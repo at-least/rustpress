@@ -1,28 +1,28 @@
 # vitezola
 
-**VitePress 的 default theme，移植到 Zola。** 盡可能忠實重刻 [VitePress](https://vitepress.dev/) default theme 的版面、配色與互動 —— navbar、自動 sidebar、右側 outline、dark mode、code groups、local search —— 全部由純靜態 HTML + CSS + 少量 vanilla JS 產生，沒有 Node toolchain、沒有 hydration。
+**The VitePress default theme, ported to Zola.** As faithful as possible a re-creation of the [VitePress](https://vitepress.dev/) default theme's layout, colors and interactions — navbar, auto sidebar, right-hand outline, dark mode, code groups, local search — all generated as pure static HTML + CSS + a little vanilla JS. No Node toolchain, no hydration.
 
-![Zola](https://img.shields.io/badge/zola-%E2%89%A50.23-blue) （需要 Zola 0.23+：使用 Tera 2 components 與新的 highlighting 設定）
+![Zola](https://img.shields.io/badge/zola-%E2%89%A50.23-blue) (requires Zola 0.23+: uses Tera 2 components and the new highlighting settings)
 
-## 功能
+## Features
 
-- **版面**：navbar（含 dropdown flyout、social links、Ask AI 按鈕）、自動生成的巢狀 sidebar（每個頂層 section 一份，同 VitePress 的 path-keyed sidebar）、右側 "On this page" outline（含 scrollspy marker，預設深度 h2-h3、front matter `outline = "deep"` 展開全部）、prev/next pager、edit link、last updated、頁尾
-- **Dark mode**：CSS variables 直接取自 VitePress `vars.css`；`<head>` 內嵌 blocking script 避免 FOUC；偏好設定存 localStorage
-- **Markdown 擴充**（Tera 2 components）：`tip` / `warning` / `danger` / `note` / `info` / `important` / `caution` 容器（支援自訂標題與 `{no-title}`）、`details`、`codegroup`
-- **Code blocks**：Zola 0.22+ 的 Giallo 高亮，light/dark 雙主題（預設 github-light/github-dark，同 VitePress）、`name=` 標籤、`hl_lines=` 行高亮、複製按鈕、code group tabs
-- **搜尋**：Zola 內建索引 + 手寫 vanilla JS 搜尋 modal（Ctrl+K 或 `/` 開啟）
-- **手機版**：hamburger 全螢幕選單、sidebar 抽屜、local nav 的 outline dropdown
-- **Badge**：`<span class="VPBadge tip">…</span>`（對應 VitePress 的 `<Badge>` 元件，樣式已移植）
-- **示範站即 vitepress.dev 的內容移植**：`content/` 是 vitepress 官方文件（33 頁）的自動轉換結果（`scripts/port-vitepress-docs.py`），用以做逐像素比對
-- **像素校正**：navbar 對齊部署版 vitepress.dev 的細節 —— logo 與標題零間距、translations 按鈕（16px option-icon 結構 + 左側 17px 保留）、GitHub icon 改用 simple-icons mask（`vpi-simple-icons-github`）、hero 圖帶 `VPImage` class（站方自訂 drop-shadow 生效）
+- **Layout**: navbar (dropdown flyouts, social links, Ask AI button), auto-generated nested sidebar (one per top-level content section, mirroring VitePress's path-keyed sidebar), right-hand "On this page" outline with scrollspy marker (depth h2–h3 by default; front matter `outline = "deep"` expands everything), prev/next pager, edit link, last updated, footer
+- **Dark mode**: CSS variables taken directly from VitePress `vars.css`; blocking script in `<head>` prevents FOUC; preference stored in localStorage
+- **Markdown extensions** (Tera 2 components): `tip` / `warning` / `danger` / `note` / `info` / `important` / `caution` containers (custom titles and `{no-title}` supported), `details`, `codegroup`
+- **Code blocks**: Zola 0.22+ Giallo highlighting with dual light/dark themes (defaults github-light/github-dark, same as VitePress), `name=` labels, `hl_lines=` line highlighting, copy buttons, code group tabs
+- **Search**: Zola's built-in index + a hand-written vanilla JS search modal (Ctrl+K or `/`)
+- **Mobile**: hamburger full-screen menu, sidebar drawer, outline dropdown in the local nav
+- **Badge**: `<span class="VPBadge tip">…</span>` (equivalent of VitePress's `<Badge>` component, styles ported)
+- **The demo site is a vitepress.dev content mirror**: `content/` is an automated conversion of the official vitepress docs (33 pages) via `scripts/port-vitepress-docs.py`, used for pixel-level comparison
+- **Pixel calibration**: navbar details matched against the deployed vitepress.dev — zero gap between logo and title, translations button (16px option-icon structure + 17px left reservation), GitHub icon as a simple-icons mask (`vpi-simple-icons-github`), hero image carries the `VPImage` class (enables the site's custom drop-shadow)
 
-## 安裝
+## Install
 
 ```sh
 git clone https://github.com/your-name/vitezola themes/vitezola
 ```
 
-然後在你的 `config.toml` 加入（**Zola 0.23 起這些是必要設定**）：
+Then add to your `config.toml` (**required settings as of Zola 0.23**):
 
 ```toml
 theme = "vitezola"
@@ -42,14 +42,15 @@ vitepress_site_title = "My Site"
 vitepress_edit_link = "https://github.com/me/my-site/edit/main/content/"
 vitepress_last_updated = true
 
-# Sidebar：預設依當前頁所屬的「頂層 content section」自動選擇（guide/、reference/
-# 各一份，同 VitePress 的 path-keyed sidebar）。要固定單一 sidebar 才需要：
+# Sidebar: by default one is derived automatically per top-level content
+# section (guide/, reference/, … — like VitePress's path-keyed sidebar).
+# Only set this to force a single fixed sidebar:
 # vitepress_sidebar_path = "docs/_index.md"
 
 [[extra.nav]]
 text = "Guide"
 link = "/guide/introduction/what-is-vitepress/"
-active_match = "/guide/"        # 選填：用 URL 前綴判斷 active（同 VitePress activeMatch）
+active_match = "/guide/"        # optional: URL-prefix active matching (like VitePress activeMatch)
 
 [[extra.nav]]
 text = "More"
@@ -60,36 +61,36 @@ kind = "github"                              # github | twitter | other
 link = "https://github.com/me/my-site"
 ```
 
-> 注意：TOML 中 `[[extra.nav]]` / `[[extra.social]]` 等 array-of-table 必須放在 `[extra]` 的 scalar keys **之後**；`[extra.xxx]` 子表之後也不能再放 bare scalar keys。
+> Note: in TOML, array-of-tables like `[[extra.nav]]` / `[[extra.social]]` must come **after** all scalar `[extra]` keys; bare scalar keys must not follow an `[extra.xxx]` sub-table either.
 
-**Sidebar 的群組（group）行為**對齊 VitePress 的 tri-state `collapsed`，以 group section（如 `content/guide/introduction/_index.md`）的 front matter 控制：
+**Sidebar group behavior** matches VitePress's tri-state `collapsed`, controlled from the group section's front matter (e.g. `content/guide/introduction/_index.md`):
 
 ```toml
 [extra]
-vitepress_collapsed = false   # 可折疊，預設展開（有 caret 按鈕）
-# vitepress_collapsed = true  # 可折疊，預設收起
-# 不設                        # 不可折疊（無 caret，永遠展開）
+vitepress_collapsed = false   # collapsible, starts expanded (caret button shown)
+# vitepress_collapsed = true  # collapsible, starts collapsed
+# unset                       # not collapsible (no caret, always expanded)
 ```
 
-把 sidebar root 當成一個「有標題的群組」渲染（同 VitePress `{ text, items }` 根項目）可加：
+To render the sidebar root as a titled group (like VitePress's `{ text, items }` root entry), add:
 
 ```toml
 [extra]
 vitepress_sidebar_title = "Reference"
 ```
 
-section 的 front matter 也接受 `[[extra.vitepress_extra_items]]`（`text` / `link`），用來放跨 section 的純連結項目（如 Guide sidebar 底部的「Config & API Reference」）。
+A section's front matter also accepts `[[extra.vitepress_extra_items]]` (`text` / `link`) for plain cross-section links (like the "Config & API Reference" entry at the bottom of the Guide sidebar).
 
 ## Home page
 
-在網站根 section（`content/_index.md`）設定 `template = "index.html"` 並加上：
+Set `template = "index.html"` on the root section (`content/_index.md`) and add:
 
 ```toml
 [extra.vitepress_home]
-name = "My Project"          # brand 色標題
+name = "My Project"          # brand-colored headline
 text = "The tagline text"
 tagline = "Longer description"
-image = { src = "hero.png", alt = "" }   # 選用，放 static/
+image = { src = "hero.png", alt = "" }   # optional, lives in static/
 
 [[extra.vitepress_home.actions]]
 text = "Get Started"
@@ -100,23 +101,23 @@ link = "/docs/guide/"
 icon = "⚡"
 title = "Feature"
 details = "Description"
-link = "/docs/feature/"      # 選用
-link_text = "Learn more"     # 選用
+link = "/docs/feature/"      # optional
+link_text = "Learn more"     # optional
 ```
 
-## 在 Markdown 裡使用
+## Using in Markdown
 
-Zola 0.23 以 Tera 2 components 取代 shortcode。容器（**block call 必須列出全部參數**）：
+Zola 0.23 replaced shortcodes with Tera 2 components. Containers (**block calls must list every parameter**):
 
 ```md
 {% <tip kind="warning" title="" no_title={false}> %}
-**注意** 這段文字會被 markdown 渲染。
+**Note** this text is rendered as markdown.
 {% </tip> %}
 ```
 
-`kind` 可用：`tip`、`warning`、`danger`、`note`、`info`、`important`、`caution`。自訂標題：`title="Server Support Required"`；隱藏標題列：`no_title={true}`（同 VitePress 的 `::: tip {no-title}`）。另有 `{% <details summary=""> %}…{% </details> %}`（`summary` 留空顯示 DETAILS）。
+Available `kind`: `tip`, `warning`, `danger`, `note`, `info`, `important`, `caution`. Custom title: `title="Server Support Required"`; hide the title row: `no_title={true}` (same as VitePress's `::: tip {no-title}`). There is also `{% <details summary=""> %}…{% </details> %}` (an empty `summary` renders DETAILS).
 
-Code group（tab 標籤來自每個 code block 的 `name=` 註解）：
+Code groups (tab labels come from each block's `name=` annotation):
 
 ````md
 {% <codegroup> %}
@@ -129,17 +130,17 @@ const b: number = 2;
 {% </codegroup> %}
 ````
 
-## 語法高亮主題
+## Syntax highlighting themes
 
-light/dark 高亮 CSS 由 Zola 在 build 時產生到 `public/giallo-light.css` / `giallo-dark.css`，但兩者都是扁平 class（`z-l-*` / `z-d-*`），無法直接用 `html.dark` 切換。本 theme 附帶的 `static/syntax.css` 已把 dark 規則改寫成 `html.dark` scope。**改過 `[markdown.highlighting]` 主題後請重新產生：**
+The light/dark highlight CSS is generated by Zola at build time into `public/giallo-light.css` / `giallo-dark.css`, but both use flat classes (`z-l-*` / `z-d-*`) that can't be switched with `html.dark` directly. The theme's bundled `static/syntax.css` rewrites the dark rules under `html.dark` scope. **Regenerate it after changing `[markdown.highlighting]` themes:**
 
 ```sh
 zola build && python3 scripts/gen-syntax-css.py
 ```
 
-## Team page 與 Sponsors
+## Team page and sponsors
 
-**Team page**：建立一個 section（如 `content/team/_index.md`）並設定 `template = "team.html"`：
+**Team page**: create a section (e.g. `content/team/_index.md`) with `template = "team.html"`:
 
 ```toml
 [extra.vitepress_team]
@@ -148,15 +149,15 @@ lead = "The folks behind this project."
 
 [[extra.vitepress_team.members]]
 name = "Ella"
-avatar = "images/avatar.svg"      # 放 static/
+avatar = "images/avatar.svg"      # lives in static/
 title = "Creator"
 org = "vitezola"
-org_link = "https://example.com" # 選用，讓 org 變連結
+org_link = "https://example.com" # optional, turns org into a link
 desc = "Description with **markdown**."
 links = [{ kind = "github", link = "https://github.com/you" }]
-sponsor = "https://github.com/sponsors/you"   # 選用，卡片底部出現 Sponsor 按鈕
+sponsor = "https://github.com/sponsors/you"   # optional, Sponsor button on the card
 
-[[extra.vitepress_team.sections]]  # 選用：分組區塊
+[[extra.vitepress_team.sections]]  # optional: grouped sections
 title = "Contributors"
 lead = "..."
 size = "small"                     # small | medium
@@ -166,10 +167,10 @@ name = "Alex"
 avatar = "images/avatar-2.svg"
 ```
 
-**Sponsors**：
+**Sponsors**:
 
 ```toml
-# Home 頁尾區塊 → content/_index.md 的 [extra.vitepress_home] 內
+# Home page footer section → inside [extra.vitepress_home] in content/_index.md
 [extra.vitepress_home.sponsors]
 message = "Special thanks to:"
 action_link = "https://github.com/sponsors/you"
@@ -177,7 +178,7 @@ action_text = "Become a sponsor"
 
 [[extra.vitepress_home.sponsors.tiers]]
 tier = "Diamond"
-size = "medium"                    # xmini | mini | small | medium | big（選填，未填依數量自動）
+size = "medium"                    # xmini | mini | small | medium | big (optional; auto by count)
 [[extra.vitepress_home.sponsors.tiers.items]]
 name = "Acme"
 img = "images/sponsor-1.svg"
@@ -185,7 +186,7 @@ url = "https://example.com"
 ```
 
 ```toml
-# 文件頁右側 aside → config.toml
+# Doc page right-hand aside → config.toml
 [[extra.vitepress_sponsors.tiers]]
 tier = "Sponsors"
 size = "xmini"
@@ -195,11 +196,11 @@ img = "images/sponsor-1.svg"
 url = "https://example.com"
 ```
 
-Grid 欄數行為同 VitePress：依數量自動選尺寸（9+ → xmini、7-8 → mini、5-6 → small、3-4 → medium、1-2 → big），桌面版欄數取「尺寸欄數」與「項目數」的較小值並補空位對齊，窄螢幕自動降為 2 欄／1 欄。暗色模式下贊助商 logo 自動反色（同 VitePress 的處理）。
+Grid column behavior matches VitePress: size auto-selected by item count (9+ → xmini, 7–8 → mini, 5–6 → small, 3–4 → medium, 1–2 → big); desktop columns = min(size columns, item count) with empty slots for alignment; narrow screens drop to 2 / 1 columns. Sponsor logos invert automatically in dark mode (same as VitePress).
 
-## 語言切換器
+## Language switcher
 
-站點有多語言（`[languages.fr]` 等）時，navbar 會自動出現語言下拉選單、手機版選單出現語言手風琴。行為同 VitePress：當前頁有對應翻譯就連過去，否則連到該語言的根路徑。語言顯示名稱可選設定：
+When the site has multiple languages (`[languages.fr]` etc.), a language flyout appears in the navbar and a language accordion in the mobile menu. Behavior matches VitePress: link to the translated page when it exists, otherwise to that language's root. Display names are optional:
 
 ```toml
 [extra.vitepress_language_labels]
@@ -207,47 +208,47 @@ en = "English"
 fr = "Français"
 ```
 
-## VitePress ↔ vitezola 語法對照
+## VitePress ↔ vitezola syntax mapping
 
 | VitePress | vitezola (Zola 0.23) |
 | --- | --- |
 | `::: tip` … `:::` | `{% <tip kind="tip" title="" no_title={false}> %} … {% </tip> %}` |
 | `::: warning SERVER REQUIRED` | `kind="warning" title="SERVER REQUIRED"` |
 | `::: tip {no-title}` | `no_title={true}` |
-| `::: details` | `{% <details summary=""> %} … {% </details> %}` |
+| `::: details` | `{% <details summary="" open={false}> %} … {% </details> %}` |
 | `<Badge type="warning" text="experimental" />` | `<span class="VPBadge warning">experimental</span>` |
-| <code>\`\`\`js [a.js]</code>（code group） | <code>\`\`\`js,name=a.js</code> 包在 `{% <codegroup> %} … {% </codegroup> %}` 裡 |
-| <code>\`\`\`js{1,3-4}</code>（行高亮） | <code>\`\`\`js,hl_lines=1 3-4</code> |
-| `outline: deep`（front matter） | 同名支援：page/section front matter `outline = "deep"`（預設只到 h3） |
-| `themeConfig.sidebar` | content section 結構自動生成（每個頂層 section 一份 sidebar） |
-| `themeConfig.appearance` | 永遠開啟（`prefers-color-scheme` + localStorage） |
-| `langLabel` / locale 名稱 | `extra.vitepress_language_labels` |
+| <code>\`\`\`js [a.js]</code> (code group) | <code>\`\`\`js,name=a.js</code> wrapped in `{% <codegroup> %} … {% </codegroup> %}` |
+| <code>\`\`\`js{1,3-4}</code> (line highlighting) | <code>\`\`\`js,hl_lines=1 3-4</code> |
+| `outline: deep` (front matter) | same name supported: page/section front matter `outline = "deep"` (default depth h2–h3) |
+| `themeConfig.sidebar` | derived from content section structure (one sidebar per top-level section) |
+| `themeConfig.appearance` | always on (`prefers-color-scheme` + localStorage) |
+| `langLabel` / locale names | `extra.vitepress_language_labels` |
 
-## 在本機開發
+## Local development
 
-repo 根目錄本身就是一個 Zola 示範站（root-level templates 直接生效）：
+The repo root is itself a Zola demo site (root-level templates take effect directly):
 
 ```sh
 zola serve
 ```
 
-## 注意事項
+## Caveats
 
-- 在 **Zola 0.23** 測試；Zola 0.22 以前（舊 Tera / shortcode）不相容。
-- 需要支援 `:has()`、CSS nesting 的現代瀏覽器（2023+ 的 Chrome/Edge/Firefox/Safari）。
-- 搜尋是以空白分詞的輕量評分，**CJK 內容的召回率會比英文差**；需要更好的 CJK 搜尋可把 `[search]` 換成 elasticlunr 並接上自己的前端。
-- 關閉 JS 時網站仍可讀：sidebar/outline 靜態渲染、code group 顯示第一個 tab、外觀跟隨系統 `prefers-color-scheme`；dark toggle 與搜尋則停用。
+- Tested on **Zola 0.23**; Zola 0.22 and earlier (old Tera / shortcodes) are incompatible.
+- Requires modern browsers with `:has()` and CSS nesting (Chrome/Edge/Firefox/Safari 2023+).
+- Search uses lightweight whitespace-tokenized scoring; **CJK recall is worse than English**. For better CJK search, swap `[search]` to elasticlunr and bring your own frontend.
+- The site stays readable without JS: sidebar/outline are static, code groups show the first tab, appearance follows the system `prefers-color-scheme`; the dark toggle and search are disabled.
 
-## 與 VitePress 的差異（設計取捨）
+## Differences from VitePress (design trade-offs)
 
-- 沒有 Vue runtime：markdown 內不能嵌入 Vue 元件；互動全部是 vanilla JS
-- Data loaders 需在 build pipeline 外先產生資料
-- sidebar 由 Zola 的 content section 結構推導，而非 `themeConfig.sidebar` 陣列；折疊語義見上方 tri-state 說明
-- sidebar / pager 的標題取自頁面 title（= 內文 H1），無法像 VitePress 在 sidebar 裡另取短名（例如 vitepress.dev 的「Deploy」vs H1「Deploy Your VitePress Site」）；prev/next 順序也只在同一 section 內排序
-- 搜尋為自寫的輕量評分（來源為 Zola 的 fuse_json 索引），非 minisearch/Algolia
-- Shiki 的行內標記 `[!code highlight]` / `[!code focus]` / `[!code ++]` 不會作用（giallo 沒有 transformers），會以原樣文字出現在 code block 裡；`:line-numbers` 修飾也會被剝除（giallo 不支援逐塊行號）
-- vitepress.dev 站方自行加的東西不屬於 default theme，僅部分重現：code group tabs 沒有 package 小圖示（那是 vitepress-plugin-group-icons）、aside 沒有 Carbon Ads（需要帳號）、navbar 的 Ask AI 是普通連結（`vitepress_ask_ai_url`），沒有 DocSearch sidepanel
+- No Vue runtime: no Vue components inside markdown; all interactivity is vanilla JS
+- Data loaders must be generated outside the build pipeline
+- The sidebar is derived from Zola's content section structure rather than a `themeConfig.sidebar` array; collapse semantics are the tri-state described above
+- Sidebar/pager titles come from the page title (= the content H1); you can't give the sidebar a separate short name like vitepress.dev does ("Deploy" vs the H1 "Deploy Your VitePress Site"). Prev/next ordering also only sorts within the same section
+- Search is a hand-written lightweight scorer over Zola's fuse_json index, not minisearch/Algolia
+- Shiki inline markers `[!code highlight]` / `[!code focus]` / `[!code ++]` have no effect (giallo has no transformers) and appear as literal text inside code blocks; the `:line-numbers` modifier is stripped (giallo doesn't support per-block line numbers)
+- Things vitepress.dev adds on top of the default theme are only partially reproduced: no package icons in code group tabs (that's vitepress-plugin-group-icons), no Carbon Ads in the aside (requires an account), and the navbar Ask AI button is a plain link (`vitepress_ask_ai_url`) with no DocSearch side panel
 
-## 授權
+## License
 
-CSS 變數、字體（Inter）與圖示移植自 VitePress（MIT）。其餘以 MIT 發佈。
+CSS variables, fonts (Inter) and icons are ported from VitePress (MIT). Everything else is released under MIT.
