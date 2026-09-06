@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block flags %}
+{% set doc = page %}
+{% set current_permalink = page.permalink %}
+{% set current_path = page.relative_path %}
+{% set current_toc = page.toc %}
+{% set outline_src = page.extra.outline | default(value="") %}
+{% if outline_src == "deep" %}{% set outline_max = 99 %}{% else %}{% set outline_max = 3 %}{% endif %}
+{% set current_translations = page.translations %}
+{% endblock flags %}
+
+{% block title %}{{ page.title }} | {{ config.title }}{% endblock title %}
+{% block description %}{{ page.description | default(value=config.description) }}{% endblock description %}
+
+{% block content %}
+{% include "partials/doc_body.html" %}
+{% endblock content %}

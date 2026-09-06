@@ -1,0 +1,12 @@
+{% if sidebar_root and has_sidebar %}
+{% set root_title = sidebar_root.extra.vitepress_sidebar_title | default(value="") %}
+<aside class="VPSidebar" id="VPSidebar">
+  <div class="curtain"></div>
+
+  <nav class="nav" id="VPSidebarNav" aria-labelledby="sidebar-aria-label" tabindex="-1">
+    <span class="visually-hidden" id="sidebar-aria-label">Sidebar Navigation</span>
+
+    {{ <sidebar_items section={sidebar_root} current_permalink={current_permalink} depth={0} lang={lang} root_title={root_title} wrap={true} /> }}
+  </nav>
+</aside>
+{% endif %}

@@ -1,0 +1,30 @@
+// vitezola — VitePress default theme ported to Zola.
+// Entry stylesheet: imported from templates via <link>.
+
+@import "vars";
+@import "base";
+@import "fonts";
+@import "icons";
+@import "utils";
+
+@import "custom-block";
+@import "vp-badge";
+@import "vp-code";
+@import "vp-code-group";
+@import "vp-doc";
+@import "vp-sponsor";
+
+@import "components/layout";
+@import "components/navbar";
+@import "components/nav-menu";
+@import "components/sidebar";
+@import "components/doc";
+@import "components/outline";
+@import "components/hero";
+@import "components/search";
+
+@import "components/team";
+@import "components/sponsors";
+
+// Demo-site-only customizations (vitepress.dev look); not theme defaults.
+@import "docs-demo";

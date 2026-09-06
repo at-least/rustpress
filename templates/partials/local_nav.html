@@ -1,0 +1,27 @@
+{% if not is_home %}
+<div class="VPLocalNav{% if has_sidebar %} has-sidebar{% endif %}" id="VPLocalNav">
+  <div class="container">
+    {% if has_sidebar %}
+    <button type="button" class="menu" id="VPLocalNavMenu" aria-expanded="false" aria-controls="VPSidebarNav">
+      <span class="vpi-align-left menu-icon" aria-hidden="true"></span>
+      <span class="menu-text">Menu</span>
+    </button>
+    {% endif %}
+
+    <div class="VPLocalNavOutlineDropdown" id="VPLocalNavOutlineDropdown">
+      <button type="button" id="VPOutlineDropdownButton" aria-expanded="false" aria-controls="VPOutlineDropdownItems">
+        <span class="menu-text">{{ config.extra.vitepress_outline_title | default(value="On this page") }}</span>
+        <span class="vpi-chevron-right icon" aria-hidden="true"></span>
+      </button>
+      <div class="items" id="VPOutlineDropdownItems" hidden>
+        <div class="header">
+          <a class="top-link" href="#">{{ config.extra.vitepress_return_to_top_label | default(value="Return to top") }}</a>
+        </div>
+        <div class="outline">
+          {{ <outline_items headers={current_toc} max_level={outline_max} /> }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}

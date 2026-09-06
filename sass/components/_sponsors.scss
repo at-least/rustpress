@@ -1,0 +1,136 @@
+// Ported from VPHomeSponsors.vue and VPDocAsideSponsors.vue
+// (grid styles live in sass/_vp-sponsor.scss, ported verbatim)
+
+.VPHomeSponsors {
+  border-top: 1px solid var(--vp-c-gutter);
+  margin: 6rem 0;
+  padding: 5.5rem 1.5rem 0;
+}
+
+@media (min-width: 48rem) {
+  .VPHomeSponsors {
+    margin: 8rem 0;
+  }
+}
+
+@media (min-width: 48rem) {
+  .VPHomeSponsors {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+@media (min-width: 60rem) {
+  .VPHomeSponsors {
+    padding-left: 4rem;
+    padding-right: 4rem;
+  }
+}
+
+.VPHomeSponsors .container {
+  margin: 0 auto;
+  max-width: 72rem;
+}
+
+.VPHomeSponsors .love {
+  margin: 0 auto;
+  width: fit-content;
+  font-size: 1.75rem;
+  color: var(--vp-c-text-3);
+}
+
+.VPHomeSponsors .icon {
+  display: inline-block;
+}
+
+.VPHomeSponsors .message {
+  margin: 0 auto;
+  border-top: none;
+  padding-top: 0.625rem;
+  max-width: 20rem;
+  text-align: center;
+  letter-spacing: normal;
+  line-height: 1.5;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+}
+
+.VPHomeSponsors .sponsors {
+  padding-top: 2rem;
+}
+
+.VPHomeSponsors .action {
+  padding-top: 2.5rem;
+  text-align: center;
+}
+
+// Doc aside variant
+
+.VPDocAsideSponsors {
+  margin-top: 1.5rem;
+}
+
+.VPSponsors.aside .message {
+  margin: 0 0 0.5rem;
+  text-align: center;
+  line-height: 1.5;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+}
+
+.VPSponsors.aside .action {
+  padding-top: 0.75rem;
+  text-align: center;
+}
+
+.VPSponsors.aside .action .VPButton {
+  height: 2rem;
+  border-radius: 1rem;
+  padding: 0 0.875rem;
+  font-size: 0.75rem;
+}
+
+// Static replication of VitePress's useSponsorsGrid: the component emits
+// data-vp-grid = desktop column count (item-count aware, remainder padded
+// with .empty slots); these media queries handle narrower screens.
+
+.vp-sponsor-grid[data-vp-grid='2'] .vp-sponsor-grid-item {
+  width: calc((100% - 0.25rem * 1) / 2);
+}
+
+.vp-sponsor-grid[data-vp-grid='3'] .vp-sponsor-grid-item {
+  width: calc((100% - 0.25rem * 2) / 3);
+}
+
+.vp-sponsor-grid[data-vp-grid='4'] .vp-sponsor-grid-item {
+  width: calc((100% - 0.25rem * 3) / 4);
+}
+
+.vp-sponsor-grid[data-vp-grid='5'] .vp-sponsor-grid-item {
+  width: calc((100% - 0.25rem * 4) / 5);
+}
+
+.vp-sponsor-grid[data-vp-grid='6'] .vp-sponsor-grid-item {
+  width: calc((100% - 0.25rem * 5) / 6);
+}
+
+@media (max-width: 59.99rem) {
+  .vp-sponsor-grid[data-vp-grid='3'] .vp-sponsor-grid-item,
+  .vp-sponsor-grid[data-vp-grid='4'] .vp-sponsor-grid-item,
+  .vp-sponsor-grid[data-vp-grid='5'] .vp-sponsor-grid-item,
+  .vp-sponsor-grid[data-vp-grid='6'] .vp-sponsor-grid-item {
+    width: calc((100% - 0.25rem) / 2);
+  }
+}
+
+@media (max-width: 39.99rem) {
+  .vp-sponsor-grid[data-vp-grid='2'] .vp-sponsor-grid-item,
+  .vp-sponsor-grid[data-vp-grid='3'] .vp-sponsor-grid-item,
+  .vp-sponsor-grid[data-vp-grid='4'] .vp-sponsor-grid-item,
+  .vp-sponsor-grid[data-vp-grid='5'] .vp-sponsor-grid-item,
+  .vp-sponsor-grid[data-vp-grid='6'] .vp-sponsor-grid-item {
+    width: 100%;
+  }
+}

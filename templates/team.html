@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block flags %}
+{% set is_home = false %}
+{% set has_sidebar = false %}
+{% endblock flags %}
+
+{% block title %}{{ section.title }} | {{ config.title }}{% endblock title %}
+{% block description %}{{ section.description | default(value=config.description) }}{% endblock description %}
+
+{% block content %}
+{% set team = section.extra.vitepress_team %}
+<div class="VPHome VPTeamPage">
+  {% if team %}
+  <div class="VPTeamPageTitle">
+    {% if team.title %}<h1 class="title">{{ team.title }}</h1>{% endif %}
+    {% if team.lead %}<p class="lead">{{ team.lead }}</p>{% endif %}
+  </div>
+
+  {% if team.members %}
+  {{ <team_members members={team.members} size="medium" lang={lang} /> }}
+  {% endif %}
+
+  {% for sec in team.sections %}
+  <section class="VPTeamPageSection">
+    <div class="title">
+      <div class="title-line"></div>
+      {% if sec.title %}<h2 class="title-text">{{ sec.title }}</h2>{% endif %}
+    </div>
+    {% if sec.lead %}<p class="lead">{{ sec.lead }}</p>{% endif %}
+    {% if sec.members %}
+    <div class="members">
+      {{ <team_members members={sec.members} size={sec.size | default(value="medium")} lang={lang} /> }}
+    </div>
+    {% endif %}
+  </section>
+  {% endfor %}
+  {% endif %}
+
+  {% if section.content %}
+  <div class="vp-doc" style="max-width: 72rem; margin: 0 auto; padding: 0 4rem;">
+    {{ section.content | safe }}
+  </div>
+  {% endif %}
+</div>
+{% endblock content %}

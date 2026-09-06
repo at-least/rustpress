@@ -1,0 +1,101 @@
+<div class="VPDoc has-aside{% if has_sidebar %} has-sidebar{% endif %}">
+  <div class="container">
+    <div class="aside">
+      <div class="aside-curtain"></div>
+      <div class="aside-container">
+        <div class="aside-content">
+          <div class="VPDocAside">
+            {% if doc.toc %}
+            <nav class="VPDocAsideOutline has-outline" aria-labelledby="doc-outline-aria-label">
+              <div class="content">
+                <div class="outline-marker" id="VPOutlineMarker"></div>
+                <div class="outline-title" id="doc-outline-aria-label" role="heading" aria-level="2">
+                  {{ config.extra.vitepress_outline_title | default(value="On this page") }}
+                </div>
+                {{ <outline_items headers={doc.toc} root={true} max_level={outline_max} /> }}
+              </div>
+            </nav>
+            {% endif %}
+
+            {% set aside_sponsors = config.extra.vitepress_sponsors %}
+            {% if aside_sponsors %}
+            <div class="VPDocAsideSponsors">
+              <div class="VPSponsors vp-sponsor aside">
+                {% if aside_sponsors.message %}<p class="message">{{ aside_sponsors.message }}</p>{% endif %}
+                {{ <sponsors_block data={aside_sponsors.tiers} aside={true} lang={lang} /> }}
+                {% if aside_sponsors.action_link %}
+                <div class="action">
+                  <a class="VPButton medium sponsor" href="{{ aside_sponsors.action_link }}">{{ aside_sponsors.action_text | default(value="Become a sponsor") }}</a>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
+            <div class="spacer"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="content-container">
+        <main class="main">
+          <div class="vp-doc" id="main">
+            {% if doc.title %}<h1 class="vp-doc-title">{{ doc.title }}</h1>{% endif %}
+            {{ doc.content | safe }}
+          </div>
+        </main>
+
+        {% set show_edit_link = config.extra.vitepress_edit_link %}
+        {% set show_last_updated = config.extra.vitepress_last_updated and doc.updated %}
+        {% if show_edit_link or show_last_updated or doc.lower or doc.higher %}
+        <footer class="VPDocFooter">
+          {% if show_edit_link or show_last_updated %}
+          <div class="edit-info">
+            {% if show_edit_link %}
+            <div class="edit-link">
+              <a class="edit-link-button" href="{{ config.extra.vitepress_edit_link }}{{ doc.relative_path }}">
+                <span class="vpi-square-pen edit-link-icon"></span>
+                {{ config.extra.vitepress_edit_link_text | default(value="Edit this page on GitHub") }}
+              </a>
+            </div>
+            {% endif %}
+
+            {% if show_last_updated %}
+            <div class="last-updated">
+              <p class="VPDocFooterLastUpdated">
+                {{ config.extra.vitepress_last_updated_text | default(value="Last updated") }}:
+                <time datetime="{{ doc.updated }}">{{ doc.updated | date(format="%Y/%m/%d") }}</time>
+              </p>
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% if doc.lower or doc.higher %}
+          <nav class="prev-next" aria-labelledby="doc-footer-aria-label">
+            <span class="visually-hidden" id="doc-footer-aria-label">Pager</span>
+            <div class="pager">
+              {% if doc.lower %}
+              <a class="pager-link prev" href="{{ doc.lower.permalink }}">
+                <span class="desc">{{ config.extra.vitepress_prev_label | default(value="Previous page") }}</span>
+                <span class="title">{{ doc.lower.title }}</span>
+              </a>
+              {% endif %}
+            </div>
+            <div class="pager">
+              {% if doc.higher %}
+              <a class="pager-link next" href="{{ doc.higher.permalink }}">
+                <span class="desc">{{ config.extra.vitepress_next_label | default(value="Next page") }}</span>
+                <span class="title">{{ doc.higher.title }}</span>
+              </a>
+              {% endif %}
+            </div>
+          </nav>
+          {% endif %}
+        </footer>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

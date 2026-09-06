@@ -1,0 +1,35 @@
+<div class="VPLocalSearchBox" id="VPLocalSearchBox" hidden role="dialog" aria-modal="true">
+  <div class="backdrop" id="VPSearchBackdrop"></div>
+  <div class="shell">
+    <form class="search-bar" id="VPSearchBar" onsubmit="return false">
+      <label id="localsearch-label" for="localsearch-input" title="Search">
+        <span aria-hidden="true" class="vpi-search search-icon local-search-icon"></span>
+      </label>
+      <input
+        class="search-input"
+        id="localsearch-input"
+        aria-labelledby="localsearch-label"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
+        maxlength="64"
+        type="search"
+        placeholder="Search docs"
+      />
+      <div class="search-actions">
+        <button type="button" class="clear-button" id="VPSearchClear" title="Clear" disabled>
+          <span class="vpi-delete clear-icon" aria-hidden="true"></span>
+        </button>
+      </div>
+    </form>
+
+    <ul class="results" id="VPSearchResults" role="listbox" aria-labelledby="localsearch-label"></ul>
+
+    <div class="search-keyboard-shortcuts" id="VPSearchShortcuts">
+      <span><kbd>←</kbd><kbd>→</kbd> to navigate</span>
+      <span><kbd>Enter</kbd> to select</span>
+      <span><kbd>Esc</kbd> to close</span>
+    </div>
+  </div>
+</div>

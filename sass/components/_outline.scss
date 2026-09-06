@@ -1,0 +1,70 @@
+// Ported from VPDocAsideOutline.vue and VPDocOutlineItem.vue
+
+.VPDocAsideOutline {
+  display: none;
+}
+
+.VPDocAsideOutline.has-outline {
+  display: block;
+}
+
+.VPDocAsideOutline .content {
+  position: relative;
+  border-left: 1px solid var(--vp-c-divider);
+  padding-left: 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.VPDocAsideOutline .outline-marker {
+  position: absolute;
+  top: 2rem;
+  left: -1px;
+  z-index: 0;
+  opacity: 0;
+  width: 2px;
+  border-radius: 2px;
+  height: 1.125rem;
+  background-color: var(--vp-c-brand-1);
+  transition: top 0.25s cubic-bezier(0, 1, 0.5, 1), background-color 0.5s, opacity 0.25s;
+}
+
+.VPDocAsideOutline .outline-title {
+  line-height: 2.2857143;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.VPDocOutlineItem.root {
+  position: relative;
+  z-index: 1;
+}
+
+.VPDocOutlineItem.nested {
+  padding-right: 1rem;
+  padding-left: 1rem;
+}
+
+.VPDocOutlineItem .outline-link {
+  display: block;
+  line-height: 2.2857143;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--vp-c-text-2);
+  scroll-margin-top: calc(var(--vp-nav-height) + var(--vp-layout-top-height, 0px) + var(--vp-doc-top-height, 0px) + 2rem);
+  scroll-margin-bottom: 3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.5s;
+}
+
+.VPDocOutlineItem .outline-link:hover,
+.VPDocOutlineItem .outline-link.active {
+  color: var(--vp-c-text-1);
+  transition: color 0.25s;
+}
+
+.VPDocOutlineItem.nested .outline-link {
+  padding-left: 0.8125rem;
+}

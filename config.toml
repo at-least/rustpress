@@ -1,0 +1,92 @@
+# Demo site configuration for the vitezola theme, mirroring vitepress.dev.
+#
+# When you use vitezola as a theme (git clone into themes/vitezola), copy the
+# settings below that are marked "required" into your own config.toml.
+base_url = "http://127.0.0.1:1789"
+title = "VitePress"
+description = "Vite & Vue powered static site generator."
+default_language = "en"
+compile_sass = true
+minify_html = false
+build_search_index = true
+generate_feeds = false
+
+[extra]
+# Navbar title/logo. Logo path is relative to static/.
+vitepress_site_title = "VitePress"
+vitepress_logo = "images/vitepress-logo-mini.svg"
+
+# DEPRECATED single-sidebar mode: leave empty and the theme derives one
+# sidebar per top-level content section (guide/, reference/, …) instead.
+vitepress_sidebar_path = ""
+
+# Outline title in the right aside / local nav dropdown.
+vitepress_outline_title = "On this page"
+
+# Optional "Ask AI" sparkle button in the navbar (VitePress 2.0 renders it
+# when DocSearch askAi is configured). Plain link — no sidepanel integration.
+vitepress_ask_ai_url = "https://vitepress.dev/"
+
+# Edit link prefix; pages get an "Edit this page" footer link when set.
+vitepress_edit_link = "https://github.com/vuejs/vitepress/edit/main/docs/"
+vitepress_edit_link_text = "Edit this page on GitHub"
+
+# vitepress.dev does not show last-updated timestamps.
+vitepress_last_updated = false
+
+# Footer text.
+vitepress_footer_message = "Released under the MIT License."
+vitepress_footer_copyright = "Copyright © 2019-present Evan You"
+
+# Language display names for the navbar language switcher (keyed by lang code).
+[extra.vitepress_language_labels]
+en = "English"
+fr = "Français"
+
+# NOTE: array-of-table keys ([[extra.*]]) must come after everything above.
+
+# Navbar links: an array of inline tables.
+#   { text = "Guide", link = "/guide/", active_match = "/guide/" } -> plain
+#     link; active_match is an optional URL prefix overriding link matching
+#   { text = "Menu", items = [...] }                               -> dropdown
+[[extra.nav]]
+text = "Guide"
+link = "/guide/introduction/what-is-vitepress/"
+active_match = "/guide/"
+
+[[extra.nav]]
+text = "Reference"
+link = "/reference/site-config/"
+active_match = "/reference/"
+
+[[extra.nav]]
+text = "2.0.0-alpha.20"
+items = [
+  { text = "1.6.4", link = "https://vuejs.github.io/vitepress/v1/" },
+  { text = "Changelog", link = "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md" },
+  { text = "Contributing", link = "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md" },
+]
+
+# Social links rendered in the navbar. kind: github | twitter | other
+[[extra.social]]
+kind = "github"
+link = "https://github.com/vuejs/vitepress"
+
+# REQUIRED: dual syntax-highlighting themes, matching VitePress defaults.
+# `style = "class"` emits stable class names (z-l-*/z-d-*) that we restyle
+# through VitePress-like CSS variables in light and dark mode.
+[markdown]
+github_alerts = true
+
+[markdown.highlighting]
+style = "class"
+light_theme = "github-light"
+dark_theme = "github-dark"
+
+# REQUIRED: Zola builds the search index consumed by the navbar search modal.
+[search]
+index_format = "fuse_json"
+
+# Demo secondary language. Remove this block for single-language sites.
+[languages.fr]
+title = "VitePress"

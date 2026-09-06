@@ -1,0 +1,296 @@
+{# Tera components for vitezola.
+   Components are registered globally from any template file; everything
+   lives here so users can override individual pieces in their own
+   templates/components.html. #}
+
+{# ── Sidebar ──────────────────────────────────────────────────────────── #}
+{# Collapsed semantics mirror VitePress's tri-state: section extra
+   vitepress_collapsed = true  -> collapsible, starts collapsed
+                         false -> collapsible, starts expanded
+                         absent -> not collapsible, no caret.
+   root_title renders the sidebar root as a plain group (VitePress
+   `{ text, items }` root entry). `wrap` controls the .group dividers.  #}
+
+{% component sidebar_items(section, current_permalink, depth, lang, root_title, wrap) %}
+{% set d = depth | default(value=0) %}
+{% set w = wrap | default(value=true) %}
+{% set rt = root_title | default(value="") %}
+{% if d == 0 and rt != "" and w %}
+<div class="group">
+<section class="VPSidebarItem level-0">
+  <div class="item">
+    <div class="indicator"></div>
+    {% if d < 5 %}<h2 class="text">{{ root_title }}</h2>{% else %}<p class="text">{{ root_title }}</p>{% endif %}
+  </div>
+  <ul class="items">
+    <li>
+      {{ <sidebar_items section={section} current_permalink={current_permalink} depth={1} lang={lang} root_title="" wrap={false} /> }}
+    </li>
+  </ul>
+</section>
+</div>
+{% else %}
+{% for p in section.pages %}
+{% if d == 0 and w %}<div class="group">{% endif %}
+<section class="VPSidebarItem level-{{ d }} is-link{% if current_permalink == p.permalink %} is-active has-active{% endif %}">
+  <div class="item">
+    <div class="indicator"></div>
+    <a class="link" href="{{ p.permalink }}" {% if current_permalink == p.permalink %}aria-current="page"{% endif %}>
+      <p class="text">{{ p.title }}</p>
+    </a>
+  </div>
+</section>
+{% if d == 0 and w %}</div>{% endif %}
+{% endfor %}
+{% for s in section.subsections %}
+{% set sub = get_section(path=s, lang=lang, allow_missing=true) %}
+{% if sub %}
+{% if d == 0 and w %}<div class="group">{% endif %}
+{% set is_active = current_permalink == sub.permalink %}
+{% set has_active = current_permalink is containing(pat=sub.permalink) %}
+{% set cv = sub.extra.vitepress_collapsed | default(value="unset") %}
+{% set collapsible = cv == true or cv == false %}
+{% set starts_collapsed = cv == true %}
+<section class="VPSidebarItem level-{{ d }}{% if collapsible %} collapsible{% endif %}{% if starts_collapsed %} collapsed{% endif %}{% if is_active %} is-active{% endif %}{% if has_active %} has-active{% endif %}">
+  <div class="item">
+    <div class="indicator"></div>
+    {% if d < 5 %}<h{{ d + 2 }} class="text">{{ sub.title }}</h{{ d + 2 }}>{% else %}<p class="text">{{ sub.title }}</p>{% endif %}
+    {% if collapsible %}
+    <button type="button" class="caret" aria-label="toggle section" aria-expanded="{{ not starts_collapsed }}">
+      <span class="vpi-chevron-right caret-icon"></span>
+    </button>
+    {% endif %}
+  </div>
+  {% if sub.pages | length > 0 or sub.subsections | length > 0 %}
+  <ul class="items">
+    <li>
+      {{ <sidebar_items section={sub} current_permalink={current_permalink} depth={d + 1} lang={lang} root_title="" wrap={true} /> }}
+    </li>
+  </ul>
+  {% endif %}
+</section>
+{% if d == 0 and w %}</div>{% endif %}
+{% endif %}
+{% endfor %}
+{# Extra leaf items declared on the section, e.g. a cross-section link
+   that VitePress would put directly in the sidebar config. #}
+{% if section.extra.vitepress_extra_items %}
+{% for x in section.extra.vitepress_extra_items %}
+{% set x_active = current_permalink is ending_with(pat=x.link) %}
+{% if not x_active %}{% set x_active = current_permalink is ending_with(pat=x.link ~ "/") %}{% endif %}
+{% if d == 0 and w %}<div class="group">{% endif %}
+<section class="VPSidebarItem level-{{ d }} is-link{% if x_active %} is-active has-active{% endif %}">
+  <div class="item">
+    <div class="indicator"></div>
+    <a class="link" href="{{ x.link }}" {% if x_active %}aria-current="page"{% endif %}>
+      <p class="text">{{ x.text }}</p>
+    </a>
+  </div>
+</section>
+{% if d == 0 and w %}</div>{% endif %}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endcomponent sidebar_items %}
+
+{# ── Outline (TOC) ────────────────────────────────────────────────────── #}
+
+{% component outline_items(headers, root = false, max_level = 3) %}
+{% set r = root | default(value=false) %}
+{% set ml = max_level | default(value=3) %}
+<ul class="VPDocOutlineItem{% if r %} root{% else %} nested{% endif %}">
+  {% for h in headers %}
+  <li>
+    <a class="outline-link" href="#{{ h.id }}" title="{{ h.title }}">{{ h.title }}</a>
+    {% if h.children and h.level < ml %}{{ <outline_items headers={h.children} max_level={ml} /> }}{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endcomponent outline_items %}
+
+{# ── Custom containers ────────────────────────────────────────────────── #}
+{# kind: tip | warning | danger | note | info | important | caution        #}
+
+{% component tip(kind, title, no_title) %}
+{% set k = kind | default(value="tip") %}
+{% set t = title | default(value="") %}
+{% set nt = no_title | default(value=false) %}
+<div class="custom-block {{ k }}">
+{% if not nt %}<p class="custom-block-title">{% if t != "" %}{{ t }}{% else %}{{ k | upper }}{% endif %}</p>{% endif %}
+
+{{ body }}
+
+</div>
+{% endcomponent tip %}
+
+{% component details(summary, open) %}
+{% set s = summary | default(value="") %}
+{% set op = open | default(value=false) %}
+<details class="custom-block details"{% if op %} open{% endif %}>
+<summary>{% if s != "" %}{{ s }}{% else %}DETAILS{% endif %}</summary>
+
+{{ body }}
+
+</details>
+{% endcomponent details %}
+
+{# ── Code group ───────────────────────────────────────────────────────── #}
+{# Body: fenced code blocks with a name annotation, one per tab:
+   ```js,name=a.js
+   ```                                                                  #}
+
+{% component codegroup() %}
+<div class="vp-code-group">
+<div class="blocks">
+
+{{ body }}
+
+</div>
+</div>
+{% endcomponent codegroup %}
+
+{# ── Language switcher ────────────────────────────────────────────────── #}
+
+{% component lang_label(code, labels) %}
+{% if labels is containing(pat=code) %}{{ labels | get(key=code) }}{% else %}{{ code | upper }}{% endif %}
+{% endcomponent lang_label %}
+
+{# mode: "menu" (navbar flyout) | "screen" (nav screen accordion) #}
+{% component lang_links(translations, lang, labels, default_lang, root_mode, base, languages, mode) %}
+{% if root_mode %}
+  {% set current_code = lang %}
+  {% if base is ending_with(pat="/") %}{% set root = base %}{% else %}{% set root = base ~ "/" %}{% endif %}
+  {% if mode == "menu" %}
+  <li class="VPMenuLink"><a class="link active" href="{{ root }}">{{ <lang_label code={current_code} labels={labels} /> }}</a></li>
+  {% else %}
+  <li class="item"><a class="link active" href="{{ root }}">{{ <lang_label code={current_code} labels={labels} /> }}</a></li>
+  {% endif %}
+  {% for code, _cfg in languages %}
+    {% if mode == "menu" %}
+    <li class="VPMenuLink"><a class="link" href="{{ root }}{{ code }}/">{{ <lang_label code={code} labels={labels} /> }}</a></li>
+    {% else %}
+    <li class="item"><a class="link" href="{{ root }}{{ code }}/">{{ <lang_label code={code} labels={labels} /> }}</a></li>
+    {% endif %}
+  {% endfor %}
+{% else %}
+  {% for t in translations %}
+  {% if t.lang %}{% set t_code = t.lang %}{% else %}{% set t_code = default_lang %}{% endif %}
+  {% set active = t_code == lang %}
+  {% if mode == "menu" %}
+  <li class="VPMenuLink"><a class="link{% if active %} active{% endif %}" href="{{ t.permalink }}" lang="{{ t_code }}" hreflang="{{ t_code }}" rel="alternate">{{ <lang_label code={t_code} labels={labels} /> }}</a></li>
+  {% else %}
+  <li class="item"><a class="link{% if active %} active{% endif %}" href="{{ t.permalink }}" lang="{{ t_code }}" hreflang="{{ t_code }}" rel="alternate">{{ <lang_label code={t_code} labels={labels} /> }}</a></li>
+  {% endif %}
+  {% endfor %}
+{% endif %}
+{% endcomponent lang_links %}
+
+{# ── Team ─────────────────────────────────────────────────────────────── #}
+
+{% component team_members(members, size, lang) %}
+{% set s = size | default(value="medium") %}
+<div class="VPTeamMembers {{ s }} count-{{ members | length }}">
+<ul class="container">
+  {% for m in members %}
+  <li class="item">
+    <article class="VPTeamMembersItem {{ s }}">
+      <div class="profile">
+        <figure class="avatar">
+          <img class="avatar-img" src="{% if m.avatar %}{{ get_url(path=m.avatar) }}{% else %}{{ get_url(path='images/avatar-1.svg') }}{% endif %}" alt="{{ m.name }}">
+        </figure>
+        <div class="data">
+          <h1 class="name">{{ m.name }}</h1>
+          {% if m.title or m.org %}
+          <p class="affiliation">
+            {% if m.title %}<span class="title">{{ m.title }}</span>{% endif %}
+            {% if m.title and m.org %}<span class="at"> @ </span>{% endif %}
+            {% if m.org %}<span class="org{% if m.org_link %} link{% endif %}">{% if m.org_link %}<a href="{{ m.org_link }}">{{ m.org }}</a>{% else %}{{ m.org }}{% endif %}</span>{% endif %}
+          </p>
+          {% endif %}
+          {% if m.desc %}<p class="desc">{{ m.desc | safe }}</p>{% endif %}
+          {% if m.links %}
+          <div class="links">
+            <div class="VPSocialLinks">
+              {% for l in m.links %}
+              <a class="VPSocialLink no-icon" href="{{ l.link }}" aria-label="{{ l.kind }}" target="_blank" rel="noopener">
+                {% if l.kind == "github" %}
+                <span class="vpi-simple-icons-github"></span>
+                {% elif l.kind == "twitter" or l.kind == "x" %}
+                <span><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.9 2.1h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.9l7.9-9.1L1.4 2.1h7l4.8 6.3 5.7-6.3Zm-1.2 18h1.9L7.4 4H5.4l12.3 16.1Z"/></svg></span>
+                {% else %}
+                <span><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="currentColor" stroke-width="2" d="M14 5h5v5m0-5L10 14M9 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3"/></svg></span>
+                {% endif %}
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% if m.sponsor %}
+      <div class="sp">
+        <a class="sp-link" href="{{ m.sponsor }}">
+          <span class="vpi-heart sp-icon"></span> {{ m.action_text | default(value="Sponsor") }}
+        </a>
+      </div>
+      {% endif %}
+    </article>
+  </li>
+  {% endfor %}
+</ul>
+</div>
+{% endcomponent team_members %}
+
+{# ── Sponsors ─────────────────────────────────────────────────────────── #}
+{# Grid size auto-selects by item count, mirroring VitePress's
+   useSponsorsGrid: 9+ -> xmini, 7-8 -> mini, 5-6 -> small,
+   3-4 -> medium, 1-2 -> big. An explicit `size` overrides.             #}
+
+{% component sponsors_grid(items, size, aside) %}
+{% set n = items | length %}
+{% if size %}
+  {% set s = size %}
+{% elif n >= 9 %}
+  {% set s = "xmini" %}
+{% elif n >= 7 %}
+  {% set s = "mini" %}
+{% elif n >= 5 %}
+  {% set s = "small" %}
+{% elif n >= 3 %}
+  {% set s = "medium" %}
+{% else %}
+  {% set s = "big" %}
+{% endif %}
+{% if s == "xmini" %}{% set maxcols = 2 %}{% elif s == "mini" %}{% set maxcols = 5 %}{% elif s == "small" %}{% set maxcols = 6 %}{% elif s == "medium" %}{% set maxcols = 5 %}{% else %}{% set maxcols = 3 %}{% endif %}
+{% set cols = maxcols %}
+{% if n > 0 and n < cols %}{% set cols = n %}{% endif %}
+{% if n == 0 %}{% set cols = 1 %}{% endif %}
+{% set rem = n % cols %}
+{% if rem == 0 %}{% set pad = 0 %}{% else %}{% set pad = cols - rem %}{% endif %}
+<ul class="VPSponsorsGrid vp-sponsor-grid {{ s }}" data-vp-grid="{{ cols }}">
+  {% for sp in items %}
+  <li class="vp-sponsor-grid-item">
+    <a class="vp-sponsor-grid-link" href="{{ sp.url }}" target="_blank" rel="sponsored noopener">
+      <article class="vp-sponsor-grid-box">
+        <img class="vp-sponsor-grid-image" src="{{ get_url(path=sp.img) }}" alt="{{ sp.name }}">
+      </article>
+    </a>
+  </li>
+  {% endfor %}
+  {% for _ in range(start=0, end=pad) %}
+  <li class="vp-sponsor-grid-item empty"></li>
+  {% endfor %}
+</ul>
+{% endcomponent sponsors_grid %}
+
+{% component sponsors_block(data, aside, lang) %}
+{% set a = aside | default(value=false) %}
+<div class="VPSponsors vp-sponsor{% if a %} aside{% endif %}">
+  {% for group in data %}
+  <section class="vp-sponsor-section">
+    {% if group.tier %}<h3 class="vp-sponsor-tier">{{ group.tier }}</h3>{% endif %}
+    {{ <sponsors_grid items={group.items} size={group.size} aside={a} /> }}
+  </section>
+  {% endfor %}
+</div>
+{% endcomponent sponsors_block %}

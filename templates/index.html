@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block flags %}
+{% set is_home = true %}
+{% set has_sidebar = false %}
+{% set current_translations = section.translations %}
+{% endblock flags %}
+
+{% block title %}{{ config.title }}{% endblock title %}
+{% block description %}{{ section.description | default(value=config.description) }}{% endblock description %}
+
+{% block content %}
+<div class="VPHome">
+  {% set h = section.extra.vitepress_home %}
+  {% if h %}
+  <div class="VPHero VPHomeHero{% if h.image %} has-image{% endif %}">
+    <div class="container">
+      <div class="main">
+        <h1 class="heading">
+          {% if h.name %}<span class="name clip">{{ h.name }}</span>{% endif %}
+          <span class="text">{{ h.text }}</span>
+        </h1>
+        {% if h.tagline %}
+        <p class="tagline">{{ h.tagline }}</p>
+        {% endif %}
+        {% if h.actions %}
+        <div class="actions">
+          {% for action in h.actions %}
+          <div class="action">
+            <a class="VPButton medium {{ action.theme | default(value='brand') }}" href="{% if action.link is starting_with(pat="http") %}{{ action.link }}{% else %}{{ get_url(path=action.link) }}{% endif %}">{{ action.text }}</a>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      {% if h.image %}
+      <div class="image">
+        <div class="image-container">
+          <div class="image-bg"></div>
+          <img class="VPImage image-src" src="{{ get_url(path=h.image.src) }}" alt="{{ h.image.alt | default(value='') }}">
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if h.features %}
+  {% set flen = h.features | length %}
+  {% if flen == 2 %}{% set grid = 'grid-2' %}{% elif flen == 3 %}{% set grid = 'grid-3' %}{% elif flen % 3 == 0 %}{% set grid = 'grid-6' %}{% elif flen > 3 %}{% set grid = 'grid-4' %}{% endif %}
+  <div class="VPFeatures VPHomeFeatures">
+    <div class="container">
+      <ul class="items">
+        {% for feature in h.features %}
+        <li class="item {{ grid | default(value='grid-2') }}">
+          <div class="VPFeature">
+            <article class="box">
+              {% if feature.icon %}<div class="icon">{{ feature.icon | safe }}</div>{% endif %}
+              <h2 class="title">{{ feature.title }}</h2>
+              <p class="details">{{ feature.details }}</p>
+              {% if feature.link_text %}
+              <div class="link-text">
+                <p class="link-text-value">{{ feature.link_text }} <span class="vpi-arrow-right link-text-icon"></span></p>
+              </div>
+              {% endif %}
+            </article>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if h.sponsors %}
+  <section class="VPHomeSponsors">
+    <div class="container">
+      <div class="header">
+        <div class="love">
+          <span class="vpi-heart icon"></span>
+        </div>
+        {% if h.sponsors.message %}<h2 class="message">{{ h.sponsors.message }}</h2>{% endif %}
+      </div>
+      <div class="sponsors">
+        {{ <sponsors_block data={h.sponsors.tiers} aside={false} lang={lang} /> }}
+      </div>
+      {% if h.sponsors.action_link %}
+      <div class="action">
+        <a class="VPButton medium sponsor" href="{% if h.sponsors.action_link is starting_with(pat="http") %}{{ h.sponsors.action_link }}{% else %}{{ get_url(path=h.sponsors.action_link) }}{% endif %}">{{ h.sponsors.action_text | default(value="Become a sponsor") }}</a>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+  {% endif %}
+
+</div>
+{% endblock content %}

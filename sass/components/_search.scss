@@ -1,0 +1,285 @@
+// Ported from VPLocalSearchBox.vue (modal) plus small glue styles for the
+// JS-driven pieces (code group tabs, code copy button).
+
+.VPLocalSearchBox {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: flex;
+}
+
+.VPLocalSearchBox .backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--vp-backdrop-bg-color);
+  transition: opacity 0.5s;
+}
+
+.VPLocalSearchBox .shell {
+  position: relative;
+  padding: 0.75rem;
+  margin: 4rem auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--vp-local-search-bg);
+  width: min(100vw - 3.75rem, 56.25rem);
+  height: min-content;
+  max-height: min(100vh - 8rem, 56.25rem);
+  border-radius: 0.375rem;
+}
+
+@media not all and (min-width: 48rem) {
+  .VPLocalSearchBox .shell {
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+  }
+}
+
+.VPLocalSearchBox .search-bar {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  cursor: text;
+}
+
+@media not all and (min-width: 48rem) {
+  .VPLocalSearchBox .search-bar {
+    padding: 0 0.5rem;
+  }
+}
+
+.VPLocalSearchBox .search-bar:focus-within {
+  border-color: var(--vp-c-brand-1);
+}
+
+.VPLocalSearchBox .local-search-icon {
+  display: block;
+  font-size: 1.125rem;
+}
+
+.VPLocalSearchBox .search-icon {
+  margin: 0.5rem;
+}
+
+@media not all and (min-width: 48rem) {
+  .VPLocalSearchBox .search-icon {
+    display: none;
+  }
+}
+
+.VPLocalSearchBox .search-input {
+  padding: 0.375rem 0.75rem;
+  font-size: inherit;
+  width: 100%;
+}
+
+.VPLocalSearchBox .search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.VPLocalSearchBox .search-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.VPLocalSearchBox .search-actions button {
+  padding: 0.5rem;
+}
+
+.VPLocalSearchBox .search-actions button:not([disabled]):hover {
+  color: var(--vp-c-brand-1);
+}
+
+.VPLocalSearchBox .results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.VPLocalSearchBox .result {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.25rem;
+  transition: none;
+  line-height: 1;
+  border: solid 2px var(--vp-local-search-result-border);
+  outline: none;
+}
+
+.VPLocalSearchBox .result > div {
+  margin: 0.75rem;
+  width: 100%;
+  overflow: hidden;
+}
+
+@media not all and (min-width: 48rem) {
+  .VPLocalSearchBox .result > div {
+    margin: 0.5rem;
+  }
+}
+
+.VPLocalSearchBox .titles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  position: relative;
+  z-index: 1001;
+  padding: 0.125rem 0;
+}
+
+.VPLocalSearchBox .title {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.VPLocalSearchBox .title.main {
+  font-weight: 500;
+}
+
+.VPLocalSearchBox .title-icon {
+  opacity: 0.5;
+  font-weight: 500;
+  color: var(--vp-c-brand-1);
+}
+
+.VPLocalSearchBox .title::after {
+  content: "/";
+  opacity: 0.5;
+  font-weight: 500;
+}
+
+.VPLocalSearchBox .title:last-child::after {
+  content: "";
+}
+
+.VPLocalSearchBox .excerpt {
+  opacity: 50%;
+  pointer-events: none;
+  max-height: 8.75rem;
+  overflow: hidden;
+  position: relative;
+  margin-top: 0.25rem;
+}
+
+.VPLocalSearchBox .result.selected .excerpt {
+  opacity: 1;
+}
+
+.VPLocalSearchBox .result.selected {
+  --vp-local-search-result-bg: var(--vp-local-search-result-selected-bg);
+  border-color: var(--vp-local-search-result-selected-border);
+}
+
+.VPLocalSearchBox .excerpt p {
+  font-size: 0.8rem !important;
+  line-height: 1.3 !important;
+}
+
+.VPLocalSearchBox mark {
+  background-color: var(--vp-local-search-highlight-bg);
+  color: var(--vp-local-search-highlight-text);
+  border-radius: 0.125rem;
+  padding: 0 0.125rem;
+}
+
+.VPLocalSearchBox .no-results {
+  font-size: 0.875rem;
+  color: var(--vp-c-text-2);
+  padding: 1rem 0.75rem;
+}
+
+.VPLocalSearchBox .search-keyboard-shortcuts {
+  font-size: 0.8rem;
+  opacity: 75%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  line-height: 1.09375;
+}
+
+.VPLocalSearchBox .search-keyboard-shortcuts span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+@media not all and (min-width: 48rem) {
+  .VPLocalSearchBox .search-keyboard-shortcuts {
+    display: none;
+  }
+}
+
+.VPLocalSearchBox kbd {
+  background: rgba(128, 128, 128, 0.1);
+  border-radius: 0.25rem;
+  padding: 0.1875rem 0.375rem;
+  min-width: 1.5rem;
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  border: 1px solid rgba(128, 128, 128, 0.15);
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+  font-family: inherit;
+}
+
+// Copy button on code blocks
+
+pre.giallo {
+  position: relative;
+}
+
+.vp-copy-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 3;
+  display: block;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--vp-code-copy-code-border-color);
+  border-radius: 0.25rem;
+  width: 2.5rem;
+  height: 2rem;
+  background-color: var(--vp-code-copy-code-bg);
+  opacity: 0;
+  color: var(--vp-c-text-2);
+  transition: opacity 0.25s;
+  cursor: pointer;
+}
+
+pre.giallo:hover .vp-copy-button,
+.vp-copy-button:focus {
+  opacity: 1;
+}
+
+.vp-copy-button::before {
+  content: "";
+  width: 0.875rem;
+  height: 0.875rem;
+  margin: auto;
+  background-color: currentColor;
+  -webkit-mask: var(--vp-icon-copy) no-repeat;
+  mask: var(--vp-icon-copy) no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+.vp-copy-button.copied::before {
+  -webkit-mask: var(--vp-icon-copied) no-repeat;
+  mask: var(--vp-icon-copied) no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
