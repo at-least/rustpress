@@ -1,39 +1,44 @@
-{% set nav_is_top = true %}
-<div class="VPNavBar{% if is_home %} home{% endif %}{% if has_sidebar %} has-sidebar{% endif %} top" id="VPNavBar">
-  <div class="wrapper">
-    <div class="container">
-      <div class="title">
-        <div class="VPNavBarTitle{% if has_sidebar %} has-sidebar{% endif %}">
-          <a class="title" href="{{ get_url(path='/') }}">
+{% set has_languages = config.languages and config.languages | length > 0 %}
+{# VPNavBar — surface is the ::before pseudo; `top`/`screen-open` are
+   toggled by js/app.js. #}
+<div class="relative z-[1] h-(--vp-nav-height) pointer-events-none whitespace-nowrap [--vp-nav-col-offset:0px] [&::before]:content-[''] [&::before]:absolute [&::before]:top-0 [&::before]:right-0 [&::before]:bottom-0 [&::before]:left-(--vp-nav-col-offset) [&::before]:z-[-1] [&::before]:bg-(--vp-nav-bg-color) [&::before]:[backdrop-filter:var(--vp-nav-backdrop-filter)] [&::before]:transition-colors [&::before]:duration-[250ms]{% if is_home %} max-lg:[&.home:not(.screen-open)::before]:bg-transparent{% endif %} max-lg:[&.screen-open::before]:bg-(--vp-nav-bg-color) max-lg:[&.screen-open::before]:transition-none lg:[&.home.top::before]:bg-(--vp-nav-home-bg-color) lg:[&.home.top::before]:[backdrop-filter:none]{% if has_sidebar %} lg:[--vp-nav-col-offset:var(--vp-sidebar-width)] 2xl:[--vp-nav-col-offset:calc((100%-var(--vp-layout-max-width))/2+var(--vp-sidebar-width))]{% endif %}" id="VPNavBar">
+  <div class="py-0 pr-2 pl-6 md:pr-8 md:pl-8">
+    <div class="flex justify-between mx-auto max-w-[calc(var(--vp-layout-max-width)-4rem)] h-(--vp-nav-height) pointer-events-none">
+      <div class="title min-w-0 pointer-events-none [&_*]:pointer-events-auto{% if has_sidebar %} lg:max-w-[calc(var(--vp-sidebar-width)-2rem)]{% elif not is_home %} lg:min-w-[calc(var(--vp-sidebar-width)-2rem)]{% endif %}">
+        {# VPNavBarTitle #}
+        <div class="flex items-center{% if has_sidebar %} lg:max-w-[calc(var(--vp-sidebar-width)-4rem)]{% endif %}">
+          <a class="flex items-center w-full h-(--vp-nav-height) text-base font-semibold text-text-1 transition-opacity duration-[250ms] [&>span]:overflow-hidden [&>span]:text-ellipsis{% if has_sidebar %} lg:shrink-0{% endif %}" href="{{ get_url(path='/') }}">
             {% if config.extra.vitepress_logo %}
-            <img class="logo" src="{{ get_url(path=config.extra.vitepress_logo) }}" alt="Logo">
+            <img class="shrink-0 mr-0 h-(--vp-nav-logo-height)" src="{{ get_url(path=config.extra.vitepress_logo) }}" alt="Logo">
             {% endif %}
             <span>{{ config.extra.vitepress_site_title | default(value=config.title) }}</span>
           </a>
         </div>
       </div>
 
-      <div class="content">
-        <div class="content-body">
-          <div class="VPNavBarSearch">
-            <button type="button" class="VPNavBarSearchButton" id="VPSearchButton" aria-keyshortcuts="/ control+k meta+k">
-              <span class="vpi-search" aria-hidden="true"></span>
-              <span class="text">Search</span>
-              <span class="keys" aria-hidden="true">
-                <kbd class="key-mod"></kbd>
-                <kbd class="key-k"></kbd>
+      <div class="content grow shrink-0 pointer-events-none [&_*]:pointer-events-auto md:shrink md:min-w-0">
+        <div class="content-body relative flex justify-end items-center h-(--vp-nav-height)">
+          {# Search + Ask AI #}
+          <div class="flex items-center md:gap-2 md:pl-6 lg:pl-8">
+            <button type="button" class="flex items-center gap-2 h-(--vp-nav-height) px-[0.875rem] py-2 text-[1.25rem] cursor-pointer md:h-auto md:py-2 md:px-3 md:bg-bg-alt md:rounded-lg md:text-[0.875rem] md:leading-none md:text-text-2" id="VPSearchButton" aria-keyshortcuts="/ control+k meta+k">
+              {{ <icon name="search" /> }}
+              <span class="hidden md:inline md:text-[0.8125rem]">Search</span>
+              <span class="hidden md:flex md:items-center md:gap-1 md:px-[0.375rem] md:py-1 md:border md:border-divider md:rounded-[0.25rem] md:text-[0.75rem]" aria-hidden="true">
+                <kbd class="font-[inherit] font-medium before:content-['Ctrl'] [.mac_&]:before:content-['⌘']"></kbd>
+                <kbd class="font-[inherit] font-medium before:content-['K']"></kbd>
               </span>
             </button>
             {% if config.extra.vitepress_ask_ai_url %}
-            <a class="VPNavBarAskAiButton" href="{{ config.extra.vitepress_ask_ai_url }}" target="_blank" rel="noopener" aria-label="Ask AI">
-              <span class="vpi-sparkles" aria-hidden="true"></span>
+            <a class="flex items-center h-(--vp-nav-height) px-[0.875rem] py-2 text-[1.25rem] md:h-auto md:p-[0.71875rem] md:transition-colors md:duration-300 md:bg-bg-alt md:rounded-lg md:text-[0.9375rem] md:text-text-2 md:hover:text-brand-1" href="{{ config.extra.vitepress_ask_ai_url }}" target="_blank" rel="noopener" aria-label="Ask AI">
+              {{ <icon name="sparkles" /> }}
             </a>
             {% endif %}
           </div>
 
           {% if config.extra.nav %}
-          <nav class="VPNavBarMenu" aria-label="Main Navigation">
-            <ul class="list">
+          {# VPNavBarMenu #}
+          <nav class="relative hidden md:flex md:grow md:justify-end min-w-0" aria-label="Main Navigation">
+            <ul class="flex justify-end">
               {% for item in config.extra.nav | default(value=[]) %}
               <li>
                 {% set am = item.active_match | default(value="") %}
@@ -46,20 +51,22 @@
                   {% set item_active = false %}
                 {% endif %}
                 {% if item.items %}
-                  {% set group_active = item_active %}
-                <div class="VPFlyout VPNavMenuGroup{% if group_active %} active{% endif %}">
-                  <button type="button" class="button" aria-expanded="false" aria-haspopup="true">
-                    <span class="text">
+                {% set group_active = item_active %}
+                {# VPFlyout #}
+                <div class="relative group/flyout hover:text-brand-1 transition-colors duration-[250ms]{% if group_active %} active{% endif %}">
+                  <button type="button" class="flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" aria-expanded="false" aria-haspopup="true">
+                    <span class="flex items-center leading-(--vp-nav-height) text-[0.875rem] font-medium transition-colors duration-[250ms]{% if group_active %} text-brand-1 group-hover/flyout:text-brand-2{% else %} text-text-1 group-hover/flyout:text-text-2{% endif %}">
                       <span>{{ item.text }}</span>
-                      <span class="vpi-chevron-down text-icon" aria-hidden="true"></span>
+                      {{ <icon name="chevron-down" class="ml-1 size-[0.875rem]" /> }}
                     </span>
                   </button>
-                  <div class="menu">
-                    <div class="VPMenu">
-                      <ul class="items">
+                  <div class="absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-focus-within/flyout:opacity-100 group-focus-within/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
+                    {# VPMenu #}
+                    <div class="rounded-xl p-3 min-w-32 border border-divider bg-bg-elv shadow-3 transition-colors duration-500 max-h-[calc(100vh-var(--vp-nav-height))] overflow-y-auto">
+                      <ul>
                         {% for child in item.items %}
-                        <li class="VPMenuLink">
-                          <a class="link{% if current_permalink is containing(pat=child.link) %} active{% endif %}" href="{% if child.link is starting_with(pat="http") %}{{ child.link }}{% else %}{{ get_url(path=child.link) }}{% endif %}">{{ child.text }}</a>
+                        <li>
+                          <a class="block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap text-text-1 transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft{% if current_permalink is containing(pat=child.link) %} text-brand-1{% endif %}" href="{% if child.link is starting_with(pat="http") %}{{ child.link }}{% else %}{{ get_url(path=child.link) }}{% endif %}">{{ child.text }}</a>
                         </li>
                         {% endfor %}
                       </ul>
@@ -67,7 +74,7 @@
                   </div>
                 </div>
                 {% else %}
-                <a class="VPNavMenuLink VPNavBarMenuLink{% if item_active %} active{% endif %}" href="{% if item.link is starting_with(pat="http") %}{{ item.link }}{% else %}{{ get_url(path=item.link) }}{% endif %}">
+                <a class="flex items-center min-h-(--vp-nav-height) px-3 leading-normal text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1{% if item_active %} text-brand-1{% endif %}" href="{% if item.link is starting_with(pat="http") %}{{ item.link }}{% else %}{{ get_url(path=item.link) }}{% endif %}">
                   <span>{{ item.text }}</span>
                 </a>
                 {% endif %}
@@ -77,18 +84,19 @@
           </nav>
           {% endif %}
 
-          {% if config.languages and config.languages | length > 0 %}
-          <div class="translations VPNavTranslations VPNavBarTranslations VPFlyout">
-            <button type="button" class="button" aria-expanded="false" aria-haspopup="true" aria-label="Change language">
-              <span class="text">
-                <span class="vpi-languages option-icon" aria-hidden="true"></span>
-                <span class="vpi-chevron-down text-icon" aria-hidden="true"></span>
+          {% if has_languages %}
+          {# VPFlyout translations #}
+          <div class="relative hidden md:flex md:items-center md:justify-end md:pl-[17px] group/flyout hover:text-brand-1 transition-colors duration-[250ms]">
+            <button type="button" class="flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" aria-expanded="false" aria-haspopup="true" aria-label="Change language">
+              <span class="flex items-center leading-(--vp-nav-height) text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] group-hover/flyout:text-text-2">
+                {{ <icon name="languages" class="size-[1rem]" /> }}
+                {{ <icon name="chevron-down" class="ml-1 size-[0.875rem]" /> }}
               </span>
             </button>
-            <div class="menu">
-              <div class="VPMenu">
-                <p class="title">{{ <lang_label code={lang} labels={lang_labels} /> }}</p>
-                <ul class="items">
+            <div class="absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-focus-within/flyout:opacity-100 group-focus-within/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
+              <div class="rounded-xl p-3 min-w-32 border border-divider bg-bg-elv shadow-3 transition-colors duration-500 max-h-[calc(100vh-var(--vp-nav-height))] overflow-y-auto">
+                <p class="text-[0.875rem] font-bold text-text-1 leading-[2.2857143]">{{ <lang_label code={lang} labels={lang_labels} /> }}</p>
+                <ul>
                   {{ <lang_links translations={current_translations} lang={lang} labels={lang_labels} default_lang={config.default_language} root_mode={lang_root_mode} base={lang_base} languages={config.languages} mode="menu" /> }}
                 </ul>
               </div>
@@ -96,28 +104,30 @@
           </div>
           {% endif %}
 
-          <div class="appearance VPNavAppearance">
-            <button type="button" id="VPSwitchAppearance" class="VPSwitch VPSwitchAppearance" role="switch" aria-label="Appearance" aria-checked="false" title="Toggle dark mode">
-              <span class="check">
-                <span class="icon">
-                  <span class="vpi-sun sun" aria-hidden="true"></span>
-                  <span class="vpi-moon moon" aria-hidden="true"></span>
+          {# Appearance switch #}
+          <div class="flex items-center{% if has_languages %} before:content-[''] before:ml-2 before:mr-4 before:w-px before:h-6 before:bg-divider{% endif %}">
+            <button type="button" id="VPSwitchAppearance" class="relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label="Appearance" aria-checked="false" title="Toggle dark mode">
+              <span class="absolute top-px left-px w-[1.125rem] h-[1.125rem] rounded-full bg-(--vp-c-neutral-inverse) shadow-1 transition-transform duration-[250ms] dark:translate-x-[1.125rem]">
+                <span class="relative block w-[1.125rem] h-[1.125rem] rounded-full overflow-hidden">
+                  {{ <icon name="sun" class="absolute top-[0.1875rem] left-[0.1875rem] size-3 text-text-2 dark:text-text-1 transition-opacity duration-[250ms] opacity-100 dark:opacity-0" /> }}
+                  {{ <icon name="moon" class="absolute top-[0.1875rem] left-[0.1875rem] size-3 text-text-2 dark:text-text-1 transition-opacity duration-[250ms] opacity-0 dark:opacity-100" /> }}
                 </span>
               </span>
             </button>
           </div>
 
           {% if config.extra.social %}
-          <div class="social-links VPNavBarSocialLinks">
-            <div class="VPSocialLinks">
+          {# Social links #}
+          <div class="hidden md:flex md:items-center -mr-2 before:content-[''] before:ml-4 before:mr-2 before:w-px before:h-6 before:bg-divider">
+            <div class="flex">
               {% for s in config.extra.social | default(value=[]) %}
-              <a class="VPSocialLink no-icon" href="{{ s.link }}" aria-label="{{ s.kind }}" target="_blank" rel="noopener">
+              <a class="flex justify-center items-center w-9 h-9 text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms]" href="{{ s.link }}" aria-label="{{ s.kind }}" target="_blank" rel="noopener">
                 {% if s.kind == "github" %}
-                <span class="vpi-simple-icons-github"></span>
+                {{ <icon name="github" class="size-5" /> }}
                 {% elif s.kind == "twitter" or s.kind == "x" %}
-                <span><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.9 2.1h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.9l7.9-9.1L1.4 2.1h7l4.8 6.3 5.7-6.3Zm-1.2 18h1.9L7.4 4H5.4l12.3 16.1Z"/></svg></span>
+                <span class="flex w-5 h-5"><svg class="fill-current size-full" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.9 2.1h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.9l7.9-9.1L1.4 2.1h7l4.8 6.3 5.7-6.3Zm-1.2 18h1.9L7.4 4H5.4l12.3 16.1Z"/></svg></span>
                 {% else %}
-                <span><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="currentColor" stroke-width="2" d="M14 5h5v5m0-5L10 14M9 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3"/></svg></span>
+                <span class="flex w-5 h-5"><svg class="fill-current size-full" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="currentColor" stroke-width="2" d="M14 5h5v5m0-5L10 14M9 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3"/></svg></span>
                 {% endif %}
               </a>
               {% endfor %}
@@ -125,11 +135,12 @@
           </div>
           {% endif %}
 
-          <button type="button" class="VPNavBarHamburger" id="VPNavBarHamburger" aria-label="Menu" aria-expanded="false">
-            <span class="container" aria-hidden="true">
-              <span class="top"></span>
-              <span class="middle"></span>
-              <span class="bottom"></span>
+          {# Hamburger — bars animate on hover / `.active` (js/app.js) #}
+          <button type="button" class="group flex justify-center items-center w-12 h-(--vp-nav-height) cursor-pointer md:hidden" id="VPNavBarHamburger" aria-label="Menu" aria-expanded="false">
+            <span class="relative w-4 h-[0.875rem] overflow-hidden" aria-hidden="true">
+              <span class="absolute w-4 h-[2px] top-0 left-0 bg-text-1 [transition:top_0.25s,background-color_0.5s,transform_0.25s] group-hover:translate-x-1 group-[.active]:top-[0.375rem] group-[.active]:translate-x-0! group-[.active]:rotate-[225deg] group-hover:group-[.active]:bg-text-2 group-hover:group-[.active]:[transition:top_0.25s,background-color_0.25s,transform_0.25s]"></span>
+              <span class="absolute w-4 h-[2px] top-[0.375rem] left-0 translate-x-2 bg-text-1 [transition:top_0.25s,background-color_0.5s,transform_0.25s] group-hover:translate-x-0 group-[.active]:top-[0.375rem] group-[.active]:translate-x-4! group-hover:group-[.active]:bg-text-2 group-hover:group-[.active]:[transition:top_0.25s,background-color_0.25s,transform_0.25s]"></span>
+              <span class="absolute w-4 h-[2px] top-[0.75rem] left-0 translate-x-[0.25rem] bg-text-1 [transition:top_0.25s,background-color_0.5s,transform_0.25s] group-hover:translate-x-2 group-[.active]:top-[0.375rem] group-[.active]:translate-x-0! group-[.active]:rotate-[135deg] group-hover:group-[.active]:bg-text-2 group-hover:group-[.active]:[transition:top_0.25s,background-color_0.25s,transform_0.25s]"></span>
             </span>
           </button>
         </div>
@@ -137,7 +148,8 @@
     </div>
   </div>
 
-  <div class="divider">
-    <div class="divider-line"></div>
+  {# Bottom divider #}
+  <div class="relative z-[-1] [transform:translateZ(0)] w-full h-px pl-[var(--vp-nav-col-offset)]{% if has_sidebar %} before:content-[''] before:absolute before:top-0 before:left-[calc(var(--vp-nav-col-offset)-var(--vp-sidebar-width)+2rem)] before:w-[calc(var(--vp-sidebar-width)-4rem)] before:h-px before:bg-divider{% endif %}">
+    <div class="w-full h-px transition-colors duration-[250ms] {% if not is_home %}bg-(--vp-nav-divider-color){% else %}bg-transparent lg:bg-(--vp-nav-divider-color) lg:[.top_&]:bg-transparent{% endif %} max-lg:[.screen-open_&]:bg-divider"></div>
   </div>
 </div>

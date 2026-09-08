@@ -1,7 +1,6 @@
 {% if not lang %}{% set lang = config.default_language | default(value='en') %}{% endif %}
 {% set is_home = false %}
 {% set has_sidebar = true %}
-{% set current_permalink = "" %}
 {% block flags %}{% endblock flags %}
 {% set current_permalink = current_permalink | default(value="") %}
 {% set current_path = current_path | default(value="") %}
@@ -32,14 +31,15 @@
 {% endif %}
 {% if not sidebar_root %}{% set has_sidebar = false %}{% endif %}
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="{{ lang }}" class="[color-scheme:light] dark:[color-scheme:dark]">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ config.title }}{% endblock title %}</title>
-    <meta name="description" content="{% block description %}{{ config.description }}{% endblock description %}">
+    <meta name="description" content="{% block description %}{{ config.description | default(value="") }}{% endblock description %}">
     <link rel="stylesheet" href="{{ get_url(path='syntax.css') }}">
     <link rel="stylesheet" href="{{ get_url(path='vitezola.css') }}">
+    <link rel="stylesheet" href="{{ get_url(path='css/main.css') }}">
     <script>
       (function () {
         try {
@@ -51,12 +51,14 @@
       if (/Mac|iPhone|iPad/.test(navigator.platform)) document.documentElement.classList.add('mac');
     </script>
   </head>
-  <body>
-    <a class="visually-hidden" href="#main">Skip to content</a>
+  <body class="font-sans bg-bg text-text-1 antialiased [text-rendering:optimizeLegibility] [-moz-osx-font-smoothing:grayscale] [text-autospace:normal] [text-spacing-trim:normal]">
+    <a class="sr-only" href="#main">Skip to content</a>
 
-    <div class="VPBackdrop" id="VPBackdrop" hidden></div>
+    {# VPBackdrop #}
+    <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" hidden></div>
 
-    <header class="VPNav">
+    {# VPNav #}
+    <header class="relative top-[var(--vp-layout-top-height,0px)] left-0 z-(--vp-z-index-nav) w-full pointer-events-none lg:fixed">
       {% include "partials/navbar.html" %}
       {% include "partials/nav_screen.html" %}
     </header>
@@ -64,18 +66,25 @@
     {% include "partials/local_nav.html" %}
     {% include "partials/sidebar.html" %}
 
-    <div class="VPContent{% if has_sidebar %} has-sidebar{% endif %}{% if is_home %} is-home{% endif %}" id="VPContent">
+    {# VPContent #}
+    {% if has_sidebar %}
+    {% set content_class = "grow shrink-0 m-0 w-full lg:mt-[var(--vp-layout-top-height,0px)] lg:pt-(--vp-nav-height) lg:pl-(--vp-sidebar-width) 2xl:pr-[calc((100%-var(--vp-layout-max-width))/2)] 2xl:pl-[calc((100%-var(--vp-layout-max-width))/2+var(--vp-sidebar-width))]" %}
+    {% else %}
+    {% set content_class = "grow shrink-0 w-full mx-auto mt-[var(--vp-layout-top-height,0px)] max-w-full lg:pt-(--vp-nav-height)" %}
+    {% endif %}
+    <div class="{{ content_class }}" id="VPContent">
       {% block content %}{% endblock content %}
     </div>
 
     {% if config.extra.vitepress_footer_message or config.extra.vitepress_footer_copyright %}
-    <footer class="VPFooter{% if has_sidebar %} has-sidebar{% endif %}">
-      <div class="container">
+    {# VPFooter #}
+    <footer class="relative z-(--vp-z-index-footer) border-t border-gutter py-8 px-6 bg-bg{% if has_sidebar %} hidden{% endif %}">
+      <div class="mx-auto max-w-(--vp-layout-max-width) text-center">
         {% if config.extra.vitepress_footer_message %}
-        <p class="message">{{ config.extra.vitepress_footer_message | safe }}</p>
+        <p class="leading-[1.7142857] text-[0.875rem] font-medium text-text-2">{{ config.extra.vitepress_footer_message | safe }}</p>
         {% endif %}
         {% if config.extra.vitepress_footer_copyright %}
-        <p class="copyright">{{ config.extra.vitepress_footer_copyright | safe }}</p>
+        <p class="leading-[1.7142857] text-[0.875rem] font-medium text-text-2">{{ config.extra.vitepress_footer_copyright | safe }}</p>
         {% endif %}
       </div>
     </footer>
