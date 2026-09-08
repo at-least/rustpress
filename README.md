@@ -1,6 +1,6 @@
 # vitezola
 
-**The VitePress default theme, ported to Zola.** As faithful as possible a re-creation of the [VitePress](https://vitepress.dev/) default theme's layout, colors and interactions — navbar, auto sidebar, right-hand outline, dark mode, code groups, local search — all generated as pure static HTML + CSS + a little vanilla JS. No Node toolchain, no hydration.
+**The VitePress default theme, ported to Zola.** As faithful as possible a re-creation of the [VitePress](https://vitepress.dev/) default theme's layout, colors and interactions — navbar, auto sidebar, right-hand outline, dark mode, code groups, local search — all generated as pure static HTML + a little vanilla JS. Styling is [Tailwind CSS](https://tailwindcss.com) v4 utilities in the templates, built with the Tailwind CLI; the only CSS in the theme is `css/main.css` (VitePress theme variables + base rules) and `css/fonts.css` (Inter `@font-face`). No hydration.
 
 ![Zola](https://img.shields.io/badge/zola-%E2%89%A50.23-blue) (requires Zola 0.23+: uses Tera 2 components and the new highlighting settings)
 
@@ -14,7 +14,7 @@
 - **Mobile**: hamburger full-screen menu, sidebar drawer, outline dropdown in the local nav
 - **Badge**: `<span class="VPBadge tip">…</span>` (equivalent of VitePress's `<Badge>` component, styles ported)
 - **The demo site is a vitepress.dev content mirror**: `content/` is an automated conversion of the official vitepress docs (33 pages) via `scripts/port-vitepress-docs.py`, used for pixel-level comparison
-- **Pixel calibration**: navbar details matched against the deployed vitepress.dev — zero gap between logo and title, translations button (16px option-icon structure + 17px left reservation), GitHub icon as a simple-icons mask (`vpi-simple-icons-github`), hero image carries the `VPImage` class (enables the site's custom drop-shadow)
+- **Pixel calibration** (against the pre-Tailwind build): navbar details matched against the deployed vitepress.dev — zero gap between logo and title, translations button (16px option-icon structure + 17px left reservation), GitHub icon as an inline simple-icons SVG, hero image keeps the site's custom drop-shadow
 
 ## Install
 
@@ -22,11 +22,21 @@
 git clone https://github.com/your-name/vitezola themes/vitezola
 ```
 
+The theme ships its Tailwind source (`css/main.css`) but **not** the compiled stylesheet — build it once with the Tailwind CLI (any Node 18+; no other toolchain):
+
+```sh
+npm install          # installs @tailwindcss/cli
+npm run build:css    # writes static/main.css (minified)
+npm run dev          # or: watch mode while working on templates
+```
+
+`static/main.css` is generated and gitignored; run `npm run build:css` before `zola build` (or `npm run build` to do both). Utilities are scanned from `templates/`, `static/js/` and `content/`, so classes used in your own templates or front-matter markup are picked up automatically.
+
 Then add to your `config.toml` (**required settings as of Zola 0.23**):
 
 ```toml
 theme = "vitezola"
-compile_sass = true
+compile_sass = false
 build_search_index = true
 
 [search]
