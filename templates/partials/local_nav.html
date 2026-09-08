@@ -1,23 +1,27 @@
 {% if not is_home %}
-<div class="VPLocalNav{% if has_sidebar %} has-sidebar{% endif %}" id="VPLocalNav">
-  <div class="container">
+{# VPLocalNav #}
+<div class="sticky top-0 left-0 z-(--vp-z-index-local-nav) w-full pt-[var(--vp-layout-top-height,0px)] border-b border-(--vp-local-nav-divider-color) [&::before]:content-[''] [&::before]:absolute [&::before]:inset-0 [&::before]:z-[-1] [&::before]:bg-(--vp-local-nav-bg-color) [&::before]:[backdrop-filter:var(--vp-nav-backdrop-filter)] [&::before]:transition-colors [&::before]:duration-[250ms] lg:top-(--vp-nav-height) lg:[&::before]:top-[calc(-1*var(--vp-nav-height))]{% if has_sidebar %} lg:pl-(--vp-sidebar-width){% endif %} xl:hidden" id="VPLocalNav">
+  <div class="flex justify-between items-center">
     {% if has_sidebar %}
-    <button type="button" class="menu" id="VPLocalNavMenu" aria-expanded="false" aria-controls="VPSidebarNav">
-      <span class="vpi-align-left menu-icon" aria-hidden="true"></span>
-      <span class="menu-text">Menu</span>
+    <button type="button" class="flex items-center py-[0.75rem] px-6 pb-[0.6875rem] leading-2 text-[0.75rem] font-medium text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] cursor-pointer lg:hidden md:px-8" id="VPLocalNavMenu" aria-expanded="false" aria-controls="VPSidebarNav">
+      {{ <icon name="align-left" class="mr-2 size-[0.875rem]" /> }}
+      <span>Menu</span>
     </button>
     {% endif %}
 
-    <div class="VPLocalNavOutlineDropdown" id="VPLocalNavOutlineDropdown">
-      <button type="button" id="VPOutlineDropdownButton" aria-expanded="false" aria-controls="VPOutlineDropdownItems">
-        <span class="menu-text">{{ config.extra.vitepress_outline_title | default(value="On this page") }}</span>
-        <span class="vpi-chevron-right icon" aria-hidden="true"></span>
+    {# VPLocalNavOutlineDropdown — `.open` on the button toggled by js/app.js.
+       The `.items` panel anchors to the sticky VPLocalNav itself (no
+       `relative` here, matching the original selector chain). #}
+    <div id="VPLocalNavOutlineDropdown">
+      <button type="button" class="group/drop relative block py-[0.75rem] px-6 pb-[0.6875rem] leading-2 text-[0.75rem] font-medium text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] cursor-pointer [&.open]:text-text-1 md:px-8 lg:text-[0.875rem]" id="VPOutlineDropdownButton" aria-expanded="false" aria-controls="VPOutlineDropdownItems">
+        <span>{{ config.extra.vitepress_outline_title | default(value="On this page") }}</span>
+        {{ <icon name="chevron-right" class="inline-block align-middle ml-[0.125rem] size-[0.875rem] transition-transform duration-[250ms] group-[.open]/drop:rotate-90 lg:size-[1rem]" /> }}
       </button>
-      <div class="items" id="VPOutlineDropdownItems" hidden>
-        <div class="header">
-          <a class="top-link" href="#">{{ config.extra.vitepress_return_to_top_label | default(value="Return to top") }}</a>
+      <div class="absolute top-10 right-4 left-4 grid gap-px border border-border rounded-lg bg-gutter max-h-[calc(var(--vp-vh,100vh)-5.375rem)] overflow-x-hidden overflow-y-auto overscroll-contain shadow-3 lg:right-auto lg:left-[calc(var(--vp-sidebar-width)+2rem)] lg:w-80" id="VPOutlineDropdownItems" hidden>
+        <div class="bg-bg-soft">
+          <a class="block px-4 leading-[3.4285714] text-[0.875rem] font-medium text-brand-1" href="#">{{ config.extra.vitepress_return_to_top_label | default(value="Return to top") }}</a>
         </div>
-        <div class="outline">
+        <div class="py-2 bg-bg-soft">
           {{ <outline_items headers={current_toc} max_level={outline_max} /> }}
         </div>
       </div>

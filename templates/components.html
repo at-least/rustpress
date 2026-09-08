@@ -138,10 +138,10 @@
 {% component outline_items(headers, root = false, max_level = 3) %}
 {% set r = root | default(value=false) %}
 {% set ml = max_level | default(value=3) %}
-<ul class="VPDocOutlineItem{% if r %} root{% else %} nested{% endif %}">
+<ul class="{% if r %}relative z-[1]{% else %}pr-4 pl-4{% endif %}">
   {% for h in headers %}
   <li>
-    <a class="outline-link" href="#{{ h.id }}" title="{{ h.title }}">{{ h.title }}</a>
+    <a class="block leading-[2.2857143] text-[0.875rem] text-text-2 whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] [&.active]:text-text-1 scroll-mt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+var(--vp-doc-top-height,0px)+2rem)] scroll-mb-12{% if not r %} pl-[0.8125rem]{% endif %}" href="#{{ h.id }}" title="{{ h.title }}">{{ h.title }}</a>
     {% if h.children and h.level < ml %}{{ <outline_items headers={h.children} max_level={ml} /> }}{% endif %}
   </li>
   {% endfor %}
