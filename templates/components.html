@@ -49,20 +49,27 @@
                          false -> collapsible, starts expanded
                          absent -> not collapsible, no caret.
    root_title renders the sidebar root as a plain group (VitePress
-   `{ text, items }` root entry). `wrap` controls the .group dividers.  #}
+   `{ text, items }` root entry). `wrap` controls the .group dividers.
+   `collapsed` is toggled at runtime by js/app.js.  #}
 
 {% component sidebar_items(section, current_permalink, depth, lang, root_title, wrap) %}
 {% set d = depth | default(value=0) %}
 {% set w = wrap | default(value=true) %}
 {% set rt = root_title | default(value="") %}
+{# ── shared fragments #}
+{% set group_cls = "[.group+&]:border-t [.group+&]:border-divider [.group+&]:pt-2.5 lg:pt-2.5 lg:w-[calc(var(--vp-sidebar-width)-4rem)]" %}
+{% set item_cls = "group/item item relative flex w-full" %}
+{% set indicator_cls = "indicator absolute top-[0.375rem] bottom-[0.375rem] left-[calc(-1rem-1px)] w-[2px] rounded-[2px] transition-colors duration-[250ms]" %}
+{% set caret_btn_cls = "caret flex justify-center items-center -mr-[0.4375rem] w-8 h-8 shrink-0 text-text-3 cursor-pointer transition-colors duration-[250ms] group-hover/item:text-text-2 hover:text-text-1!" %}
+{% set caret_icon_cls = "text-[1.125rem] rotate-90 transition-transform duration-[250ms] group-[.collapsed]/side:rotate-0" %}
 {% if d == 0 and rt != "" and w %}
-<div class="group">
-<section class="VPSidebarItem level-0">
-  <div class="item">
-    <div class="indicator"></div>
-    {% if d < 5 %}<h2 class="text">{{ root_title }}</h2>{% else %}<p class="text">{{ root_title }}</p>{% endif %}
+<div class="group {{ group_cls | safe }}">
+<section class="group/side VPSidebarItem level-0 pb-6 [&.collapsed]:pb-2.5">
+  <div class="{{ item_cls | safe }}">
+    <div class="{{ indicator_cls | safe }}"></div>
+    {% if d < 5 %}<h2 class="text grow py-1 leading-[1.7142857] text-[0.875rem] font-bold text-text-1">{{ root_title }}</h2>{% else %}<p class="text grow py-1 leading-[1.7142857] text-[0.875rem] font-bold text-text-1">{{ root_title }}</p>{% endif %}
   </div>
-  <ul class="items">
+  <ul class="items group-[.collapsed]/side:hidden">
     <li>
       {{ <sidebar_items section={section} current_permalink={current_permalink} depth={1} lang={lang} root_title="" wrap={false} /> }}
     </li>
@@ -71,12 +78,12 @@
 </div>
 {% else %}
 {% for p in section.pages %}
-{% if d == 0 and w %}<div class="group">{% endif %}
-<section class="VPSidebarItem level-{{ d }} is-link{% if current_permalink == p.permalink %} is-active has-active{% endif %}">
-  <div class="item">
-    <div class="indicator"></div>
-    <a class="link" href="{{ p.permalink }}" {% if current_permalink == p.permalink %}aria-current="page"{% endif %}>
-      <p class="text">{{ p.title }}</p>
+{% if d == 0 and w %}<div class="group {{ group_cls | safe }}">{% endif %}
+<section class="group/side VPSidebarItem level-{{ d }} is-link{% if d == 0 %} pb-6 [&.collapsed]:pb-2.5{% endif %}{% if current_permalink == p.permalink %} is-active has-active{% endif %}">
+  <div class="{{ item_cls | safe }}">
+    <div class="{{ indicator_cls | safe }}"></div>
+    <a class="link flex items-center grow group/link" href="{{ p.permalink }}" {% if current_permalink == p.permalink %}aria-current="page"{% endif %}>
+      <p class="text grow py-1 leading-[1.7142857] text-[0.875rem] transition-colors duration-[250ms] group-hover/link:text-brand-1{% if current_permalink == p.permalink %} text-brand-1{% elif d == 0 %} text-text-1{% else %} text-text-2{% endif %}">{{ p.title }}</p>
     </a>
   </div>
 </section>
@@ -85,24 +92,24 @@
 {% for s in section.subsections %}
 {% set sub = get_section(path=s, lang=lang, allow_missing=true) %}
 {% if sub %}
-{% if d == 0 and w %}<div class="group">{% endif %}
+{% if d == 0 and w %}<div class="group {{ group_cls | safe }}">{% endif %}
 {% set is_active = current_permalink == sub.permalink %}
 {% set has_active = current_permalink is containing(pat=sub.permalink) %}
 {% set cv = sub.extra.vitepress_collapsed | default(value="unset") %}
 {% set collapsible = cv == true or cv == false %}
 {% set starts_collapsed = cv == true %}
-<section class="VPSidebarItem level-{{ d }}{% if collapsible %} collapsible{% endif %}{% if starts_collapsed %} collapsed{% endif %}{% if is_active %} is-active{% endif %}{% if has_active %} has-active{% endif %}">
-  <div class="item">
-    <div class="indicator"></div>
-    {% if d < 5 %}<h{{ d + 2 }} class="text">{{ sub.title }}</h{{ d + 2 }}>{% else %}<p class="text">{{ sub.title }}</p>{% endif %}
+<section class="group/side VPSidebarItem level-{{ d }}{% if d == 0 %} pb-6 [&.collapsed]:pb-2.5{% endif %}{% if collapsible %} collapsible{% endif %}{% if starts_collapsed %} collapsed{% endif %}{% if is_active %} is-active{% endif %}{% if has_active %} has-active{% endif %}">
+  <div class="{{ item_cls | safe }}{% if collapsible %} cursor-pointer{% endif %}">
+    <div class="{{ indicator_cls | safe }}{% if d >= 2 and is_active %} bg-brand-1{% endif %}"></div>
+    {% if d < 5 %}<h{{ d + 2 }} class="text grow py-1 leading-[1.7142857] text-[0.875rem] transition-colors duration-[250ms]{% if d == 0 %} font-bold text-text-1{% else %} font-medium{% if has_active %} text-text-1{% else %} text-text-2{% endif %}{% endif %}">{{ sub.title }}</h{{ d + 2 }}>{% else %}<p class="text grow py-1 leading-[1.7142857] text-[0.875rem] transition-colors duration-[250ms] font-medium{% if has_active %} text-text-1{% else %} text-text-2{% endif %}">{{ sub.title }}</p>{% endif %}
     {% if collapsible %}
-    <button type="button" class="caret" aria-label="toggle section" aria-expanded="{{ not starts_collapsed }}">
-      <span class="vpi-chevron-right caret-icon"></span>
+    <button type="button" class="{{ caret_btn_cls | safe }}" aria-label="toggle section" aria-expanded="{{ not starts_collapsed }}">
+      {{ <icon name="chevron-right" class={caret_icon_cls} /> }}
     </button>
     {% endif %}
   </div>
   {% if sub.pages | length > 0 or sub.subsections | length > 0 %}
-  <ul class="items">
+  <ul class="items{% if d >= 1 %} border-l border-divider pl-4{% endif %} group-[.collapsed]/side:hidden">
     <li>
       {{ <sidebar_items section={sub} current_permalink={current_permalink} depth={d + 1} lang={lang} root_title="" wrap={true} /> }}
     </li>
@@ -118,12 +125,12 @@
 {% for x in section.extra.vitepress_extra_items %}
 {% set x_active = current_permalink is ending_with(pat=x.link) %}
 {% if not x_active %}{% set x_active = current_permalink is ending_with(pat=x.link ~ "/") %}{% endif %}
-{% if d == 0 and w %}<div class="group">{% endif %}
-<section class="VPSidebarItem level-{{ d }} is-link{% if x_active %} is-active has-active{% endif %}">
-  <div class="item">
-    <div class="indicator"></div>
-    <a class="link" href="{{ x.link }}" {% if x_active %}aria-current="page"{% endif %}>
-      <p class="text">{{ x.text }}</p>
+{% if d == 0 and w %}<div class="group {{ group_cls | safe }}">{% endif %}
+<section class="group/side VPSidebarItem level-{{ d }} is-link{% if d == 0 %} pb-6 [&.collapsed]:pb-2.5{% endif %}{% if x_active %} is-active has-active{% endif %}">
+  <div class="{{ item_cls | safe }}">
+    <div class="{{ indicator_cls | safe }}"></div>
+    <a class="link flex items-center grow group/link" href="{{ x.link }}" {% if x_active %}aria-current="page"{% endif %}>
+      <p class="text grow py-1 leading-[1.7142857] text-[0.875rem] transition-colors duration-[250ms] group-hover/link:text-brand-1{% if x_active %} text-brand-1{% elif d == 0 %} text-text-1{% else %} text-text-2{% endif %}">{{ x.text }}</p>
     </a>
   </div>
 </section>
