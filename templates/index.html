@@ -9,24 +9,27 @@
 {% block description %}{{ section.description | default(value=config.description) }}{% endblock description %}
 
 {% block content %}
-<div class="VPHome">
+{# VPHome #}
+<div class="overflow-x-clip mb-24 md:mb-32">
   {% set h = section.extra.vitepress_home %}
   {% if h %}
-  <div class="VPHero VPHomeHero{% if h.image %} has-image{% endif %}">
-    <div class="container">
-      <div class="main">
-        <h1 class="heading">
-          {% if h.name %}<span class="name clip">{{ h.name }}</span>{% endif %}
-          <span class="text">{{ h.text }}</span>
+  {# VPHero #}
+  <div class="-mt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px))] pt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+3rem)] px-6 pb-12 sm:pt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+5rem)] sm:px-12 sm:pb-16 lg:px-16 lg:pb-16">
+    <div class="flex flex-col mx-auto max-w-[72rem] lg:flex-row{% if h.image %} text-center lg:text-left{% endif %}">
+      <div class="relative z-10 order-2 grow shrink-0{% if h.image %} lg:max-w-[37rem]{% endif %} lg:order-1 lg:w-[calc((100%/3)*2)]">
+        <h1 class="heading flex flex-col">
+          {% if h.name %}<span class="w-fit max-w-[24.5rem] tracking-[-0.025rem] leading-[1.25] text-[2rem] font-bold whitespace-pre-wrap text-(--vp-home-hero-name-color) [background-image:var(--vp-home-hero-name-background)] bg-clip-text [-webkit-text-fill-color:var(--vp-home-hero-name-color)]{% if h.image %} mx-auto lg:mx-0{% endif %} sm:max-w-[36rem] sm:leading-[1.1666667] sm:text-[3rem] lg:leading-[1.1428571] lg:text-[3.5rem]">{{ h.name }}</span>{% endif %}
+          <span class="w-fit max-w-[24.5rem] tracking-[-0.025rem] leading-[1.25] text-[2rem] font-bold whitespace-pre-wrap{% if h.image %} mx-auto lg:mx-0{% endif %} sm:max-w-[36rem] sm:leading-[1.1666667] sm:text-[3rem] lg:leading-[1.1428571] lg:text-[3.5rem]">{{ h.text }}</span>
         </h1>
         {% if h.tagline %}
-        <p class="tagline">{{ h.tagline }}</p>
+        <p class="pt-2 max-w-[24.5rem] leading-[1.5555556] text-[1.125rem] font-medium whitespace-pre-wrap text-text-2{% if h.image %} mx-auto lg:mx-0{% endif %} sm:pt-3 sm:max-w-[36rem] sm:leading-[1.6] sm:text-[1.25rem] lg:leading-[1.5] lg:text-[1.5rem]">{{ h.tagline }}</p>
         {% endif %}
         {% if h.actions %}
-        <div class="actions">
+        <div class="flex flex-wrap m-[-0.375rem] pt-6{% if h.image %} justify-center lg:justify-start{% endif %} sm:pt-8">
           {% for action in h.actions %}
-          <div class="action">
-            <a class="VPButton medium {{ action.theme | default(value='brand') }}" href="{% if action.link is starting_with(pat="http") %}{{ action.link }}{% else %}{{ get_url(path=action.link) }}{% endif %}">{{ action.text }}</a>
+          <div class="shrink-0 p-[0.375rem]">
+            {% if action.link is starting_with(pat="http") %}{% set action_href = action.link %}{% else %}{% set action_href = get_url(path=action.link) %}{% endif %}
+            {{ <button size="medium" theme={action.theme | default(value="brand")} href={action_href} text={action.text} /> }}
           </div>
           {% endfor %}
         </div>
@@ -34,10 +37,10 @@
       </div>
 
       {% if h.image %}
-      <div class="image">
-        <div class="image-container">
-          <div class="image-bg"></div>
-          <img class="VPImage image-src" src="{{ get_url(path=h.image.src) }}" alt="{{ h.image.alt | default(value='') }}">
+      <div class="order-1 m-[-4.75rem_-1.5rem_-3rem] sm:m-[-6.75rem_-1.5rem_-3rem] lg:order-2 lg:grow lg:m-0 lg:min-h-full">
+        <div class="relative mx-auto w-80 h-80 sm:w-[24.5rem] sm:h-[24.5rem] lg:flex lg:justify-center lg:items-center lg:w-full lg:h-full lg:[transform:translate(-2rem,-2rem)]">
+          <div class="absolute top-1/2 left-1/2 rounded-full w-48 h-48 [background-image:var(--vp-home-hero-image-background-image)] [filter:var(--vp-home-hero-image-filter)] [transform:translate(-50%,-50%)] sm:w-64 sm:h-64 lg:w-80 lg:h-80"></div>
+          <img class="absolute top-1/2 left-1/2 max-w-48 max-h-48 w-full h-full object-contain [transform:translate(-50%,-50%)] [filter:drop-shadow(-2px_4px_6px_rgba(0,0,0,0.2))] p-[1.125rem] sm:max-w-64 sm:max-h-64 lg:max-w-80 lg:max-h-80" src="{{ get_url(path=h.image.src) }}" alt="{{ h.image.alt | default(value='') }}">
         </div>
       </div>
       {% endif %}
@@ -47,19 +50,22 @@
   {% if h.features %}
   {% set flen = h.features | length %}
   {% if flen == 2 %}{% set grid = 'grid-2' %}{% elif flen == 3 %}{% set grid = 'grid-3' %}{% elif flen % 3 == 0 %}{% set grid = 'grid-6' %}{% elif flen > 3 %}{% set grid = 'grid-4' %}{% endif %}
-  <div class="VPFeatures VPHomeFeatures">
-    <div class="container">
-      <ul class="items">
+  {% set grid = grid | default(value='grid-2') %}
+  {# VPFeatures #}
+  <div class="relative px-6 sm:px-12 lg:px-16">
+    <div class="mx-auto max-w-[72rem]">
+      <ul class="flex flex-wrap m-[-0.5rem]">
         {% for feature in h.features %}
-        <li class="item {{ grid | default(value='grid-2') }}">
-          <div class="VPFeature">
-            <article class="box">
-              {% if feature.icon %}<div class="icon">{{ feature.icon | safe }}</div>{% endif %}
-              <h2 class="title">{{ feature.title }}</h2>
-              <p class="details">{{ feature.details }}</p>
+        <li class="p-2 w-full{% if grid == 'grid-2' %} sm:w-1/2{% elif grid == 'grid-3' %} md:w-1/3{% elif grid == 'grid-4' %} sm:w-1/2 lg:w-1/4{% elif grid == 'grid-6' %} sm:w-1/2 md:w-1/3{% endif %}">
+          {# VPFeature #}
+          <div class="block border border-bg-soft rounded-xl h-full bg-bg-soft transition-colors duration-[250ms]">
+            <article class="flex flex-col p-6 h-full">
+              {% if feature.icon %}<div class="flex justify-center items-center mb-5 rounded-md bg-default-soft w-12 h-12 text-[1.5rem] transition-colors duration-[250ms]">{{ feature.icon | safe }}</div>{% endif %}
+              <h2 class="leading-[1.5] text-[1rem] font-semibold">{{ feature.title }}</h2>
+              <p class="grow pt-2 leading-[1.7142857] text-[0.875rem] font-medium text-text-2">{{ feature.details }}</p>
               {% if feature.link_text %}
-              <div class="link-text">
-                <p class="link-text-value">{{ feature.link_text }} <span class="vpi-arrow-right link-text-icon"></span></p>
+              <div class="pt-2">
+                <p class="flex items-center text-[0.875rem] font-medium text-brand-1">{{ feature.link_text }} {{ <icon name="chevron-right" class="ml-[0.375rem] size-[0.875rem]" /> }}</p>
               </div>
               {% endif %}
             </article>
@@ -72,20 +78,22 @@
   {% endif %}
 
   {% if h.sponsors %}
-  <section class="VPHomeSponsors">
-    <div class="container">
+  {# VPHomeSponsors #}
+  <section class="border-t border-gutter my-24 pt-[5.5rem] px-6 md:my-32 md:px-12 lg:px-16">
+    <div class="mx-auto max-w-[72rem]">
       <div class="header">
-        <div class="love">
-          <span class="vpi-heart icon"></span>
+        <div class="mx-auto w-fit text-[1.75rem] text-text-3">
+          {{ <icon name="heart" class="inline-block" /> }}
         </div>
-        {% if h.sponsors.message %}<h2 class="message">{{ h.sponsors.message }}</h2>{% endif %}
+        {% if h.sponsors.message %}<h2 class="mx-auto pt-[0.625rem] max-w-80 text-center tracking-normal leading-[1.5] text-[1rem] font-medium text-text-2">{{ h.sponsors.message }}</h2>{% endif %}
       </div>
-      <div class="sponsors">
+      <div class="pt-8">
         {{ <sponsors_block data={h.sponsors.tiers} aside={false} lang={lang} /> }}
       </div>
       {% if h.sponsors.action_link %}
-      <div class="action">
-        <a class="VPButton medium sponsor" href="{% if h.sponsors.action_link is starting_with(pat="http") %}{{ h.sponsors.action_link }}{% else %}{{ get_url(path=h.sponsors.action_link) }}{% endif %}">{{ h.sponsors.action_text | default(value="Become a sponsor") }}</a>
+      <div class="pt-10 text-center">
+        {% if h.sponsors.action_link is starting_with(pat="http") %}{% set sponsor_href = h.sponsors.action_link %}{% else %}{% set sponsor_href = get_url(path=h.sponsors.action_link) %}{% endif %}
+        {{ <button size="medium" theme="sponsor" href={sponsor_href} text={h.sponsors.action_text | default(value="Become a sponsor")} /> }}
       </div>
       {% endif %}
     </div>
