@@ -53,14 +53,14 @@
                 {% if item.items %}
                 {% set group_active = item_active %}
                 {# VPFlyout #}
-                <div class="relative group/flyout hover:text-brand-1 transition-colors duration-[250ms]{% if group_active %} active{% endif %}">
-                  <button type="button" class="flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" aria-expanded="false" aria-haspopup="true">
+                <div class="VPFlyout relative group/flyout hover:text-brand-1 transition-colors duration-[250ms]{% if group_active %} active{% endif %}">
+                  <button type="button" class="button flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" aria-expanded="false" aria-haspopup="true">
                     <span class="flex items-center leading-(--vp-nav-height) text-[0.875rem] font-medium transition-colors duration-[250ms]{% if group_active %} text-brand-1 group-hover/flyout:text-brand-2{% else %} text-text-1 group-hover/flyout:text-text-2{% endif %}">
                       <span>{{ item.text }}</span>
                       {{ <icon name="chevron-down" class="ml-1 size-[0.875rem]" /> }}
                     </span>
                   </button>
-                  <div class="absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-focus-within/flyout:opacity-100 group-focus-within/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
+                  <div class="menu absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-focus-within/flyout:opacity-100 group-focus-within/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
                     {# VPMenu #}
                     <div class="rounded-xl p-3 min-w-32 border border-divider bg-bg-elv shadow-3 transition-colors duration-500 max-h-[calc(100vh-var(--vp-nav-height))] overflow-y-auto">
                       <ul>
@@ -86,14 +86,14 @@
 
           {% if has_languages %}
           {# VPFlyout translations #}
-          <div class="relative hidden md:flex md:items-center md:justify-end md:pl-[17px] group/flyout hover:text-brand-1 transition-colors duration-[250ms]">
+          <div class="VPFlyout relative hidden md:flex md:items-center md:justify-end md:pl-[17px] group/flyout hover:text-brand-1 transition-colors duration-[250ms]">
             <button type="button" class="flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" aria-expanded="false" aria-haspopup="true" aria-label="Change language">
               <span class="flex items-center leading-(--vp-nav-height) text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] group-hover/flyout:text-text-2">
                 {{ <icon name="languages" class="size-[1rem]" /> }}
                 {{ <icon name="chevron-down" class="ml-1 size-[0.875rem]" /> }}
               </span>
             </button>
-            <div class="absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-focus-within/flyout:opacity-100 group-focus-within/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
+            <div class="menu absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-focus-within/flyout:opacity-100 group-focus-within/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
               <div class="rounded-xl p-3 min-w-32 border border-divider bg-bg-elv shadow-3 transition-colors duration-500 max-h-[calc(100vh-var(--vp-nav-height))] overflow-y-auto">
                 <p class="text-[0.875rem] font-bold text-text-1 leading-[2.2857143]">{{ <lang_label code={lang} labels={lang_labels} /> }}</p>
                 <ul>
@@ -106,7 +106,7 @@
 
           {# Appearance switch #}
           <div class="flex items-center{% if has_languages %} before:content-[''] before:ml-2 before:mr-4 before:w-px before:h-6 before:bg-divider{% endif %}">
-            <button type="button" id="VPSwitchAppearance" class="relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label="Appearance" aria-checked="false" title="Toggle dark mode">
+            <button type="button" id="VPSwitchAppearance" class="VPSwitch VPSwitchAppearance relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label="Appearance" aria-checked="false" title="Toggle dark mode">
               <span class="absolute top-px left-px w-[1.125rem] h-[1.125rem] rounded-full bg-(--vp-c-neutral-inverse) shadow-1 transition-transform duration-[250ms] dark:translate-x-[1.125rem]">
                 <span class="relative block w-[1.125rem] h-[1.125rem] rounded-full overflow-hidden">
                   {{ <icon name="sun" class="absolute top-[0.1875rem] left-[0.1875rem] size-3 text-text-2 dark:text-text-1 transition-opacity duration-[250ms] opacity-100 dark:opacity-0" /> }}

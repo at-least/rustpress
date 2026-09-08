@@ -19,7 +19,7 @@
           {% endif %}
           {% if item.items %}
           {# VPNavScreenMenuGroup — `.open` toggled by js/app.js #}
-          <div class="group{% if item_active %} active{% endif %}">
+          <div class="VPNavScreenMenuGroup group{% if item_active %} active{% endif %}">
             <button type="button" class="button cursor-pointer" aria-expanded="false">
               <span class="button-text">{{ item.text }}</span>
               {{ <icon name="plus" class="button-icon" /> }}
@@ -56,7 +56,7 @@
 
     <div class="appearance flex justify-center items-center pt-3{% if config.extra.nav and not has_languages %} mt-4{% endif %}">
       <span class="label mr-3 text-[0.875rem] font-medium text-text-1">Appearance</span>
-      <button type="button" id="VPSwitchAppearanceScreen" class="relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label="Appearance" aria-checked="false" title="Toggle dark mode">
+      <button type="button" id="VPSwitchAppearanceScreen" class="VPSwitch VPSwitchAppearance relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label="Appearance" aria-checked="false" title="Toggle dark mode">
         <span class="absolute top-px left-px w-[1.125rem] h-[1.125rem] rounded-full bg-(--vp-c-neutral-inverse) shadow-1 transition-transform duration-[250ms] dark:translate-x-[1.125rem]">
           <span class="relative block w-[1.125rem] h-[1.125rem] rounded-full overflow-hidden">
             {{ <icon name="sun" class="absolute top-[0.1875rem] left-[0.1875rem] size-3 text-text-2 dark:text-text-1 transition-opacity duration-[250ms] opacity-100 dark:opacity-0" /> }}
