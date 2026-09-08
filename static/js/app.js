@@ -185,6 +185,13 @@
     plain: "text"
   };
 
+  /* Inline copy/copy-checked icons; the .vp-doc wrapper utilities toggle
+     which one shows through the button's .copied class. */
+  var COPY_ICONS = {
+    normal: '<svg class="icon-copy size-[0.875rem] m-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>',
+    copied: '<svg class="icon-copied size-[0.875rem] m-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14l2 2l4-4"/></svg>'
+  };
+
   d.querySelectorAll("pre.giallo").forEach(function (pre) {
     var code = pre.querySelector("code");
     var rawLang = code ? code.getAttribute("data-lang") : null;
@@ -197,7 +204,8 @@
     }
     var button = d.createElement("button");
     button.type = "button";
-    button.className = "vp-copy-button copy";
+    button.className = "vp-copy-button copy flex";
+    button.innerHTML = COPY_ICONS.normal + COPY_ICONS.copied;
     button.setAttribute("aria-label", "Copy code");
     button.addEventListener("click", function () {
       if (!code) return;

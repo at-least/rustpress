@@ -4,8 +4,8 @@
   "description": "VitePress default theme ported to Zola (Tailwind CSS)",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:css": "tailwindcss -i css/main.css -o static/css/main.css --minify",
-    "watch:css": "tailwindcss -i css/main.css -o static/css/main.css --watch",
+    "build:css": "tailwindcss -i css/main.css -o static/main.css --minify",
+    "watch:css": "tailwindcss -i css/main.css -o static/main.css --watch",
     "build": "npm run build:css && zola build",
     "dev": "tailwindcss -i css/main.css -o static/css/main.css --watch"
   },
