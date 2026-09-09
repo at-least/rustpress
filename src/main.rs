@@ -42,10 +42,21 @@ fn main() -> anyhow::Result<()> {
             let content = gen_docs::content::Content::load(&gen_docs::sidebar::content_dir(&site))
                 .context("loading content")?;
             let sidebars = gen_docs::sidebar::Sidebars::build(&config, &content);
-            // Stage 3+: render pages, emit search index.
+            let engine = gen_docs::markdown::MarkdownEngine::new(&config.markdown)
+                .context("building markdown engine")?;
+            let content_dir = gen_docs::sidebar::content_dir(&site);
+            // Render every page now (stage 4 writes the site output).
+            let mut rendered = 0usize;
+            let mut headings = 0usize;
+            for page in &content.pages {
+                let out = engine.render(page, &content, &site, &content_dir)?;
+                rendered += 1;
+                headings += out.headings.len();
+            }
             println!(
-                "gen-docs: {} pages, {} sidebar(s) (title: {}, lang: {}, base: {})",
-                content.pages.len(),
+                "gen-docs: {} pages rendered ({} headings), {} sidebar(s) — title: {}, lang: {}, base: {}",
+                rendered,
+                headings,
                 sidebars.trees.len(),
                 config.title.as_deref().unwrap_or("(untitled)"),
                 config.lang,
