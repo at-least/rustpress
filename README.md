@@ -24,7 +24,7 @@ src/                  config, content loader, sidebar resolution,
 demo/                 dogfood site: gen-docs.toml + content/ (VitePress
                       format, mirrored from vitepress.dev) + static/
 assets/themes/        vendored github-light/dark .tmTheme files
-styles/               Tailwind entry (main.css) + Inter @font-face
+styles/               Tailwind entry (vitepress.css) + Inter @font-face
 js/alpine-entry.js    the Alpine bundle source
 tests/fixtures/en/    verbatim subset of vitepress/docs/en used by tests
 ```
@@ -38,7 +38,7 @@ npm test             # cargo test + full demo build
 npm run dev          # tailwind/esbuild watch + gen-docs serve (stage 8)
 ```
 
-The Rust build needs only `cargo` (no Node). The committed `static/main.css` is built by the Tailwind CLI from `styles/` + class strings living in `src/**/*.rs` (`@source "../src"`), so `cargo build` alone suffices for Rust-side changes that don't touch classes.
+The Rust build needs only `cargo` (no Node). The committed `static/main.css` is built by the Tailwind CLI from `styles/vitepress.css` + class strings living in `src/**/*.rs` (`@source "../src"`), so `cargo build` alone suffices for Rust-side changes that don't touch classes.
 
 ## Site shape
 

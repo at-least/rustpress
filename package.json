@@ -5,8 +5,8 @@
   "scripts": {
     "test": "cargo test --quiet && npm run build:js && npm run build:css && npm run check:demo",
     "check:demo": "cargo run --quiet -- build demo",
-    "build:css": "tailwindcss -i styles/main.css -o static/main.css --minify",
-    "watch:css": "tailwindcss -i styles/main.css -o static/main.css --watch",
+    "build:css": "tailwindcss -i styles/vitepress.css -o static/main.css --minify",
+    "watch:css": "tailwindcss -i styles/vitepress.css -o static/main.css --watch",
     "build:js": "esbuild js/alpine-entry.js --bundle --format=iife --target=es2018 --minify --outfile=static/js/app.js",
     "watch:js": "esbuild js/alpine-entry.js --bundle --format=iife --target=es2018 --outfile=static/js/app.js --watch",
     "build": "npm run build:js && npm run build:css && cargo run --quiet -- build demo",
