@@ -8,3 +8,4 @@ node_modules/
 /static/js/app.js
 /demo/public/
 /parity/cache/
+/parity/upstream.prev.json

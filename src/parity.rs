@@ -699,7 +699,12 @@ fn brief(v: &Value) -> String {
         other => {
             let s = other.to_string();
             if s.len() > 80 {
-                format!("{}…", &s[..80])
+                // cut on a char boundary — serialized JSON can be multibyte
+                let mut cut = 80;
+                while !s.is_char_boundary(cut) {
+                    cut -= 1;
+                }
+                format!("{}…", &s[..cut])
             } else {
                 s
             }

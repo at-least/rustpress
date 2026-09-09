@@ -12,7 +12,7 @@ const pages = (await readFile('parity/pages.txt', 'utf8'))
 
 await mkdir('parity/cache', { recursive: true })
 
-const slug = (p) => (p === '/' ? 'home' : p.replaceAll('/', '_').replace(/^_/, ''))
+const slug = (p) => (p === '/' ? 'home' : p.replace(/\/+$/, '').replaceAll('/', '_').replace(/^_/, ''))
 const etags = {}
 let generator
 

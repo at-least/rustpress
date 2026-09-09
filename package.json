@@ -6,7 +6,7 @@
     "test": "cargo test --quiet && npm run build:js && npm run build:css && npm run check:demo && npm run check:parity",
     "check:demo": "cargo run --quiet -- build demo",
     "check:parity": "cargo run --quiet -- parity check demo/public",
-    "parity:refresh": "cp parity/upstream.json parity/upstream.prev.json 2>/dev/null; node scripts/parity-refresh.mjs && cargo run --quiet -- parity snapshot parity/cache --meta parity/cache/meta.json && cargo run --quiet -- parity diff parity/upstream.prev.json parity/upstream.json",
+    "parity:refresh": "cp parity/upstream.json parity/upstream.prev.json 2>/dev/null; node scripts/parity-refresh.mjs && cargo run --quiet -- parity snapshot parity/cache --meta parity/cache/meta.json && cargo run --quiet -- parity diff parity/upstream.prev.json parity/upstream.json; rm -f parity/upstream.prev.json",
     "diff:upstream": "bash scripts/diff-upstream.sh",
     "build:css": "tailwindcss -i styles/vitepress.css -o static/main.css --minify",
     "watch:css": "tailwindcss -i styles/vitepress.css -o static/main.css --watch",

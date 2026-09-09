@@ -16,4 +16,9 @@ fi
 
 if diff -rq demo/content "$UP"; then
   echo "diff:upstream: demo/content matches $UP"
+  exit 0
+else
+  # differences listed above; exit non-zero like diff(1) so callers can
+  # script on it
+  exit 1
 fi
