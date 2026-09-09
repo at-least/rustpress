@@ -1,0 +1,16 @@
+{
+  "deltas": [],
+  "_format": {
+    "page": "site URL as listed in parity/pages.txt (e.g. /guide/deploy)",
+    "path": "fingerprint path of the mismatch (e.g. sidebar[3].href, hero.tagline); a path matches the mismatch and any of its children",
+    "upstream": "optional: only suppress when the upstream value equals this",
+    "ours": "optional: only suppress when our value equals this",
+    "reason": "REQUIRED: why this divergence is intentional; entries without a reason do not count as reviewed"
+  },
+  "_example": {
+    "page": "/guide/deploy",
+    "path": "pager[0].title",
+    "upstream": "Deploy",
+    "reason": "example entry (not active): demo intentionally orders the pager differently here"
+  }
+}

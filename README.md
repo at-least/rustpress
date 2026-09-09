@@ -34,11 +34,15 @@ tests/fixtures/en/    verbatim subset of vitepress/docs/en used by tests
 ```sh
 npm install          # tailwindcss CLI + esbuild + alpinejs (assets only)
 npm run build        # bundle app.js, build main.css, cargo build + demo build
-npm test             # cargo test + full demo build
+npm test             # cargo test + full demo build + upstream parity gate
 npm run dev          # tailwind/esbuild watch + gen-docs serve (stage 8)
 ```
 
 The Rust build needs only `cargo` (no Node). The committed `static/main.css` is built by the Tailwind CLI from `styles/vitepress.css` + class strings living in `src/**/*.rs` (`@source "../src"`), so `cargo build` alone suffices for Rust-side changes that don't touch classes.
+
+## Upstream parity
+
+When VitePress ships a new version, `npm run parity:refresh` (theme axis: re-pin landmark fingerprints from the deployed site and diff old→new) and `npm run diff:upstream` (content axis: byte-diff `demo/content` against a vuejs/vitepress clone) mechanically show what changed upstream, and `npm run check:parity` gates `npm test` until every divergence is fixed or reviewed into `parity/known-deltas.json`. See [PARITY.md](PARITY.md).
 
 ## Site shape
 

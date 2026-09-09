@@ -7,6 +7,7 @@ pub mod config;
 pub mod content;
 pub mod markdown;
 pub mod palettes;
+pub mod parity;
 pub mod render;
 pub mod serve;
 pub mod sidebar;

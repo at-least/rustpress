@@ -1,0 +1,2659 @@
+{
+  "meta": {
+    "etags": {
+      "/": "\"8709c509ba4c477e142046d505b30bea-ssl-df\"",
+      "/guide/asset-handling": "\"e214904db90f4de0563a8a4666f589fd-ssl-df\"",
+      "/guide/deploy": "\"fb26cfb75078c44e873529b94a9197e2-ssl-df\"",
+      "/guide/extending-default-theme": "\"c0ffed6382358354d4c4231e4b686fcf-ssl-df\"",
+      "/guide/frontmatter": "\"cd6c3f04ed2499b3f0e445f03ff3d34c-ssl-df\"",
+      "/guide/getting-started": "\"7dca2ab1066d7d49976511727123e6ea-ssl-df\"",
+      "/guide/i18n": "\"85e08e56c2c1504ce943eb6b067df244-ssl-df\"",
+      "/guide/markdown": "\"1ce4c65a38f2a40b6b8f6caecff953a7-ssl-df\"",
+      "/guide/routing": "\"cbd0b424e19f46d6f34c5dc09cd2242a-ssl-df\"",
+      "/guide/using-vue": "\"29c17a6eb298d184757a10fcaeb5f095-ssl-df\"",
+      "/guide/what-is-vitepress": "\"149757708c8c49e79df60465c3053e28-ssl-df\"",
+      "/reference/default-theme-config": "\"137d5fc685bf63673336df1f9b832564-ssl-df\"",
+      "/reference/runtime-api": "\"c6f86c1ecf530eb35c763d3a66938464-ssl-df\"",
+      "/reference/site-config": "\"d9965bc1cfb9b8ffb20ac230fa3eecb7-ssl-df\""
+    },
+    "fetched_at": "2026-09-09T21:11:25.623Z",
+    "generator": "VitePress v2.0.0-alpha.20",
+    "source": "https://vitepress.dev"
+  },
+  "pages": {
+    "/": {
+      "block_counts": null,
+      "edit_link": null,
+      "features": [
+        {
+          "details": "Effortlessly create beautiful documentation sites with just markdown.",
+          "title": "Focus on your content"
+        },
+        {
+          "details": "Instant server start, lightning fast hot updates, and leverage Vite ecosystem plugins.",
+          "title": "Enjoy the Vite DX"
+        },
+        {
+          "details": "Use Vue syntax and components directly in markdown, or build custom themes with Vue.",
+          "title": "Customize with Vue"
+        },
+        {
+          "details": "Fast initial load with static HTML, fast post-load navigation with client-side routing.",
+          "title": "Ship fast sites"
+        }
+      ],
+      "h1": {
+        "id": null,
+        "text": "VitePressVite & Vue Powered Static Site Generator"
+      },
+      "has_main": false,
+      "has_search": true,
+      "hero": {
+        "actions": [
+          {
+            "href": "/guide/what-is-vitepress",
+            "text": "What is VitePress?"
+          },
+          {
+            "href": "/guide/getting-started",
+            "text": "Quickstart"
+          },
+          {
+            "href": "https://github.com/vuejs/vitepress",
+            "text": "GitHub"
+          }
+        ],
+        "lines": [
+          "VitePress",
+          "Vite & Vue Powered Static Site Generator"
+        ],
+        "tagline": "Markdown to beautiful docs in minutes"
+      },
+      "last_updated": null,
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": null,
+      "outline_title": null,
+      "pager": [],
+      "sidebar": [],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "VitePress"
+    },
+    "/guide/asset-handling": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 4,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "ol": 0,
+        "pre": 5,
+        "table": 0,
+        "ul": 0
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/asset-handling.md",
+      "features": null,
+      "h1": {
+        "id": "asset-handling",
+        "text": "Asset Handling"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-08-27",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Previous page",
+          "href": "/guide/markdown",
+          "title": "Markdown Extensions"
+        },
+        {
+          "desc": "Next page",
+          "href": "/guide/frontmatter",
+          "title": "Frontmatter"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Introduction"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "What is VitePress?"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/getting-started",
+          "kind": "link",
+          "text": "Getting Started"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/routing",
+          "kind": "link",
+          "text": "Routing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/deploy",
+          "kind": "link",
+          "text": "Deploy"
+        },
+        {
+          "kind": "group",
+          "text": "Writing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/markdown",
+          "kind": "link",
+          "text": "Markdown Extensions"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/asset-handling",
+          "kind": "link",
+          "text": "Asset Handling"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/frontmatter",
+          "kind": "link",
+          "text": "Frontmatter"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/using-vue",
+          "kind": "link",
+          "text": "Using Vue in Markdown"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/i18n",
+          "kind": "link",
+          "text": "Internationalization"
+        },
+        {
+          "kind": "group",
+          "text": "Customization"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/custom-theme",
+          "kind": "link",
+          "text": "Using a Custom Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/extending-default-theme",
+          "kind": "link",
+          "text": "Extending the Default Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/data-loading",
+          "kind": "link",
+          "text": "Build-Time Data Loading"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/ssr-compat",
+          "kind": "link",
+          "text": "SSR Compatibility"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/cms",
+          "kind": "link",
+          "text": "Connecting to a CMS"
+        },
+        {
+          "kind": "group",
+          "text": "Experimental"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/mpa-mode",
+          "kind": "link",
+          "text": "MPA Mode"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/sitemap-generation",
+          "kind": "link",
+          "text": "Sitemap Generation"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Config & API Reference"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "Asset Handling | VitePress"
+    },
+    "/guide/deploy": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 5,
+        "h3": 12,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "ol": 6,
+        "pre": 17,
+        "table": 0,
+        "ul": 4
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/deploy.md",
+      "features": null,
+      "h1": {
+        "id": "deploy-your-vitepress-site",
+        "text": "Deploy Your VitePress Site"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-08-27",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Previous page",
+          "href": "/guide/routing",
+          "title": "Routing"
+        },
+        {
+          "desc": "Next page",
+          "href": "/guide/markdown",
+          "title": "Markdown Extensions"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Introduction"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "What is VitePress?"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/getting-started",
+          "kind": "link",
+          "text": "Getting Started"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/routing",
+          "kind": "link",
+          "text": "Routing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/deploy",
+          "kind": "link",
+          "text": "Deploy"
+        },
+        {
+          "kind": "group",
+          "text": "Writing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/markdown",
+          "kind": "link",
+          "text": "Markdown Extensions"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/asset-handling",
+          "kind": "link",
+          "text": "Asset Handling"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/frontmatter",
+          "kind": "link",
+          "text": "Frontmatter"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/using-vue",
+          "kind": "link",
+          "text": "Using Vue in Markdown"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/i18n",
+          "kind": "link",
+          "text": "Internationalization"
+        },
+        {
+          "kind": "group",
+          "text": "Customization"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/custom-theme",
+          "kind": "link",
+          "text": "Using a Custom Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/extending-default-theme",
+          "kind": "link",
+          "text": "Extending the Default Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/data-loading",
+          "kind": "link",
+          "text": "Build-Time Data Loading"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/ssr-compat",
+          "kind": "link",
+          "text": "SSR Compatibility"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/cms",
+          "kind": "link",
+          "text": "Connecting to a CMS"
+        },
+        {
+          "kind": "group",
+          "text": "Experimental"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/mpa-mode",
+          "kind": "link",
+          "text": "MPA Mode"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/sitemap-generation",
+          "kind": "link",
+          "text": "Sitemap Generation"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Config & API Reference"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "Deploy Your VitePress Site | VitePress"
+    },
+    "/guide/extending-default-theme": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 6,
+        "h3": 3,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "ol": 1,
+        "pre": 14,
+        "table": 0,
+        "ul": 6
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/extending-default-theme.md",
+      "features": null,
+      "h1": {
+        "id": "extending-the-default-theme",
+        "text": "Extending the Default Theme"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-08-30",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Previous page",
+          "href": "/guide/custom-theme",
+          "title": "Using a Custom Theme"
+        },
+        {
+          "desc": "Next page",
+          "href": "/guide/data-loading",
+          "title": "Build-Time Data Loading"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Introduction"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "What is VitePress?"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/getting-started",
+          "kind": "link",
+          "text": "Getting Started"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/routing",
+          "kind": "link",
+          "text": "Routing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/deploy",
+          "kind": "link",
+          "text": "Deploy"
+        },
+        {
+          "kind": "group",
+          "text": "Writing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/markdown",
+          "kind": "link",
+          "text": "Markdown Extensions"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/asset-handling",
+          "kind": "link",
+          "text": "Asset Handling"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/frontmatter",
+          "kind": "link",
+          "text": "Frontmatter"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/using-vue",
+          "kind": "link",
+          "text": "Using Vue in Markdown"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/i18n",
+          "kind": "link",
+          "text": "Internationalization"
+        },
+        {
+          "kind": "group",
+          "text": "Customization"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/custom-theme",
+          "kind": "link",
+          "text": "Using a Custom Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/extending-default-theme",
+          "kind": "link",
+          "text": "Extending the Default Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/data-loading",
+          "kind": "link",
+          "text": "Build-Time Data Loading"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/ssr-compat",
+          "kind": "link",
+          "text": "SSR Compatibility"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/cms",
+          "kind": "link",
+          "text": "Connecting to a CMS"
+        },
+        {
+          "kind": "group",
+          "text": "Experimental"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/mpa-mode",
+          "kind": "link",
+          "text": "MPA Mode"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/sitemap-generation",
+          "kind": "link",
+          "text": "Sitemap Generation"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Config & API Reference"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "Extending the Default Theme | VitePress"
+    },
+    "/guide/frontmatter": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 3,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "ol": 0,
+        "pre": 3,
+        "table": 0,
+        "ul": 0
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/frontmatter.md",
+      "features": null,
+      "h1": {
+        "id": "frontmatter",
+        "text": "Frontmatter"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-08-30",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Previous page",
+          "href": "/guide/asset-handling",
+          "title": "Asset Handling"
+        },
+        {
+          "desc": "Next page",
+          "href": "/guide/using-vue",
+          "title": "Using Vue in Markdown"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Introduction"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "What is VitePress?"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/getting-started",
+          "kind": "link",
+          "text": "Getting Started"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/routing",
+          "kind": "link",
+          "text": "Routing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/deploy",
+          "kind": "link",
+          "text": "Deploy"
+        },
+        {
+          "kind": "group",
+          "text": "Writing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/markdown",
+          "kind": "link",
+          "text": "Markdown Extensions"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/asset-handling",
+          "kind": "link",
+          "text": "Asset Handling"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/frontmatter",
+          "kind": "link",
+          "text": "Frontmatter"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/using-vue",
+          "kind": "link",
+          "text": "Using Vue in Markdown"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/i18n",
+          "kind": "link",
+          "text": "Internationalization"
+        },
+        {
+          "kind": "group",
+          "text": "Customization"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/custom-theme",
+          "kind": "link",
+          "text": "Using a Custom Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/extending-default-theme",
+          "kind": "link",
+          "text": "Extending the Default Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/data-loading",
+          "kind": "link",
+          "text": "Build-Time Data Loading"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/ssr-compat",
+          "kind": "link",
+          "text": "SSR Compatibility"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/cms",
+          "kind": "link",
+          "text": "Connecting to a CMS"
+        },
+        {
+          "kind": "group",
+          "text": "Experimental"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/mpa-mode",
+          "kind": "link",
+          "text": "MPA Mode"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/sitemap-generation",
+          "kind": "link",
+          "text": "Sitemap Generation"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Config & API Reference"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "Frontmatter | VitePress"
+    },
+    "/guide/getting-started": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 5,
+        "h3": 4,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "ol": 0,
+        "pre": 21,
+        "table": 0,
+        "ul": 3
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/getting-started.md",
+      "features": null,
+      "h1": {
+        "id": "getting-started",
+        "text": "Getting Started"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-07-17",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Previous page",
+          "href": "/guide/what-is-vitepress",
+          "title": "What is VitePress?"
+        },
+        {
+          "desc": "Next page",
+          "href": "/guide/routing",
+          "title": "Routing"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Introduction"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "What is VitePress?"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/getting-started",
+          "kind": "link",
+          "text": "Getting Started"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/routing",
+          "kind": "link",
+          "text": "Routing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/deploy",
+          "kind": "link",
+          "text": "Deploy"
+        },
+        {
+          "kind": "group",
+          "text": "Writing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/markdown",
+          "kind": "link",
+          "text": "Markdown Extensions"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/asset-handling",
+          "kind": "link",
+          "text": "Asset Handling"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/frontmatter",
+          "kind": "link",
+          "text": "Frontmatter"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/using-vue",
+          "kind": "link",
+          "text": "Using Vue in Markdown"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/i18n",
+          "kind": "link",
+          "text": "Internationalization"
+        },
+        {
+          "kind": "group",
+          "text": "Customization"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/custom-theme",
+          "kind": "link",
+          "text": "Using a Custom Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/extending-default-theme",
+          "kind": "link",
+          "text": "Extending the Default Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/data-loading",
+          "kind": "link",
+          "text": "Build-Time Data Loading"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/ssr-compat",
+          "kind": "link",
+          "text": "SSR Compatibility"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/cms",
+          "kind": "link",
+          "text": "Connecting to a CMS"
+        },
+        {
+          "kind": "group",
+          "text": "Experimental"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/mpa-mode",
+          "kind": "link",
+          "text": "MPA Mode"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/sitemap-generation",
+          "kind": "link",
+          "text": "Sitemap Generation"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Config & API Reference"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "Getting Started | VitePress"
+    },
+    "/guide/i18n": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 3,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "ol": 0,
+        "pre": 8,
+        "table": 0,
+        "ul": 0
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/i18n.md",
+      "features": null,
+      "h1": {
+        "id": "internationalization",
+        "text": "Internationalization"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-07-26",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Previous page",
+          "href": "/guide/using-vue",
+          "title": "Using Vue in Markdown"
+        },
+        {
+          "desc": "Next page",
+          "href": "/guide/custom-theme",
+          "title": "Using a Custom Theme"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Introduction"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "What is VitePress?"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/getting-started",
+          "kind": "link",
+          "text": "Getting Started"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/routing",
+          "kind": "link",
+          "text": "Routing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/deploy",
+          "kind": "link",
+          "text": "Deploy"
+        },
+        {
+          "kind": "group",
+          "text": "Writing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/markdown",
+          "kind": "link",
+          "text": "Markdown Extensions"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/asset-handling",
+          "kind": "link",
+          "text": "Asset Handling"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/frontmatter",
+          "kind": "link",
+          "text": "Frontmatter"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/using-vue",
+          "kind": "link",
+          "text": "Using Vue in Markdown"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/i18n",
+          "kind": "link",
+          "text": "Internationalization"
+        },
+        {
+          "kind": "group",
+          "text": "Customization"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/custom-theme",
+          "kind": "link",
+          "text": "Using a Custom Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/extending-default-theme",
+          "kind": "link",
+          "text": "Extending the Default Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/data-loading",
+          "kind": "link",
+          "text": "Build-Time Data Loading"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/ssr-compat",
+          "kind": "link",
+          "text": "SSR Compatibility"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/cms",
+          "kind": "link",
+          "text": "Connecting to a CMS"
+        },
+        {
+          "kind": "group",
+          "text": "Experimental"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/mpa-mode",
+          "kind": "link",
+          "text": "MPA Mode"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/sitemap-generation",
+          "kind": "link",
+          "text": "Sitemap Generation"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Config & API Reference"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "Internationalization | VitePress"
+    },
+    "/guide/markdown": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 22,
+        "h3": 11,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "ol": 1,
+        "pre": 84,
+        "table": 2,
+        "ul": 9
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/markdown.md",
+      "features": null,
+      "h1": {
+        "id": "markdown-extensions",
+        "text": "Markdown Extensions"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-08-13",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Previous page",
+          "href": "/guide/deploy",
+          "title": "Deploy"
+        },
+        {
+          "desc": "Next page",
+          "href": "/guide/asset-handling",
+          "title": "Asset Handling"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Introduction"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "What is VitePress?"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/getting-started",
+          "kind": "link",
+          "text": "Getting Started"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/routing",
+          "kind": "link",
+          "text": "Routing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/deploy",
+          "kind": "link",
+          "text": "Deploy"
+        },
+        {
+          "kind": "group",
+          "text": "Writing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/markdown",
+          "kind": "link",
+          "text": "Markdown Extensions"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/asset-handling",
+          "kind": "link",
+          "text": "Asset Handling"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/frontmatter",
+          "kind": "link",
+          "text": "Frontmatter"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/using-vue",
+          "kind": "link",
+          "text": "Using Vue in Markdown"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/i18n",
+          "kind": "link",
+          "text": "Internationalization"
+        },
+        {
+          "kind": "group",
+          "text": "Customization"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/custom-theme",
+          "kind": "link",
+          "text": "Using a Custom Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/extending-default-theme",
+          "kind": "link",
+          "text": "Extending the Default Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/data-loading",
+          "kind": "link",
+          "text": "Build-Time Data Loading"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/ssr-compat",
+          "kind": "link",
+          "text": "SSR Compatibility"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/cms",
+          "kind": "link",
+          "text": "Connecting to a CMS"
+        },
+        {
+          "kind": "group",
+          "text": "Experimental"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/mpa-mode",
+          "kind": "link",
+          "text": "MPA Mode"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/sitemap-generation",
+          "kind": "link",
+          "text": "Sitemap Generation"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Config & API Reference"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "Markdown Extensions | VitePress"
+    },
+    "/guide/routing": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 6,
+        "h3": 10,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "ol": 0,
+        "pre": 31,
+        "table": 0,
+        "ul": 3
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/routing.md",
+      "features": null,
+      "h1": {
+        "id": "routing",
+        "text": "Routing"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-07-03",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Previous page",
+          "href": "/guide/getting-started",
+          "title": "Getting Started"
+        },
+        {
+          "desc": "Next page",
+          "href": "/guide/deploy",
+          "title": "Deploy"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Introduction"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "What is VitePress?"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/getting-started",
+          "kind": "link",
+          "text": "Getting Started"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/routing",
+          "kind": "link",
+          "text": "Routing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/deploy",
+          "kind": "link",
+          "text": "Deploy"
+        },
+        {
+          "kind": "group",
+          "text": "Writing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/markdown",
+          "kind": "link",
+          "text": "Markdown Extensions"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/asset-handling",
+          "kind": "link",
+          "text": "Asset Handling"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/frontmatter",
+          "kind": "link",
+          "text": "Frontmatter"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/using-vue",
+          "kind": "link",
+          "text": "Using Vue in Markdown"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/i18n",
+          "kind": "link",
+          "text": "Internationalization"
+        },
+        {
+          "kind": "group",
+          "text": "Customization"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/custom-theme",
+          "kind": "link",
+          "text": "Using a Custom Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/extending-default-theme",
+          "kind": "link",
+          "text": "Extending the Default Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/data-loading",
+          "kind": "link",
+          "text": "Build-Time Data Loading"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/ssr-compat",
+          "kind": "link",
+          "text": "SSR Compatibility"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/cms",
+          "kind": "link",
+          "text": "Connecting to a CMS"
+        },
+        {
+          "kind": "group",
+          "text": "Experimental"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/mpa-mode",
+          "kind": "link",
+          "text": "MPA Mode"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/sitemap-generation",
+          "kind": "link",
+          "text": "Sitemap Generation"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Config & API Reference"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "Routing | VitePress"
+    },
+    "/guide/using-vue": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 8,
+        "h3": 5,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "ol": 2,
+        "pre": 20,
+        "table": 1,
+        "ul": 0
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/using-vue.md",
+      "features": null,
+      "h1": {
+        "id": "using-vue-in-markdown",
+        "text": "Using Vue in Markdown"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-07-17",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Previous page",
+          "href": "/guide/frontmatter",
+          "title": "Frontmatter"
+        },
+        {
+          "desc": "Next page",
+          "href": "/guide/i18n",
+          "title": "Internationalization"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Introduction"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "What is VitePress?"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/getting-started",
+          "kind": "link",
+          "text": "Getting Started"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/routing",
+          "kind": "link",
+          "text": "Routing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/deploy",
+          "kind": "link",
+          "text": "Deploy"
+        },
+        {
+          "kind": "group",
+          "text": "Writing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/markdown",
+          "kind": "link",
+          "text": "Markdown Extensions"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/asset-handling",
+          "kind": "link",
+          "text": "Asset Handling"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/frontmatter",
+          "kind": "link",
+          "text": "Frontmatter"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/using-vue",
+          "kind": "link",
+          "text": "Using Vue in Markdown"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/i18n",
+          "kind": "link",
+          "text": "Internationalization"
+        },
+        {
+          "kind": "group",
+          "text": "Customization"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/custom-theme",
+          "kind": "link",
+          "text": "Using a Custom Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/extending-default-theme",
+          "kind": "link",
+          "text": "Extending the Default Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/data-loading",
+          "kind": "link",
+          "text": "Build-Time Data Loading"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/ssr-compat",
+          "kind": "link",
+          "text": "SSR Compatibility"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/cms",
+          "kind": "link",
+          "text": "Connecting to a CMS"
+        },
+        {
+          "kind": "group",
+          "text": "Experimental"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/mpa-mode",
+          "kind": "link",
+          "text": "MPA Mode"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/sitemap-generation",
+          "kind": "link",
+          "text": "Sitemap Generation"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Config & API Reference"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "Using Vue in Markdown | VitePress"
+    },
+    "/guide/what-is-vitepress": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 4,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "ol": 0,
+        "pre": 0,
+        "table": 0,
+        "ul": 3
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/what-is-vitepress.md",
+      "features": null,
+      "h1": {
+        "id": "what-is-vitepress",
+        "text": "What is VitePress?"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-07-25",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Next page",
+          "href": "/guide/getting-started",
+          "title": "Getting Started"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Introduction"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "What is VitePress?"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/getting-started",
+          "kind": "link",
+          "text": "Getting Started"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/routing",
+          "kind": "link",
+          "text": "Routing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/deploy",
+          "kind": "link",
+          "text": "Deploy"
+        },
+        {
+          "kind": "group",
+          "text": "Writing"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/markdown",
+          "kind": "link",
+          "text": "Markdown Extensions"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/asset-handling",
+          "kind": "link",
+          "text": "Asset Handling"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/frontmatter",
+          "kind": "link",
+          "text": "Frontmatter"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/using-vue",
+          "kind": "link",
+          "text": "Using Vue in Markdown"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/i18n",
+          "kind": "link",
+          "text": "Internationalization"
+        },
+        {
+          "kind": "group",
+          "text": "Customization"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/custom-theme",
+          "kind": "link",
+          "text": "Using a Custom Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/extending-default-theme",
+          "kind": "link",
+          "text": "Extending the Default Theme"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/data-loading",
+          "kind": "link",
+          "text": "Build-Time Data Loading"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/ssr-compat",
+          "kind": "link",
+          "text": "SSR Compatibility"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/cms",
+          "kind": "link",
+          "text": "Connecting to a CMS"
+        },
+        {
+          "kind": "group",
+          "text": "Experimental"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/mpa-mode",
+          "kind": "link",
+          "text": "MPA Mode"
+        },
+        {
+          "depth": 1,
+          "href": "/guide/sitemap-generation",
+          "kind": "link",
+          "text": "Sitemap Generation"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Config & API Reference"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "What is VitePress? | VitePress"
+    },
+    "/reference/default-theme-config": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 27,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "ol": 0,
+        "pre": 25,
+        "table": 0,
+        "ul": 26
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/reference/default-theme-config.md",
+      "features": null,
+      "h1": {
+        "id": "default-theme-config",
+        "text": "Default Theme Config"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-08-28",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Previous page",
+          "href": "/reference/cli",
+          "title": "CLI"
+        },
+        {
+          "desc": "Next page",
+          "href": "/reference/default-theme-nav",
+          "title": "Nav"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Reference"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Site Config"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/frontmatter-config",
+          "kind": "link",
+          "text": "Frontmatter Config"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/runtime-api",
+          "kind": "link",
+          "text": "Runtime API"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/cli",
+          "kind": "link",
+          "text": "CLI"
+        },
+        {
+          "kind": "group",
+          "text": "Default Theme"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-config",
+          "kind": "link",
+          "text": "Overview"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-nav",
+          "kind": "link",
+          "text": "Nav"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-sidebar",
+          "kind": "link",
+          "text": "Sidebar"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-home-page",
+          "kind": "link",
+          "text": "Home Page"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-footer",
+          "kind": "link",
+          "text": "Footer"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-layout",
+          "kind": "link",
+          "text": "Layout"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-badge",
+          "kind": "link",
+          "text": "Badge"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-team-page",
+          "kind": "link",
+          "text": "Team Page"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-prev-next-links",
+          "kind": "link",
+          "text": "Prev / Next Links"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-edit-link",
+          "kind": "link",
+          "text": "Edit Link"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-last-updated",
+          "kind": "link",
+          "text": "Last Updated Timestamp"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-search",
+          "kind": "link",
+          "text": "Search"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-carbon-ads",
+          "kind": "link",
+          "text": "Carbon Ads"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "Default Theme Config | VitePress"
+    },
+    "/reference/runtime-api": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 9,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "ol": 0,
+        "pre": 11,
+        "table": 0,
+        "ul": 3
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/reference/runtime-api.md",
+      "features": null,
+      "h1": {
+        "id": "runtime-api",
+        "text": "Runtime API"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-08-28",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Previous page",
+          "href": "/reference/frontmatter-config",
+          "title": "Frontmatter Config"
+        },
+        {
+          "desc": "Next page",
+          "href": "/reference/cli",
+          "title": "CLI"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Reference"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Site Config"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/frontmatter-config",
+          "kind": "link",
+          "text": "Frontmatter Config"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/runtime-api",
+          "kind": "link",
+          "text": "Runtime API"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/cli",
+          "kind": "link",
+          "text": "CLI"
+        },
+        {
+          "kind": "group",
+          "text": "Default Theme"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-config",
+          "kind": "link",
+          "text": "Overview"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-nav",
+          "kind": "link",
+          "text": "Nav"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-sidebar",
+          "kind": "link",
+          "text": "Sidebar"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-home-page",
+          "kind": "link",
+          "text": "Home Page"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-footer",
+          "kind": "link",
+          "text": "Footer"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-layout",
+          "kind": "link",
+          "text": "Layout"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-badge",
+          "kind": "link",
+          "text": "Badge"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-team-page",
+          "kind": "link",
+          "text": "Team Page"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-prev-next-links",
+          "kind": "link",
+          "text": "Prev / Next Links"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-edit-link",
+          "kind": "link",
+          "text": "Edit Link"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-last-updated",
+          "kind": "link",
+          "text": "Last Updated Timestamp"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-search",
+          "kind": "link",
+          "text": "Search"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-carbon-ads",
+          "kind": "link",
+          "text": "Carbon Ads"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "Runtime API | VitePress"
+    },
+    "/reference/site-config": {
+      "block_counts": {
+        "blockquote": 0,
+        "h2": 7,
+        "h3": 33,
+        "h4": 7,
+        "h5": 0,
+        "h6": 0,
+        "ol": 0,
+        "pre": 44,
+        "table": 0,
+        "ul": 31
+      },
+      "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/reference/site-config.md",
+      "features": null,
+      "h1": {
+        "id": "site-config",
+        "text": "Site Config"
+      },
+      "has_main": true,
+      "has_search": true,
+      "hero": null,
+      "last_updated": "2026-08-28",
+      "nav_items": [
+        {
+          "href": "/guide/what-is-vitepress",
+          "kind": "link",
+          "text": "Guide"
+        },
+        {
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Reference"
+        },
+        {
+          "items": [
+            {
+              "href": "https://vuejs.github.io/vitepress/v1",
+              "text": "1.6.4"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md",
+              "text": "Changelog"
+            },
+            {
+              "href": "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md",
+              "text": "Contributing"
+            }
+          ],
+          "kind": "group",
+          "text": "2.0.0-alpha.20"
+        }
+      ],
+      "nav_title": {
+        "href": "/",
+        "logo_src": "/vitepress-logo-mini.svg",
+        "text": "VitePress"
+      },
+      "outline_items": [],
+      "outline_title": "On this page",
+      "pager": [
+        {
+          "desc": "Next page",
+          "href": "/reference/frontmatter-config",
+          "title": "Frontmatter Config"
+        }
+      ],
+      "sidebar": [
+        {
+          "kind": "group",
+          "text": "Reference"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/site-config",
+          "kind": "link",
+          "text": "Site Config"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/frontmatter-config",
+          "kind": "link",
+          "text": "Frontmatter Config"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/runtime-api",
+          "kind": "link",
+          "text": "Runtime API"
+        },
+        {
+          "depth": 1,
+          "href": "/reference/cli",
+          "kind": "link",
+          "text": "CLI"
+        },
+        {
+          "kind": "group",
+          "text": "Default Theme"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-config",
+          "kind": "link",
+          "text": "Overview"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-nav",
+          "kind": "link",
+          "text": "Nav"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-sidebar",
+          "kind": "link",
+          "text": "Sidebar"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-home-page",
+          "kind": "link",
+          "text": "Home Page"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-footer",
+          "kind": "link",
+          "text": "Footer"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-layout",
+          "kind": "link",
+          "text": "Layout"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-badge",
+          "kind": "link",
+          "text": "Badge"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-team-page",
+          "kind": "link",
+          "text": "Team Page"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-prev-next-links",
+          "kind": "link",
+          "text": "Prev / Next Links"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-edit-link",
+          "kind": "link",
+          "text": "Edit Link"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-last-updated",
+          "kind": "link",
+          "text": "Last Updated Timestamp"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-search",
+          "kind": "link",
+          "text": "Search"
+        },
+        {
+          "depth": 2,
+          "href": "/reference/default-theme-carbon-ads",
+          "kind": "link",
+          "text": "Carbon Ads"
+        }
+      ],
+      "site_footer": [
+        "Released under the MIT License.",
+        "Copyright © 2019-present Evan You"
+      ],
+      "title": "Site Config | VitePress"
+    }
+  }
+}

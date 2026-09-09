@@ -24,6 +24,7 @@ hypertext = { version = "0.12.1", features = ["alpine"] }
 include_dir = "0.7"
 notify = "8"
 regex = "1"
+scraper = "0.27.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_norway = "0.9"

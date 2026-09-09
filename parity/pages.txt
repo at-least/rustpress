@@ -1,0 +1,18 @@
+# Pages pinned in the upstream parity baseline (parity/upstream.json).
+# One URL per line; fetched from the deployed site by parity:refresh.
+# Keep the list representative: home, core guide pages (incl. the
+# code-heavy markdown page), reference pages with deep sidebars.
+/
+/guide/what-is-vitepress
+/guide/getting-started
+/guide/routing
+/guide/deploy
+/guide/markdown
+/guide/asset-handling
+/guide/frontmatter
+/guide/using-vue
+/guide/i18n
+/guide/extending-default-theme
+/reference/site-config
+/reference/runtime-api
+/reference/default-theme-config

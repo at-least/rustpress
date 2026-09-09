@@ -7,3 +7,4 @@ node_modules/
 /static/main.css
 /static/js/app.js
 /demo/public/
+/parity/cache/
