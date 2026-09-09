@@ -42,7 +42,7 @@ The Rust build needs only `cargo` (no Node). The committed `static/main.css` is 
 
 ## Site shape
 
-- `gen-docs.toml` — site config mirroring VitePress's `themeConfig`: `title`, `nav` (plain links with `activeMatch`, dropdowns), `sidebar` (absent → one auto-derived per top-level section; explicit single array; or VitePress's path-keyed `{ base, items }` map with tri-state `collapsed`), `socialLinks`, `editLink` (`:path` pattern), `footer`, `outline`, `search.provider = "local"`. There is no theme system: one design, compiled in, with a fixed syntax-highlighting pair (vendored github-light/github-dark).
+- `gen-docs.toml` — site config mirroring VitePress's `themeConfig`: `title` + `titleTemplate` (`:title`), `description`, `lang`, `base`, `srcDir`, `nav` (plain links with `activeMatch`, dropdowns), `sidebar` (absent → one auto-derived per top-level section; explicit single array; or VitePress's path-keyed `{ base, items }` map with tri-state `collapsed`), `socialLinks`, `editLink` (`:path` pattern), `footer`, `outline` (level + label), `search.provider = "local"`, `appearance` (`true`/`false`/`"dark"`/`"force"`/`"force-auto"`), `lastUpdated` (git-based) + `lastUpdatedText`, `ignoreDeadLinks` (`true` or link prefixes), `[sitemap]` (hostname → sitemap.xml), `[[head]]` extra tags, `[docFooter]` prev/next labels, `[notFound]` title/quote/linkText, `returnToTopLabel`, `darkModeSwitchLabel`, `skipToContentLabel`, `[rewrites]` (source-path mapping with `:rest*`), `[locales]` (multi-language sites), `[markdown]` (lineNumbers, codeCopyButton, math, image.lazyLoading, container labels + custom containers). There is no theme system: one design, compiled in, with a fixed syntax-highlighting pair (vendored github-light/github-dark).
 - `content/**/*.md` — VitePress format. URLs are directory-style: `guide/x.md` → `/guide/x/`, `index.md` → `/`. Titles come from the first H1 (fence-aware); front matter keys honored: `description`, `title`, `layout: home` (+ `hero`/`features`), `outline: deep` (or a level/level-pair).
 - `static/` — copied verbatim into the output root.
 
@@ -50,17 +50,27 @@ The Rust build needs only `cargo` (no Node). The committed `static/main.css` is 
 
 | VitePress | gen-docs |
 | --- | --- |
-| `::: tip` / `warning` / `danger` / `note` / `info` / `important` / `caution` (custom titles, `{no-title}`, nested `::::`) | same syntax |
+| `::: tip` / `warning` / `danger` / `note` / `info` / `important` / `caution` (custom titles, `{no-title}`, nested `::::`) | same syntax; labels + custom container kinds configurable |
 | `::: details SUMMARY {open}` | same |
 | `::: code-group` with ```` ```sh [npm] ```` fences | server-emitted tab strip |
 | ```` ```js{1,3-4} ```` | `<span class="line hl">` highlighting |
+| ```` ```js:line-numbers ```` / `:no-line-numbers` / `:line-numbers=2` + global `markdown.lineNumbers` | CSS-counter line numbers |
+| `[!code highlight]` / `[!code focus]` / `[!code ++]` / `[!code --]` / `[!code warning]` / `[!code error]` (+ `:N` counts, `[!!code …]` escape) | per-line classes + styling |
 | `> [!NOTE]` … GitHub alerts | rendered |
-| `<<< @/snippets/x.ts` (incl. `#region`, `[label]`, `.ansi` stripping) | inlined at build time |
+| `<<< @/snippets/x.ts` (incl. `#region`, `[label]`, `.ansi` stripping, `{1,3-4}` lines, `{ts:line-numbers}`) | inlined at build time |
 | `<Badge type="info" text="composable" />` | `<span class="VPBadge info">…</span>` |
 | front matter `outline: deep` | deeper right-hand outline |
-| `[!code highlight]`, `:line-numbers` | not yet (literal text / stripped), matching the old Zola build |
+| `[[toc]]` | nested `<nav class="table-of-contents">` |
+| emoji shortcodes (`:tada:`) | rendered |
+| `## Heading {#custom-id}` | custom anchor id (slug replaced) |
+| `$…$` / `$$…$$` math (`markdown.math`) | MathJax (tex-svg) injected on math pages |
+| `markdown.image.lazyLoading` | `loading="lazy"` on content images |
 
-Relative `.md`/`.html` links resolve to canonical page URLs at build time (unknown targets pass through untouched).
+Relative `.md`/`.html` links resolve to canonical page URLs at build time (unknown targets pass through untouched, and the dead-link checker reports them unless ignored).
+
+### Multi-language sites
+
+`[locales.root]` + `[locales.zh]` (label/lang/title/description) with per-locale content directories (`content/zh/**` → `/zh/**`); pair with `[rewrites]` `"en/:rest*" = ":rest*"` for VitePress's canonical `en/` layout. The navbar gets a language flyout and the mobile menu a language list; links target the same page in the other locale when it exists, else the locale root. Per-locale `lang` attribute, title and description.
 
 ## Testing
 
@@ -69,9 +79,10 @@ Relative `.md`/`.html` links resolve to canonical page URLs at build time (unkno
 ## Caveats
 
 - Requires `cargo` 1.85+; Node 18+ only for rebuilding the CSS/JS assets (the built artifacts are committed).
-- Single language (the old `fr` demo locale had no content; i18n is a later stage).
 - CJK search recall is whitespace-tokenization-grade, same as before.
-- Team page/sponsors from the Zola theme are deferred (the demo never configured them).
+- Math typesetting runs client-side (MathJax tex-svg from a CDN, injected only on pages containing math) — VitePress renders it at build time.
+- Team page/sponsors are not implemented (the demo never configured them).
+- No Vue runtime, so Vue components/`<script setup>`/`{{ }}` in markdown stay literal; no Algolia/Carbon ads (external services).
 
 ## License
 
