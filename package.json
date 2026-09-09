@@ -1,5 +1,5 @@
 {
-  "name": "vitezola",
+  "name": "gen-docs",
   "version": "1.0.0",
   "description": "VitePress default theme ported to Zola (Tailwind CSS)",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/newlix/vitezola.git"
+    "url": "git+https://github.com/newlix/gen-docs.git"
   },
   "license": "ISC",
   "devDependencies": {

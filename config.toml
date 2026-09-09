@@ -1,6 +1,6 @@
-# Demo site configuration for the vitezola theme, mirroring vitepress.dev.
+# Demo site configuration for the gen-docs theme, mirroring vitepress.dev.
 #
-# When you use vitezola as a theme (git clone into themes/vitezola), copy the
+# When you use gen-docs as a theme (git clone into themes/gen-docs), copy the
 # settings below that are marked "required" into your own config.toml.
 base_url = "http://127.0.0.1:1789"
 title = "VitePress"

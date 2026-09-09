@@ -1,4 +1,4 @@
-# vitezola
+# gen-docs
 
 **The VitePress default theme, ported to Zola.** As faithful as possible a re-creation of the [VitePress](https://vitepress.dev/) default theme's layout, colors and interactions — navbar, auto sidebar, right-hand outline, dark mode, code groups, local search — all generated as pure static HTML + a little vanilla JS. Styling is [Tailwind CSS](https://tailwindcss.com) v4 utilities in the templates, built with the Tailwind CLI; the only CSS in the theme is `css/main.css` (VitePress theme variables + base rules) and `css/fonts.css` (Inter `@font-face`). No hydration.
 
@@ -19,7 +19,7 @@
 ## Install
 
 ```sh
-git clone https://github.com/your-name/vitezola themes/vitezola
+git clone https://github.com/your-name/gen-docs themes/gen-docs
 ```
 
 The theme ships its Tailwind source (`css/main.css`) and JS source (`js/`, ES modules bundled with esbuild) but **not** the compiled assets — build them once (any Node 18+; no other toolchain):
@@ -51,7 +51,7 @@ Three spots now match vitepress.dev more closely than the old Sass build did:
 Then add to your `config.toml` (**required settings as of Zola 0.23**):
 
 ```toml
-theme = "vitezola"
+theme = "gen-docs"
 compile_sass = false
 build_search_index = true
 
@@ -177,7 +177,7 @@ lead = "The folks behind this project."
 name = "Ella"
 avatar = "images/avatar.svg"      # lives in static/
 title = "Creator"
-org = "vitezola"
+org = "gen-docs"
 org_link = "https://example.com" # optional, turns org into a link
 desc = "Description with **markdown**."
 links = [{ kind = "github", link = "https://github.com/you" }]
@@ -234,9 +234,9 @@ en = "English"
 fr = "Français"
 ```
 
-## VitePress ↔ vitezola syntax mapping
+## VitePress ↔ gen-docs syntax mapping
 
-| VitePress | vitezola (Zola 0.23) |
+| VitePress | gen-docs (Zola 0.23) |
 | --- | --- |
 | `::: tip` … `:::` | `{% <tip kind="tip" title="" no_title={false}> %} … {% </tip> %}` |
 | `::: warning SERVER REQUIRED` | `kind="warning" title="SERVER REQUIRED"` |

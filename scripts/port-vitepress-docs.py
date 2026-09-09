@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Port the real vitepress.dev docs (docs/en) into the vitezola demo content tree.
+"""Port the real vitepress.dev docs (docs/en) into the gen-docs demo content tree.
 
 Single fence-aware pass converts, outside code fences only:
   - `<<< @/path` code includes -> inlined fenced blocks (regions extracted)
@@ -16,7 +16,7 @@ from pathlib import Path
 
 SRC = Path('/home/newlix/github/at-least/vitepress/docs/en')
 DOCS = Path('/home/newlix/github/at-least/vitepress/docs')
-DST = Path('/home/newlix/github/at-least/vitezola/content')
+DST = Path('/home/newlix/github/at-least/gen-docs/content')
 
 # dest rel path (without .md) -> src rel path; title/weight come from the H1 / order below
 PAGES = {

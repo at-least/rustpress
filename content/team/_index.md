@@ -1,17 +1,17 @@
 +++
 title = "Team"
 template = "team.html"
-description = "The people behind vitezola"
+description = "The people behind gen-docs"
 
 [extra.vitepress_team]
 title = "Our Team"
-lead = "The folks building vitezola in the open."
+lead = "The folks building gen-docs in the open."
 
 [[extra.vitepress_team.members]]
 name = "Ella Zhang"
 avatar = "images/avatar-1.svg"
 title = "Creator"
-org = "vitezola"
+org = "gen-docs"
 desc = "Ported the VitePress default theme to Zola, one CSS variable at a time."
 links = [{ kind = "github", link = "https://github.com/your-name" }]
 sponsor = "https://github.com/sponsors/your-name"
@@ -20,7 +20,7 @@ sponsor = "https://github.com/sponsors/your-name"
 name = "Kai Lin"
 avatar = "images/avatar-2.svg"
 title = "Design"
-org = "vitezola"
+org = "gen-docs"
 desc = "Keeps the `vp-*` variables pixel-honest to the original theme."
 
 [[extra.vitepress_team.members]]

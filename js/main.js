@@ -1,4 +1,4 @@
-/* vitezola — vanilla JS port of the VitePress default theme interactions.
+/* gen-docs — vanilla JS port of the VitePress default theme interactions.
    Entry point: each feature lives in its own module and exports init();
    they are called here in the same top-to-bottom order the original
    single-file script executed, so listener registration order is

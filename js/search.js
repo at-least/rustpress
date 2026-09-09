@@ -13,8 +13,8 @@ var selectedIndex = -1;
 var currentResults = [];
 
 function searchIndexUrl() {
-  if (window.vitezola && window.vitezola.searchIndexUrl) {
-    return window.vitezola.searchIndexUrl;
+  if (window.genDocs && window.genDocs.searchIndexUrl) {
+    return window.genDocs.searchIndexUrl;
   }
   var lang = d.documentElement.lang || "en";
   return "search_index." + lang + ".json";
@@ -139,7 +139,7 @@ function renderResults(results, q) {
 }
 
 function openSearch() {
-  if (!(window.vitezola && window.vitezola.searchIndexUrl)) return;
+  if (!(window.genDocs && window.genDocs.searchIndexUrl)) return;
   searchBox.hidden = false;
   d.body.style.overflow = "hidden";
   searchInput.focus();
