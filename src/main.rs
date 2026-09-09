@@ -6,7 +6,6 @@ use std::path::PathBuf;
 use anyhow::{Context, bail};
 use clap::{Parser, Subcommand};
 
-use gen_docs::config::SiteConfig;
 
 #[derive(Parser)]
 #[command(name = "gen-docs", version, about = "VitePress-format docs site generator")]
@@ -37,30 +36,16 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Command::Build { site } => {
-            let config = SiteConfig::load(&site)
-                .with_context(|| format!("loading site config from {}", site.display()))?;
-            let content = gen_docs::content::Content::load(&gen_docs::sidebar::content_dir(&site))
-                .context("loading content")?;
-            let sidebars = gen_docs::sidebar::Sidebars::build(&config, &content);
-            let engine = gen_docs::markdown::MarkdownEngine::new(&config.markdown)
-                .context("building markdown engine")?;
-            let content_dir = gen_docs::sidebar::content_dir(&site);
-            // Render every page now (stage 4 writes the site output).
-            let mut rendered = 0usize;
-            let mut headings = 0usize;
-            for page in &content.pages {
-                let out = engine.render(page, &content, &site, &content_dir)?;
-                rendered += 1;
-                headings += out.headings.len();
-            }
+            let started = std::time::Instant::now();
+            let site_model = gen_docs::render::Site::load(&site)
+                .with_context(|| format!("loading site from {}", site.display()))?;
+            let out_dir = site.join("public");
+            let stats = site_model.build(&site, &out_dir)?;
             println!(
-                "gen-docs: {} pages rendered ({} headings), {} sidebar(s) — title: {}, lang: {}, base: {}",
-                rendered,
-                headings,
-                sidebars.trees.len(),
-                config.title.as_deref().unwrap_or("(untitled)"),
-                config.lang,
-                config.base
+                "gen-docs: {} pages + 404 + syntax.css + static/ → {} ({:.1}s)",
+                stats.pages,
+                out_dir.display(),
+                started.elapsed().as_secs_f32()
             );
             Ok(())
         }

@@ -13,6 +13,7 @@
 @layer syntax, theme, base, components, utilities;
 
 @import "tailwindcss" source(none);
+@source "../src";
 @source "../templates";
 @source "../js";
 @source "../static/js";

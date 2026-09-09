@@ -17,6 +17,7 @@ path = "src/main.rs"
 anyhow = "1"
 clap = { version = "4", features = ["derive", "wrap_help"] }
 comrak = { version = "0.55", default-features = false }
+hypertext = { version = "0.12.1", features = ["alpine"] }
 regex = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

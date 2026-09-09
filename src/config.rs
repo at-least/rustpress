@@ -92,6 +92,15 @@ pub struct SiteConfig {
     /// Local search. Absent → no search index, no search modal.
     #[serde(default)]
     pub search: Option<Search>,
+
+    /// Navbar logo path, relative to the site's static/ directory
+    /// (VitePress `themeConfig.logo`).
+    #[serde(default)]
+    pub logo: Option<String>,
+
+    /// Optional "Ask AI" sparkle link in the navbar.
+    #[serde(default)]
+    pub ask_ai_url: Option<String>,
 }
 
 impl Default for SiteConfig {
