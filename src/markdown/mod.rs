@@ -94,7 +94,7 @@ impl MarkdownEngine {
         // each syntax theme value is a built-in name or a path to a
         // Sublime/TextMate .tmTheme file (relative to base_dir)
         let load = |value: &str| -> Result<Theme, MarkdownError> {
-            if let Some(rest) = value.strip_suffix(".tmTheme") {
+            if value.ends_with(".tmTheme") {
                 let path = base_dir.join(value);
                 let file = std::fs::File::open(&path).map_err(|e| MarkdownError::ThemeLoad {
                     value: value.to_string(),
