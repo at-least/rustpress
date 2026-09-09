@@ -39,7 +39,7 @@ impl Site {
         let content_dir = site_dir.join(&config.src_dir);
         let mut content = Content::load(&content_dir)?;
         let sidebars = Sidebars::build(&config, &content);
-        let engine = MarkdownEngine::new(&config.markdown)?;
+        let engine = MarkdownEngine::new(&config.markdown, &config.syntax)?;
         // git timestamps beat mtimes: a fresh clone's mtimes are checkout
         // time, which would make "last updated" meaningless
         if config.last_updated {

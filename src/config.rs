@@ -94,6 +94,12 @@ pub struct SiteConfig {
     #[serde(default)]
     pub markdown: Markdown,
 
+    /// Source-code syntax color scheme ([syntax] section) — separate
+    /// from the UI palette (theme.toml). Vendored: github-light /
+    /// github-dark; any syntect bundled theme name also works.
+    #[serde(default)]
+    pub syntax: SyntaxThemes,
+
     /// Dark-mode behavior: `true` (default, toggleable, follows system),
     /// `false` (light only, no toggle), `"dark"` (dark default,
     /// toggleable), `"force"` (always dark, no toggle), `"force-auto"`
@@ -363,14 +369,14 @@ fn default_dark_theme() -> String {
 /// The syntax-highlighting theme pair.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
-pub struct HighlightThemes {
+pub struct SyntaxThemes {
     #[serde(default = "default_light_theme")]
     pub light: String,
     #[serde(default = "default_dark_theme")]
     pub dark: String,
 }
 
-impl Default for HighlightThemes {
+impl Default for SyntaxThemes {
     fn default() -> Self {
         toml::from_str("").unwrap()
     }
@@ -524,11 +530,6 @@ pub struct Markdown {
     #[serde(default)]
     pub container: ContainerOptions,
 
-    /// Source-code syntax color scheme — separate from the UI palette
-    /// (theme.toml). Vendored: github-light / github-dark; any syntect
-    /// bundled theme name also works.
-    #[serde(default)]
-    pub theme: HighlightThemes,
 }
 
 impl Default for Markdown {
@@ -676,15 +677,18 @@ mod tests {
     }
 
     #[test]
-    fn markdown_theme_syntax_scheme_configurable() {
-        // syntax color scheme: separate setting, defaults to the vendored
-        // github pair, overridable by name
+    fn syntax_section_configurable() {
+        // syntax color scheme: separate top-level section, defaults to
+        // the vendored github pair, overridable by name
         let c = parse("");
-        assert_eq!(c.markdown.theme.light, "github-light");
-        assert_eq!(c.markdown.theme.dark, "github-dark");
-        let c = parse("[markdown.theme]\nlight = \"base16-ocean.light\"\ndark = \"base16-ocean.dark\"\n");
-        assert_eq!(c.markdown.theme.light, "base16-ocean.light");
-        assert_eq!(c.markdown.theme.dark, "base16-ocean.dark");
+        assert_eq!(c.syntax.light, "github-light");
+        assert_eq!(c.syntax.dark, "github-dark");
+        let c = parse("[syntax]\nlight = \"base16-ocean.light\"\ndark = \"base16-ocean.dark\"\n");
+        assert_eq!(c.syntax.light, "base16-ocean.light");
+        assert_eq!(c.syntax.dark, "base16-ocean.dark");
+        // theme key no longer exists under [markdown]
+        let err = toml::from_str::<SiteConfig>("[markdown.theme]\nlight = \"x\"\n").unwrap_err();
+        assert!(err.to_string().contains("theme"), "{err}");
     }
 
     #[test]

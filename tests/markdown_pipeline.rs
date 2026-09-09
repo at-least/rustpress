@@ -11,7 +11,11 @@ use gen_docs::markdown::MarkdownEngine;
 use std::path::Path;
 
 fn engine() -> MarkdownEngine {
-    MarkdownEngine::new(&gen_docs::config::Markdown::default()).expect("engine")
+    engine_with(&gen_docs::config::Markdown::default())
+}
+
+fn engine_with(md: &gen_docs::config::Markdown) -> MarkdownEngine {
+    MarkdownEngine::new(md, &gen_docs::config::SyntaxThemes::default()).expect("engine")
 }
 
 fn fixture(url: &str) -> gen_docs::markdown::RenderedPage {
@@ -186,7 +190,7 @@ fn math_renders_with_delimiters_and_flags_page() {
     let site_root = Path::new("tests/fixtures");
     let content_dir = site_root.join("en");
     let config = gen_docs::config::Markdown { math: true, ..Default::default() };
-    let engine = MarkdownEngine::new(&config).expect("engine");
+    let engine = engine_with(&config);
     let page = Page {
         rel: "p.md".into(),
         url: "/p/".into(),

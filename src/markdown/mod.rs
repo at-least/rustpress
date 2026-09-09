@@ -65,7 +65,7 @@ pub struct MarkdownEngine {
 }
 
 impl MarkdownEngine {
-    pub fn new(config: &MarkdownConfig) -> Result<Self, MarkdownError> {
+    pub fn new(markdown: &MarkdownConfig, syntax: &crate::config::SyntaxThemes) -> Result<Self, MarkdownError> {
         let mut options = Options::default();
         let ext = &mut options.extension;
         ext.table = true;
@@ -76,7 +76,7 @@ impl MarkdownEngine {
         ext.alerts = true;
         // :tada:-style emoji shortcodes, like VitePress
         ext.shortcodes = true;
-        if config.math {
+        if markdown.math {
             ext.math_dollars = true;
         }
         // GitHub-style ids on every heading; the trailing `<a
@@ -88,23 +88,23 @@ impl MarkdownEngine {
         options.render.tasklist_classes = true;
         // syntax color scheme is its own setting ([markdown.theme]),
         // independent of the UI palette in theme.toml
-        let light = highlight::load_theme(&config.theme.light)
-            .ok_or_else(|| MarkdownError::Theme { name: config.theme.light.clone() })?;
-        let dark = highlight::load_theme(&config.theme.dark)
-            .ok_or_else(|| MarkdownError::Theme { name: config.theme.dark.clone() })?;
+        let light = highlight::load_theme(&syntax.light)
+            .ok_or_else(|| MarkdownError::Theme { name: syntax.light.clone() })?;
+        let dark = highlight::load_theme(&syntax.dark)
+            .ok_or_else(|| MarkdownError::Theme { name: syntax.dark.clone() })?;
         Ok(Self {
             options,
             renderer: highlight::GdCodeRenderer {
                 options: highlight::RendererOptions {
-                    copy_button: config.code_copy_button,
-                    line_numbers: config.line_numbers,
+                    copy_button: markdown.code_copy_button,
+                    line_numbers: markdown.line_numbers,
                 },
             },
             light,
             dark,
-            lazy_images: config.image.lazy_loading,
-            math: config.math,
-            config_container: config.container.clone(),
+            lazy_images: markdown.image.lazy_loading,
+            math: markdown.math,
+            config_container: markdown.container.clone(),
         })
     }
 

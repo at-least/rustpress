@@ -20,7 +20,7 @@ fn build_fixture() -> (tempdir::Guard, gen_docs::render::BuildStats) {
     let content = Content::load(&fixtures.join("en")).unwrap();
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
-        engine: MarkdownEngine::new(&config.markdown).unwrap(),
+        engine: MarkdownEngine::new(&config.markdown, &config.syntax).unwrap(),
         palette: None,
         config,
         content,
@@ -124,7 +124,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
         let content = Content::load(&fixtures.join("en")).unwrap();
         Site {
             sidebars: Sidebars::build(&config, &content),
-            engine: MarkdownEngine::new(&config.markdown).unwrap(),
+            engine: MarkdownEngine::new(&config.markdown, &config.syntax).unwrap(),
         palette: None,
             config,
             content,
@@ -148,7 +148,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
     let content = Content::load(&fixtures.join("en")).unwrap();
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
-        engine: MarkdownEngine::new(&config.markdown).unwrap(),
+        engine: MarkdownEngine::new(&config.markdown, &config.syntax).unwrap(),
         palette: None,
         config,
         content,
@@ -270,16 +270,16 @@ c-brand-1 = "#83aa63"
 
 #[test]
 fn syntax_theme_pair_is_selectable() {
-    // [markdown.theme] picks the syntax color scheme independently of the
-    // UI palette; unknown names fail at engine construction
+    // the [syntax] section picks the syntax color scheme independently of
+    // the UI palette; unknown names fail at engine construction
     let mk = |dark: &str| {
-        let engine = MarkdownEngine::new(&gen_docs::config::Markdown {
-            theme: gen_docs::config::HighlightThemes {
+        let engine = MarkdownEngine::new(
+            &gen_docs::config::Markdown::default(),
+            &gen_docs::config::SyntaxThemes {
                 light: "github-light".into(),
                 dark: dark.into(),
             },
-            ..Default::default()
-        });
+        );
         engine.map(|e| e.syntax_css())
     };
     assert!(mk("base16-ocean.dark").is_ok(), "syntect bundled theme by name");
