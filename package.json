@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "VitePress default theme ported to Zola (Tailwind CSS)",
   "scripts": {
-    "test": "cargo test --quiet && npm run build && npm run check:demo",
-    "check:demo": "./target/debug/gen-docs build demo",
+    "test": "cargo test --quiet && npm run build:js && npm run build:css && npm run check:demo",
+    "check:demo": "cargo run --quiet -- build demo",
     "build:css": "tailwindcss -i styles/main.css -o static/main.css --minify",
     "watch:css": "tailwindcss -i styles/main.css -o static/main.css --watch",
     "build:js": "esbuild js/alpine-entry.js --bundle --format=iife --target=es2018 --minify --outfile=static/js/app.js",

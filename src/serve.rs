@@ -130,6 +130,10 @@ async fn livereload() -> Sse<impl futures_core::Stream<Item = Result<Event, std:
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
+/// Serves files under public/. Traversal: the path is percent-decoded
+/// once, then segment-split, and any `..` segment is rejected before any
+/// filesystem access; symlinks inside public/ are trusted (127.0.0.1 dev
+/// server serving its own build output only).
 fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
     let path = uri.path();
     let path = match path {

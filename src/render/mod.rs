@@ -148,10 +148,19 @@ impl Site {
             let json = serde_json::to_string(&search_docs).expect("serializable docs");
             write_file(&out_dir.join("search-docs.json"), json.as_bytes())?;
         }
-        // site static/ copied verbatim
+        // site static/ copied verbatim; when the site lives nested under
+        // a repo root that also has a static/ dir (the dogfood layout),
+        // the root's built assets (app.js, main.css) are layered on top
+        // so a plain `gen-docs build` produces a complete deployable site
         let static_dir = site_dir.join("static");
         if static_dir.is_dir() {
             copy_dir(&static_dir, out_dir)?;
+        }
+        if let Some(root) = site_dir.parent() {
+            let root_static = root.join("static");
+            if root_static.is_dir() {
+                copy_dir(&root_static, out_dir)?;
+            }
         }
         Ok(stats)
     }
