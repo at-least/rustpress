@@ -258,6 +258,8 @@ The repo root is itself a Zola demo site (root-level templates take effect direc
 npm run dev     # watches css/ + js/ and serves the site (build once first with npm run build)
 ```
 
+After editing the `vpdoc_classes` component in `templates/components.html`, run `npm run check` — it catches space/escaping mistakes Tera renders silently (missing leading spaces glue two utilities together).
+
 ## Caveats
 
 - Tested on **Zola 0.23**; Zola 0.22 and earlier (old Tera / shortcodes) are incompatible.

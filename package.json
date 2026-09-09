@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "VitePress default theme ported to Zola (Tailwind CSS)",
   "scripts": {
-    "test": "npm run build",
+    "test": "npm run build && npm run check",
+    "check": "python3 scripts/check_vpdoc_classes.py",
     "build:css": "tailwindcss -i css/main.css -o static/main.css --minify",
     "watch:css": "tailwindcss -i css/main.css -o static/main.css --watch",
     "build:js": "esbuild js/main.js --bundle --format=iife --target=es2017 --banner:js='\"use strict\";' --outfile=static/js/app.js",
