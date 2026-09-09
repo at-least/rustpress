@@ -382,35 +382,6 @@ impl Default for SyntaxThemes {
     }
 }
 
-/// UI palette overrides loaded from `theme.toml` (the color-only part of
-/// VitePress's "extending the default theme"): each entry overrides one
-/// root-level CSS custom property in the light (`:root`) or dark
-/// (`.dark`) palette. Keys are CSS variable names — a leading `--` is
-/// kept as-is, otherwise `--vp-` is prepended (`c-brand-1` →
-/// `--vp-c-brand-1`).
-#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
-pub struct ThemePalette {
-    #[serde(default)]
-    pub light: std::collections::BTreeMap<String, String>,
-    #[serde(default)]
-    pub dark: std::collections::BTreeMap<String, String>,
-}
-
-impl ThemePalette {
-    pub fn is_empty(&self) -> bool {
-        self.light.is_empty() && self.dark.is_empty()
-    }
-
-    /// `key` → CSS custom property name.
-    pub fn var_name(key: &str) -> String {
-        if key.starts_with("--") {
-            key.to_string()
-        } else {
-            format!("--vp-{key}")
-        }
-    }
-}
 
 /// Dark-mode behavior (see [`SiteConfig::appearance`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -691,27 +662,6 @@ mod tests {
         assert!(err.to_string().contains("theme"), "{err}");
     }
 
-    #[test]
-    fn theme_palette_parses_and_normalizes() {
-        let raw = r##"
-[light]
-"--vp-c-brand-1" = "#508d3f"
-c-brand-2 = "#629a4e"
-"--vp-nav-bg-color" = "#f6f6f6"
-
-[dark]
-c-brand-1 = "#83aa63"
-"##;
-        let p: ThemePalette = toml::from_str(raw).unwrap();
-        assert_eq!(p.light.len(), 3);
-        // keys are stored raw; prefix normalization happens at CSS
-        // generation time (var_name)
-        assert!(p.light.contains_key("--vp-c-brand-1"));
-        assert!(p.light.contains_key("c-brand-2"));
-        assert_eq!(ThemePalette::var_name("c-brand-1"), "--vp-c-brand-1");
-        assert_eq!(ThemePalette::var_name("--vp-font-family-base"), "--vp-font-family-base");
-        assert_eq!(p.dark["c-brand-1"], "#83aa63");
-    }
 
     #[test]
     fn full_config_round_trip() {

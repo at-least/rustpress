@@ -39,11 +39,7 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
     let show_footer = footer.is_some();
     let head_tags = serialize_head_tags(&site.config.head);
     let skip_label = site.config.skip_to_content_label.clone();
-    let theme_link = site
-        .palette
-        .as_ref()
-        .filter(|p| !p.is_empty())
-        .map(|_| site.url("theme.css"));
+    let theme_link = site.theme_css.then(|| site.url("theme.css"));
     let footer_message = footer.as_ref().and_then(|f| f.message.clone());
     let footer_copyright = footer.as_ref().and_then(|f| f.copyright.clone());
 

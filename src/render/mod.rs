@@ -29,8 +29,8 @@ pub struct Site {
     pub content: Content,
     pub sidebars: Sidebars,
     pub engine: MarkdownEngine,
-    /// UI palette overrides from the optional `theme.toml`.
-    pub palette: Option<crate::config::ThemePalette>,
+    /// The site provides a `theme.css` (UI palette overrides).
+    pub theme_css: bool,
 }
 
 impl Site {
@@ -98,23 +98,12 @@ impl Site {
             }
         }
 
-        // theme.toml: UI palette overrides (color-only customization,
-        // VitePress "extending the default theme" style). Syntax colors
-        // are NOT here — they live in [markdown.theme].
-        let palette_path = site_dir.join("theme.toml");
-        let palette = if palette_path.is_file() {
-            let raw = std::fs::read_to_string(&palette_path).map_err(|source| {
-                crate::config::ConfigError::Read { path: palette_path.clone(), source }
-            })?;
-            Some(
-                toml::from_str::<crate::config::ThemePalette>(&raw).map_err(|source| {
-                    crate::config::ConfigError::Parse { path: palette_path.clone(), source }
-                })?,
-            )
-        } else {
-            None
-        };
-        Ok(Site { config, content, sidebars, engine, palette })
+        // theme.css: UI palette overrides as CSS custom properties
+        // (VitePress "extending the default theme" style — copied
+        // verbatim and linked after main.css). Syntax colors are NOT
+        // here — they live in the [syntax] section of gen-docs.toml.
+        let theme_css = site_dir.join("theme.css").is_file();
+        Ok(Site { config, content, sidebars, engine, theme_css })
     }
 
     /// Prefix a canonical path with the configured base. Relative asset
@@ -230,10 +219,10 @@ impl Site {
         write_file(&out_dir.join("404.html"), not_found.as_bytes())?;
         // generated assets
         write_file(&out_dir.join("syntax.css"), self.engine.syntax_css().as_bytes())?;
-        if let Some(palette) = &self.palette
-            && !palette.is_empty()
-        {
-            write_file(&out_dir.join("theme.css"), palette_css(palette).as_bytes())?;
+        if self.theme_css {
+            std::fs::copy(site_dir.join("theme.css"), out_dir.join("theme.css")).map_err(
+                |source| BuildError::Write { path: out_dir.join("theme.css"), source },
+            )?;
             stats.theme = true;
         }
         if let Some(sitemap) = &self.config.sitemap {
@@ -475,30 +464,6 @@ pub enum BuildError {
     Write { path: std::path::PathBuf, source: std::io::Error },
 }
 
-/// The theme.toml palette as an override stylesheet: plain `:root` /
-/// `.dark` custom-property definitions. Unlayered rules win the cascade
-/// over main.css's layers, and overriding the `--vp-*` variables reaches
-/// both the Tailwind utilities (`@theme inline` maps them) and the
-/// hand-written component rules.
-fn palette_css(palette: &crate::config::ThemePalette) -> String {
-    let mut out = String::from("/* generated from theme.toml — UI palette overrides */\n");
-    for (selector, vars) in [(":root", &palette.light), (".dark", &palette.dark)] {
-        if vars.is_empty() {
-            continue;
-        }
-        out.push_str(selector);
-        out.push_str(" {\n");
-        for (key, value) in vars {
-            out.push_str(&format!(
-                "  {}: {};\n",
-                crate::config::ThemePalette::var_name(key),
-                value
-            ));
-        }
-        out.push_str("}\n");
-    }
-    out
-}
 
 /// Candidates for dead links: internal href/src targets in one page's
 /// html that are neither known pages nor resolvable to an output path.

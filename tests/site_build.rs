@@ -21,7 +21,7 @@ fn build_fixture() -> (tempdir::Guard, gen_docs::render::BuildStats) {
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
         engine: MarkdownEngine::new(&config.markdown, &config.syntax).unwrap(),
-        palette: None,
+        theme_css: false,
         config,
         content,
     };
@@ -125,7 +125,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
         Site {
             sidebars: Sidebars::build(&config, &content),
             engine: MarkdownEngine::new(&config.markdown, &config.syntax).unwrap(),
-        palette: None,
+        theme_css: false,
             config,
             content,
         }
@@ -149,7 +149,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
         engine: MarkdownEngine::new(&config.markdown, &config.syntax).unwrap(),
-        palette: None,
+        theme_css: false,
         config,
         content,
     };
@@ -219,43 +219,29 @@ provider = "local"
 }
 
 #[test]
-fn theme_toml_generates_override_stylesheet() {
-    // a site WITH theme.toml: theme.css generated + linked from pages
+fn theme_css_is_copied_and_linked_when_present() {
+    // a site WITH theme.css: copied verbatim + linked from every page
     let site_dir = tempdir::tempdir();
     std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
     std::fs::write(site_dir.path().join("content/index.md"), "# Home\n").unwrap();
+    std::fs::write(site_dir.path().join("gen-docs.toml"), "title = \"T\"\n").unwrap();
     std::fs::write(
-        site_dir.path().join("gen-docs.toml"),
-        "title = \"T\"\n",
-    )
-    .unwrap();
-    std::fs::write(
-        site_dir.path().join("theme.toml"),
-        r##"
-[light]
-c-brand-1 = "#508d3f"
-c-brand-2 = "#629a4e"
-
-[dark]
-c-brand-1 = "#83aa63"
-"##,
+        site_dir.path().join("theme.css"),
+        ":root { --vp-c-brand-1: #508d3f; }\n.dark { --vp-c-brand-1: #83aa63; }\n",
     )
     .unwrap();
 
-    let site = Site::load(site_dir.path()).unwrap();
+    let mut site = Site::load(site_dir.path()).unwrap();
+    site.theme_css = true;
     let out = tempdir::tempdir();
     site.build(site_dir.path(), out.path()).unwrap();
 
     let css = std::fs::read_to_string(out.path().join("theme.css")).unwrap();
-    assert!(css.contains(":root {"), "{css}");
-    assert!(css.contains("--vp-c-brand-1: #508d3f;"), "prefix normalized: {css}");
-    assert!(css.contains(".dark {"), "{css}");
-    assert!(css.contains("--vp-c-brand-1: #83aa63;"), "{css}");
+    assert!(css.contains("--vp-c-brand-1: #508d3f;"), "copied verbatim: {css}");
     let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
-    assert!(html.contains(r#"<link rel="stylesheet" href="/theme.css">"#), "linked: {}",
-        html[html.find("main.css").unwrap_or(0)..].chars().take(160).collect::<String>());
+    assert!(html.contains(r#"<link rel="stylesheet" href="/theme.css">"#), "linked");
 
-    // a site WITHOUT theme.toml: no theme.css, no link
+    // a site WITHOUT theme.css: no copy, no link
     let site_dir2 = tempdir::tempdir();
     std::fs::create_dir_all(site_dir2.path().join("content")).unwrap();
     std::fs::write(site_dir2.path().join("content/index.md"), "# Home\n").unwrap();
@@ -265,7 +251,7 @@ c-brand-1 = "#83aa63"
     site2.build(site_dir2.path(), out2.path()).unwrap();
     assert!(!out2.path().join("theme.css").exists());
     let html2 = std::fs::read_to_string(out2.path().join("index.html")).unwrap();
-    assert!(!html2.contains("theme.css"), "no link without theme.toml");
+    assert!(!html2.contains("theme.css"), "no link without theme.css");
 }
 
 #[test]

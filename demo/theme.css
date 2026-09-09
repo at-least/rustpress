@@ -1,0 +1,23 @@
+/*
+ * UI palette overrides — the color-only part of VitePress's
+ * "extending the default theme". Every rule here overrides one
+ * root-level CSS custom property; full CSS is allowed (color-mix,
+ * gradients, var() references, any selector).
+ *
+ * Source-code syntax colors are NOT set here — they are the separate
+ * [syntax] section in gen-docs.toml.
+ *
+ * Examples (uncomment to apply):
+ *
+:root {
+  --vp-c-brand-1: #508d3f;
+  --vp-c-brand-2: #629a4e;
+  --vp-c-brand-3: #83aa63;
+  --vp-c-brand-soft: rgba(131, 170, 99, 0.16);
+  --vp-nav-bg-color: #f6f6f6;
+}
+
+.dark {
+  --vp-c-brand-1: #83aa63;
+}
+ */
