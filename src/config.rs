@@ -352,6 +352,60 @@ pub enum SearchProvider {
     Local,
 }
 
+fn default_light_theme() -> String {
+    "github-light".into()
+}
+
+fn default_dark_theme() -> String {
+    "github-dark".into()
+}
+
+/// The syntax-highlighting theme pair.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct HighlightThemes {
+    #[serde(default = "default_light_theme")]
+    pub light: String,
+    #[serde(default = "default_dark_theme")]
+    pub dark: String,
+}
+
+impl Default for HighlightThemes {
+    fn default() -> Self {
+        toml::from_str("").unwrap()
+    }
+}
+
+/// UI palette overrides loaded from `theme.toml` (the color-only part of
+/// VitePress's "extending the default theme"): each entry overrides one
+/// root-level CSS custom property in the light (`:root`) or dark
+/// (`.dark`) palette. Keys are CSS variable names — a leading `--` is
+/// kept as-is, otherwise `--vp-` is prepended (`c-brand-1` →
+/// `--vp-c-brand-1`).
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct ThemePalette {
+    #[serde(default)]
+    pub light: std::collections::BTreeMap<String, String>,
+    #[serde(default)]
+    pub dark: std::collections::BTreeMap<String, String>,
+}
+
+impl ThemePalette {
+    pub fn is_empty(&self) -> bool {
+        self.light.is_empty() && self.dark.is_empty()
+    }
+
+    /// `key` → CSS custom property name.
+    pub fn var_name(key: &str) -> String {
+        if key.starts_with("--") {
+            key.to_string()
+        } else {
+            format!("--vp-{key}")
+        }
+    }
+}
+
 /// Dark-mode behavior (see [`SiteConfig::appearance`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Appearance {
@@ -469,6 +523,12 @@ pub struct Markdown {
 
     #[serde(default)]
     pub container: ContainerOptions,
+
+    /// Source-code syntax color scheme — separate from the UI palette
+    /// (theme.toml). Vendored: github-light / github-dark; any syntect
+    /// bundled theme name also works.
+    #[serde(default)]
+    pub theme: HighlightThemes,
 }
 
 impl Default for Markdown {
@@ -616,10 +676,37 @@ mod tests {
     }
 
     #[test]
-    fn markdown_theme_key_is_unknown_now() {
-        // themes are fixed; the old [markdown.theme] table must be rejected
-        let err = toml::from_str::<SiteConfig>("[markdown.theme]\nlight = \"x\"\n").unwrap_err();
-        assert!(err.to_string().contains("theme"), "{err}");
+    fn markdown_theme_syntax_scheme_configurable() {
+        // syntax color scheme: separate setting, defaults to the vendored
+        // github pair, overridable by name
+        let c = parse("");
+        assert_eq!(c.markdown.theme.light, "github-light");
+        assert_eq!(c.markdown.theme.dark, "github-dark");
+        let c = parse("[markdown.theme]\nlight = \"base16-ocean.light\"\ndark = \"base16-ocean.dark\"\n");
+        assert_eq!(c.markdown.theme.light, "base16-ocean.light");
+        assert_eq!(c.markdown.theme.dark, "base16-ocean.dark");
+    }
+
+    #[test]
+    fn theme_palette_parses_and_normalizes() {
+        let raw = r##"
+[light]
+"--vp-c-brand-1" = "#508d3f"
+c-brand-2 = "#629a4e"
+"--vp-nav-bg-color" = "#f6f6f6"
+
+[dark]
+c-brand-1 = "#83aa63"
+"##;
+        let p: ThemePalette = toml::from_str(raw).unwrap();
+        assert_eq!(p.light.len(), 3);
+        // keys are stored raw; prefix normalization happens at CSS
+        // generation time (var_name)
+        assert!(p.light.contains_key("--vp-c-brand-1"));
+        assert!(p.light.contains_key("c-brand-2"));
+        assert_eq!(ThemePalette::var_name("c-brand-1"), "--vp-c-brand-1");
+        assert_eq!(ThemePalette::var_name("--vp-font-family-base"), "--vp-font-family-base");
+        assert_eq!(p.dark["c-brand-1"], "#83aa63");
     }
 
     #[test]

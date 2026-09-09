@@ -86,10 +86,12 @@ impl MarkdownEngine {
         // trusted wrappers (containers, badges) as raw HTML too.
         options.render.r#unsafe = true;
         options.render.tasklist_classes = true;
-        let light = highlight::load_theme(THEME_LIGHT)
-            .ok_or_else(|| MarkdownError::Theme { name: THEME_LIGHT.to_string() })?;
-        let dark = highlight::load_theme(THEME_DARK)
-            .ok_or_else(|| MarkdownError::Theme { name: THEME_DARK.to_string() })?;
+        // syntax color scheme is its own setting ([markdown.theme]),
+        // independent of the UI palette in theme.toml
+        let light = highlight::load_theme(&config.theme.light)
+            .ok_or_else(|| MarkdownError::Theme { name: config.theme.light.clone() })?;
+        let dark = highlight::load_theme(&config.theme.dark)
+            .ok_or_else(|| MarkdownError::Theme { name: config.theme.dark.clone() })?;
         Ok(Self {
             options,
             renderer: highlight::GdCodeRenderer {

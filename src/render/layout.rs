@@ -39,6 +39,11 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
     let show_footer = footer.is_some();
     let head_tags = serialize_head_tags(&site.config.head);
     let skip_label = site.config.skip_to_content_label.clone();
+    let theme_link = site
+        .palette
+        .as_ref()
+        .filter(|p| !p.is_empty())
+        .map(|_| site.url("theme.css"));
     let footer_message = footer.as_ref().and_then(|f| f.message.clone());
     let footer_copyright = footer.as_ref().and_then(|f| f.copyright.clone());
 
@@ -57,6 +62,9 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
                 <meta name="description" content=(description)>
                 <link rel="stylesheet" href=(syntax_css)>
                 <link rel="stylesheet" href=(main_css)>
+                @if let Some(href) = theme_link.clone() {
+                    <link rel="stylesheet" href=(href)>
+                }
                 (Raw::dangerously_create(appearance_script(&site.config.appearance)))
                 @if shell.has_math {
                     (Raw::dangerously_create(MATHJAX_SCRIPT.to_string()))

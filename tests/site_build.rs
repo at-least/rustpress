@@ -21,6 +21,7 @@ fn build_fixture() -> (tempdir::Guard, gen_docs::render::BuildStats) {
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
         engine: MarkdownEngine::new(&config.markdown).unwrap(),
+        palette: None,
         config,
         content,
     };
@@ -124,6 +125,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
         Site {
             sidebars: Sidebars::build(&config, &content),
             engine: MarkdownEngine::new(&config.markdown).unwrap(),
+        palette: None,
             config,
             content,
         }
@@ -147,6 +149,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
         engine: MarkdownEngine::new(&config.markdown).unwrap(),
+        palette: None,
         config,
         content,
     };
@@ -213,4 +216,75 @@ provider = "local"
     let zh_html = std::fs::read_to_string(out.path().join("zh/guide/page/index.html")).unwrap();
     assert!(zh_html.contains(r#"<html lang="zh-CN""#), "zh lang attr");
     assert!(zh_html.contains(r#"<title>页面"#), "localized title");
+}
+
+#[test]
+fn theme_toml_generates_override_stylesheet() {
+    // a site WITH theme.toml: theme.css generated + linked from pages
+    let site_dir = tempdir::tempdir();
+    std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
+    std::fs::write(site_dir.path().join("content/index.md"), "# Home\n").unwrap();
+    std::fs::write(
+        site_dir.path().join("gen-docs.toml"),
+        "title = \"T\"\n",
+    )
+    .unwrap();
+    std::fs::write(
+        site_dir.path().join("theme.toml"),
+        r##"
+[light]
+c-brand-1 = "#508d3f"
+c-brand-2 = "#629a4e"
+
+[dark]
+c-brand-1 = "#83aa63"
+"##,
+    )
+    .unwrap();
+
+    let site = Site::load(site_dir.path()).unwrap();
+    let out = tempdir::tempdir();
+    site.build(site_dir.path(), out.path()).unwrap();
+
+    let css = std::fs::read_to_string(out.path().join("theme.css")).unwrap();
+    assert!(css.contains(":root {"), "{css}");
+    assert!(css.contains("--vp-c-brand-1: #508d3f;"), "prefix normalized: {css}");
+    assert!(css.contains(".dark {"), "{css}");
+    assert!(css.contains("--vp-c-brand-1: #83aa63;"), "{css}");
+    let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
+    assert!(html.contains(r#"<link rel="stylesheet" href="/theme.css">"#), "linked: {}",
+        html[html.find("main.css").unwrap_or(0)..].chars().take(160).collect::<String>());
+
+    // a site WITHOUT theme.toml: no theme.css, no link
+    let site_dir2 = tempdir::tempdir();
+    std::fs::create_dir_all(site_dir2.path().join("content")).unwrap();
+    std::fs::write(site_dir2.path().join("content/index.md"), "# Home\n").unwrap();
+    std::fs::write(site_dir2.path().join("gen-docs.toml"), "title = \"T\"\n").unwrap();
+    let site2 = Site::load(site_dir2.path()).unwrap();
+    let out2 = tempdir::tempdir();
+    site2.build(site_dir2.path(), out2.path()).unwrap();
+    assert!(!out2.path().join("theme.css").exists());
+    let html2 = std::fs::read_to_string(out2.path().join("index.html")).unwrap();
+    assert!(!html2.contains("theme.css"), "no link without theme.toml");
+}
+
+#[test]
+fn syntax_theme_pair_is_selectable() {
+    // [markdown.theme] picks the syntax color scheme independently of the
+    // UI palette; unknown names fail at engine construction
+    let mk = |dark: &str| {
+        let engine = MarkdownEngine::new(&gen_docs::config::Markdown {
+            theme: gen_docs::config::HighlightThemes {
+                light: "github-light".into(),
+                dark: dark.into(),
+            },
+            ..Default::default()
+        });
+        engine.map(|e| e.syntax_css())
+    };
+    assert!(mk("base16-ocean.dark").is_ok(), "syntect bundled theme by name");
+    let err = mk("no-such-theme").unwrap_err();
+    assert!(err.to_string().contains("no-such-theme"), "{err}");
+    let css = mk("base16-ocean.dark").unwrap();
+    assert!(css.contains("html.dark .st-"), "dark still scoped");
 }

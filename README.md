@@ -42,7 +42,7 @@ The Rust build needs only `cargo` (no Node). The committed `static/main.css` is 
 
 ## Site shape
 
-- `gen-docs.toml` — site config mirroring VitePress's `themeConfig`: `title` + `titleTemplate` (`:title`), `description`, `lang`, `base`, `srcDir`, `nav` (plain links with `activeMatch`, dropdowns), `sidebar` (absent → one auto-derived per top-level section; explicit single array; or VitePress's path-keyed `{ base, items }` map with tri-state `collapsed`), `socialLinks`, `editLink` (`:path` pattern), `footer`, `outline` (level + label), `search.provider = "local"`, `appearance` (`true`/`false`/`"dark"`/`"force"`/`"force-auto"`), `lastUpdated` (git-based) + `lastUpdatedText`, `ignoreDeadLinks` (`true` or link prefixes), `[sitemap]` (hostname → sitemap.xml), `[[head]]` extra tags, `[docFooter]` prev/next labels, `[notFound]` title/quote/linkText, `returnToTopLabel`, `darkModeSwitchLabel`, `skipToContentLabel`, `[rewrites]` (source-path mapping with `:rest*`), `[locales]` (multi-language sites), `[markdown]` (lineNumbers, codeCopyButton, math, image.lazyLoading, container labels + custom containers). There is no theme system: one design, compiled in, with a fixed syntax-highlighting pair (vendored github-light/github-dark).
+- `gen-docs.toml` — site config mirroring VitePress's `themeConfig`: `title` + `titleTemplate` (`:title`), `description`, `lang`, `base`, `srcDir`, `nav` (plain links with `activeMatch`, dropdowns), `sidebar` (absent → one auto-derived per top-level section; explicit single array; or VitePress's path-keyed `{ base, items }` map with tri-state `collapsed`), `socialLinks`, `editLink` (`:path` pattern), `footer`, `outline` (level + label), `search.provider = "local"`, `appearance` (`true`/`false`/`"dark"`/`"force"`/`"force-auto"`), `lastUpdated` (git-based) + `lastUpdatedText`, `ignoreDeadLinks` (`true` or link prefixes), `[sitemap]` (hostname → sitemap.xml), `[[head]]` extra tags, `[docFooter]` prev/next labels, `[notFound]` title/quote/linkText, `returnToTopLabel`, `darkModeSwitchLabel`, `skipToContentLabel`, `[rewrites]` (source-path mapping with `:rest*`), `[locales]` (multi-language sites), `[markdown]` (lineNumbers, codeCopyButton, math, image.lazyLoading, container labels + custom containers, `[markdown.theme]` syntax color scheme). There is no swappable theme system: one design, compiled in. Colors are customizable two ways (see `theme.toml` below), and the syntax color scheme is a separate setting.
 - `content/**/*.md` — VitePress format. URLs are directory-style: `guide/x.md` → `/guide/x/`, `index.md` → `/`. Titles come from the first H1 (fence-aware); front matter keys honored: `description`, `title`, `layout: home` (+ `hero`/`features`), `outline: deep` (or a level/level-pair).
 - `static/` — copied verbatim into the output root.
 
@@ -67,6 +67,30 @@ The Rust build needs only `cargo` (no Node). The committed `static/main.css` is 
 | `markdown.image.lazyLoading` | `loading="lazy"` on content images |
 
 Relative `.md`/`.html` links resolve to canonical page URLs at build time (unknown targets pass through untouched, and the dead-link checker reports them unless ignored).
+
+### Color customization (`theme.toml` + `[markdown.theme]`)
+
+Following VitePress's "extending the default theme", UI colors are customized by overriding root-level CSS custom properties. Create a `theme.toml` next to `gen-docs.toml`:
+
+```toml
+[light]
+c-brand-1 = "#508d3f"       # → --vp-c-brand-1 (the --vp- prefix is optional)
+c-brand-2 = "#629a4e"
+"--vp-nav-bg-color" = "#f6f6f6"   # full variable names also work
+
+[dark]
+c-brand-1 = "#83aa63"
+```
+
+The build generates `theme.css` (`:root` / `.dark` custom-property overrides) and every page links it after `main.css`. Because Tailwind utilities (`text-brand-1`, `bg-bg`, …) and the hand-written component rules both reference the `--vp-*` variables via `@theme inline`, overriding the variable reaches everything — no new classes, no CSS rebuild.
+
+The **source-code syntax color scheme is a separate setting** — `[markdown.theme]` in `gen-docs.toml` (defaults `github-light` / `github-dark`, the vendored tmThemes; any syntect bundled theme name also works):
+
+```toml
+[markdown.theme]
+light = "github-light"
+dark = "base16-ocean.dark"
+```
 
 ### Multi-language sites
 
