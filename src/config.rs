@@ -1,10 +1,11 @@
-//! Site configuration: `gen-docs.yaml`, a static-file mirror of VitePress's
+//! Site configuration: `gen-docs.toml`, a static-file mirror of VitePress's
 //! `themeConfig` schema (VitePress's config is TypeScript, which a Rust
-//! binary cannot execute; the YAML keys intentionally keep VitePress's
-//! camelCase names so the mapping is mechanical).
+//! binary cannot execute; the keys intentionally keep VitePress's camelCase
+//! names so the mapping is mechanical).
 //!
 //! Unknown keys are rejected (`deny_unknown_fields`) so config typos fail
-//! at load time instead of silently doing nothing.
+//! at load time instead of silently doing nothing. (Content front matter
+//! stays VitePress's YAML — see `content.rs`.)
 
 use std::path::{Path, PathBuf};
 
@@ -30,7 +31,7 @@ fn default_dark_theme() -> String {
     "github-dark".into()
 }
 
-/// The whole `gen-docs.yaml`.
+/// The whole `gen-docs.toml`.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct SiteConfig {
@@ -95,28 +96,24 @@ pub struct SiteConfig {
 
 impl Default for SiteConfig {
     fn default() -> Self {
-        serde_norway::from_str("{}").unwrap()
+        toml::from_str("").unwrap()
     }
 }
 
 impl SiteConfig {
-    pub const CONFIG_FILE: &'static str = "gen-docs.yaml";
+    pub const CONFIG_FILE: &'static str = "gen-docs.toml";
 
-    /// Load `gen-docs.yaml` from a site directory and validate it.
+    /// Load `gen-docs.toml` from a site directory and validate it.
     pub fn load(site_dir: &Path) -> Result<SiteConfig, ConfigError> {
         let path = site_dir.join(Self::CONFIG_FILE);
         let raw = std::fs::read_to_string(&path).map_err(|source| ConfigError::Read {
             path: path.clone(),
             source,
         })?;
-        let config: SiteConfig = if raw.trim().is_empty() {
-            Default::default()
-        } else {
-            serde_norway::from_str(&raw).map_err(|source| ConfigError::Parse {
-                path: path.clone(),
-                source,
-            })?
-        };
+        let config: SiteConfig = toml::from_str(&raw).map_err(|source| ConfigError::Parse {
+            path: path.clone(),
+            source,
+        })?;
         config.validate()?;
         Ok(config)
     }
@@ -249,7 +246,7 @@ pub struct Outline {
 
 impl Default for Outline {
     fn default() -> Self {
-        serde_norway::from_str("{}").unwrap()
+        toml::from_str("").unwrap()
     }
 }
 
@@ -264,7 +261,7 @@ pub struct Markdown {
 
 impl Default for Markdown {
     fn default() -> Self {
-        serde_norway::from_str("{}").unwrap()
+        toml::from_str("").unwrap()
     }
 }
 
@@ -279,7 +276,7 @@ pub struct HighlightThemes {
 
 impl Default for HighlightThemes {
     fn default() -> Self {
-        serde_norway::from_str("{}").unwrap()
+        toml::from_str("").unwrap()
     }
 }
 
@@ -296,13 +293,13 @@ pub enum SearchProvider {
     Local,
 }
 
-/// Errors loading or validating `gen-docs.yaml`.
+/// Errors loading or validating `gen-docs.toml`.
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
     #[error("cannot read {path}: {source}")]
     Read { path: PathBuf, source: std::io::Error },
-    #[error("invalid YAML in {path}: {source}")]
-    Parse { path: PathBuf, source: serde_norway::Error },
+    #[error("invalid TOML in {path}: {source}")]
+    Parse { path: PathBuf, source: toml::de::Error },
     #[error("invalid base {value:?}: must start and end with '/'")]
     Base { value: String },
 }
@@ -311,8 +308,8 @@ pub enum ConfigError {
 mod tests {
     use super::*;
 
-    fn parse(yaml: &str) -> SiteConfig {
-        serde_norway::from_str(yaml).expect("parse")
+    fn parse(src: &str) -> SiteConfig {
+        toml::from_str(src).expect("parse")
     }
 
     #[test]
@@ -333,37 +330,46 @@ mod tests {
     fn full_config_round_trip() {
         let c = parse(
             r#"
-title: My Docs
-description: Example site
-lang: zh-TW
-base: /docs/
-lastUpdated: true
-nav:
-  - text: Guide
-    link: /guide/
-    activeMatch: /guide/
-  - text: More
-    items:
-      - text: Reference
-        link: /reference/
-socialLinks:
-  - icon: github
-    link: https://github.com/me/repo
-editLink:
-  pattern: https://github.com/me/repo/edit/main/docs/:path
-  text: Edit this page
-footer:
-  message: Released under the MIT License.
-  copyright: Copyright © 2026 Me
-outline:
-  level: [2, 3]
-  label: On this page
-markdown:
-  theme:
-    light: github-light
-    dark: github-dark
-search:
-  provider: local
+title = "My Docs"
+description = "Example site"
+lang = "zh-TW"
+base = "/docs/"
+lastUpdated = true
+
+[[nav]]
+text = "Guide"
+link = "/guide/"
+activeMatch = "/guide/"
+
+[[nav]]
+text = "More"
+
+  [[nav.items]]
+  text = "Reference"
+  link = "/reference/"
+
+[[socialLinks]]
+icon = "github"
+link = "https://github.com/me/repo"
+
+[editLink]
+pattern = "https://github.com/me/repo/edit/main/docs/:path"
+text = "Edit this page"
+
+[footer]
+message = "Released under the MIT License."
+copyright = "Copyright (c) 2026 Me"
+
+[outline]
+level = [2, 3]
+label = "On this page"
+
+[markdown.theme]
+light = "github-light"
+dark = "github-dark"
+
+[search]
+provider = "local"
 "#,
         );
         assert_eq!(c.title.as_deref(), Some("My Docs"));
@@ -384,17 +390,36 @@ search:
     }
 
     #[test]
+    fn social_link_svg_icon_form() {
+        let c = parse(
+            r#"
+[[socialLinks]]
+link = "https://example.com"
+
+  [socialLinks.icon]
+  svg = "<svg></svg>"
+"#,
+        );
+        assert_eq!(
+            c.social_links[0].icon,
+            SocialIcon::Svg { svg: "<svg></svg>".into() }
+        );
+    }
+
+    #[test]
     fn sidebar_single_array_form() {
         let c = parse(
             r#"
-sidebar:
-  - text: Guide
-    items:
-      - text: Intro
-        link: /guide/intro
-  - text: Reference
-    collapsed: false
-    items: []
+[[sidebar]]
+text = "Guide"
+
+  [[sidebar.items]]
+  text = "Intro"
+  link = "/guide/intro"
+
+[[sidebar]]
+text = "Reference"
+collapsed = false
 "#,
         );
         match c.sidebar {
@@ -411,19 +436,22 @@ sidebar:
     fn sidebar_path_keyed_map_form() {
         let c = parse(
             r#"
-sidebar:
-  /guide/:
-    items:
-      - text: Intro
-        link: /guide/intro
-  /reference/:
-    base: /reference/
-    items:
-      - text: Default Theme
-        base: /reference/default-theme-
-        items:
-          - text: Overview
-            link: config
+[sidebar."/guide/"]
+
+  [[sidebar."/guide/".items]]
+  text = "Intro"
+  link = "/guide/intro"
+
+[sidebar."/reference/"]
+base = "/reference/"
+
+  [[sidebar."/reference/".items]]
+  text = "Default Theme"
+  base = "/reference/default-theme-"
+
+    [[sidebar."/reference/".items.items]]
+    text = "Overview"
+    link = "config"
 "#,
         );
         match c.sidebar {
@@ -441,13 +469,13 @@ sidebar:
 
     #[test]
     fn outline_level_single_number() {
-        let c = parse("outline:\n  level: 2\n");
+        let c = parse("outline.level = 2\n");
         assert_eq!(c.outline.level, Some(OutlineLevel::Single(2)));
     }
 
     #[test]
     fn unknown_key_is_rejected() {
-        let err = serde_norway::from_str::<SiteConfig>("titel: typo\n").unwrap_err();
+        let err = toml::from_str::<SiteConfig>("titel = \"typo\"\n").unwrap_err();
         assert!(err.to_string().contains("titel"), "error should name the bad key: {err}");
     }
 

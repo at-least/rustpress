@@ -19,7 +19,7 @@ struct Cli {
 enum Command {
     /// Build the site in SITE (default: current directory) into public/.
     Build {
-        /// Site directory containing gen-docs.yaml + content/.
+        /// Site directory containing gen-docs.toml + content/.
         #[arg(value_name = "SITE", default_value = ".")]
         site: PathBuf,
     },
