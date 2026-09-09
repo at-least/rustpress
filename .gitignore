@@ -6,3 +6,4 @@ node_modules/
 /vuepress/
 /static/main.css
 /static/js/app.js
+/demo/public/
