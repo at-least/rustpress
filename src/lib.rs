@@ -4,3 +4,5 @@
 //! interactivity, Tailwind CSS styling.
 
 pub mod config;
+pub mod content;
+pub mod sidebar;

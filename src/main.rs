@@ -39,9 +39,14 @@ fn main() -> anyhow::Result<()> {
         Command::Build { site } => {
             let config = SiteConfig::load(&site)
                 .with_context(|| format!("loading site config from {}", site.display()))?;
-            // Stage 2+: walk content, render pages, emit search index.
+            let content = gen_docs::content::Content::load(&gen_docs::sidebar::content_dir(&site))
+                .context("loading content")?;
+            let sidebars = gen_docs::sidebar::Sidebars::build(&config, &content);
+            // Stage 3+: render pages, emit search index.
             println!(
-                "gen-docs: config OK (title: {}, lang: {}, base: {})",
+                "gen-docs: {} pages, {} sidebar(s) (title: {}, lang: {}, base: {})",
+                content.pages.len(),
+                sidebars.trees.len(),
                 config.title.as_deref().unwrap_or("(untitled)"),
                 config.lang,
                 config.base

@@ -17,6 +17,7 @@ path = "src/main.rs"
 anyhow = "1"
 clap = { version = "4", features = ["derive", "wrap_help"] }
 serde = { version = "1", features = ["derive"] }
+serde_norway = "0.9"
 thiserror = "2"
 toml = "0.9"
 
