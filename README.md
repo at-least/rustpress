@@ -32,6 +32,18 @@ npm run dev          # or: watch mode while working on templates
 
 `static/main.css` is generated and gitignored; run `npm run build:css` before `zola build` (or `npm run build` to do both). Utilities are scanned from `templates/`, `static/js/` and `content/`, so classes used in your own templates or front-matter markup are picked up automatically.
 
+### Intentional deviations from the pre-Tailwind build
+
+Three spots now match vitepress.dev more closely than the old Sass build did:
+
+- the local nav / outline-dropdown line-height is the unitless `2` from the
+  source SCSS (24px at 12px font, 47px row) — the old build rendered 18px/41px
+- the right-hand outline's border wraps only its content; previously the
+  outline's `.content` class collided with `.VPDoc .content` and grew a
+  128px padding-bottom
+- dark code blocks use `--vp-code-block-bg` (`#161618`) instead of the
+  GitHub-dark palette background baked into `static/syntax.css`
+
 Then add to your `config.toml` (**required settings as of Zola 0.23**):
 
 ```toml

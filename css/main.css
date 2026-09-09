@@ -8,6 +8,10 @@
  * templates/ (and static/js/app.js for JS-generated markup) as Tailwind
  * utility classes. */
 
+/* Pin the layer order: syntax.css (linked first) declares the `syntax`
+   layer, and these utilities must always win over it. */
+@layer syntax, theme, base, components, utilities;
+
 @import "tailwindcss" source(none);
 @source "../templates";
 @source "../static/js";
