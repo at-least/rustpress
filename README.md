@@ -32,6 +32,10 @@ npm run dev          # or: watch mode (CSS + JS) with zola serve
 
 `static/main.css` and `static/js/app.js` are generated and gitignored; run `npm run build:js && npm run build:css` before `zola build` (or `npm run build` to do all three). Utility classes are scanned from `templates/`, `js/`, `static/js/` and `content/`, so classes used in your own templates or front-matter markup are picked up automatically — `js/` is scanned so CSS generation never depends on the JS bundle having been built first.
 
+### Customizing components
+
+Theme components (the 13 in `templates/components.html`) are registered globally. To change one, define a component with the same name in any of your own template files — your definition replaces the theme's, and the theme's own templates then call yours; the theme's other components stay available (verified on Zola 0.23). A component name defined in two of your own files is a build error, so keep one definition per name on the site side.
+
 ### Intentional deviations from the pre-Tailwind build
 
 Three spots now match vitepress.dev more closely than the old Sass build did:
