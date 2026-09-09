@@ -1,0 +1,49 @@
+# Demo site configuration, mirroring the vitepress.dev docs corpus in
+# content/ (a near-verbatim copy of vitepress/docs/en — VitePress's own
+# content format).
+
+title = "VitePress"
+description = "Vite & Vue powered static site generator."
+lang = "en"
+base = "/"
+lastUpdated = false
+logo = "images/vitepress-logo-mini.svg"
+
+[editLink]
+pattern = "https://github.com/vuejs/vitepress/edit/main/docs/:path"
+text = "Edit this page on GitHub"
+
+[footer]
+message = "Released under the MIT License."
+copyright = "Copyright © 2019-present Evan You"
+
+[outline]
+level = [2, 3]
+label = "On this page"
+
+[markdown.theme]
+light = "github-light"
+dark = "github-dark"
+
+[search]
+provider = "local"
+
+[[nav]]
+text = "Guide"
+link = "/guide/what-is-vitepress/"
+activeMatch = "/guide/"
+
+[[nav]]
+text = "Reference"
+link = "/reference/runtime-api/"
+activeMatch = "/reference/"
+
+[[nav]]
+text = "2.0.0-alpha.20"
+items = [
+  { text = "Changelog", link = "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md" },
+]
+
+[[socialLinks]]
+icon = "github"
+link = "https://github.com/vuejs/vitepress"
