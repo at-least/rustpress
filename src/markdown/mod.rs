@@ -13,6 +13,7 @@ use comrak::options::{Plugins, RenderPlugins};
 use comrak::{Anchorizer, Arena, Options};
 use std::sync::OnceLock;
 use syntect::highlighting::Theme;
+use syntect::highlighting::ThemeSet;
 
 use crate::config::Markdown as MarkdownConfig;
 use crate::content::{Content, Page};
@@ -47,8 +48,8 @@ pub struct RenderedPage {
 
 #[derive(Debug, thiserror::Error)]
 pub enum MarkdownError {
-    #[error("highlight theme {name:?} not found (vendored: github-light, github-dark)")]
-    Theme { name: String },
+    #[error("cannot load syntax theme {value:?}: {detail} (built-in names: github-light, github-dark, or syntect bundled themes like base16-ocean.dark / InspiredGitHub / Solarized (dark); a value ending in .tmTheme is resolved as a Sublime/TextMate theme file relative to the site dir)")]
+    ThemeLoad { value: String, detail: String },
     #[error(transparent)]
     Preprocess(#[from] preprocess::PreprocessError),
 }
@@ -65,7 +66,11 @@ pub struct MarkdownEngine {
 }
 
 impl MarkdownEngine {
-    pub fn new(markdown: &MarkdownConfig, syntax: &crate::config::SyntaxThemes) -> Result<Self, MarkdownError> {
+    pub fn new(
+        markdown: &MarkdownConfig,
+        syntax: &crate::config::SyntaxThemes,
+        base_dir: &std::path::Path,
+    ) -> Result<Self, MarkdownError> {
         let mut options = Options::default();
         let ext = &mut options.extension;
         ext.table = true;
@@ -86,12 +91,30 @@ impl MarkdownEngine {
         // trusted wrappers (containers, badges) as raw HTML too.
         options.render.r#unsafe = true;
         options.render.tasklist_classes = true;
-        // syntax color scheme is its own setting ([markdown.theme]),
-        // independent of the UI palette in theme.toml
-        let light = highlight::load_theme(&syntax.light)
-            .ok_or_else(|| MarkdownError::Theme { name: syntax.light.clone() })?;
-        let dark = highlight::load_theme(&syntax.dark)
-            .ok_or_else(|| MarkdownError::Theme { name: syntax.dark.clone() })?;
+        // each syntax theme value is a built-in name or a path to a
+        // Sublime/TextMate .tmTheme file (relative to base_dir)
+        let load = |value: &str| -> Result<Theme, MarkdownError> {
+            if let Some(rest) = value.strip_suffix(".tmTheme") {
+                let path = base_dir.join(value);
+                let file = std::fs::File::open(&path).map_err(|e| MarkdownError::ThemeLoad {
+                    value: value.to_string(),
+                    detail: format!("cannot open {}: {e}", path.display()),
+                })?;
+                ThemeSet::load_from_reader(&mut std::io::BufReader::new(file)).map_err(|e| {
+                    MarkdownError::ThemeLoad {
+                        value: value.to_string(),
+                        detail: format!("parse error: {e}"),
+                    }
+                })
+            } else {
+                highlight::load_theme(value).ok_or_else(|| MarkdownError::ThemeLoad {
+                    value: value.to_string(),
+                    detail: "not a built-in name".into(),
+                })
+            }
+        };
+        let light = load(&syntax.light)?;
+        let dark = load(&syntax.dark)?;
         Ok(Self {
             options,
             renderer: highlight::GdCodeRenderer {

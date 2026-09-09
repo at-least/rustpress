@@ -38,6 +38,13 @@ pub fn syntax_set() -> &'static SyntaxSet {
     SS.get_or_init(SyntaxSet::load_defaults_newlines)
 }
 
+/// Load a highlight theme from a Sublime/TextMate `.tmTheme` file.
+pub fn load_theme_file(path: &std::path::Path) -> Option<Theme> {
+    let file = std::fs::File::open(path).ok()?;
+    let mut reader = std::io::BufReader::new(file);
+    ThemeSet::load_from_reader(&mut reader).ok()
+}
+
 /// Load a highlight theme by name: the vendored github-light/github-dark
 /// pair (converted from Shiki's VS Code themes), else syntect's bundled
 /// set.

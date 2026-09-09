@@ -84,12 +84,12 @@ c-brand-1 = "#83aa63"
 
 The build generates `theme.css` (`:root` / `.dark` custom-property overrides) and every page links it after `main.css`. Because Tailwind utilities (`text-brand-1`, `bg-bg`, …) and the hand-written component rules both reference the `--vp-*` variables via `@theme inline`, overriding the variable reaches everything — no new classes, no CSS rebuild.
 
-The **source-code syntax color scheme is a separate setting** — `[syntax]` in `gen-docs.toml` (defaults `github-light` / `github-dark`, the vendored tmThemes; any syntect bundled theme name also works):
+The **source-code syntax color scheme is a separate setting** — `[syntax]` in `gen-docs.toml`. Each of `light`/`dark` takes either a built-in name or a path to your own Sublime/TextMate `.tmTheme` file (relative to the site dir). Built-ins: `github-light` / `github-dark` (vendored), plus every syntect bundled theme (`base16-ocean.dark`, `base16-eighties.dark`, `InspiredGitHub`, `Solarized (dark)`, `Solarized (light)`, …):
 
 ```toml
 [syntax]
 light = "github-light"
-dark = "base16-ocean.dark"
+dark = "themes/my-dark.tmTheme"   # your own Sublime/TextMate color scheme
 ```
 
 ### Multi-language sites

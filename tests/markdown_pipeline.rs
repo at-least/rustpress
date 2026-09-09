@@ -15,7 +15,12 @@ fn engine() -> MarkdownEngine {
 }
 
 fn engine_with(md: &gen_docs::config::Markdown) -> MarkdownEngine {
-    MarkdownEngine::new(md, &gen_docs::config::SyntaxThemes::default()).expect("engine")
+    MarkdownEngine::new(
+        md,
+        &gen_docs::config::SyntaxThemes::default(),
+        std::path::Path::new("tests/fixtures"),
+    )
+    .expect("engine")
 }
 
 fn fixture(url: &str) -> gen_docs::markdown::RenderedPage {
