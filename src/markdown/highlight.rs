@@ -464,8 +464,11 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                 // walk highlight events into classed segments over the
                 // (notation-stripped) source
                 let mut highlighter = Highlighter::new();
+                // a closure (not the fn item): keeps lifetime inference
+                // local, and silences clippy's redundant-closure suggestion
+                #[allow(clippy::redundant_closure)]
                 let events = highlighter
-                    .highlight(config, stripped.as_bytes(), None, config_for)
+                    .highlight(config, stripped.as_bytes(), None, |name| config_for(name))
                     .map_err(|_| fmt::Error)?;
                 let mut segments: Vec<(usize, usize, Option<&'static str>)> = Vec::new();
                 let mut stack: Vec<&'static str> = Vec::new();
