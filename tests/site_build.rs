@@ -155,3 +155,62 @@ fn dead_links_fail_the_build_and_ignore_works() {
     assert!(!err.to_string().contains("guide/deploy"), "ignored prefix filtered: {err}");
     assert!(err.to_string().contains("guide/custom-theme"), "others still reported");
 }
+
+#[test]
+fn locales_and_rewrites_end_to_end() {
+    // temp site: content/en/** + content/zh/**, rewrite en/:rest* → :rest*,
+    // locales root(en) + zh — the canonical VitePress i18n layout
+    let site_dir = tempdir::tempdir();
+    let content = site_dir.path().join("content");
+    std::fs::create_dir_all(content.join("en/guide")).unwrap();
+    std::fs::create_dir_all(content.join("zh/guide")).unwrap();
+    let page_body = "---\ndescription: d\n---\n\n# Page\n\nhello\n";
+    std::fs::write(content.join("en/guide/page.md"), page_body).unwrap();
+    std::fs::write(content.join("zh/guide/page.md"), "---\ndescription: 目录\n---\n\n# 页面\n\n内容\n").unwrap();
+    std::fs::write(
+        site_dir.path().join("gen-docs.toml"),
+        r#"
+title = "Docs"
+
+[locales.root]
+label = "English"
+lang = "en"
+
+[locales.zh]
+label = "简体中文"
+lang = "zh-CN"
+
+[rewrites]
+"en/:rest*" = ":rest*"
+
+[search]
+provider = "local"
+"#,
+    )
+    .unwrap();
+
+    let site = Site::load(site_dir.path()).unwrap();
+    // rewritten URLs: en/ promoted to root, zh stays under /zh/
+    assert!(site.content.get("/guide/page/").is_some(), "en rewritten to root");
+    assert_eq!(site.content.get("/guide/page/").unwrap().locale, "root");
+    assert!(site.content.get("/zh/guide/page/").is_some(), "zh at /zh/");
+    assert_eq!(site.content.get("/zh/guide/page/").unwrap().locale, "zh");
+
+    // switcher: en page links to its zh twin and vice versa
+    let en_page = site.content.get("/guide/page/").unwrap();
+    let tr = site.translations_for(en_page);
+    assert_eq!(tr.len(), 2);
+    let zh_entry = tr.iter().find(|(label, _, _)| label == "简体中文").unwrap();
+    assert_eq!(zh_entry.1, "/zh/guide/page/");
+
+    // build and check rendered html lang + switcher markup
+    let out = tempdir::tempdir();
+    site.build(site_dir.path(), out.path()).unwrap();
+    let en_html = std::fs::read_to_string(out.path().join("guide/page/index.html")).unwrap();
+    assert!(en_html.contains(r#"<html lang="en""#), "en lang attr");
+    assert!(en_html.contains("Change language"), "flyout present");
+    assert!(en_html.contains("href=\"/zh/guide/page/\""), "cross-locale link");
+    let zh_html = std::fs::read_to_string(out.path().join("zh/guide/page/index.html")).unwrap();
+    assert!(zh_html.contains(r#"<html lang="zh-CN""#), "zh lang attr");
+    assert!(zh_html.contains(r#"<title>页面"#), "localized title");
+}

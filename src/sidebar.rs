@@ -258,6 +258,7 @@ mod tests {
             body: String::new(),
             modified: None,
             src: rel.into(),
+            locale: "root".into(),
         }
     }
 

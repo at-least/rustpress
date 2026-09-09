@@ -139,6 +139,8 @@ pub struct Page {
     pub modified: Option<SystemTime>,
     /// Raw source path (diagnostics).
     pub src: PathBuf,
+    /// Locale key from the site config (`"root"` when unassigned).
+    pub locale: String,
 }
 
 impl Page {
@@ -154,6 +156,9 @@ impl Page {
 pub struct Content {
     pub pages: Vec<Page>,
     pub by_url: BTreeMap<String, usize>,
+    /// Source-rel-path index (e.g. `guide/x.md`) — link resolution and
+    /// locale assignment work in source space.
+    pub by_rel: BTreeMap<String, usize>,
 }
 
 impl Content {
@@ -172,6 +177,12 @@ impl Content {
             .iter()
             .enumerate()
             .map(|(i, p)| (p.url.clone(), i))
+            .collect();
+        content.by_rel = content
+            .pages
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (p.rel.clone(), i))
             .collect();
         Ok(content)
     }
@@ -245,6 +256,7 @@ fn load_page(path: &Path, rel: &str) -> Result<Page, ContentError> {
         body: body.to_string(),
         modified,
         src: path.to_path_buf(),
+        locale: "root".to_string(),
     })
 }
 

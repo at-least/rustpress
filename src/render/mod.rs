@@ -58,6 +58,44 @@ impl Site {
                 }
             }
         }
+        // URL rewrites (VitePress `rewrites`): applied over source rel
+        // paths; patterns may end with `:rest*` captured as `:rest`
+        if !config.rewrites.is_empty() {
+            for page in &mut content.pages {
+                for (from, to) in &config.rewrites {
+                    let dest = if let Some(prefix) = from.strip_suffix(":rest*") {
+                        page.rel.strip_prefix(prefix).map(|rest| to.replace(":rest*", rest))
+                    } else if *from == page.rel {
+                        Some(to.clone())
+                    } else {
+                        None
+                    };
+                    if let Some(dest_rel) = dest {
+                        page.url = crate::content::page_url(&normalize_rewrite_path(&dest_rel));
+                    }
+                }
+            }
+            content.by_url = content
+                .pages
+                .iter()
+                .enumerate()
+                .map(|(i, p)| (p.url.clone(), i))
+                .collect();
+        }
+
+        // locale assignment from content subdirectories ([locales.zh] →
+        // content/zh/**)
+        for page in &mut content.pages {
+            for key in config.locales.keys() {
+                if key != "root"
+                    && let Some(rest) = page.rel.strip_prefix(&format!("{key}/"))
+                {
+                    page.locale = key.clone();
+                    let _ = rest;
+                }
+            }
+        }
+
         Ok(Site { config, content, sidebars, engine })
     }
 
@@ -101,13 +139,14 @@ impl Site {
         let is_home = page.is_home();
 
         let title = self.document_title(page, is_home);
+        let locale = self.config.locales.get(&page.locale).cloned();
         let description = page
             .front
             .description
             .clone()
+            .or_else(|| locale.as_ref().and_then(|l| l.description.clone()))
             .or_else(|| self.config.description.clone())
             .unwrap_or_default();
-
         let shell = layout::Shell {
             title,
             description,
@@ -115,6 +154,8 @@ impl Site {
             has_sidebar,
             current_url: &page.url,
             has_math: rendered.has_math,
+            lang: self.locale_lang(page),
+            translations: self.translations_for(page),
         };
 
         let body = if is_home {
@@ -223,6 +264,49 @@ impl Site {
         Ok(stats)
     }
 
+    /// Language switcher entries for a page: (label, href, is_current).
+    /// Same-rel-path page in the other locale when it exists, else that
+    /// locale's root (VitePress behavior).
+    pub fn translations_for(&self, page: &Page) -> Vec<(String, String, bool)> {
+        if self.config.locales.len() <= 1 {
+            return Vec::new();
+        }
+        let own_base = if page.locale == "root" {
+            String::new()
+        } else {
+            format!("/{}", page.locale)
+        };
+        let url_rest = page.url.strip_prefix(&own_base).unwrap_or(&page.url);
+        let mut out = Vec::new();
+        for (key, loc) in &self.config.locales {
+            let target_base = if key == "root" {
+                String::new()
+            } else {
+                format!("/{key}")
+            };
+            let candidate = format!("{target_base}{url_rest}");
+            let is_current = *key == page.locale;
+            let href = if is_current {
+                self.url(&page.url)
+            } else if self.content.by_url.contains_key(&candidate) {
+                self.url(&candidate)
+            } else {
+                self.url(&format!("{target_base}/"))
+            };
+            out.push((loc.label.clone(), href, is_current));
+        }
+        out
+    }
+
+    /// The `lang` attribute for a page (its locale's code).
+    pub fn locale_lang(&self, page: &Page) -> String {
+        self.config
+            .locales
+            .get(&page.locale)
+            .and_then(|l| l.lang.clone())
+            .unwrap_or_else(|| self.config.lang.clone())
+    }
+
     /// `<title>`: VitePress's `titleTemplate` semantics — `:title` is
     /// replaced with the page title; without a template it's
     /// `Page | Site` (home pages use the site title alone).
@@ -282,6 +366,8 @@ impl Site {
             has_sidebar: false,
             current_url: "/404.html",
             has_math: false,
+            lang: self.config.lang.clone(),
+            translations: Vec::new(),
         };
         let home = self.url("/");
         let nf_title = nf.title.clone().unwrap_or_else(|| "Page not found".into());
@@ -477,6 +563,17 @@ fn plain_text(html: &str) -> String {
         }
     }
     out.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// Normalize a rewrite destination to a content-rel path (page_url
+/// input shape).
+fn normalize_rewrite_path(path: &str) -> String {
+    let p = path.trim_start_matches('/');
+    if p.ends_with(".md") || p.ends_with("index.md") {
+        p.to_string()
+    } else {
+        format!("{p}.md")
+    }
 }
 
 fn write_file(path: &Path, bytes: &[u8]) -> Result<(), BuildError> {

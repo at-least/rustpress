@@ -36,6 +36,7 @@ fn synthetic(body: &str) -> gen_docs::markdown::RenderedPage {
         body: body.to_string(),
         modified: None,
         src: "page.md".into(),
+        locale: "root".into(),
     };
     engine()
         .render(&page, &content, site_root, &content_dir)
@@ -194,6 +195,7 @@ fn math_renders_with_delimiters_and_flags_page() {
         body: "Inline $a^2$ and $$b_c$$ here.\n".into(),
         modified: None,
         src: "p.md".into(),
+        locale: "root".into(),
     };
     let out = engine.render(&page, &Content::default(), site_root, &content_dir).unwrap();
     assert!(out.has_math, "page flagged");

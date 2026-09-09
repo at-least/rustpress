@@ -226,11 +226,15 @@ pub fn resolve_relative(url: &str, page_rel: &str, content: &Content) -> Option<
     }
     let target = target.trim_end_matches('/');
     let frag = frag.map(|f| format!("#{f}")).unwrap_or_default();
-    if target.is_empty() {
-        return content.get("/").map(|_| format!("/{frag}"));
+    // source-space resolution: links name source files, pages carry the
+    // (possibly rewritten) URL
+    for cand in [format!("{target}.md"), format!("{target}/index.md"), target.to_string()] {
+        if let Some(i) = content.by_rel.get(&cand) {
+            return Some(format!("{}{}", content.pages[*i].url, frag));
+        }
     }
-    if let Some(canonical) = content.get(&format!("/{target}/")).or_else(|| content.get(&format!("/{target}"))) {
-        return Some(format!("{}{}", canonical.url, frag));
+    if target.is_empty() && let Some(i) = content.by_rel.get("index.md") {
+        return Some(format!("{}{frag}", content.pages[*i].url));
     }
     None
 }
@@ -364,6 +368,7 @@ mod tests {
                 body: String::new(),
                 modified: None,
                 src: rel.into(),
+                locale: "root".into(),
             });
         }
         content.by_url = content
@@ -371,6 +376,12 @@ mod tests {
             .iter()
             .enumerate()
             .map(|(i, p)| (p.url.clone(), i))
+            .collect();
+        content.by_rel = content
+            .pages
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (p.rel.clone(), i))
             .collect();
 
         // sibling .md link + anchor

@@ -17,11 +17,15 @@ pub struct Shell<'a> {
     pub current_url: &'a str,
     /// Page contains math → inject the MathJax loader.
     pub has_math: bool,
+    /// `lang` attribute (locale-aware).
+    pub lang: String,
+    /// (label, href, current) language switcher entries.
+    pub translations: Vec<(String, String, bool)>,
 }
 
 /// The whole HTML document; `content` is the VPContent body.
 pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::markdown::Heading], body_html: String) -> impl Renderable + 'a {
-    let lang = site.config.lang.clone();
+    let lang = shell.lang.clone();
     let title = shell.title.clone();
     let description = shell.description.clone();
     let syntax_css = site.url("syntax.css");
@@ -65,8 +69,8 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
                 <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" x-cloak x-show="$store.ui.screen || $store.ui.sidebar" @click="$store.ui.screen = false; $store.ui.sidebar = false"></div>
 
                 <header class="relative top-[var(--vp-layout-top-height,0px)] left-0 z-(--vp-z-index-nav) w-full pointer-events-none lg:fixed">
-                    (navbar::navbar(site, &current_url, is_home, has_sidebar))
-                    (navbar::nav_screen(site, &current_url))
+                    (navbar::navbar(site, &current_url, is_home, has_sidebar, &shell.translations))
+                    (navbar::nav_screen(site, &current_url, &shell.translations))
                 </header>
 
                 (Raw::dangerously_create(super::local_nav::local_nav(site, is_home, has_sidebar, headings)))

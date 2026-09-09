@@ -19,7 +19,13 @@ fn nav_item_active(item: &NavItem, current_url: &str) -> bool {
     }
 }
 
-pub fn navbar<'a>(site: &'a Site, current_url: &'a str, is_home: bool, has_sidebar: bool) -> impl Renderable + 'a {
+pub fn navbar<'a>(
+    site: &'a Site,
+    current_url: &'a str,
+    is_home: bool,
+    has_sidebar: bool,
+    translations: &'a [(String, String, bool)],
+) -> impl Renderable + 'a {
     let home = site.url("/");
     let site_title = site
         .config
@@ -95,6 +101,29 @@ pub fn navbar<'a>(site: &'a Site, current_url: &'a str, is_home: bool, has_sideb
                                         }
                                     </ul>
                                 </nav>
+                            }
+
+                            @if !translations.is_empty() {
+                                <div class="VPFlyout relative hidden md:flex md:items-center md:justify-end md:pl-[17px] group/flyout hover:text-brand-1 transition-colors duration-[250ms]"
+                                    x-data="{ open: false }" @click.outside="open = false">
+                                    <button type="button" class="flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" :aria-expanded=("open.toString()") @click="open = !open" aria-haspopup="true" aria-label="Change language">
+                                        <span class="flex items-center leading-(--vp-nav-height) text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] group-hover/flyout:text-text-2">
+                                            (icon("languages", "size-[1rem]"))
+                                            (icon("chevron-down", "ml-1 size-[0.875rem]"))
+                                        </span>
+                                    </button>
+                                    <div class="menu absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-focus-within/flyout:opacity-100 group-focus-within/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
+                                        <div class="rounded-xl p-3 min-w-32 border border-divider bg-bg-elv shadow-3 transition-colors duration-500 max-h-[calc(100vh-var(--vp-nav-height))] overflow-y-auto">
+                                            <ul>
+                                                @for (label, href, current) in translations {
+                                                    <li>
+                                                        <a class=(format!("block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap text-text-1 transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft{}", if *current { " text-brand-1" } else { "" })) href=(href)>(label.clone())</a>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
                             }
 
                             @if toggleable {
@@ -215,7 +244,11 @@ fn appearance_switch(id: &'static str) -> impl Renderable {
 }
 
 /// VPNavScreen — the full-screen mobile menu.
-pub fn nav_screen<'a>(site: &'a Site, current_url: &'a str) -> impl Renderable + 'a {
+pub fn nav_screen<'a>(
+    site: &'a Site,
+    current_url: &'a str,
+    translations: &'a [(String, String, bool)],
+) -> impl Renderable + 'a {
     let nav: Vec<&NavItem> = site.config.nav.iter().collect();
     let socials = site.config.social_links.clone();
     let has_nav = !nav.is_empty();
@@ -233,6 +266,18 @@ pub fn nav_screen<'a>(site: &'a Site, current_url: &'a str) -> impl Renderable +
                         }
                     </ul>
                 </nav>
+
+                @if !translations.is_empty() {
+                    <div class="mt-4">
+                        <ul>
+                            @for (label, href, current) in translations {
+                                <li>
+                                    <a class=(format!("leading-[2.4615385] text-[0.8125rem] text-text-1{}", if *current { " text-brand-1" } else { "" })) href=(href)>(label.clone())</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
 
                 @if toggleable {
                     <div class=(format!("appearance flex justify-center items-center pt-3{}", if has_nav { " mt-4" } else { "" }))>
