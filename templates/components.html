@@ -84,7 +84,7 @@
                          absent -> not collapsible, no caret.
    root_title renders the sidebar root as a plain group (VitePress
    `{ text, items }` root entry). `wrap` controls the .group dividers.
-   `collapsed` is toggled at runtime by js/app.js.  #}
+   `collapsed` is toggled at runtime by static/js/app.js.  #}
 
 {% component sidebar_items(section, current_permalink, depth, lang, root_title, wrap) %}
 {% set d = depth | default(value=0) %}

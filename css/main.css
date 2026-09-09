@@ -5,8 +5,8 @@
  *
  * This file contains ONLY theme variables and the couple of global rules
  * that cannot be expressed as utilities. Every component style lives in
- * templates/ (and static/js/app.js for JS-generated markup) as Tailwind
- * utility classes. */
+ * templates/ (and js/ for JS-generated markup) as Tailwind utility
+ * classes. */
 
 /* Pin the layer order: syntax.css (linked first) declares the `syntax`
    layer, and these utilities must always win over it. */
@@ -14,6 +14,7 @@
 
 @import "tailwindcss" source(none);
 @source "../templates";
+@source "../js";
 @source "../static/js";
 @source "../content";
 @import "./fonts.css";

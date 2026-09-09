@@ -1,6 +1,6 @@
 {% set has_languages = config.languages and config.languages | length > 0 %}
 {# VPNavBar — surface is the ::before pseudo; `top`/`screen-open` are
-   toggled by js/app.js. #}
+   toggled by static/js/app.js. #}
 <div class="top relative z-[1] h-(--vp-nav-height) pointer-events-none whitespace-nowrap [--vp-nav-col-offset:0px] [&::before]:content-[''] [&::before]:absolute [&::before]:top-0 [&::before]:right-0 [&::before]:bottom-0 [&::before]:left-(--vp-nav-col-offset) [&::before]:z-[-1] [&::before]:bg-(--vp-nav-bg-color) [&::before]:[backdrop-filter:var(--vp-nav-backdrop-filter)] [&::before]:transition-colors [&::before]:duration-[250ms]{% if is_home %} max-lg:[&.home:not(.screen-open)::before]:bg-transparent{% endif %} max-lg:[&.screen-open::before]:bg-(--vp-nav-bg-color) max-lg:[&.screen-open::before]:transition-none lg:[&.home.top::before]:bg-(--vp-nav-home-bg-color) lg:[&.home.top::before]:[backdrop-filter:none]{% if has_sidebar %} lg:[--vp-nav-col-offset:var(--vp-sidebar-width)] 2xl:[--vp-nav-col-offset:calc((100%-var(--vp-layout-max-width))/2+var(--vp-sidebar-width))]{% endif %}" id="VPNavBar">
   <div class="py-0 pr-2 pl-6 md:pr-8 md:pl-8">
     <div class="flex justify-between mx-auto max-w-[calc(var(--vp-layout-max-width)-4rem)] h-(--vp-nav-height) pointer-events-none">
@@ -135,7 +135,7 @@
           </div>
           {% endif %}
 
-          {# Hamburger — bars animate on hover / `.active` (js/app.js) #}
+          {# Hamburger — bars animate on hover / `.active` (static/js/app.js) #}
           <button type="button" class="group flex justify-center items-center w-12 h-(--vp-nav-height) cursor-pointer md:hidden" id="VPNavBarHamburger" aria-label="Menu" aria-expanded="false">
             <span class="relative w-4 h-[0.875rem] overflow-hidden" aria-hidden="true">
               <span class="absolute w-4 h-[2px] top-0 left-0 bg-text-1 [transition:top_0.25s,background-color_0.5s,transform_0.25s] group-hover:translate-x-1 group-[.active]:top-[0.375rem] group-[.active]:translate-x-0! group-[.active]:rotate-[225deg] group-hover:group-[.active]:bg-text-2 group-hover:group-[.active]:[transition:top_0.25s,background-color_0.25s,transform_0.25s]"></span>

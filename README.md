@@ -22,15 +22,15 @@
 git clone https://github.com/your-name/vitezola themes/vitezola
 ```
 
-The theme ships its Tailwind source (`css/main.css`) but **not** the compiled stylesheet — build it once with the Tailwind CLI (any Node 18+; no other toolchain):
+The theme ships its Tailwind source (`css/main.css`) and JS source (`js/`, ES modules bundled with esbuild) but **not** the compiled assets — build them once (any Node 18+; no other toolchain):
 
 ```sh
-npm install          # installs @tailwindcss/cli
-npm run build:css    # writes static/main.css (minified)
-npm run dev          # or: watch mode while working on templates
+npm install          # installs @tailwindcss/cli + esbuild
+npm run build        # bundles static/js/app.js, writes static/main.css, runs zola build
+npm run dev          # or: watch mode (CSS + JS) with zola serve
 ```
 
-`static/main.css` is generated and gitignored; run `npm run build:css` before `zola build` (or `npm run build` to do both). Utilities are scanned from `templates/`, `static/js/` and `content/`, so classes used in your own templates or front-matter markup are picked up automatically.
+`static/main.css` and `static/js/app.js` are generated and gitignored; run `npm run build:js && npm run build:css` before `zola build` (or `npm run build` to do all three). Utility classes are scanned from `templates/`, `js/`, `static/js/` and `content/`, so classes used in your own templates or front-matter markup are picked up automatically — `js/` is scanned so CSS generation never depends on the JS bundle having been built first.
 
 ### Intentional deviations from the pre-Tailwind build
 
@@ -251,7 +251,7 @@ fr = "Français"
 The repo root is itself a Zola demo site (root-level templates take effect directly):
 
 ```sh
-zola serve
+npm run dev     # watches css/ + js/ and serves the site (build once first with npm run build)
 ```
 
 ## Caveats

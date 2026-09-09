@@ -1,5 +1,5 @@
 {% set has_languages = config.languages and config.languages | length > 0 %}
-{# VPNavScreen — full-screen mobile menu, `hidden` toggled by js/app.js.
+{# VPNavScreen — full-screen mobile menu, `hidden` toggled by static/js/app.js.
    (Menu groups intentionally carry no styling of their own, matching the
    previous stylesheet.) #}
 <div class="fixed inset-0 pt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+1px)] pr-8 pl-8 bg-(--vp-nav-screen-bg-color) w-full overflow-y-auto overscroll-contain transition-colors duration-[250ms] pointer-events-auto opacity-100 md:hidden" id="VPNavScreen" hidden>
@@ -18,7 +18,7 @@
             {% set item_active = false %}
           {% endif %}
           {% if item.items %}
-          {# VPNavScreenMenuGroup — `.open` toggled by js/app.js #}
+          {# VPNavScreenMenuGroup — `.open` toggled by static/js/app.js #}
           <div class="VPNavScreenMenuGroup group{% if item_active %} active{% endif %}">
             <button type="button" class="button cursor-pointer" aria-expanded="false">
               <span class="button-text">{{ item.text }}</span>
@@ -41,7 +41,7 @@
     </nav>
 
     {% if config.languages and config.languages | length > 0 %}
-    {# VPNavScreenTranslations — `.open` toggled by js/app.js #}
+    {# VPNavScreenTranslations — `.open` toggled by static/js/app.js #}
     <div class="group mt-4" id="VPNavScreenTranslations">
       <button type="button" class="title flex items-center w-full pt-3 pb-[0.6875rem] border-b border-divider leading-[1.7142857] text-[0.875rem] font-medium text-text-1 cursor-pointer" aria-expanded="false" aria-controls="VPNavScreenTranslationsList">
         {{ <icon name="languages" class="mr-2 size-[1rem]" /> }}

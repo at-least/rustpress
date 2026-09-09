@@ -4,3 +4,4 @@ node_modules/
 /vitepress/
 /vuepress/
 /static/main.css
+/static/js/app.js
