@@ -68,7 +68,7 @@ pub fn navbar<'a>(site: &'a Site, current_url: &'a str, is_home: bool, has_sideb
                         <div class="content-body relative flex justify-end items-center h-(--vp-nav-height)">
                             <div class="flex items-center md:gap-2 md:pl-6 lg:pl-8">
                                 @if has_search {
-                                    <button type="button" class="flex items-center gap-2 h-(--vp-nav-height) px-[0.875rem] py-2 text-[1.25rem] cursor-pointer md:h-auto md:py-2 md:px-3 md:bg-bg-alt md:rounded-lg md:text-[0.875rem] md:leading-none md:text-text-2" id="VPSearchButton" aria-keyshortcuts="/ control+k meta+k">
+                                    <button type="button" class="flex items-center gap-2 h-(--vp-nav-height) px-[0.875rem] py-2 text-[1.25rem] cursor-pointer md:h-auto md:py-2 md:px-3 md:bg-bg-alt md:rounded-lg md:text-[0.875rem] md:leading-none md:text-text-2" id="VPSearchButton" aria-keyshortcuts="/ control+k meta+k" @click="$store.ui.search = true">
                                         (icon("search", ""))
                                         <span class="hidden md:inline md:text-[0.8125rem]">"Search"</span>
                                         <span class="hidden md:flex md:items-center md:gap-1 md:px-[0.375rem] md:py-1 md:border md:border-divider md:rounded-[0.25rem] md:text-[0.75rem]" aria-hidden="true">

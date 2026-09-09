@@ -39,7 +39,9 @@ impl Site {
         Ok(Site { config, content, sidebars, engine })
     }
 
-    /// Prefix a canonical path with the configured base.
+    /// Prefix a canonical path with the configured base. Relative asset
+    /// names ("syntax.css") are rooted first so they resolve from any
+    /// page depth.
     pub fn url(&self, path: &str) -> String {
         if path.starts_with("http://") || path.starts_with("https://") || path.starts_with("mailto:") {
             return path.to_string();
@@ -48,7 +50,12 @@ impl Site {
         if path == "/" {
             return format!("{base}/");
         }
-        format!("{base}{path}")
+        let rooted = if path.starts_with('/') {
+            path.to_string()
+        } else {
+            format!("/{path}")
+        };
+        format!("{base}{rooted}")
     }
 
     /// Render one page's full HTML document.
@@ -56,6 +63,14 @@ impl Site {
         let rendered = self
             .engine
             .render(page, &self.content, &self.content_root(), &self.content_dir())?;
+        self.render_page_inner(page, &rendered)
+    }
+
+    fn render_page_inner(
+        &self,
+        page: &Page,
+        rendered: &crate::markdown::RenderedPage,
+    ) -> Result<String, BuildError> {
         let has_sidebar = self.sidebars.for_url(&page.url).is_some();
         let (prev, next) = self.sidebars.neighbors(&page.url);
         let prev = prev.and_then(|u| self.content.get(&u));
@@ -88,9 +103,9 @@ impl Site {
         };
 
         let body = if is_home {
-            home::home_page(self, page).render().into_inner().to_string()
+            home::home_page(self, page).render().into_inner()
         } else {
-            doc::doc_page(self, page, &rendered, prev, next, has_sidebar, outline).render().into_inner().to_string()
+            doc::doc_page(self, page, rendered, prev, next, has_sidebar, outline).render().into_inner()
         };
         let document = layout::layout(self, &shell, &rendered.headings, body);
         let html = document.render().into_inner().to_string();
@@ -101,8 +116,25 @@ impl Site {
     /// Build the whole site into `out_dir`.
     pub fn build(&self, site_dir: &Path, out_dir: &Path) -> Result<BuildStats, BuildError> {
         let mut stats = BuildStats::default();
+        let mut search_docs: Vec<serde_json::Value> = Vec::new();
+        let search_enabled = self.config.search.is_some();
         for page in &self.content.pages {
-            let html = self.render_page(page)?;
+            let rendered = self
+                .engine
+                .render(page, &self.content, &self.content_root(), &self.content_dir())?;
+            if search_enabled {
+                let title = if page.is_home() {
+                    self.config.title.clone().unwrap_or_else(|| page.title.clone())
+                } else {
+                    page.title.clone()
+                };
+                search_docs.push(serde_json::json!({
+                    "url": self.url(&page.url),
+                    "title": title,
+                    "body": plain_text(&rendered.html),
+                }));
+            }
+            let html = self.render_page_with(page, rendered)?;
             let file = out_dir.join(page.url.trim_start_matches('/')).join("index.html");
             write_file(&file, html.as_bytes())?;
             stats.pages += 1;
@@ -112,12 +144,28 @@ impl Site {
         write_file(&out_dir.join("404.html"), not_found.as_bytes())?;
         // generated assets
         write_file(&out_dir.join("syntax.css"), self.engine.syntax_css().as_bytes())?;
+        if search_enabled {
+            let json = serde_json::to_string(&search_docs).expect("serializable docs");
+            write_file(&out_dir.join("search-docs.json"), json.as_bytes())?;
+        }
         // site static/ copied verbatim
         let static_dir = site_dir.join("static");
         if static_dir.is_dir() {
             copy_dir(&static_dir, out_dir)?;
         }
         Ok(stats)
+    }
+
+    /// render_page with a precomputed markdown render (build renders
+    /// each page once and reuses the result for the search index).
+    fn render_page_with(
+        &self,
+        page: &Page,
+        rendered: crate::markdown::RenderedPage,
+    ) -> Result<String, BuildError> {
+        let rendered = &rendered;
+        let html = self.render_page_inner(page, rendered)?;
+        Ok(html)
     }
 
     fn render_404(&self) -> Result<String, BuildError> {
@@ -147,7 +195,8 @@ impl Site {
                 </div>
             </div>
         };
-        let document = layout::layout(self, &shell, &[], content);
+        let content_html = content.render().into_inner();
+        let document = layout::layout(self, &shell, &[], content_html);
         Ok(format!("<!DOCTYPE html>\n{}", document.render().into_inner()))
     }
 
@@ -201,6 +250,45 @@ pub enum BuildError {
     Markdown(#[from] crate::markdown::MarkdownError),
     #[error("cannot write {path}: {source}")]
     Write { path: std::path::PathBuf, source: std::io::Error },
+}
+
+/// Search body text: rendered HTML with tags stripped, entities
+/// decoded, whitespace collapsed to single spaces.
+fn plain_text(html: &str) -> String {
+    let mut out = String::with_capacity(html.len());
+    let mut in_tag = false;
+    let mut chars = html.chars().peekable();
+    while let Some(ch) = chars.next() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            '&' if !in_tag => {
+                // decode the handful of entities comrak/hypertext emit
+                let mut entity = String::new();
+                while let Some(&c) = chars.peek() {
+                    if c == ';' || entity.len() > 8 {
+                        break;
+                    }
+                    entity.push(c);
+                    chars.next();
+                }
+                let _ = chars.next(); // consume ';'
+                let decoded: String = match entity.as_str() {
+                    "amp" => "&".into(),
+                    "lt" => "<".into(),
+                    "gt" => ">".into(),
+                    "quot" => "\"".into(),
+                    "apos" => "'".into(),
+                    "nbsp" => "\u{a0}".into(),
+                    other => format!("&{other};"),
+                };
+                out.push_str(&decoded);
+            }
+            c if !in_tag => out.push(c),
+            _ => {}
+        }
+    }
+    out.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 fn write_file(path: &Path, bytes: &[u8]) -> Result<(), BuildError> {

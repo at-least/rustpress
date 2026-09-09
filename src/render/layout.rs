@@ -18,13 +18,14 @@ pub struct Shell<'a> {
 }
 
 /// The whole HTML document; `content` is the VPContent body.
-pub fn layout<'a>(site: &'a Site, shell: &Shell<'a>, headings: &'a [crate::markdown::Heading], content: impl Renderable + 'a) -> impl Renderable + 'a {
+pub fn layout<'a>(site: &'a Site, shell: &Shell<'a>, headings: &'a [crate::markdown::Heading], body_html: String) -> impl Renderable + 'a {
     let lang = site.config.lang.clone();
     let title = shell.title.clone();
     let description = shell.description.clone();
     let syntax_css = site.url("syntax.css");
     let main_css = site.url("main.css");
     let app_js = site.url("js/app.js");
+    let search_index_url = site.url("search-docs.json");
     let is_home = shell.is_home;
     let has_sidebar = shell.has_sidebar;
     let current_url = shell.current_url.to_string();
@@ -64,7 +65,7 @@ pub fn layout<'a>(site: &'a Site, shell: &Shell<'a>, headings: &'a [crate::markd
                 (Raw::dangerously_create(super::sidebar::sidebar(site, &current_url)))
 
                 <div class=(content_class) id="VPContent">
-                    (content)
+                    (Raw::dangerously_create(body_html.clone()))
                 </div>
 
                 @if show_footer {
@@ -81,7 +82,7 @@ pub fn layout<'a>(site: &'a Site, shell: &Shell<'a>, headings: &'a [crate::markd
                 }
 
                 @if site.config.search.is_some() {
-                    (super::search_modal::search_modal())
+                    (super::search_modal::search_modal(&search_index_url))
                 }
 
                 <script src=(app_js) defer></script>

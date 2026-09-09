@@ -8,7 +8,7 @@ use hypertext::prelude::*;
 
 use super::icons::icon;
 
-pub fn search_modal() -> impl Renderable {
+pub fn search_modal(index_url: &str) -> impl Renderable + '_ {
     let kbd_cls = "bg-[rgba(128,128,128,0.1)] rounded-[0.25rem] px-[0.375rem] py-[0.1875rem] min-w-6 inline-block text-center align-middle border border-[rgba(128,128,128,0.15)] shadow-[0_2px_2px_0_rgba(0,0,0,0.1)] font-[inherit]";
     let results_cls = concat!(
         "flex flex-col gap-[0.375rem] overflow-x-hidden overflow-y-auto overscroll-contain",
@@ -23,8 +23,8 @@ pub fn search_modal() -> impl Renderable {
         " [&_mark]:bg-(--vp-local-search-highlight-bg) [&_mark]:text-(--vp-local-search-highlight-text) [&_mark]:rounded-[0.125rem] [&_mark]:px-[0.125rem]",
     );
     rsx! {
-        <div class="fixed inset-0 z-[100] flex" id="VPLocalSearchBox" hidden role="dialog" aria-modal="true">
-            <div class="absolute inset-0 bg-(--vp-backdrop-bg-color) transition-opacity duration-500" id="VPSearchBackdrop"></div>
+        <div class="fixed inset-0 z-[100] flex" id="VPLocalSearchBox" x-cloak x-show="$store.ui.search" x-data="searchModal" data-index-url=(index_url) role="dialog" aria-modal="true">
+            <div class="absolute inset-0 bg-(--vp-backdrop-bg-color) transition-opacity duration-500" id="VPSearchBackdrop" @click="close()"></div>
             <div class="relative p-3 my-16 mx-auto flex flex-col gap-4 bg-(--vp-local-search-bg) w-[min(100vw-3.75rem,56.25rem)] h-min max-h-[min(100vh-8rem,56.25rem)] rounded-md max-md:my-0 max-md:w-screen max-md:h-screen max-md:max-h-none max-md:rounded-none">
                 <form class="border border-divider rounded-[0.25rem] flex items-center px-3 cursor-text focus-within:border-brand-1 max-md:px-2" id="VPSearchBar" onsubmit="return false">
                     <label id="localsearch-label" for="localsearch-input" title="Search">
@@ -33,6 +33,12 @@ pub fn search_modal() -> impl Renderable {
                     <input
                         class="py-[0.375rem] px-3 w-full placeholder:text-text-3 [&::-webkit-search-cancel-button]:hidden"
                         id="localsearch-input"
+                        x-ref="input"
+                        x-model="q"
+                        @input.debounce.200ms="search()"
+                        @keydown.arrow-down.prevent="move(1)"
+                        @keydown.arrow-up.prevent="move(-1)"
+                        @keydown.enter.prevent="enter()"
                         aria-labelledby="localsearch-label"
                         autocomplete="off"
                         autocapitalize="off"
@@ -43,13 +49,13 @@ pub fn search_modal() -> impl Renderable {
                         placeholder="Search docs"
                     >
                     <div class="flex gap-1">
-                        <button type="button" class="p-2 not-disabled:hover:text-brand-1 cursor-pointer" id="VPSearchClear" title="Clear" disabled>
+                        <button type="button" class="p-2 not-disabled:hover:text-brand-1 cursor-pointer" id="VPSearchClear" title="Clear" @click="clear()" :disabled=("q.trim() === ''")>
                             (icon("delete", ""))
                         </button>
                     </div>
                 </form>
 
-                <ul class=(results_cls) id="VPSearchResults" role="listbox" aria-labelledby="localsearch-label"></ul>
+                <ul class=(results_cls) id="VPSearchResults" x-ref="results" x-html=(r#"resultsHtml"#) @click="pick($event)" :class=("(results.length) ? '' : 'flex-1'") role="listbox" aria-labelledby="localsearch-label"></ul>
 
                 <div class="text-[0.8rem] opacity-75 flex flex-wrap gap-4 leading-[1.09375] max-md:hidden" id="VPSearchShortcuts">
                     <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"←"</kbd><kbd class=(kbd_cls)>"→"</kbd>" to navigate"</span>

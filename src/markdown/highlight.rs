@@ -165,15 +165,28 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
             Some(syntax) => {
                 let mut parse_state = ParseState::new(syntax);
                 let mut stack = ScopeStack::new();
+                // Scopes left open at the start of the current line
+                // (multi-line strings, block comments). Each line's spans
+                // are self-balanced: reopen the carried scopes at the line
+                // start, close everything at the line end, so the .line
+                // wrappers never interleave with syntect's spans.
+                let mut carried: Vec<String> = Vec::new();
                 for (idx, line) in LinesWithEndings::from(code).enumerate() {
                     let ops = parse_state
                         .parse_line(line, ss)
                         .map_err(|_| fmt::Error)?;
-                    let (html, _delta) =
+                    let (mut html, delta) =
                         syntect::html::line_tokens_to_classed_spans(line, &ops, CLASS_STYLE, &mut stack)
                             .map_err(|_| fmt::Error)?;
+                    let mut prefix = String::new();
+                    for scope in &carried {
+                        prefix.push_str(&scope_span(scope));
+                    }
+                    let open_now = (carried.len() as isize + delta).max(0) as usize;
+                    html.push_str(&"</span>".repeat(open_now));
+                    carried = stack.to_string().split_whitespace().map(String::from).collect();
                     let class = if hl.contains(&(idx + 1)) { "line hl" } else { "line" };
-                    write!(output, "<span class=\"{class}\">{html}</span>")?;
+                    write!(output, "<span class=\"{class}\">{prefix}{html}</span>")?;
                 }
             }
             None => {
@@ -220,6 +233,12 @@ pub fn syntax_css(light: &Theme, dark: &Theme) -> Result<String, syntect::Error>
 /// The copy button (icons toggled by the `.copied` class rules in the
 /// vp-doc styles); gdCopyCode lives in the Alpine entry.
 const COPY_BUTTON: &str = "<button class=\"vp-copy-button\" type=\"button\" aria-label=\"Copy code\" onclick=\"gdCopyCode(this)\"><svg class=\"icon-copy\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" aria-hidden=\"true\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/></svg><svg class=\"icon-copied\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" aria-hidden=\"true\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"m9 14l2 2l4-4\"/></svg></button>";
+
+/// One reopened scope: a span carrying the scope's st--prefixed atoms.
+fn scope_span(scope: &str) -> String {
+    let classes: Vec<String> = scope.split('.').map(|atom| format!("st-{atom}")).collect();
+    format!("<span class=\"{}\">", classes.join(" "))
+}
 
 fn escape_attr(s: &str) -> String {
     escape_text(s).replace('\'', "&#39;")
@@ -299,5 +318,52 @@ mod tests {
             .write(&mut out2, FENCE_LANG, "lang=", "plain <text>\n", None)
             .unwrap();
         assert!(out2.contains("plain &lt;text&gt;"), "{out2}");
+    }
+}
+
+#[cfg(test)]
+mod span_balance_tests {
+    use super::*;
+    use comrak::adapters::CodefenceRendererAdapter;
+
+    #[test]
+    fn spans_balance_per_block_even_with_cross_line_scopes() {
+        // js template literal + block comment: scopes span lines
+        let code = "const s = `multi\nline`;\n/* block\ncomment */\nlet x = 1;\n";
+        let mut out = String::new();
+        GdCodeRenderer.write(&mut out, FENCE_LANG, "lang=js", code, None).unwrap();
+        let body = out.split("<code").nth(1).unwrap();
+        let body = &body[..body.find("</code>").unwrap()];
+        assert_eq!(
+            body.matches("<span").count(),
+            body.matches("</span>").count(),
+            "spans balance across the block: {out}"
+        );
+        // every .line wrapper is self-contained: within one wrapper's
+        // segment (up to the next wrapper), spans open and close equally
+        let mut rest = body;
+        while let Some(i) = rest.find("<span class=\"line") {
+            let after = &rest[i..];
+            let open_end = after.find('>').unwrap() + 1;
+            let next = after[open_end..]
+                .find("<span class=\"line")
+                .map(|n| open_end + n)
+                .unwrap_or(after.len());
+            let mut segment = &after[open_end..next];
+            // each segment ends with the wrapper's own close (except the
+            // last, whose close precedes </code>) — discount one
+            if let Some(t) = segment.rfind("</span>")
+                && (t + "</span>".len() == segment.len()
+                    || segment[t + 7..].trim_start().starts_with("</code>"))
+                {
+                    segment = &segment[..t];
+                }
+            assert_eq!(
+                segment.matches("<span").count(),
+                segment.matches("</span>").count(),
+                "line wrapper segment unbalanced: {segment}"
+            );
+            rest = &after[open_end..];
+        }
     }
 }
