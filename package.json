@@ -7,7 +7,7 @@
     "build:css": "tailwindcss -i css/main.css -o static/main.css --minify",
     "watch:css": "tailwindcss -i css/main.css -o static/main.css --watch",
     "build": "npm run build:css && zola build",
-    "dev": "tailwindcss -i css/main.css -o static/css/main.css --watch"
+    "dev": "tailwindcss -i css/main.css -o static/main.css --watch"
   },
   "repository": {
     "type": "git",
@@ -17,5 +17,5 @@
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3"
   },
-  "private": "true"
+  "private": true
 }
