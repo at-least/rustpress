@@ -248,21 +248,6 @@ impl Site {
         // 404
         let not_found = self.render_404()?;
         write_file(&out_dir.join("404.html"), not_found.as_bytes())?;
-        // generated assets
-        write_file(&out_dir.join("syntax.css"), self.engine.syntax_css().as_bytes())?;
-        if let Some(css) = &self.theme_css {
-            write_file(&out_dir.join("theme.css"), css.as_bytes())?;
-            stats.theme = true;
-        }
-        if let Some(sitemap) = &self.config.sitemap {
-            let xml = self.sitemap_xml(&sitemap.hostname);
-            write_file(&out_dir.join("sitemap.xml"), xml.as_bytes())?;
-            stats.sitemap = true;
-        }
-        if search_enabled {
-            let json = serde_json::to_string(&search_docs).expect("serializable docs");
-            write_file(&out_dir.join("search-docs.json"), json.as_bytes())?;
-        }
         // site static/ copied verbatim; when the site lives nested under
         // a repo root that also has a static/ dir (the dogfood layout),
         // the root's built assets (app.js, main.css) are layered on top
@@ -277,8 +262,23 @@ impl Site {
                 copy_dir(&root_static, out_dir)?;
             }
         }
-        // dead-link check runs after everything is on disk so asset
-        // references resolve too (like VitePress's build-time check)
+        // generated assets are written AFTER the static copy: a
+        // same-named leftover in static/ (e.g. a stale syntax.css) must
+        // never shadow the freshly generated one
+        write_file(&out_dir.join("syntax.css"), self.engine.syntax_css().as_bytes())?;
+        if search_enabled {
+            let json = serde_json::to_string(&search_docs).expect("serializable docs");
+            write_file(&out_dir.join("search-docs.json"), json.as_bytes())?;
+        }
+        if let Some(css) = &self.theme_css {
+            write_file(&out_dir.join("theme.css"), css.as_bytes())?;
+            stats.theme = true;
+        }
+        if let Some(sitemap) = &self.config.sitemap {
+            let xml = self.sitemap_xml(&sitemap.hostname);
+            write_file(&out_dir.join("sitemap.xml"), xml.as_bytes())?;
+            stats.sitemap = true;
+        }
         match &self.config.ignore_dead_links {
             // IgnoreAll skips the report; Check and IgnorePrefixes both
             // report (prefix filtering already ran at collection time)
