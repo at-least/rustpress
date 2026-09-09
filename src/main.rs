@@ -3,7 +3,7 @@
 
 use std::path::PathBuf;
 
-use anyhow::{Context, bail};
+use anyhow::Context;
 use clap::{Parser, Subcommand};
 
 
@@ -32,7 +32,8 @@ enum Command {
     },
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Command::Build { site } => {
@@ -49,8 +50,7 @@ fn main() -> anyhow::Result<()> {
             );
             Ok(())
         }
-        Command::Serve { site: _, port: _ } => {
-            bail!("serve is not implemented yet");
-        }
+        Command::Serve { site, port } => gen_docs::serve::run(site, port)
+            .await,
     }
 }
