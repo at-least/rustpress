@@ -31,7 +31,19 @@ pub fn sidebar(site: &Site, current_url: &str) -> String {
                 <span class="sr-only" id="sidebar-aria-label">"Sidebar Navigation"</span>
                 <div class=(format!("group {GROUP_CLS}"))>
                     @for item in &items {
-                        (Raw::dangerously_create(node(site, item, current_url, 0)))
+                        @if item.children.is_empty() && item.url.is_some() {
+                            // Root-level bare links render one level deep,
+                            // wrapped in a headless item — like VitePress's
+                            // VPSidebarItem for link-only root entries.
+                            <div class="VPSidebarItem level-0">
+                                <div class=(ITEM_CLS)><div class=(INDICATOR_CLS)></div></div>
+                                <ul class="items">
+                                    <li>(Raw::dangerously_create(node(site, item, current_url, 1)))</li>
+                                </ul>
+                            </div>
+                        } @else {
+                            (Raw::dangerously_create(node(site, item, current_url, 0)))
+                        }
                     }
                 </div>
             </nav>

@@ -94,8 +94,8 @@ fn auto_sidebar_two_trees_in_natural_order() {
         ]
     );
     let (prev, next) = sb.neighbors("/guide/getting-started/");
-    assert_eq!(prev.as_deref(), Some("/guide/asset-handling/"));
-    assert_eq!(next.as_deref(), Some("/guide/markdown/"));
+    assert_eq!(prev.as_ref().map(|(t, u)| (t.as_str(), u.as_str())), Some(("Asset Handling", "/guide/asset-handling/")));
+    assert_eq!(next.as_ref().map(|(t, u)| (t.as_str(), u.as_str())), Some(("Markdown Extensions", "/guide/markdown/")));
 }
 
 #[test]
@@ -134,6 +134,9 @@ fn explicit_vitepress_style_sidebar_resolves_base_chains() {
     );
     // prev/next only within configured leaves
     let (prev, next) = sb.neighbors("/guide/getting-started/");
-    assert_eq!(prev.as_deref(), Some("/guide/what-is-vitepress/"));
+    assert_eq!(
+        prev.as_ref().map(|(_, u)| u.as_str()),
+        Some("/guide/what-is-vitepress/")
+    );
     assert_eq!(next, None);
 }

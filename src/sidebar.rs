@@ -90,16 +90,18 @@ impl Sidebars {
         flat
     }
 
-    /// (prev, next) URLs for a page, per its sidebar's flat order.
-    pub fn neighbors(&self, url: &str) -> (Option<String>, Option<String>) {
+    /// (prev, next) for a page, per its sidebar's flat order, as
+    /// `(sidebar text, url)` pairs — VitePress's pager shows the sidebar
+    /// label, not the page title.
+    pub fn neighbors(&self, url: &str) -> (Option<(String, String)>, Option<(String, String)>) {
         let Some(tree) = self.for_url(url) else {
             return (None, None);
         };
         let flat = Self::flatten(tree);
         match flat.iter().position(|(_, u)| u == url) {
             Some(i) => (
-                i.checked_sub(1).and_then(|p| flat.get(p)).map(|(_, u)| u.clone()),
-                flat.get(i + 1).map(|(_, u)| u.clone()),
+                i.checked_sub(1).and_then(|p| flat.get(p)).cloned(),
+                flat.get(i + 1).cloned(),
             ),
             None => (None, None),
         }
@@ -333,9 +335,24 @@ mod tests {
             ("/guide/c/", "guide/c.md", "C"),
         ]);
         let sb = Sidebars::build(&SiteConfig::default(), &content);
-        assert_eq!(sb.neighbors("/guide/b/"), (Some("/guide/a/".into()), Some("/guide/c/".into())));
-        assert_eq!(sb.neighbors("/guide/a/"), (Some("/guide/".into()), Some("/guide/b/".into())));
-        assert_eq!(sb.neighbors("/guide/c/"), (Some("/guide/b/".into()), None));
+        assert_eq!(
+            sb.neighbors("/guide/b/"),
+            (
+                Some(("A".into(), "/guide/a/".into())),
+                Some(("C".into(), "/guide/c/".into()))
+            )
+        );
+        assert_eq!(
+            sb.neighbors("/guide/a/"),
+            (
+                Some(("Guide".into(), "/guide/".into())),
+                Some(("B".into(), "/guide/b/".into()))
+            )
+        );
+        assert_eq!(
+            sb.neighbors("/guide/c/"),
+            (Some(("B".into(), "/guide/b/".into())), None)
+        );
     }
 
     #[test]
@@ -404,6 +421,6 @@ text = "All"
         assert_eq!(sb.trees[0].prefix, "/");
         let (prev, next) = sb.neighbors("/a/");
         assert_eq!(prev, None);
-        assert_eq!(next.as_deref(), Some("/b/"));
+        assert_eq!(next, Some(("B".into(), "/b/".into())));
     }
 }

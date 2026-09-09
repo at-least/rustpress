@@ -7,10 +7,10 @@ description = "Vite & Vue powered static site generator."
 lang = "en"
 base = "/"
 lastUpdated = true
-logo = "images/vitepress-logo-mini.svg"
+logo = "vitepress-logo-mini.svg"
 
 [editLink]
-pattern = "https://github.com/vuejs/vitepress/edit/main/docs/:path"
+pattern = "https://github.com/vuejs/vitepress/edit/main/docs/en/:path"
 text = "Edit this page on GitHub"
 
 [footer]
@@ -31,15 +31,186 @@ activeMatch = "/guide/"
 
 [[nav]]
 text = "Reference"
-link = "/reference/runtime-api/"
+link = "/reference/site-config/"
 activeMatch = "/reference/"
 
 [[nav]]
 text = "2.0.0-alpha.20"
 items = [
+  { text = "1.6.4", link = "https://vuejs.github.io/vitepress/v1/" },
   { text = "Changelog", link = "https://github.com/vuejs/vitepress/blob/main/CHANGELOG.md" },
+  { text = "Contributing", link = "https://github.com/vuejs/vitepress/blob/main/.github/contributing.md" },
 ]
 
 [[socialLinks]]
 icon = "github"
 link = "https://github.com/vuejs/vitepress"
+
+# Sidebar mirroring vitepress/docs/config.ts (the vitepress.dev docs
+# sidebar) — keep in sync when re-syncing content from upstream.
+
+[sidebar."/guide/"]
+base = "/guide/"
+
+  [[sidebar."/guide/".items]]
+  text = "Introduction"
+  collapsed = false
+
+    [[sidebar."/guide/".items.items]]
+    text = "What is VitePress?"
+    link = "what-is-vitepress"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Getting Started"
+    link = "getting-started"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Routing"
+    link = "routing"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Deploy"
+    link = "deploy"
+
+  [[sidebar."/guide/".items]]
+  text = "Writing"
+  collapsed = false
+
+    [[sidebar."/guide/".items.items]]
+    text = "Markdown Extensions"
+    link = "markdown"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Asset Handling"
+    link = "asset-handling"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Frontmatter"
+    link = "frontmatter"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Using Vue in Markdown"
+    link = "using-vue"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Internationalization"
+    link = "i18n"
+
+  [[sidebar."/guide/".items]]
+  text = "Customization"
+  collapsed = false
+
+    [[sidebar."/guide/".items.items]]
+    text = "Using a Custom Theme"
+    link = "custom-theme"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Extending the Default Theme"
+    link = "extending-default-theme"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Build-Time Data Loading"
+    link = "data-loading"
+
+    [[sidebar."/guide/".items.items]]
+    text = "SSR Compatibility"
+    link = "ssr-compat"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Connecting to a CMS"
+    link = "cms"
+
+  [[sidebar."/guide/".items]]
+  text = "Experimental"
+  collapsed = false
+
+    [[sidebar."/guide/".items.items]]
+    text = "MPA Mode"
+    link = "mpa-mode"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Sitemap Generation"
+    link = "sitemap-generation"
+
+  [[sidebar."/guide/".items]]
+  text = "Config & API Reference"
+  base = "/reference/"
+  link = "site-config"
+
+[sidebar."/reference/"]
+base = "/reference/"
+
+  [[sidebar."/reference/".items]]
+  text = "Reference"
+
+    [[sidebar."/reference/".items.items]]
+    text = "Site Config"
+    link = "site-config"
+
+    [[sidebar."/reference/".items.items]]
+    text = "Frontmatter Config"
+    link = "frontmatter-config"
+
+    [[sidebar."/reference/".items.items]]
+    text = "Runtime API"
+    link = "runtime-api"
+
+    [[sidebar."/reference/".items.items]]
+    text = "CLI"
+    link = "cli"
+
+    [[sidebar."/reference/".items.items]]
+    text = "Default Theme"
+    base = "/reference/default-theme-"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Overview"
+      link = "config"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Nav"
+      link = "nav"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Sidebar"
+      link = "sidebar"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Home Page"
+      link = "home-page"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Footer"
+      link = "footer"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Layout"
+      link = "layout"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Badge"
+      link = "badge"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Team Page"
+      link = "team-page"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Prev / Next Links"
+      link = "prev-next-links"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Edit Link"
+      link = "edit-link"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Last Updated Timestamp"
+      link = "last-updated"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Search"
+      link = "search"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Carbon Ads"
+      link = "carbon-ads"

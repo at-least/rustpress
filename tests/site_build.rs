@@ -113,6 +113,18 @@ fn built_pages_carry_alpine_and_landmarks() {
 }
 
 #[test]
+fn built_pages_render_the_aside_outline() {
+    // parity gate cannot police the outline (the deployed upstream
+    // hydrates it client-side, so the baseline records it empty) — this
+    // is the renderer-level guard instead
+    let (out, _) = build_fixture();
+    let html = std::fs::read_to_string(out.path().join("guide/getting-started/index.html")).unwrap();
+    assert!(html.contains("VPDocAsideOutline"), "outline aside missing");
+    let outline_links = html.matches("class=\"outline-link").count();
+    assert!(outline_links > 0, "outline has no items");
+}
+
+#[test]
 fn dead_links_fail_the_build_and_ignore_works() {
     let fixtures = Path::new("tests/fixtures");
     let mk = |ignore: &str| {

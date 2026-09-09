@@ -270,16 +270,26 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
     let mut fence: Option<(char, usize)> = None;
     let mut group_counter = 0usize;
 
-    let close_markup = |open: Open, out: &mut Vec<String>| match open {
-        Open::Tip => out.extend(["".into(), "</div>".into(), "".into()]),
-        Open::Details => out.extend(["".into(), "</details>".into(), "".into()]),
-        Open::CodeGroup => out.extend(["".into(), "</div>".into(), "</div>".into(), "".into()]),
+    // Containers opened inside a list item keep the item's indent on
+    // every emitted line — at column 0 the HTML block would interrupt
+    // the list (markdown-it keeps the container inside the item).
+    let close_markup = |open: Open, indent: &str, out: &mut Vec<String>| match open {
+        Open::Tip => out.extend(["".into(), format!("{indent}</div>"), "".into()]),
+        Open::Details => out.extend(["".into(), format!("{indent}</details>"), "".into()]),
+        Open::CodeGroup => out.extend([
+            "".into(),
+            format!("{indent}</div>"),
+            format!("{indent}</div>"),
+            "".into(),
+        ]),
         Open::VPre => {}
     };
 
     let lines: Vec<&str> = md.split_inclusive('\n').collect();
     for (idx, line) in lines.iter().enumerate() {
         let bare = line.trim_end_matches(['\n', '\r']);
+        let trimmed = bare.trim_start();
+        let indent = &bare[..bare.len() - trimmed.len()];
         if let Some((ch, n)) = fence {
             out_lines.push(bare.to_string());
             if is_closing_fence(bare, ch, n) {
@@ -292,7 +302,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
             fence = Some((ch, n));
             continue;
         }
-        let t = bare.trim();
+        let t = trimmed.trim_end();
         if t == "[[toc]]" {
             out_lines.push("<!--gd-toc-->".into());
             continue;
@@ -303,7 +313,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
             if let Some(&(top_colons, _)) = stack.last()
                 && colons >= top_colons {
                     let (_, open) = stack.pop().unwrap();
-                    close_markup(open, &mut out_lines);
+                    close_markup(open, indent, &mut out_lines);
                     continue;
                 }
             out_lines.push(bare.to_string());
@@ -321,9 +331,9 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
                     group_counter += 1;
                     let tabs = code_group_tabs(&lines, idx, group_counter);
                     out_lines.extend([
-                        "<div class=\"vp-code-group\" x-data=\"codeGroup\">".into(),
-                        tabs,
-                        "<div class=\"blocks\">".into(),
+                        format!("{indent}<div class=\"vp-code-group\" x-data=\"codeGroup\">"),
+                        format!("{indent}{tabs}"),
+                        format!("{indent}<div class=\"blocks\">"),
                         String::new(),
                     ]);
                 }
@@ -332,8 +342,8 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
                     stack.push((colons, Open::Details));
                     let open_attr = if open { " open" } else { "" };
                     out_lines.extend([
-                        format!("<details class=\"custom-block details\"{open_attr}>"),
-                        format!("<summary>{}</summary>", escape_text(&summary)),
+                        format!("{indent}<details class=\"custom-block details\"{open_attr}>"),
+                        format!("{indent}<summary>{}</summary>", escape_text(&summary)),
                         String::new(),
                     ]);
                 }
@@ -356,11 +366,11 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
                         };
                     stack.push((colons, Open::Tip));
                     let (no_title, title) = parse_tip_rest(rest);
-                    out_lines.push(format!("<div class=\"custom-block {class}\">"));
+                    out_lines.push(format!("{indent}<div class=\"custom-block {class}\">"));
                     if !no_title {
                         let title = title.unwrap_or(default_label);
                         out_lines.push(format!(
-                            "<p class=\"custom-block-title\">{}</p>",
+                            "{indent}<p class=\"custom-block-title\">{}</p>",
                             escape_text(&title)
                         ));
                     }
@@ -372,7 +382,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
         out_lines.push(bare.to_string());
     }
     while let Some((_, open)) = stack.pop() {
-        close_markup(open, &mut out_lines);
+        close_markup(open, "", &mut out_lines);
     }
     let mut out = out_lines.join("\n");
     out.push('\n');
@@ -395,7 +405,7 @@ fn code_group_tabs(lines: &[&str], idx: usize, group_no: usize) -> String {
             continue;
         }
         if let Some((ch, n)) = opening_fence(bare) {
-            let info = bare[n..].trim();
+            let info = bare[fence_info_offset(bare, n)..].trim();
             let label = info
                 .find('[')
                 .and_then(|i| info[i + 1..].find(']').map(|j| info[i + 1..i + 1 + j].to_string()));
@@ -487,8 +497,9 @@ pub fn rewrite_fences(md: &str) -> String {
             continue;
         }
         if let Some((ch, n)) = opening_fence(bare) {
-            let info = &bare[n..];
-            let new_line = format!("{}{}", &bare[..n], rewrite_info(info.trim()));
+            let cut = fence_info_offset(bare, n);
+            let info = &bare[cut..];
+            let new_line = format!("{}{}", &bare[..cut], rewrite_info(info.trim()));
             out.push_str(&new_line);
             out.push('\n');
             fence = Some((ch, n));
@@ -641,6 +652,14 @@ fn is_closing_fence(line: &str, ch: char, n: usize) -> bool {
     count >= n && t[count..].trim().is_empty()
 }
 
+/// Byte offset just past the opening fence marker in `line` (leading
+/// indent + marker run). Slicing the raw line by the marker count alone
+/// is only correct at column 0 — inside a list item the indent would
+/// swallow the backticks and corrupt the fence.
+fn fence_info_offset(line: &str, count: usize) -> usize {
+    line.len() - line.trim_start().len() + count
+}
+
 pub fn escape_text(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     for ch in s.chars() {
@@ -726,6 +745,20 @@ mod tests {
         // fence inside stays literal
         assert!(out.contains("```js [x]"), "{out}");
         assert_eq!(out.matches("gdcode").count(), 1, "{out}");
+    }
+
+    #[test]
+    fn indented_fences_keep_their_marker() {
+        // fences inside list items are indented; the marker must survive
+        // the rewrite (regression: the indent+count mixup dropped the
+        // backticks and turned the fence into paragraph text)
+        let md = "1. step:\n\n   ```json [package.json]\n   { \"a\": 1 }\n   ```\n";
+        let out = rewrite_fences(md);
+        assert!(
+            out.contains("   ```gdcode lang=json label=package.json"),
+            "{out}"
+        );
+        assert!(out.lines().any(|l| l == "   ```"), "{out}");
     }
 
     #[test]

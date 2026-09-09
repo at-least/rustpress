@@ -13,8 +13,8 @@ pub fn doc_page<'a>(
     site: &'a Site,
     page: &'a Page,
     rendered: &'a RenderedPage,
-    prev: Option<&'a Page>,
-    next: Option<&'a Page>,
+    prev: Option<(&'a Page, &'a str)>,
+    next: Option<(&'a Page, &'a str)>,
     has_sidebar: bool,
     outline: (u8, u8),
 ) -> impl Renderable + 'a {
@@ -110,18 +110,18 @@ pub fn doc_page<'a>(
                                     <nav class="border-t border-divider pt-6 grid gap-y-2 sm:grid-cols-2 sm:gap-x-4" aria-labelledby="doc-footer-aria-label">
                                         <span class="sr-only" id="doc-footer-aria-label">"Pager"</span>
                                         <div class="pager">
-                                            @if let Some(p) = prev {
+                                            @if let Some((p, ptitle)) = prev {
                                                 <a class="block border border-divider rounded-lg px-4 pt-[0.6875rem] pb-[0.8125rem] w-full h-full transition-colors duration-[250ms] hover:border-brand-1" href=(site.url(&p.url))>
                                                     <span class="block leading-[1.6666667] text-[0.75rem] font-medium text-text-2">(prev_label.clone())</span>
-                                                    <span class="block leading-[1.4285714] text-[0.875rem] font-medium text-brand-1 transition-colors duration-[250ms]">(p.title.clone())</span>
+                                                    <span class="block leading-[1.4285714] text-[0.875rem] font-medium text-brand-1 transition-colors duration-[250ms]">(ptitle.to_string())</span>
                                                 </a>
                                             }
                                         </div>
                                         <div class="pager">
-                                            @if let Some(n) = next {
+                                            @if let Some((n, ntitle)) = next {
                                                 <a class="block border border-divider rounded-lg px-4 pt-[0.6875rem] pb-[0.8125rem] w-full h-full transition-colors duration-[250ms] hover:border-brand-1 ml-auto text-right" href=(site.url(&n.url))>
                                                     <span class="block leading-[1.6666667] text-[0.75rem] font-medium text-text-2">(next_label.clone())</span>
-                                                    <span class="block leading-[1.4285714] text-[0.875rem] font-medium text-brand-1 transition-colors duration-[250ms]">(n.title.clone())</span>
+                                                    <span class="block leading-[1.4285714] text-[0.875rem] font-medium text-brand-1 transition-colors duration-[250ms]">(ntitle.to_string())</span>
                                                 </a>
                                             }
                                         </div>

@@ -331,12 +331,17 @@ fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
 /// (`<nav class="table-of-contents">`).
 fn replace_toc(html: &str, headings: &[Heading]) -> String {
     const MARK: &str = "<!--gd-toc-->";
+    // VitePress's [[toc]] covers h2–h3 regardless of deeper headings
+    const TOC_LEVELS: (u8, u8) = (2, 3);
     if !html.contains(MARK) {
         return html.to_string();
     }
     let mut body = String::from("<ul>");
     let mut stack: Vec<u8> = Vec::new();
-    for h in headings {
+    for h in headings
+        .iter()
+        .filter(|h| h.level >= TOC_LEVELS.0 && h.level <= TOC_LEVELS.1)
+    {
         if stack.is_empty() {
             body.push_str("<li>");
             stack.push(h.level);

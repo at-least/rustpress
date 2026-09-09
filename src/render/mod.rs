@@ -171,8 +171,10 @@ impl Site {
     ) -> Result<String, BuildError> {
         let has_sidebar = self.sidebars.for_url(&page.url).is_some();
         let (prev, next) = self.sidebars.neighbors(&page.url);
-        let prev = prev.and_then(|u| self.content.get(&u));
-        let next = next.and_then(|u| self.content.get(&u));
+        // pager labels come from the sidebar config (VitePress behavior);
+        // the page is only carried for its URL
+        let prev = prev.and_then(|(text, u)| self.content.get(&u).map(|p| (p, text)));
+        let next = next.and_then(|(text, u)| self.content.get(&u).map(|p| (p, text)));
         let outline = outline_range(&self.config, page);
         let is_home = page.is_home();
 
@@ -199,7 +201,17 @@ impl Site {
         let body = if is_home {
             home::home_page(self, page).render().into_inner()
         } else {
-            doc::doc_page(self, page, rendered, prev, next, has_sidebar, outline).render().into_inner()
+            doc::doc_page(
+                self,
+                page,
+                rendered,
+                prev.as_ref().map(|(p, t)| (*p, t.as_str())),
+                next.as_ref().map(|(p, t)| (*p, t.as_str())),
+                has_sidebar,
+                outline,
+            )
+            .render()
+            .into_inner()
         };
         let document = layout::layout(self, &shell, &rendered.headings, body);
         let html = document.render().into_inner().to_string();
