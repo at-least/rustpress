@@ -1,6 +1,6 @@
 # gen-docs
 
-**A standalone documentation site generator in Rust, speaking VitePress's content format.** Content is ordinary VitePress markdown — YAML front matter, `:::` containers, `[!NOTE]` GitHub alerts, labeled code fences, code groups, `<Badge>` — with no Node runtime at render time: a single Rust binary parses and renders every page (comrak + syntect + hypertext `rsx!` templates), and the little client-side interactivity is Alpine.js over server-rendered markup. Styling is Tailwind CSS v4 with the VitePress default theme's `--vp-*` design tokens.
+**A standalone documentation site generator in Rust, speaking VitePress's content format.** Content is ordinary VitePress markdown — YAML front matter, `:::` containers, `[!NOTE]` GitHub alerts, labeled code fences, code groups, `<Badge>` — with no Node runtime at render time: a single Rust binary parses and renders every page (comrak + tree-sitter + hypertext `rsx!` templates), and the little client-side interactivity is Alpine.js over server-rendered markup. Styling is Tailwind CSS v4 with the VitePress default theme's `--vp-*` design tokens.
 
 ![Zola-free](https://img.shields.io/badge/zola-not%20required-informational) ![rust](https://img.shields.io/badge/rust-1.85%2B-orange) (edition 2024)
 
@@ -9,7 +9,7 @@
 This repo started life as the VitePress default theme ported to Zola. Zola's constraints leaked everywhere: TOML front matter, Tera component calls replacing `:::` containers (`{% <tip kind="tip" title="" no_title={false}> %}` with every parameter mandatory), sidebars derived from directory `_index.md`s because Zola has no sidebar config, a Zola-specific syntax-highlighting pipeline. The content was born VitePress; the format conversion was pure tax. So the renderer became a Rust program and the Zola layer went away:
 
 - **Content format = VitePress**, verbatim. Re-syncing the demo from `vitepress/docs/en` is a file copy.
-- **Renderer = Rust**: comrak (GFM, alerts, footnotes, GitHub-style heading ids) behind a fence-aware preprocessor that expands `:::` containers into HTML blocks (the markdown-it-container trick — inner markdown still parses in the same comrak pass), rewrites ```` ```js{1,3-4} [npm] ```` info strings, inlines `<<< @/path` includes, and rewrites `<Badge>`. Syntax highlighting is syntect with scope classes, dual github-light/github-dark tmThemes (converted from Shiki's VS Code themes), producing a `syntax.css` scoped `html.dark` inside `@layer syntax`.
+- **Renderer = Rust**: comrak (GFM, alerts, footnotes, GitHub-style heading ids) behind a fence-aware preprocessor that expands `:::` containers into HTML blocks (the markdown-it-container trick — inner markdown still parses in the same comrak pass), rewrites ```` ```js{1,3-4} [npm] ```` info strings, inlines `<<< @/path` includes, and rewrites `<Badge>`. Syntax highlighting is tree-sitter (grammars compiled in) with capture-name classes, themes authored in Helix TOML format, producing a `syntax.css` scoped `html.dark` inside `@layer syntax`.
 - **Markup = hypertext `rsx!`** (see `src/render/`): the whole VitePress default theme — navbar, mobile nav screen, auto sidebar, local nav, right-hand outline, doc footer with pager/edit link, home hero/features, search modal, 404.
 - **Interactivity = Alpine.js 3.17** (bundled with esbuild): scrollspy, sidebar drawer and carets, flyouts, appearance toggle (the anti-FOUC script stays vanilla in `<head>`; Alpine can't run pre-paint), code-group tabs, copy buttons, and the local search modal (Ctrl/Cmd+K, `/`).
 - **Search** = a `search-docs.json` (url/title/body per page) built by Rust, scored client-side (title-exact +20, title hits +5, body occurrences capped at +20/token, top 20).
@@ -84,13 +84,16 @@ c-brand-1 = "#83aa63"
 
 The build generates `theme.css` (`:root` / `.dark` custom-property overrides) and every page links it after `main.css`. Because Tailwind utilities (`text-brand-1`, `bg-bg`, …) and the hand-written component rules both reference the `--vp-*` variables via `@theme inline`, overriding the variable reaches everything — no new classes, no CSS rebuild.
 
-The **source-code syntax color scheme is a separate setting** — `[syntax]` in `gen-docs.toml`. Each of `light`/`dark` takes either a built-in name or a path to your own Sublime/TextMate `.tmTheme` file (relative to the site dir). Built-ins: `github-light` / `github-dark` (vendored), plus every syntect bundled theme (`base16-ocean.dark`, `base16-eighties.dark`, `InspiredGitHub`, `Solarized (dark)`, `Solarized (light)`, …):
+The **source-code syntax color scheme is a separate setting** — `[syntax]` in `gen-docs.toml`. Each of `light`/`dark` takes either a built-in name or a path to your own Helix TOML theme file (relative to the site dir). Built-in names: `github-light` / `github-dark` (vendored defaults), plus **all 218 Helix editor themes** are bundled and selectable by file stem:
 
 ```toml
 [syntax]
 light = "github-light"
-dark = "themes/my-dark.tmTheme"   # your own Sublime/TextMate color scheme
+dark = "catppuccin_mocha"        # any of the 218 bundled Helix themes
+# dark = "themes/my-dark.toml"   # or your own Helix/TextMate-style TOML
 ```
+
+Helix theme files map dotted tree-sitter capture scopes to colors, support `[palette]` named colors and `inherits` chains (resolved longest-prefix-first, cycle-safe).
 
 ### Multi-language sites
 
