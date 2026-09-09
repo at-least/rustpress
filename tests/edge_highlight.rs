@@ -6,7 +6,7 @@ fn scope_same_line_open_close() {
     // opens and closes within one line: no carry
     let code = "let x = 1;\n";
     let mut out = String::new();
-    GdCodeRenderer.write(&mut out, "gdcode", "lang=js", code, None).unwrap();
+    GdCodeRenderer::default().write(&mut out, "gdcode", "lang=js", code, None).unwrap();
     let body = out.split("<code").nth(1).unwrap();
     let body = &body[..body.find("</code>").unwrap()];
     assert_eq!(body.matches("<span").count(), body.matches("</span>").count());
@@ -15,7 +15,7 @@ fn scope_same_line_open_close() {
 #[test]
 fn last_line_without_newline() {
     let mut out = String::new();
-    GdCodeRenderer.write(&mut out, "gdcode", "lang=js", "let x = 1;", None).unwrap();
+    GdCodeRenderer::default().write(&mut out, "gdcode", "lang=js", "let x = 1;", None).unwrap();
     assert!(out.contains("<span class=\"line\">"));
 }
 
@@ -23,7 +23,7 @@ fn last_line_without_newline() {
 fn empty_lines_inside_carried_scope() {
     let code = "/* c\n\n\nd */\nlet x = 1;\n";
     let mut out = String::new();
-    GdCodeRenderer.write(&mut out, "gdcode", "lang=js", code, None).unwrap();
+    GdCodeRenderer::default().write(&mut out, "gdcode", "lang=js", code, None).unwrap();
     let body = out.split("<code").nth(1).unwrap();
     let body = &body[..body.find("</code>").unwrap()];
     assert_eq!(body.matches("<span").count(), body.matches("</span>").count());

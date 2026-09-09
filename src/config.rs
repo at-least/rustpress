@@ -89,6 +89,94 @@ pub struct SiteConfig {
     /// Optional "Ask AI" sparkle link in the navbar.
     #[serde(default)]
     pub ask_ai_url: Option<String>,
+
+    /// Markdown feature options ([markdown] section).
+    #[serde(default)]
+    pub markdown: Markdown,
+
+    /// Dark-mode behavior: `true` (default, toggleable, follows system),
+    /// `false` (light only, no toggle), `"dark"` (dark default,
+    /// toggleable), `"force"` (always dark, no toggle), `"force-auto"`
+    /// (always system, no toggle).
+    #[serde(default)]
+    pub appearance: Appearance,
+
+    /// Fail the build on internal links that resolve to nothing.
+    /// `true` ignores all dead links; a string list ignores links that
+    /// start with any listed prefix; absent/false = checking on.
+    #[serde(default)]
+    pub ignore_dead_links: IgnoreDeadLinks,
+
+    /// Emit sitemap.xml when configured (`hostname` required).
+    #[serde(default)]
+    pub sitemap: Option<Sitemap>,
+
+    /// Extra tags injected into every page's <head>.
+    #[serde(default)]
+    pub head: Vec<HeadTag>,
+
+    /// Document title template; `:title` is replaced by the page title.
+    #[serde(default)]
+    pub title_template: Option<String>,
+
+    /// Directory (inside the site dir) holding the markdown content.
+    #[serde(default = "default_src_dir")]
+    pub src_dir: String,
+
+    /// Prev/next pager labels.
+    #[serde(default)]
+    pub doc_footer: Option<DocFooter>,
+
+    /// 404 page texts.
+    #[serde(default)]
+    pub not_found: Option<NotFound>,
+
+    #[serde(default = "default_last_updated_text")]
+    pub last_updated_text: String,
+
+    #[serde(default = "default_return_to_top")]
+    pub return_to_top_label: String,
+
+    #[serde(default = "default_dark_mode_switch_label")]
+    pub dark_mode_switch_label: String,
+
+    #[serde(default = "default_skip_to_content")]
+    pub skip_to_content_label: String,
+
+    /// URL rewrites: source content path pattern → destination template.
+    /// A pattern may end with `:rest*` (captured as `:rest`).
+    #[serde(default)]
+    pub rewrites: std::collections::BTreeMap<String, String>,
+
+    /// Locales for multi-language sites. The special key `root` describes
+    /// the top-level content; every other key names a content
+    /// subdirectory (`content/zh/...` served under `/zh/`).
+    #[serde(default)]
+    pub locales: std::collections::BTreeMap<String, Locale>,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn default_src_dir() -> String {
+    "content".into()
+}
+
+fn default_last_updated_text() -> String {
+    "Last updated".into()
+}
+
+fn default_return_to_top() -> String {
+    "Return to top".into()
+}
+
+fn default_dark_mode_switch_label() -> String {
+    "Appearance".into()
+}
+
+fn default_skip_to_content() -> String {
+    "Skip to content".into()
 }
 
 impl Default for SiteConfig {
@@ -264,6 +352,238 @@ pub enum SearchProvider {
     Local,
 }
 
+/// Dark-mode behavior (see [`SiteConfig::appearance`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Appearance {
+    Toggleable { default_dark: bool },
+    LightOnly,
+    ForceDark,
+    ForceAuto,
+}
+
+impl Default for Appearance {
+    fn default() -> Self {
+        Appearance::Toggleable { default_dark: false }
+    }
+}
+
+impl Appearance {
+    /// Should the navbar toggle switch render at all?
+    pub fn toggleable(&self) -> bool {
+        !matches!(self, Appearance::LightOnly | Appearance::ForceDark | Appearance::ForceAuto)
+    }
+}
+
+impl<'de> Deserialize<'de> for Appearance {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error as _;
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Raw {
+            Bool(bool),
+            Word(String),
+        }
+        match Raw::deserialize(deserializer)? {
+            Raw::Bool(true) => Ok(Appearance::Toggleable { default_dark: false }),
+            Raw::Bool(false) => Ok(Appearance::LightOnly),
+            Raw::Word(w) => match w.as_str() {
+                "dark" => Ok(Appearance::Toggleable { default_dark: true }),
+                "force" => Ok(Appearance::ForceDark),
+                "force-auto" => Ok(Appearance::ForceAuto),
+                other => Err(D::Error::custom(format!(
+                    "unknown appearance {other:?}: expected true, false, \"dark\", \"force\", \"force-auto\""
+                ))),
+            },
+        }
+    }
+}
+
+/// `ignoreDeadLinks`: `true` (ignore all) or a list of link prefixes.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub enum IgnoreDeadLinks {
+    #[default]
+    Check,
+    IgnoreAll,
+    IgnorePrefixes(Vec<String>),
+}
+
+impl<'de> Deserialize<'de> for IgnoreDeadLinks {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Raw {
+            Bool(bool),
+            Prefixes(Vec<String>),
+        }
+        match Raw::deserialize(deserializer)? {
+            Raw::Bool(true) => Ok(IgnoreDeadLinks::IgnoreAll),
+            Raw::Bool(false) => Ok(IgnoreDeadLinks::Check),
+            Raw::Prefixes(v) => Ok(IgnoreDeadLinks::IgnorePrefixes(v)),
+        }
+    }
+}
+
+/// `[sitemap]` — emits sitemap.xml.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct Sitemap {
+    pub hostname: String,
+}
+
+/// One `[[head]]` tag: `tag`, inline-table `attrs`, optional `children`.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct HeadTag {
+    pub tag: String,
+    #[serde(default)]
+    pub attrs: std::collections::BTreeMap<String, String>,
+    #[serde(default)]
+    pub children: Option<String>,
+}
+
+/// Markdown feature switches ([markdown] section).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct Markdown {
+    /// Number the lines of every code block (per-fence `:line-numbers`
+    /// / `:no-line-numbers` overrides).
+    #[serde(default)]
+    pub line_numbers: bool,
+
+    /// Render the hover copy button on code blocks.
+    #[serde(default = "default_true")]
+    pub code_copy_button: bool,
+
+    /// Render `$…$` / `$$…$$` TeX via client-side MathJax.
+    #[serde(default)]
+    pub math: bool,
+
+    #[serde(default)]
+    pub image: ImageOptions,
+
+    #[serde(default)]
+    pub container: ContainerOptions,
+}
+
+impl Default for Markdown {
+    fn default() -> Self {
+        toml::from_str("").unwrap()
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct ImageOptions {
+    /// Add `loading="lazy"` to content images.
+    #[serde(default)]
+    pub lazy_loading: bool,
+}
+
+
+
+/// Container title labels and custom container kinds. Keys are the
+/// VitePress `markdown.container` label names.
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct ContainerOptions {
+    #[serde(default)]
+    pub tip_label: Option<String>,
+    #[serde(default)]
+    pub warning_label: Option<String>,
+    #[serde(default)]
+    pub danger_label: Option<String>,
+    #[serde(default)]
+    pub note_label: Option<String>,
+    #[serde(default)]
+    pub info_label: Option<String>,
+    #[serde(default)]
+    pub important_label: Option<String>,
+    #[serde(default)]
+    pub caution_label: Option<String>,
+    #[serde(default)]
+    pub details_label: Option<String>,
+    /// Custom `::: name` containers: rendered with `kind`'s styling and
+    /// the given label (default: the name uppercased).
+    #[serde(default, rename = "custom")]
+    pub custom: Vec<CustomContainer>,
+}
+
+impl ContainerOptions {
+    /// Display label for a builtin kind.
+    pub fn label_for(&self, kind: &str) -> String {
+        let upper = kind.to_uppercase();
+        match kind {
+            "tip" => self.tip_label.clone(),
+            "warning" => self.warning_label.clone(),
+            "danger" => self.danger_label.clone(),
+            "note" => self.note_label.clone(),
+            "info" => self.info_label.clone(),
+            "important" => self.important_label.clone(),
+            "caution" => self.caution_label.clone(),
+            _ => None,
+        }
+        .unwrap_or(upper)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct CustomContainer {
+    /// The `::: name` keyword.
+    pub name: String,
+    /// Builtin kind whose styling is reused (default: tip).
+    #[serde(default)]
+    pub kind: Option<String>,
+    /// Title row label (default: the name uppercased).
+    #[serde(default)]
+    pub label: Option<String>,
+}
+
+/// `[docFooter]` — prev/next pager labels.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct DocFooter {
+    #[serde(default)]
+    pub prev: Option<String>,
+    #[serde(default)]
+    pub next: Option<String>,
+}
+
+/// `[notFound]` — 404 page texts.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct NotFound {
+    #[serde(default)]
+    pub title: Option<String>,
+    #[serde(default)]
+    pub quote: Option<String>,
+    #[serde(default)]
+    pub link_text: Option<String>,
+}
+
+/// One locale (`[locales.root]`, `[locales.zh]`, …).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct Locale {
+    /// Display name in the language switcher.
+    pub label: String,
+    /// Language code (`lang` attribute).
+    #[serde(default)]
+    pub lang: Option<String>,
+    /// Locale-specific site title.
+    #[serde(default)]
+    pub title: Option<String>,
+    /// Locale-specific description.
+    #[serde(default)]
+    pub description: Option<String>,
+}
+
 /// Errors loading or validating `gen-docs.toml`.
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
@@ -296,10 +616,10 @@ mod tests {
     }
 
     #[test]
-    fn markdown_section_is_unknown_now() {
-        // themes are fixed; the old [markdown] table must be rejected
+    fn markdown_theme_key_is_unknown_now() {
+        // themes are fixed; the old [markdown.theme] table must be rejected
         let err = toml::from_str::<SiteConfig>("[markdown.theme]\nlight = \"x\"\n").unwrap_err();
-        assert!(err.to_string().contains("markdown"), "{err}");
+        assert!(err.to_string().contains("theme"), "{err}");
     }
 
     #[test]

@@ -13,6 +13,7 @@ use comrak::options::{Plugins, RenderPlugins};
 use comrak::{Anchorizer, Arena, Options};
 use syntect::highlighting::Theme;
 
+use crate::config::Markdown as MarkdownConfig;
 use crate::content::{Content, Page};
 
 /// The one shipped highlight theme pair (vendored tmThemes; see
@@ -50,10 +51,11 @@ pub struct MarkdownEngine {
     renderer: highlight::GdCodeRenderer,
     light: Theme,
     dark: Theme,
+    lazy_images: bool,
 }
 
 impl MarkdownEngine {
-    pub fn new() -> Result<Self, MarkdownError> {
+    pub fn new(config: &MarkdownConfig) -> Result<Self, MarkdownError> {
         let mut options = Options::default();
         let ext = &mut options.extension;
         ext.table = true;
@@ -75,9 +77,15 @@ impl MarkdownEngine {
             .ok_or_else(|| MarkdownError::Theme { name: THEME_DARK.to_string() })?;
         Ok(Self {
             options,
-            renderer: highlight::GdCodeRenderer,
+            renderer: highlight::GdCodeRenderer {
+                options: highlight::RendererOptions {
+                    copy_button: config.code_copy_button,
+                    line_numbers: config.line_numbers,
+                },
+            },
             light,
             dark,
+            lazy_images: config.image.lazy_loading,
         })
     }
 
@@ -112,6 +120,10 @@ impl MarkdownEngine {
         let mut html = String::new();
         comrak::format_html_with_plugins(root, &self.options, &mut html, &plugins)
             .expect("infallible string write");
+        let mut html = replace_toc(&html, &headings);
+        if self.lazy_images {
+            html = html.replace("<img ", "<img loading=\"lazy\" ");
+        }
         Ok(RenderedPage { html, headings })
     }
 }
@@ -205,6 +217,46 @@ fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
     out
 }
 
+/// `[[toc]]` — the placeholder comment (emitted by the preprocessor)
+/// becomes a nested table of contents, VitePress-shaped
+/// (`<nav class="table-of-contents">`).
+fn replace_toc(html: &str, headings: &[Heading]) -> String {
+    const MARK: &str = "<!--gd-toc-->";
+    if !html.contains(MARK) {
+        return html.to_string();
+    }
+    let mut body = String::from("<ul>");
+    let mut stack: Vec<u8> = Vec::new();
+    for h in headings {
+        if stack.is_empty() {
+            body.push_str("<li>");
+            stack.push(h.level);
+        } else if h.level > *stack.last().unwrap() {
+            body.push_str("<ul><li>");
+            stack.push(h.level);
+        } else {
+            while stack.len() > 1 && h.level < *stack.last().unwrap() {
+                body.push_str("</li></ul>");
+                stack.pop();
+            }
+            body.push_str("</li><li>");
+            *stack.last_mut().unwrap() = h.level;
+        }
+        body.push_str(&format!("<a href=\"#{}\">{}</a>", h.id, preprocess::escape_text(&h.text)));
+    }
+    while stack.len() > 1 {
+        body.push_str("</li></ul>");
+        stack.pop();
+    }
+    if !stack.is_empty() {
+        body.push_str("</li>");
+    }
+    body.push_str("</ul>");
+    let toc = format!("<nav class=\"table-of-contents\">{body}</nav>");
+    // both bare and inside the paragraph comrak wraps it in
+    html.replace(&format!("<p>{MARK}</p>"), &toc).replace(MARK, &toc)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -255,3 +307,4 @@ mod tests {
         assert_eq!(resolve_relative("https://x.y/z", "guide/intro.md", &content), None);
     }
 }
+

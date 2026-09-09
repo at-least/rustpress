@@ -58,6 +58,14 @@ pub fn load_theme(name: &str) -> Option<Theme> {
         .cloned()
 }
 
+/// Per-fence line-number setting (`ln=true` / `ln=false` / `ln=5`).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum LineNumbers {
+    On,
+    Off,
+    From(usize),
+}
+
 /// The parsed fence metadata carried in the rewritten info string.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct FenceSpec {
@@ -65,6 +73,7 @@ pub struct FenceSpec {
     pub label: Option<String>,
     /// 1-based highlighted line numbers.
     pub hl: Vec<usize>,
+    pub ln: Option<LineNumbers>,
 }
 
 impl FenceSpec {
@@ -83,6 +92,12 @@ impl FenceSpec {
                 spec.lang = v.to_string();
             } else if let Some(v) = token.strip_prefix("hl=") {
                 spec.hl = parse_line_spec(v);
+            } else if let Some(v) = token.strip_prefix("ln=") {
+                spec.ln = Some(match v {
+                    "true" => LineNumbers::On,
+                    "false" => LineNumbers::Off,
+                    n => LineNumbers::From(n.parse().unwrap_or(1)),
+                });
             }
         }
         spec
@@ -108,9 +123,73 @@ fn parse_line_spec(spec: &str) -> Vec<usize> {
     lines
 }
 
+/// Per-site renderer options (from `[markdown]` in the site config).
+#[derive(Debug, Clone, Copy)]
+pub struct RendererOptions {
+    /// Hover copy button on code blocks.
+    pub copy_button: bool,
+    /// Number lines by default (per-fence `ln=` overrides).
+    pub line_numbers: bool,
+}
+
+impl Default for RendererOptions {
+    fn default() -> Self {
+        Self { copy_button: true, line_numbers: false }
+    }
+}
+
 /// Renders every `gdcode` fence.
 #[derive(Debug, Clone, Copy, Default)]
-pub struct GdCodeRenderer;
+pub struct GdCodeRenderer {
+    pub options: RendererOptions,
+}
+
+/// Shiki-style line notations: `[!code highlight]` / `hl` / `focus` /
+/// `++` / `--` / `warning` / `error`, with `:N` propagating over the
+/// next N-1 lines; `[!!code …]` renders the notation literally.
+fn line_notations(lines: &[String]) -> (Vec<String>, Vec<Vec<&'static str>>) {
+    static NOTATION: OnceLock<regex::Regex> = OnceLock::new();
+    let re = NOTATION.get_or_init(|| {
+        regex::Regex::new(r"\[!(!)?code\s+(highlight|hl|focus|warning|error|\+\+|--)(?::(\d+))?\]").unwrap()
+    });
+    let mut clean: Vec<String> = Vec::with_capacity(lines.len());
+    let mut classes: Vec<Vec<&'static str>> = vec![Vec::new(); lines.len()];
+    let class_of = |kind: &str| match kind {
+        "highlight" | "hl" => "hl",
+        "focus" => "focus",
+        "++" => "diff add",
+        "--" => "diff remove",
+        "warning" => "warning",
+        _ => "error",
+    };
+    for line in lines {
+        let mut line_classes: Vec<&'static str> = Vec::new();
+        let mut out = String::with_capacity(line.len());
+        let mut last = 0usize;
+        for cap in re.captures_iter(line) {
+            let whole = cap.get(0).unwrap();
+            out.push_str(&line[last..whole.start()]);
+            last = whole.end();
+            if cap.get(1).is_some() {
+                // escaped: drop one `!`, keep the notation as literal text
+                out.push_str(&format!("[!code {}{}]", &cap[2], cap.get(3).map(|n| format!(":{}", n.as_str())).unwrap_or_default()));
+                continue;
+            }
+            let class = class_of(&cap[2]);
+            line_classes.push(class);
+            if let Some(n) = cap.get(3).and_then(|n| n.as_str().parse::<usize>().ok()) {
+                // highlight:N also covers the next N-1 lines
+                for extra in classes.iter_mut().skip(clean.len() + 1).take(n.saturating_sub(1)) {
+                    extra.push(class);
+                }
+            }
+        }
+        out.push_str(&line[last..]);
+        classes[clean.len()].append(&mut line_classes);
+        clean.push(out);
+    }
+    (clean, classes)
+}
 
 impl GdCodeRenderer {
     /// The plugins map comrak dispatches code fences through.
@@ -129,6 +208,15 @@ impl GdCodeRenderer {
         ss.find_syntax_by_token(&l)
             .or_else(|| ss.find_syntax_by_extension(&l))
     }
+
+    fn line_numbers(&self, spec: &FenceSpec) -> (bool, Option<usize>) {
+        match spec.ln {
+            Some(LineNumbers::On) => (true, None),
+            Some(LineNumbers::Off) => (false, None),
+            Some(LineNumbers::From(n)) => (true, Some(n)),
+            None => (self.options.line_numbers, None),
+        }
+    }
 }
 
 impl CodefenceRendererAdapter for GdCodeRenderer {
@@ -144,8 +232,28 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
         let spec = FenceSpec::parse_meta(meta);
         let hl: std::collections::HashSet<usize> = spec.hl.iter().copied().collect();
 
-        write!(output, "<pre class=\"language-{}\">", escape_attr(&spec.lang))?;
-        write!(output, "{COPY_BUTTON}")?;
+        // line notations ([!code …]) are stripped from the text and turn
+        // into per-line classes
+        let raw_lines: Vec<String> = LinesWithEndings::from(code).map(String::from).collect();
+        let (lines, notation_classes) = line_notations(&raw_lines);
+        let has_focus = notation_classes.iter().any(|c| c.contains(&"focus"));
+        let (show_ln, ln_start) = self.line_numbers(&spec);
+
+        let mut pre_class = format!("language-{}", escape_attr(&spec.lang));
+        if has_focus {
+            pre_class.push_str(" has-focus");
+        }
+        if show_ln {
+            pre_class.push_str(" line-numbers");
+        }
+        write!(output, "<pre class=\"{pre_class}\"")?;
+        if show_ln && ln_start.is_some_and(|n| n > 1) {
+            write!(output, " style=\"counter-reset: gdln {};\"", ln_start.unwrap() - 1)?;
+        }
+        write!(output, ">")?;
+        if self.options.copy_button {
+            write!(output, "{COPY_BUTTON}")?;
+        }
         if let Some(label) = &spec.label {
             write!(output, "<span class=\"lang\">{}</span>", escape_text(label))?;
         }
@@ -171,7 +279,7 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                 // start, close everything at the line end, so the .line
                 // wrappers never interleave with syntect's spans.
                 let mut carried: Vec<String> = Vec::new();
-                for (idx, line) in LinesWithEndings::from(code).enumerate() {
+                for (idx, line) in lines.iter().enumerate() {
                     let ops = parse_state
                         .parse_line(line, ss)
                         .map_err(|_| fmt::Error)?;
@@ -185,28 +293,36 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                     let open_now = (carried.len() as isize + delta).max(0) as usize;
                     html.push_str(&"</span>".repeat(open_now));
                     carried = stack.to_string().split_whitespace().map(String::from).collect();
-                    let class = if hl.contains(&(idx + 1)) { "line hl" } else { "line" };
+                    let class = line_class(idx + 1, &hl, &notation_classes[idx]);
                     write!(output, "<span class=\"{class}\">{prefix}{html}</span>")?;
                 }
             }
             None => {
-                for (idx, line) in LinesWithEndings::from(code).enumerate() {
-                    let class = if hl.contains(&(idx + 1)) { "line hl" } else { "line" };
+                for (idx, line) in lines.iter().enumerate() {
+                    let class = line_class(idx + 1, &hl, &notation_classes[idx]);
                     write!(output, "<span class=\"{class}\">{}</span>", escape_text(line))?;
                 }
             }
-        }
-        // syntect wants newline-terminated lines; add a trailing newline
-        // when the source lacks one so the final <span> matches the rest.
-        if !code.is_empty() && !code.ends_with('\n') {
-            // The last line span was emitted without its newline; patch by
-            // closing the code block cleanly (the missing newline is
-            // cosmetic inside <pre>).
         }
         output.write_str("</code></pre>")
     }
 }
 
+/// The class list for one rendered line: `line`, `hl` (from meta or a
+/// notation), plus notation classes (focus / diff / warning / error).
+fn line_class(number: usize, hl: &std::collections::HashSet<usize>, notation: &[&'static str]) -> String {
+    let mut class = String::from("line");
+    if hl.contains(&number) || notation.contains(&"hl") {
+        class.push_str(" hl");
+    }
+    for c in notation {
+        if *c != "hl" {
+            class.push(' ');
+            class.push_str(c);
+        }
+    }
+    class
+}
 /// The dual-theme stylesheet: light rules unscoped, dark rules under
 /// `html.dark`, all inside `@layer syntax` so Tailwind utilities win.
 pub fn syntax_css(light: &Theme, dark: &Theme) -> Result<String, syntect::Error> {
@@ -291,7 +407,7 @@ mod tests {
     #[test]
     fn renderer_emits_vitepress_shaped_markup() {
         let mut out = String::new();
-        GdCodeRenderer
+        GdCodeRenderer::default()
             .write(&mut out, FENCE_LANG, "lang=js hl=2 label=a.js", "const a = 1;\nconst b = 2;\n", None)
             .unwrap();
         assert!(out.starts_with("<pre class=\"language-js\">"), "{out}");
@@ -308,13 +424,13 @@ mod tests {
     #[test]
     fn plain_langs_escape_instead_of_highlight() {
         let mut out = String::new();
-        GdCodeRenderer
+        GdCodeRenderer::default()
             .write(&mut out, FENCE_LANG, "lang=ansi", "\x1b[1mbold\x1b[0m\n", None)
             .unwrap();
         assert!(!out.contains("st-"), "no scope classes: {out}");
         assert!(out.contains("<span class=\"line\">"), "{out}");
         let mut out2 = String::new();
-        GdCodeRenderer
+        GdCodeRenderer::default()
             .write(&mut out2, FENCE_LANG, "lang=", "plain <text>\n", None)
             .unwrap();
         assert!(out2.contains("plain &lt;text&gt;"), "{out2}");
@@ -331,7 +447,7 @@ mod span_balance_tests {
         // js template literal + block comment: scopes span lines
         let code = "const s = `multi\nline`;\n/* block\ncomment */\nlet x = 1;\n";
         let mut out = String::new();
-        GdCodeRenderer.write(&mut out, FENCE_LANG, "lang=js", code, None).unwrap();
+        GdCodeRenderer::default().write(&mut out, FENCE_LANG, "lang=js", code, None).unwrap();
         let body = out.split("<code").nth(1).unwrap();
         let body = &body[..body.find("</code>").unwrap()];
         assert_eq!(
@@ -365,5 +481,75 @@ mod span_balance_tests {
             );
             rest = &after[open_end..];
         }
+    }
+}
+
+#[cfg(test)]
+mod notation_tests {
+    use super::*;
+    use comrak::adapters::CodefenceRendererAdapter;
+
+    fn render(code: &str, meta: &str, options: RendererOptions) -> String {
+        let mut out = String::new();
+        GdCodeRenderer { options }
+            .write(&mut out, FENCE_LANG, meta, code, None)
+            .unwrap();
+        out
+    }
+
+    #[test]
+    fn notations_become_line_classes_and_vanish_from_text() {
+        let out = render(
+            "a [!code highlight]\nb\n// [!code focus]\n+ added [!code ++]\n- gone [!code --]\nw [!code warning]\ne [!code error]\n",
+            "lang=txt",
+            RendererOptions::default(),
+        );
+        assert!(!out.contains("[!code"), "markers stripped: {out}");
+        assert!(out.contains("<span class=\"line hl\">"), "{out}");
+        assert!(out.contains("<pre class=\"language-txt has-focus\">"), "{out}");
+        assert!(out.contains("<span class=\"line focus\">"), "{out}");
+        assert!(out.contains("<span class=\"line diff add\">"), "{out}");
+        assert!(out.contains("<span class=\"line diff remove\">"), "{out}");
+        assert!(out.contains("<span class=\"line warning\">"), "{out}");
+        assert!(out.contains("<span class=\"line error\">"), "{out}");
+    }
+
+    #[test]
+    fn notation_with_count_covers_following_lines() {
+        let out = render("a [!code highlight:3]\nb\nc\nd\n", "lang=txt", RendererOptions::default());
+        // lines 1..=3 get hl
+        let hits = out.matches("<span class=\"line hl\">").count();
+        assert_eq!(hits, 3, "{out}");
+    }
+
+    #[test]
+    fn escaped_notation_keeps_literal_text() {
+        let out = render("x [!!code highlight] y\n", "lang=txt", RendererOptions::default());
+        assert!(out.contains("[!code highlight]"), "literal kept: {out}");
+        assert!(!out.contains("line hl"), "{out}");
+    }
+
+    #[test]
+    fn per_fence_line_numbers() {
+        let on = render("a\nb\n", "lang=txt ln=true", RendererOptions::default());
+        assert!(on.contains("<pre class=\"language-txt line-numbers\">"), "{on}");
+        let from = render("a\nb\n", "lang=txt ln=5", RendererOptions::default());
+        assert!(from.contains("counter-reset: gdln 4;"), "{from}");
+        let off = render("a\n", "lang=txt ln=false", RendererOptions { line_numbers: true, copy_button: true });
+        assert!(!off.contains("line-numbers"), "{off}");
+        let global = render("a\n", "lang=txt", RendererOptions { line_numbers: true, copy_button: true });
+        assert!(global.contains("line-numbers"), "{global}");
+    }
+
+    #[test]
+    fn copy_button_can_be_disabled() {
+        let out = render("a\n", "lang=txt", RendererOptions { line_numbers: false, copy_button: false });
+        assert!(!out.contains("vp-copy-button"), "{out}");
+    }
+
+    #[test]
+    fn meta_hl_and_notations_coexist() {
+        let out = render("a\nb [!code highlight]\n", "lang=txt hl=1", RendererOptions::default());
+        assert_eq!(out.matches("<span class=\"line hl\">").count(), 2, "{out}");
     }
 }

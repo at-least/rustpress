@@ -11,7 +11,7 @@ use gen_docs::markdown::MarkdownEngine;
 use std::path::Path;
 
 fn engine() -> MarkdownEngine {
-    MarkdownEngine::new().expect("engine")
+    MarkdownEngine::new(&gen_docs::config::Markdown::default()).expect("engine")
 }
 
 fn fixture(url: &str) -> gen_docs::markdown::RenderedPage {
@@ -155,5 +155,15 @@ fn syntax_css_carries_github_palette() {
     assert!(
         css.contains("html.dark .st-code") && css.contains("#e1e4e8"),
         "dark palette present"
+    );
+}
+
+#[test]
+fn toc_placeholder_becomes_table_of_contents() {
+    let out = synthetic("[[toc]]\n\n## One\n\ntext\n\n### Deep\n\n## Two\n");
+    assert!(
+        out.html.contains("<nav class=\"table-of-contents\"><ul><li><a href=\"#one\">One</a><ul><li><a href=\"#deep\">Deep</a></li></ul></li><li><a href=\"#two\">Two</a></li></ul></nav>"),
+        "nested toc: {}",
+        &out.html[out.html.find("table-of-contents").map(|i| i.saturating_sub(30)).unwrap_or(0)..].chars().take(260).collect::<String>()
     );
 }

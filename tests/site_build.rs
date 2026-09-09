@@ -15,7 +15,7 @@ fn build_fixture() -> (tempdir::Guard, gen_docs::render::BuildStats) {
     let content = Content::load(&fixtures.join("en")).unwrap();
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
-        engine: MarkdownEngine::new().unwrap(),
+        engine: MarkdownEngine::new(&config.markdown).unwrap(),
         config,
         content,
     };

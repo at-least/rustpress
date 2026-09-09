@@ -248,6 +248,10 @@ pub fn expand_containers(md: &str) -> String {
             continue;
         }
         let t = bare.trim();
+        if t == "[[toc]]" {
+            out_lines.push("<!--gd-toc-->".into());
+            continue;
+        }
         // closing `:::` (3+ colons, nothing else): closes the innermost
         // container opened with ≤ that many colons
         if let Some(colons) = closing_container(t) {
@@ -464,20 +468,20 @@ fn rewrite_info(info: &str) -> String {
                 rest.replace_range(i..i + j + 1, " ");
             }
         }
-    // :line-numbers / :no-line-numbers / :line-numbers=N — unsupported,
-    // stripped (giallo-era parity)
+    // :line-numbers / :no-line-numbers / :line-numbers=N → ln= token
     let mut lang = rest.split_whitespace().next().unwrap_or("").to_string();
-    loop {
-        let stripped = lang
-            .strip_suffix(":line-numbers")
-            .map(str::to_string)
-            .or_else(|| lang.strip_suffix(":no-line-numbers").map(str::to_string));
-        match stripped {
-            Some(s) => lang = s,
-            None => break,
+    let mut ln: Option<String> = None;
+    for (suffix, token) in [
+        (":no-line-numbers", "false"),
+        (":line-numbers", "true"),
+    ] {
+        if let Some(stripped) = lang.strip_suffix(suffix) {
+            lang = stripped.to_string();
+            ln = Some(token.to_string());
         }
     }
     if let Some(i) = lang.find(":line-numbers=") {
+        ln = Some(lang[i + ":line-numbers=".len()..].to_string());
         lang.truncate(i);
     }
     lang = lang.trim_matches(':').to_string();
@@ -485,6 +489,9 @@ fn rewrite_info(info: &str) -> String {
     let mut out = format!("{FENCE_LANG} lang={lang}");
     if let Some(hl) = hl {
         out.push_str(&format!(" hl={hl}"));
+    }
+    if let Some(v) = ln {
+        out.push_str(&format!(" ln={v}"));
     }
     if let Some(label) = label {
         out.push_str(&format!(" label={label}"));
@@ -573,7 +580,7 @@ fn is_closing_fence(line: &str, ch: char, n: usize) -> bool {
     count >= n && t[count..].trim().is_empty()
 }
 
-pub(crate) fn escape_text(s: &str) -> String {
+pub fn escape_text(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     for ch in s.chars() {
         match ch {
@@ -641,7 +648,9 @@ mod tests {
         assert_eq!(rewrite_info("js [npm]"), "gdcode lang=js label=npm");
         assert_eq!(rewrite_info("js{1,3-4}"), "gdcode lang=js hl=1,3-4");
         assert_eq!(rewrite_info("js {4}"), "gdcode lang=js hl=4");
-        assert_eq!(rewrite_info("md:line-numbers"), "gdcode lang=md");
+        assert_eq!(rewrite_info("md:line-numbers"), "gdcode lang=md ln=true");
+        assert_eq!(rewrite_info("ts:no-line-numbers"), "gdcode lang=ts ln=false");
+        assert_eq!(rewrite_info("md:line-numbers=4"), "gdcode lang=md ln=4");
         assert_eq!(rewrite_info("vue [Layout.vue]"), "gdcode lang=vue label=Layout.vue");
         assert_eq!(rewrite_info(""), "gdcode");
         // non-numeric braces are not line specs: left alone
@@ -745,7 +754,7 @@ mod edge_tests {
         // lang with dashes/dots survives
         assert_eq!(rewrite_info("objective-c++"), "gdcode lang=objective-c++");
         // :line-numbers=N mid-token
-        assert_eq!(rewrite_info("md:line-numbers=2"), "gdcode lang=md");
+        assert_eq!(rewrite_info("md:line-numbers=2"), "gdcode lang=md ln=2");
     }
 }
 
