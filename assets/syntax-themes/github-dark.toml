@@ -1,0 +1,31 @@
+# GitHub dark syntax palette (Helix theme format). Block backgrounds
+# come from --vp-code-block-bg; these are token colors only.
+
+"attribute" = "#b392f0"
+"comment" = "#6a737d"
+"constant" = "#79b8ff"
+"constant.builtin" = "#79b8ff"
+"constructor" = "#b392f0"
+"function" = "#b392f0"
+"function.builtin" = "#79b8ff"
+"function.macro" = "#b392f0"
+"keyword" = "#f97583"
+"keyword.operator" = "#f97583"
+"label" = "#9ecbff"
+"namespace" = "#ffab70"
+"operator" = "#f97583"
+"punctuation" = "#e1e4e8"
+"punctuation.bracket" = "#e1e4e8"
+"punctuation.delimiter" = "#e1e4e8"
+"string" = "#9ecbff"
+"string.escape" = "#85e89d"
+"tag" = "#85e89d"
+"tag.attribute" = "#b392f0"
+"type" = "#bff8c8"
+"variable" = "#e1e4e8"
+"variable.builtin" = "#79b8ff"
+"variable.parameter" = "#ffab70"
+"markup.heading" = "#9ecbff"
+"markup.bold" = { fg = "#e1e4e8", modifiers = ["bold"] }
+"markup.italic" = { fg = "#e1e4e8", modifiers = ["italic"] }
+"markup.link.url" = "#9ecbff"

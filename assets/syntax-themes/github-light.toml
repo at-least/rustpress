@@ -1,0 +1,32 @@
+# GitHub light syntax palette (Helix theme format), approximating the
+# vendored github-light colors. Scopes are tree-sitter capture names;
+# a capture falls back to its shortest defined parent scope.
+
+"attribute" = "#e36209"
+"comment" = "#6a737d"
+"constant" = "#005cc5"
+"constant.builtin" = "#005cc5"
+"constructor" = "#6f42c1"
+"function" = "#6f42c1"
+"function.builtin" = "#005cc5"
+"function.macro" = "#6f42c1"
+"keyword" = "#d73a49"
+"keyword.operator" = "#d73a49"
+"label" = "#032f62"
+"namespace" = "#e36209"
+"operator" = "#d73a49"
+"punctuation" = "#24292e"
+"punctuation.bracket" = "#24292e"
+"punctuation.delimiter" = "#24292e"
+"string" = "#032f62"
+"string.escape" = "#22863a"
+"tag" = "#22863a"
+"tag.attribute" = "#6f42c1"
+"type" = "#22863a"
+"variable" = "#24292e"
+"variable.builtin" = "#005cc5"
+"variable.parameter" = "#e36209"
+"markup.heading" = "#032f62"
+"markup.bold" = { fg = "#24292e", modifiers = ["bold"] }
+"markup.italic" = { fg = "#24292e", modifiers = ["italic"] }
+"markup.link.url" = "#032f62"

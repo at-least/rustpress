@@ -79,7 +79,7 @@ fn builds_pages_404_syntax_and_search_docs() {
         assert!(root.join(page).is_file(), "missing {page}");
     }
     let css = std::fs::read_to_string(root.join("syntax.css")).unwrap();
-    assert!(css.contains("html.dark .st-"));
+    assert!(css.contains("html.dark .tk-"));
     let docs: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(root.join("search-docs.json")).unwrap()).unwrap();
     let entries = docs.as_array().unwrap();
@@ -301,43 +301,30 @@ fn syntax_theme_pair_is_selectable() {
         );
         engine.map(|e| e.syntax_css())
     };
-    assert!(mk("base16-ocean.dark").is_ok(), "syntect bundled theme by name");
+    assert!(mk("github-dark").is_ok(), "built-in dark theme");
     let err = mk("no-such-theme").unwrap_err();
     assert!(err.to_string().contains("no-such-theme"), "{err}");
-    let css = mk("base16-ocean.dark").unwrap();
-    assert!(css.contains("html.dark .st-"), "dark still scoped");
+    let css = mk("github-dark").unwrap();
+    assert!(css.contains("html.dark .tk-"), "dark still scoped");
 }
 
 #[test]
-fn custom_tmtheme_file_path() {
-    // a Sublime/TextMate .tmTheme next to gen-docs.toml, selected by path
+fn custom_helix_toml_theme_file_path() {
+    // a Helix TOML theme next to gen-docs.toml, selected by path
     let site_dir = tempdir::tempdir();
     std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
     std::fs::write(site_dir.path().join("content/index.md"), "# Home\n").unwrap();
     std::fs::write(
         site_dir.path().join("gen-docs.toml"),
-        "[syntax]\nlight = \"my.tmTheme\"\ndark = \"github-dark\"\n",
+        "[syntax]\nlight = \"my.toml\"\ndark = \"github-dark\"\n",
     )
     .unwrap();
     std::fs::write(
-        site_dir.path().join("my.tmTheme"),
-        r#"<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>name</key><string>my-theme</string>
-  <key>settings</key>
-  <array>
-    <dict>
-      <key>settings</key>
-      <dict>
-        <key>foreground</key><string>#24292e</string>
-        <key>background</key><string>#ffffff</string>
-      </dict>
-    </dict>
-  </array>
-</dict>
-</plist>"#,
+        site_dir.path().join("my.toml"),
+        r##"
+"keyword" = "#123456"
+"string" = "#abcdef"
+"##,
     )
     .unwrap();
 
@@ -345,13 +332,13 @@ fn custom_tmtheme_file_path() {
     let out = tempdir::tempdir();
     site.build(site_dir.path(), out.path()).unwrap();
     let css = std::fs::read_to_string(out.path().join("syntax.css")).unwrap();
-    assert!(css.contains("#24292e"), "custom theme colors in syntax.css");
+    assert!(css.contains("#123456"), "custom theme colors in syntax.css");
 
     // missing file: error names it
-    std::fs::remove_file(site_dir.path().join("my.tmTheme")).unwrap();
+    std::fs::remove_file(site_dir.path().join("my.toml")).unwrap();
     let err = match Site::load(site_dir.path()) {
         Err(e) => e.to_string(),
-        Ok(_) => panic!("missing .tmTheme should fail at load"),
+        Ok(_) => panic!("missing theme file should fail at load"),
     };
-    assert!(err.contains("my.tmTheme"), "{err}");
+    assert!(err.contains("my.toml"), "{err}");
 }

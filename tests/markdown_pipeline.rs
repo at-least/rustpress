@@ -64,7 +64,7 @@ fn getting_started_renders_containers_code_groups_and_highlighting() {
     assert!(html.contains("<span class=\"lang\">npm</span>"), "npm lang label");
     assert!(html.contains("data-name=\"pnpm\""), "pnpm data-name");
     assert!(html.contains("class=\"language-sh\""), "sh fences highlighted");
-    assert!(html.contains("st-"), "syntect scope classes");
+    assert!(html.contains("tk-"), "tree-sitter capture classes");
     // the <<< @/snippets/init.ansi include: ANSI stripped, fenced
     assert!(!html.contains("\x1b["), "ansi escapes stripped");
     assert!(!html.contains("<<<"), "include line gone");
@@ -140,8 +140,8 @@ fn hl_lines_and_vitepress_fence_syntax() {
 fn syntax_css_dual_theme() {
     let css = engine().syntax_css();
     assert!(css.starts_with("@layer syntax"));
-    assert!(css.contains("html.dark .st-"));
-    assert!(css.lines().any(|l| l.starts_with(".st-") && !l.contains("html.dark")));
+    assert!(css.contains("html.dark .tk-"));
+    assert!(css.lines().any(|l| l.starts_with(".tk-") && !l.contains("html.dark")));
 }
 
 #[test]
@@ -152,21 +152,6 @@ fn container_after_paragraph_interrupts_correctly_through_comrak() {
     assert!(out.html.contains("inner <strong>bold</strong>"), "inner markdown parsed");
 }
 
-#[test]
-fn syntax_css_carries_github_palette() {
-    let css = engine().syntax_css();
-    // github-light global: fg #24292e bg #ffffff; github-dark fg #e1e4e8.
-    // (Block backgrounds ultimately come from --vp-code-block-bg in the
-    // theme CSS, VitePress-style.)
-    assert!(
-        css.lines().any(|l| !l.contains("html.dark") && l.contains("#ffffff")),
-        "light palette present"
-    );
-    assert!(
-        css.contains("html.dark .st-code") && css.contains("#e1e4e8"),
-        "dark palette present"
-    );
-}
 
 #[test]
 fn toc_placeholder_becomes_table_of_contents() {

@@ -1,68 +1,87 @@
-//! Syntax highlighting: the `gdcode` codefence renderer (a comrak
-//! `CodefenceRendererAdapter`) driving syntect with scope-name CSS
-//! classes, plus the dual-theme `syntax.css` generator.
+//! Syntax highlighting: the `gdcode` codefence renderer driving
+//! tree-sitter, plus the dual-theme `syntax.css` generator over Helix
+//! TOML themes.
 //!
 //! Every fenced block is rewritten by the preprocessor to
 //! ```` ```gdcode lang=js label=npm hl=1,3-4 ````, so this renderer sees
-//! the whole site's code through one path: syntect highlighting with
-//! `st-`-prefixed scope classes, per-line `<span class="line">` wrappers
-//! (` hl` on highlighted lines), a server-side `<span class="lang">`
-//! label, and `data-lang`/`data-name` attributes for the client-side
-//! copy button and code-group tabs.
+//! the whole site's code through one path: tree-sitter highlighting with
+//! `tk-`-prefixed capture classes, per-line `<span class="line">`
+//! wrappers (` hl` on highlighted lines, plus `[!code …]` notation
+//! classes), a server-side `<span class="lang">` label, and
+//! `data-lang`/`data-name` attributes for the client-side copy button
+//! and code-group tabs. Languages without a tree-sitter grammar fall
+//! back to escaped plain lines.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
-use std::io::Cursor;
 use std::sync::OnceLock;
 
 use comrak::adapters::CodefenceRendererAdapter;
 use comrak::nodes::Sourcepos;
-use syntect::highlighting::{Theme, ThemeSet};
-use syntect::html::ClassStyle;
-use syntect::parsing::{ParseState, ScopeStack, SyntaxSet};
-use syntect::util::LinesWithEndings;
+use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent, Highlighter};
+
+use super::syntax_theme::{SyntaxTheme, ThemeStyle};
 
 /// The sentinel language token all code fences are rewritten to.
 pub const FENCE_LANG: &str = "gdcode";
 
-/// Scope classes are prefixed to keep them out of the global CSS
-/// namespace (`.st-source.st.js` instead of `.source.js`).
-const CLASS_STYLE: ClassStyle = ClassStyle::SpacedPrefixed { prefix: "st-" };
+/// The tree-sitter capture names we style. `HighlightConfiguration` is
+/// configured with exactly this list, so capture indices always map back
+/// into it; `syntax.css` carries one `.tk-*` rule per name (the theme's
+/// longest-prefix resolution decides which names actually get rules).
+pub const CAPTURE_NAMES: &[&str] = &[
+    "attribute",
+    "comment",
+    "comment.documentation",
+    "constant",
+    "constant.builtin",
+    "constant.builtin.boolean",
+    "constructor",
+    "function",
+    "function.builtin",
+    "function.macro",
+    "function.method",
+    "keyword",
+    "keyword.control.conditional",
+    "keyword.control.import",
+    "keyword.control.repeat",
+    "keyword.control.return",
+    "keyword.function",
+    "keyword.operator",
+    "keyword.storage",
+    "keyword.storage.type",
+    "label",
+    "namespace",
+    "operator",
+    "punctuation.bracket",
+    "punctuation.delimiter",
+    "punctuation.special",
+    "string",
+    "string.escape",
+    "string.special",
+    "tag",
+    "tag.attribute",
+    "type",
+    "type.builtin",
+    "type.definition",
+    "variable",
+    "variable.builtin",
+    "variable.member",
+    "variable.parameter",
+    "markup.heading",
+    "markup.bold",
+    "markup.italic",
+    "markup.list",
+    "markup.quote",
+    "markup.link.url",
+    "markup.raw.inline",
+    "diff.plus",
+    "diff.minus",
+];
 
-const GITHUB_LIGHT: &str = include_str!("../../assets/themes/github-light.tmTheme");
-const GITHUB_DARK: &str = include_str!("../../assets/themes/github-dark.tmTheme");
-
-/// The site's syntax definitions (syntect defaults, newline-flavoured).
-pub fn syntax_set() -> &'static SyntaxSet {
-    static SS: OnceLock<SyntaxSet> = OnceLock::new();
-    SS.get_or_init(SyntaxSet::load_defaults_newlines)
-}
-
-/// Load a highlight theme from a Sublime/TextMate `.tmTheme` file.
-pub fn load_theme_file(path: &std::path::Path) -> Option<Theme> {
-    let file = std::fs::File::open(path).ok()?;
-    let mut reader = std::io::BufReader::new(file);
-    ThemeSet::load_from_reader(&mut reader).ok()
-}
-
-/// Load a highlight theme by name: the vendored github-light/github-dark
-/// pair (converted from Shiki's VS Code themes), else syntect's bundled
-/// set.
-pub fn load_theme(name: &str) -> Option<Theme> {
-    let vendored = match name {
-        "github-light" => Some(GITHUB_LIGHT),
-        "github-dark" => Some(GITHUB_DARK),
-        _ => None,
-    };
-    if let Some(src) = vendored {
-        return ThemeSet::load_from_reader(&mut Cursor::new(src)).ok();
-    }
-    static DEFAULTS: OnceLock<ThemeSet> = OnceLock::new();
-    DEFAULTS
-        .get_or_init(ThemeSet::load_defaults)
-        .themes
-        .get(name)
-        .cloned()
+/// CSS class for a capture name (dots become dashes).
+fn tk_class(capture: &str) -> String {
+    format!("tk-{}", capture.replace('.', "-"))
 }
 
 /// Per-fence line-number setting (`ln=true` / `ln=false` / `ln=5`).
@@ -84,8 +103,8 @@ pub struct FenceSpec {
 }
 
 impl FenceSpec {
-    /// Parse `lang=js hl=1,3-4 label=npm` (label last — it may contain
-    /// spaces).
+    /// Parse `lang=js hl=1,3-4 ln=true label=npm` (label last — it may
+    /// contain spaces).
     pub fn parse_meta(meta: &str) -> FenceSpec {
         let mut spec = FenceSpec::default();
         let rest = if let Some(idx) = meta.find(" label=") {
@@ -151,6 +170,153 @@ pub struct GdCodeRenderer {
     pub options: RendererOptions,
 }
 
+impl GdCodeRenderer {
+    /// The plugins map comrak dispatches code fences through.
+    pub fn plugins_map(&self) -> HashMap<String, &dyn CodefenceRendererAdapter> {
+        let mut map: HashMap<String, &dyn CodefenceRendererAdapter> = HashMap::new();
+        map.insert(FENCE_LANG.to_string(), self);
+        map
+    }
+}
+
+/// The language registry: one entry per supported grammar, with the
+/// fence tokens (canonical + aliases) that select it.
+struct LanguageDef {
+    tokens: &'static [&'static str],
+    highlights: &'static [&'static str],
+    injections: &'static str,
+    language: fn() -> tree_sitter::Language,
+}
+
+const LANGUAGES: &[LanguageDef] = &[
+    LanguageDef {
+        tokens: &["bash", "sh", "shell", "zsh"],
+        highlights: &[tree_sitter_bash::HIGHLIGHT_QUERY],
+        injections: "",
+        language: || tree_sitter_bash::LANGUAGE.into(),
+    },
+    LanguageDef {
+        tokens: &["javascript", "js", "jsx", "mjs", "cjs"],
+        highlights: &[
+            tree_sitter_javascript::HIGHLIGHT_QUERY,
+            tree_sitter_javascript::JSX_HIGHLIGHT_QUERY,
+        ],
+        injections: tree_sitter_javascript::INJECTIONS_QUERY,
+        language: || tree_sitter_javascript::LANGUAGE.into(),
+    },
+    LanguageDef {
+        tokens: &["typescript", "ts"],
+        highlights: &[tree_sitter_typescript::HIGHLIGHTS_QUERY],
+        injections: "",
+        language: || tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
+    },
+    LanguageDef {
+        tokens: &["tsx"],
+        highlights: &[tree_sitter_typescript::HIGHLIGHTS_QUERY],
+        injections: "",
+        language: || tree_sitter_typescript::LANGUAGE_TSX.into(),
+    },
+    LanguageDef {
+        tokens: &["json", "jsonc"],
+        highlights: &[tree_sitter_json::HIGHLIGHTS_QUERY],
+        injections: "",
+        language: || tree_sitter_json::LANGUAGE.into(),
+    },
+    LanguageDef {
+        tokens: &["yaml", "yml"],
+        highlights: &[tree_sitter_yaml::HIGHLIGHTS_QUERY],
+        injections: "",
+        language: || tree_sitter_yaml::LANGUAGE.into(),
+    },
+    LanguageDef {
+        tokens: &["toml"],
+        highlights: &[tree_sitter_toml_ng::HIGHLIGHTS_QUERY],
+        injections: "",
+        language: || tree_sitter_toml_ng::LANGUAGE.into(),
+    },
+    LanguageDef {
+        tokens: &["html"],
+        highlights: &[tree_sitter_html::HIGHLIGHTS_QUERY],
+        injections: tree_sitter_html::INJECTIONS_QUERY,
+        language: || tree_sitter_html::LANGUAGE.into(),
+    },
+    LanguageDef {
+        tokens: &["css"],
+        highlights: &[tree_sitter_css::HIGHLIGHTS_QUERY],
+        injections: "",
+        language: || tree_sitter_css::LANGUAGE.into(),
+    },
+    LanguageDef {
+        tokens: &["python", "py"],
+        highlights: &[tree_sitter_python::HIGHLIGHTS_QUERY],
+        injections: "",
+        language: || tree_sitter_python::LANGUAGE.into(),
+    },
+    LanguageDef {
+        tokens: &["rust", "rs"],
+        highlights: &[tree_sitter_rust::HIGHLIGHTS_QUERY],
+        injections: tree_sitter_rust::INJECTIONS_QUERY,
+        language: || tree_sitter_rust::LANGUAGE.into(),
+    },
+    LanguageDef {
+        tokens: &["go", "golang"],
+        highlights: &[tree_sitter_go::HIGHLIGHTS_QUERY],
+        injections: "",
+        language: || tree_sitter_go::LANGUAGE.into(),
+    },
+    LanguageDef {
+        tokens: &["c"],
+        highlights: &[tree_sitter_c::HIGHLIGHT_QUERY],
+        injections: "",
+        language: || tree_sitter_c::LANGUAGE.into(),
+    },
+    LanguageDef {
+        tokens: &["cpp", "c++"],
+        highlights: &[tree_sitter_cpp::HIGHLIGHT_QUERY],
+        injections: "",
+        language: || tree_sitter_cpp::LANGUAGE.into(),
+    },
+];
+
+/// Compile every grammar's `HighlightConfiguration` once; the map is
+/// keyed by every token (canonical + aliases) that selects it. A grammar
+/// whose queries fail to compile is skipped (its fences fall back to
+/// escaped plain lines).
+fn configs() -> &'static HashMap<&'static str, &'static HighlightConfiguration> {
+    static CONFIGS: OnceLock<HashMap<&'static str, &'static HighlightConfiguration>> = OnceLock::new();
+    CONFIGS.get_or_init(|| {
+        let mut map = HashMap::new();
+        for def in LANGUAGES {
+            let highlights = def.highlights.join("\n");
+            // deliberately leaked: the registry lives for the whole process
+            let Ok(config) = Box::leak(Box::new(HighlightConfiguration::new(
+                (def.language)(),
+                def.tokens[0],
+                &highlights,
+                def.injections,
+                "",
+            ))) else {
+                continue;
+            };
+            config.configure(CAPTURE_NAMES);
+            for token in def.tokens {
+                map.insert(*token, &*config);
+            }
+        }
+        map
+    })
+}
+
+fn config_for(token: &str) -> Option<&'static HighlightConfiguration> {
+    let token = token.trim().to_lowercase();
+    if token.is_empty()
+        || matches!(token.as_str(), "text" | "txt" | "plain" | "ansi" | "md" | "markdown")
+    {
+        return None;
+    }
+    configs().get(token.as_str()).copied()
+}
+
 /// Shiki-style line notations: `[!code highlight]` / `hl` / `focus` /
 /// `++` / `--` / `warning` / `error`, with `:N` propagating over the
 /// next N-1 lines; `[!!code …]` renders the notation literally.
@@ -169,7 +335,7 @@ fn line_notations(lines: &[String]) -> (Vec<String>, Vec<Vec<&'static str>>) {
         "warning" => "warning",
         _ => "error",
     };
-    for line in lines {
+    for (idx, line) in lines.iter().enumerate() {
         let mut line_classes: Vec<&'static str> = Vec::new();
         let mut out = String::with_capacity(line.len());
         let mut last = 0usize;
@@ -179,51 +345,63 @@ fn line_notations(lines: &[String]) -> (Vec<String>, Vec<Vec<&'static str>>) {
             last = whole.end();
             if cap.get(1).is_some() {
                 // escaped: drop one `!`, keep the notation as literal text
-                out.push_str(&format!("[!code {}{}]", &cap[2], cap.get(3).map(|n| format!(":{}", n.as_str())).unwrap_or_default()));
+                out.push_str(&format!(
+                    "[!code {}{}]",
+                    &cap[2],
+                    cap.get(3).map(|n| format!(":{}", n.as_str())).unwrap_or_default()
+                ));
                 continue;
             }
             let class = class_of(&cap[2]);
             line_classes.push(class);
             if let Some(n) = cap.get(3).and_then(|n| n.as_str().parse::<usize>().ok()) {
                 // highlight:N also covers the next N-1 lines
-                for extra in classes.iter_mut().skip(clean.len() + 1).take(n.saturating_sub(1)) {
+                for extra in classes.iter_mut().skip(idx + 1).take(n.saturating_sub(1)) {
                     extra.push(class);
                 }
             }
         }
         out.push_str(&line[last..]);
-        classes[clean.len()].append(&mut line_classes);
+        classes[idx].extend(line_classes.iter().copied());
         clean.push(out);
     }
     (clean, classes)
 }
 
-impl GdCodeRenderer {
-    /// The plugins map comrak dispatches code fences through.
-    pub fn plugins_map(&self) -> HashMap<String, &dyn CodefenceRendererAdapter> {
-        let mut map: HashMap<String, &dyn CodefenceRendererAdapter> = HashMap::new();
-        map.insert(FENCE_LANG.to_string(), self);
-        map
+/// The class list for one rendered line: `line`, `hl` (from meta or a
+/// notation), plus notation classes (focus / diff / warning / error).
+fn line_class(number: usize, hl: &std::collections::HashSet<usize>, notation: &[&'static str]) -> String {
+    let mut class = String::from("line");
+    if hl.contains(&number) || notation.contains(&"hl") {
+        class.push_str(" hl");
     }
-
-    fn syntax_for(&self, lang: &str) -> Option<&'static syntect::parsing::SyntaxReference> {
-        let ss = syntax_set();
-        let l = lang.trim().to_lowercase();
-        if l.is_empty() || l == "text" || l == "txt" || l == "plain" || l == "ansi" {
-            return None;
-        }
-        ss.find_syntax_by_token(&l)
-            .or_else(|| ss.find_syntax_by_extension(&l))
-    }
-
-    fn line_numbers(&self, spec: &FenceSpec) -> (bool, Option<usize>) {
-        match spec.ln {
-            Some(LineNumbers::On) => (true, None),
-            Some(LineNumbers::Off) => (false, None),
-            Some(LineNumbers::From(n)) => (true, Some(n)),
-            None => (self.options.line_numbers, None),
+    for c in notation {
+        if *c != "hl" {
+            class.push(' ');
+            class.push_str(c);
         }
     }
+    class
+}
+
+const COPY_BUTTON: &str = "<button class=\"vp-copy-button\" type=\"button\" aria-label=\"Copy code\" onclick=\"gdCopyCode(this)\"><svg class=\"icon-copy\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" aria-hidden=\"true\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/></svg><svg class=\"icon-copied\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" aria-hidden=\"true\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"m9 14l2 2l4-4\"/></svg></button>";
+
+fn escape_text(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for ch in s.chars() {
+        match ch {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            c => out.push(c),
+        }
+    }
+    out
+}
+
+fn escape_attr(s: &str) -> String {
+    escape_text(s).replace('\'', "&#39;")
 }
 
 impl CodefenceRendererAdapter for GdCodeRenderer {
@@ -241,10 +419,15 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
 
         // line notations ([!code …]) are stripped from the text and turn
         // into per-line classes
-        let raw_lines: Vec<String> = LinesWithEndings::from(code).map(String::from).collect();
+        let raw_lines: Vec<String> = code.split_inclusive('\n').map(String::from).collect();
         let (lines, notation_classes) = line_notations(&raw_lines);
         let has_focus = notation_classes.iter().any(|c| c.contains(&"focus"));
-        let (show_ln, ln_start) = self.line_numbers(&spec);
+        let (show_ln, ln_start) = match spec.ln {
+            Some(LineNumbers::On) => (true, None),
+            Some(LineNumbers::Off) => (false, None),
+            Some(LineNumbers::From(n)) => (true, Some(n)),
+            None => (self.options.line_numbers, None),
+        };
 
         let mut pre_class = format!("language-{}", escape_attr(&spec.lang));
         if has_focus {
@@ -275,33 +458,75 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
         }
         output.write_str(">")?;
 
-        let ss = syntax_set();
-        match self.syntax_for(&spec.lang) {
-            Some(syntax) => {
-                let mut parse_state = ParseState::new(syntax);
-                let mut stack = ScopeStack::new();
-                // Scopes left open at the start of the current line
-                // (multi-line strings, block comments). Each line's spans
-                // are self-balanced: reopen the carried scopes at the line
-                // start, close everything at the line end, so the .line
-                // wrappers never interleave with syntect's spans.
-                let mut carried: Vec<String> = Vec::new();
-                for (idx, line) in lines.iter().enumerate() {
-                    let ops = parse_state
-                        .parse_line(line, ss)
-                        .map_err(|_| fmt::Error)?;
-                    let (mut html, delta) =
-                        syntect::html::line_tokens_to_classed_spans(line, &ops, CLASS_STYLE, &mut stack)
-                            .map_err(|_| fmt::Error)?;
-                    let mut prefix = String::new();
-                    for scope in &carried {
-                        prefix.push_str(&scope_span(scope));
+        let stripped = lines.concat();
+        match config_for(&spec.lang) {
+            Some(config) => {
+                // walk highlight events into classed segments over the
+                // (notation-stripped) source
+                let mut highlighter = Highlighter::new();
+                let events = highlighter
+                    .highlight(config, stripped.as_bytes(), None, |name| config_for(name))
+                    .map_err(|_| fmt::Error)?;
+                let mut segments: Vec<(usize, usize, Option<&'static str>)> = Vec::new();
+                let mut stack: Vec<&'static str> = Vec::new();
+                for event in events {
+                    match event.map_err(|_| fmt::Error)? {
+                        HighlightEvent::HighlightStart(h) => {
+                            stack.push(CAPTURE_NAMES.get(h.0).copied().unwrap_or(""));
+                        }
+                        HighlightEvent::HighlightEnd => {
+                            stack.pop();
+                        }
+                        HighlightEvent::Source { start, end } => {
+                            segments.push((start, end, stack.last().copied()));
+                        }
                     }
-                    let open_now = (carried.len() as isize + delta).max(0) as usize;
-                    html.push_str(&"</span>".repeat(open_now));
-                    carried = stack.to_string().split_whitespace().map(String::from).collect();
+                }
+
+                // render line by line; each line is composed from the
+                // segments clipped to it, so `.line` wrappers never
+                // interleave with capture spans (same trick as Shiki)
+                let bytes = stripped.as_bytes();
+                let mut starts = vec![0usize];
+                for (i, b) in bytes.iter().enumerate() {
+                    if *b == b'\n' {
+                        starts.push(i + 1);
+                    }
+                }
+                // a source ending in a newline produces one trailing empty
+                // start; it has no content and no notation entry
+                starts.retain(|&s| s < bytes.len() || s == 0);
+                for (idx, &start) in starts.iter().enumerate() {
+                    let end = starts.get(idx + 1).copied().unwrap_or(bytes.len());
                     let class = line_class(idx + 1, &hl, &notation_classes[idx]);
-                    write!(output, "<span class=\"{class}\">{prefix}{html}</span>")?;
+                    write!(output, "<span class=\"{class}\">")?;
+                    let mut pos = start;
+                    for (s, e, capture) in &segments {
+                        let seg_start = (*s).max(start);
+                        let seg_end = (*e).min(end);
+                        if seg_end <= seg_start {
+                            continue;
+                        }
+                        if seg_start > pos {
+                            output.write_str(&escape_text(std::str::from_utf8(&bytes[pos..seg_start]).unwrap()))?;
+                            pos = seg_start;
+                        }
+                        match capture {
+                            Some(name) => write!(
+                                output,
+                                "<span class=\"{}\">{}</span>",
+                                tk_class(name),
+                                escape_text(std::str::from_utf8(&bytes[pos..seg_end]).unwrap())
+                            )?,
+                            None => output.write_str(&escape_text(std::str::from_utf8(&bytes[pos..seg_end]).unwrap()))?,
+                        }
+                        pos = seg_end;
+                    }
+                    if pos < end {
+                        output
+                            .write_str(&escape_text(std::str::from_utf8(&bytes[pos..end]).unwrap()))?;
+                    }
+                    output.write_str("</span>")?;
                 }
             }
             None => {
@@ -315,248 +540,41 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
     }
 }
 
-/// The class list for one rendered line: `line`, `hl` (from meta or a
-/// notation), plus notation classes (focus / diff / warning / error).
-fn line_class(number: usize, hl: &std::collections::HashSet<usize>, notation: &[&'static str]) -> String {
-    let mut class = String::from("line");
-    if hl.contains(&number) || notation.contains(&"hl") {
-        class.push_str(" hl");
-    }
-    for c in notation {
-        if *c != "hl" {
-            class.push(' ');
-            class.push_str(c);
-        }
-    }
-    class
-}
 /// The dual-theme stylesheet: light rules unscoped, dark rules under
 /// `html.dark`, all inside `@layer syntax` so Tailwind utilities win.
-pub fn syntax_css(light: &Theme, dark: &Theme) -> Result<String, syntect::Error> {
-    let l = syntect::html::css_for_theme_with_class_style(light, CLASS_STYLE)?;
-    let d = syntect::html::css_for_theme_with_class_style(dark, CLASS_STYLE)?;
+/// Each standard capture name resolves through the theme's longest
+/// prefix; names the theme doesn't style emit no rule (they inherit the
+/// block's base color from the `.vp-doc` rules).
+pub fn syntax_css(light: &SyntaxTheme, dark: &SyntaxTheme) -> String {
+    let block = |theme: &SyntaxTheme, scope_prefix: &str, out: &mut String| {
+        for name in CAPTURE_NAMES {
+            let Some(style) = theme.resolve(name) else { continue };
+            let ThemeStyle { fg, bg, bold, italic, underline } = style;
+            if fg.is_none() && bg.is_none() && !bold && !italic && !underline {
+                continue;
+            }
+            out.push_str(&format!("{scope_prefix}.{} {{\n", tk_class(name)));
+            if let Some(fg) = fg {
+                out.push_str(&format!("  color: {fg};\n"));
+            }
+            if let Some(bg) = bg {
+                out.push_str(&format!("  background-color: {bg};\n"));
+            }
+            if *bold {
+                out.push_str("  font-weight: 600;\n");
+            }
+            if *italic {
+                out.push_str("  font-style: italic;\n");
+            }
+            if *underline {
+                out.push_str("  text-decoration: underline;\n");
+            }
+            out.push_str("}\n");
+        }
+    };
     let mut out = String::from("@layer syntax {\n");
-    out.push_str(&l);
-    out.push('\n');
-    for line in d.lines() {
-        let t = line.trim_start();
-        if t.starts_with('.') {
-            out.push_str("html.dark ");
-            out.push_str(line);
-            out.push('\n');
-        } else {
-            out.push_str(line);
-            out.push('\n');
-        }
-    }
+    block(light, "", &mut out);
+    block(dark, "html.dark ", &mut out);
     out.push_str("}\n");
-    Ok(out)
-}
-
-/// The copy button (icons toggled by the `.copied` class rules in the
-/// vp-doc styles); gdCopyCode lives in the Alpine entry.
-const COPY_BUTTON: &str = "<button class=\"vp-copy-button\" type=\"button\" aria-label=\"Copy code\" onclick=\"gdCopyCode(this)\"><svg class=\"icon-copy\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" aria-hidden=\"true\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/></svg><svg class=\"icon-copied\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" aria-hidden=\"true\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"m9 14l2 2l4-4\"/></svg></button>";
-
-/// One reopened scope: a span carrying the scope's st--prefixed atoms.
-fn scope_span(scope: &str) -> String {
-    let classes: Vec<String> = scope.split('.').map(|atom| format!("st-{atom}")).collect();
-    format!("<span class=\"{}\">", classes.join(" "))
-}
-
-fn escape_attr(s: &str) -> String {
-    escape_text(s).replace('\'', "&#39;")
-}
-
-fn escape_text(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for ch in s.chars() {
-        match ch {
-            '&' => out.push_str("&amp;"),
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '"' => out.push_str("&quot;"),
-            c => out.push(c),
-        }
-    }
     out
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn meta_parsing() {
-        let s = FenceSpec::parse_meta("lang=js hl=1,3-4 label=npm");
-        assert_eq!(s.lang, "js");
-        assert_eq!(s.label.as_deref(), Some("npm"));
-        assert_eq!(s.hl, vec![1, 3, 4]);
-
-        let s = FenceSpec::parse_meta("lang=sh label=.vitepress/config.js");
-        assert_eq!(s.lang, "sh");
-        assert_eq!(s.label.as_deref(), Some(".vitepress/config.js"));
-        assert!(s.hl.is_empty());
-
-        let s = FenceSpec::parse_meta("lang=");
-        assert_eq!(s.lang, "");
-    }
-
-    #[test]
-    fn vendored_themes_load_and_css_generates() {
-        let light = load_theme("github-light").expect("github-light loads");
-        let dark = load_theme("github-dark").expect("github-dark loads");
-        let css = syntax_css(&light, &dark).expect("css generates");
-        assert!(css.starts_with("@layer syntax"));
-        assert!(css.contains("html.dark .st-"), "dark rules scoped: {}", &css[..css.len().min(400)]);
-        assert!(css.contains(".st-"));
-    }
-
-    #[test]
-    fn renderer_emits_vitepress_shaped_markup() {
-        let mut out = String::new();
-        GdCodeRenderer::default()
-            .write(&mut out, FENCE_LANG, "lang=js hl=2 label=a.js", "const a = 1;\nconst b = 2;\n", None)
-            .unwrap();
-        assert!(out.starts_with("<pre class=\"language-js\">"), "{out}");
-        assert!(out.contains("<span class=\"lang\">a.js</span>"));
-        assert!(out.contains("data-lang=\"js\""));
-        assert!(out.contains("data-name=\"a.js\""));
-        assert!(out.contains("<span class=\"line\">"));
-        assert!(out.contains("<span class=\"line hl\">"));
-        assert!(out.ends_with("</code></pre>"));
-        // js highlighting: keyword scopes present
-        assert!(out.contains("st-keyword"), "{out}");
-    }
-
-    #[test]
-    fn plain_langs_escape_instead_of_highlight() {
-        let mut out = String::new();
-        GdCodeRenderer::default()
-            .write(&mut out, FENCE_LANG, "lang=ansi", "\x1b[1mbold\x1b[0m\n", None)
-            .unwrap();
-        assert!(!out.contains("st-"), "no scope classes: {out}");
-        assert!(out.contains("<span class=\"line\">"), "{out}");
-        let mut out2 = String::new();
-        GdCodeRenderer::default()
-            .write(&mut out2, FENCE_LANG, "lang=", "plain <text>\n", None)
-            .unwrap();
-        assert!(out2.contains("plain &lt;text&gt;"), "{out2}");
-    }
-}
-
-#[cfg(test)]
-mod span_balance_tests {
-    use super::*;
-    use comrak::adapters::CodefenceRendererAdapter;
-
-    #[test]
-    fn spans_balance_per_block_even_with_cross_line_scopes() {
-        // js template literal + block comment: scopes span lines
-        let code = "const s = `multi\nline`;\n/* block\ncomment */\nlet x = 1;\n";
-        let mut out = String::new();
-        GdCodeRenderer::default().write(&mut out, FENCE_LANG, "lang=js", code, None).unwrap();
-        let body = out.split("<code").nth(1).unwrap();
-        let body = &body[..body.find("</code>").unwrap()];
-        assert_eq!(
-            body.matches("<span").count(),
-            body.matches("</span>").count(),
-            "spans balance across the block: {out}"
-        );
-        // every .line wrapper is self-contained: within one wrapper's
-        // segment (up to the next wrapper), spans open and close equally
-        let mut rest = body;
-        while let Some(i) = rest.find("<span class=\"line") {
-            let after = &rest[i..];
-            let open_end = after.find('>').unwrap() + 1;
-            let next = after[open_end..]
-                .find("<span class=\"line")
-                .map(|n| open_end + n)
-                .unwrap_or(after.len());
-            let mut segment = &after[open_end..next];
-            // each segment ends with the wrapper's own close (except the
-            // last, whose close precedes </code>) — discount one
-            if let Some(t) = segment.rfind("</span>")
-                && (t + "</span>".len() == segment.len()
-                    || segment[t + 7..].trim_start().starts_with("</code>"))
-                {
-                    segment = &segment[..t];
-                }
-            assert_eq!(
-                segment.matches("<span").count(),
-                segment.matches("</span>").count(),
-                "line wrapper segment unbalanced: {segment}"
-            );
-            rest = &after[open_end..];
-        }
-    }
-}
-
-#[cfg(test)]
-mod notation_tests {
-    use super::*;
-    use comrak::adapters::CodefenceRendererAdapter;
-
-    fn render(code: &str, meta: &str, options: RendererOptions) -> String {
-        let mut out = String::new();
-        GdCodeRenderer { options }
-            .write(&mut out, FENCE_LANG, meta, code, None)
-            .unwrap();
-        out
-    }
-
-    #[test]
-    fn notations_become_line_classes_and_vanish_from_text() {
-        let out = render(
-            "a [!code highlight]\nb\n// [!code focus]\n+ added [!code ++]\n- gone [!code --]\nw [!code warning]\ne [!code error]\n",
-            "lang=txt",
-            RendererOptions::default(),
-        );
-        assert!(!out.contains("[!code"), "markers stripped: {out}");
-        assert!(out.contains("<span class=\"line hl\">"), "{out}");
-        assert!(out.contains("<pre class=\"language-txt has-focus\">"), "{out}");
-        assert!(out.contains("<span class=\"line focus\">"), "{out}");
-        assert!(out.contains("<span class=\"line diff add\">"), "{out}");
-        assert!(out.contains("<span class=\"line diff remove\">"), "{out}");
-        assert!(out.contains("<span class=\"line warning\">"), "{out}");
-        assert!(out.contains("<span class=\"line error\">"), "{out}");
-    }
-
-    #[test]
-    fn notation_with_count_covers_following_lines() {
-        let out = render("a [!code highlight:3]\nb\nc\nd\n", "lang=txt", RendererOptions::default());
-        // lines 1..=3 get hl
-        let hits = out.matches("<span class=\"line hl\">").count();
-        assert_eq!(hits, 3, "{out}");
-    }
-
-    #[test]
-    fn escaped_notation_keeps_literal_text() {
-        let out = render("x [!!code highlight] y\n", "lang=txt", RendererOptions::default());
-        assert!(out.contains("[!code highlight]"), "literal kept: {out}");
-        assert!(!out.contains("line hl"), "{out}");
-    }
-
-    #[test]
-    fn per_fence_line_numbers() {
-        let on = render("a\nb\n", "lang=txt ln=true", RendererOptions::default());
-        assert!(on.contains("<pre class=\"language-txt line-numbers\">"), "{on}");
-        let from = render("a\nb\n", "lang=txt ln=5", RendererOptions::default());
-        assert!(from.contains("counter-reset: gdln 4;"), "{from}");
-        let off = render("a\n", "lang=txt ln=false", RendererOptions { line_numbers: true, copy_button: true });
-        assert!(!off.contains("line-numbers"), "{off}");
-        let global = render("a\n", "lang=txt", RendererOptions { line_numbers: true, copy_button: true });
-        assert!(global.contains("line-numbers"), "{global}");
-    }
-
-    #[test]
-    fn copy_button_can_be_disabled() {
-        let out = render("a\n", "lang=txt", RendererOptions { line_numbers: false, copy_button: false });
-        assert!(!out.contains("vp-copy-button"), "{out}");
-    }
-
-    #[test]
-    fn meta_hl_and_notations_coexist() {
-        let out = render("a\nb [!code highlight]\n", "lang=txt hl=1", RendererOptions::default());
-        assert_eq!(out.matches("<span class=\"line hl\">").count(), 2, "{out}");
-    }
 }

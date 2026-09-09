@@ -4,6 +4,7 @@
 //! → HTML with the `gdcode` highlighter.
 
 pub mod highlight;
+pub mod syntax_theme;
 pub mod preprocess;
 
 use std::path::Path;
@@ -12,17 +13,9 @@ use comrak::nodes::{NodeLink, NodeValue};
 use comrak::options::{Plugins, RenderPlugins};
 use comrak::{Anchorizer, Arena, Options};
 use std::sync::OnceLock;
-use syntect::highlighting::Theme;
-use syntect::highlighting::ThemeSet;
 
 use crate::config::Markdown as MarkdownConfig;
 use crate::content::{Content, Page};
-
-/// The one shipped highlight theme pair (vendored tmThemes; see
-/// assets/themes/). Intentionally not configurable — the generator has a
-/// single design, like the templates.
-pub const THEME_LIGHT: &str = "github-light";
-pub const THEME_DARK: &str = "github-dark";
 
 /// One outline heading with its render-matching anchor id.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -48,7 +41,7 @@ pub struct RenderedPage {
 
 #[derive(Debug, thiserror::Error)]
 pub enum MarkdownError {
-    #[error("cannot load syntax theme {value:?}: {detail} (built-in names: github-light, github-dark, or syntect bundled themes like base16-ocean.dark / InspiredGitHub / Solarized (dark); a value ending in .tmTheme is resolved as a Sublime/TextMate theme file relative to the site dir)")]
+    #[error("cannot load syntax theme {value:?}: {detail} (built-in names: github-light, github-dark; a value ending in .toml is resolved as a Helix theme file relative to the site dir)")]
     ThemeLoad { value: String, detail: String },
     #[error(transparent)]
     Preprocess(#[from] preprocess::PreprocessError),
@@ -58,8 +51,8 @@ pub enum MarkdownError {
 pub struct MarkdownEngine {
     options: Options<'static>,
     renderer: highlight::GdCodeRenderer,
-    light: Theme,
-    dark: Theme,
+    light: syntax_theme::SyntaxTheme,
+    dark: syntax_theme::SyntaxTheme,
     lazy_images: bool,
     math: bool,
     config_container: crate::config::ContainerOptions,
@@ -91,23 +84,18 @@ impl MarkdownEngine {
         // trusted wrappers (containers, badges) as raw HTML too.
         options.render.r#unsafe = true;
         options.render.tasklist_classes = true;
-        // each syntax theme value is a built-in name or a path to a
-        // Sublime/TextMate .tmTheme file (relative to base_dir)
-        let load = |value: &str| -> Result<Theme, MarkdownError> {
-            if value.ends_with(".tmTheme") {
+        // each syntax theme value is a built-in name (github-light /
+        // github-dark) or a path to a Helix TOML theme file (relative to
+        // base_dir)
+        let load = |value: &str| -> Result<syntax_theme::SyntaxTheme, MarkdownError> {
+            if value.ends_with(".toml") {
                 let path = base_dir.join(value);
-                let file = std::fs::File::open(&path).map_err(|e| MarkdownError::ThemeLoad {
+                syntax_theme::load(&path).map_err(|e| MarkdownError::ThemeLoad {
                     value: value.to_string(),
-                    detail: format!("cannot open {}: {e}", path.display()),
-                })?;
-                ThemeSet::load_from_reader(&mut std::io::BufReader::new(file)).map_err(|e| {
-                    MarkdownError::ThemeLoad {
-                        value: value.to_string(),
-                        detail: format!("parse error: {e}"),
-                    }
+                    detail: e.to_string(),
                 })
             } else {
-                highlight::load_theme(value).ok_or_else(|| MarkdownError::ThemeLoad {
+                syntax_theme::builtin(value).ok_or_else(|| MarkdownError::ThemeLoad {
                     value: value.to_string(),
                     detail: "not a built-in name".into(),
                 })
@@ -133,7 +121,7 @@ impl MarkdownEngine {
 
     /// The dual-theme `syntax.css` content.
     pub fn syntax_css(&self) -> String {
-        highlight::syntax_css(&self.light, &self.dark).expect("themes already loaded")
+        highlight::syntax_css(&self.light, &self.dark)
     }
 
     /// Render one page: `site_root` is where `@/` includes resolve,
