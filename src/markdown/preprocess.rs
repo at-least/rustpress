@@ -19,6 +19,7 @@ use std::path::{Path, PathBuf};
 use regex::Regex;
 
 use super::highlight::FENCE_LANG;
+use crate::config::ContainerOptions;
 
 /// Errors during preprocessing (mostly bad includes).
 #[derive(Debug, thiserror::Error)]
@@ -35,6 +36,8 @@ pub struct Preprocess<'a> {
     /// The content directory (`../`-style includes resolve against the
     /// page's directory inside it).
     pub content_dir: &'a Path,
+    /// Container labels and custom kinds ([markdown.container]).
+    pub container: ContainerOptions,
 }
 
 const MAX_INCLUDE_DEPTH: u8 = 8;
@@ -42,7 +45,7 @@ const MAX_INCLUDE_DEPTH: u8 = 8;
 impl<'a> Preprocess<'a> {
     pub fn run(&self, body: &str, page_rel: &str) -> Result<String, PreprocessError> {
         let md = self.resolve_includes(body, page_rel, 0)?;
-        let md = expand_containers(&md);
+        let md = expand_containers(&md, &self.container);
         let md = rewrite_fences(&md);
         Ok(rewrite_badges(&md))
     }
@@ -104,21 +107,36 @@ impl<'a> Preprocess<'a> {
     }
 
     /// `<<< @/snippets/x.ts` / `<<< ../y.js` / `<<< ./z.vue [label]` → a
-    /// fenced block; returns None for forms we don't support (line
-    /// selectors like `{2}`), which stay literal.
+    /// fenced block; returns None for forms we don't support, which stay
+    /// literal.
     fn expand_code_include(&self, line: &str, page_dir: &Path) -> Option<String> {
         let rest = line.trim_start_matches("<<<").trim();
         let (mut target, label) = match rest.find(" [") {
             Some(i) if rest.ends_with(']') => (&rest[..i], Some(rest[i + 2..rest.len() - 1].to_string())),
             _ => (rest, None),
         };
+        // the brace spec comes after any #region anchor — parse it first
+        let mut hl: Option<String> = None;
+        let mut lang_switch: Option<String> = None;
+        let mut ln = false;
+        if let Some(i) = target.find('{') {
+            let j = target[i..].find('}')?;
+            let spec = &target[i + 1..i + j];
+            for token in spec.split_whitespace() {
+                if token == ":line-numbers" {
+                    ln = true;
+                } else if token.chars().all(|c| c.is_ascii_digit() || c == ',' || c == '-') {
+                    hl = Some(token.to_string());
+                } else {
+                    lang_switch = Some(token.trim_end_matches(':').to_string());
+                }
+            }
+            target = &target[..i];
+        }
         let mut region = None;
         if let Some(i) = target.find('#') {
             region = Some(target[i + 1..].to_string());
             target = &target[..i];
-        }
-        if target.contains('{') {
-            return None; // line-selector form unsupported
         }
         let file = if let Some(rel) = target.strip_prefix("@/") {
             self.site_root.join(rel)
@@ -129,16 +147,25 @@ impl<'a> Preprocess<'a> {
         if let Some(name) = region {
             content = extract_region(&content, &name)?;
         }
-        let ext = file
+        if let Some(spec) = &hl {
+            content = pick_lines(&content, spec)?;
+        }
+        let mut ext = file
             .extension()
             .map(|e| e.to_string_lossy().into_owned())
             .unwrap_or_default();
         if ext == "ansi" {
             content = strip_ansi(&content);
         }
+        if let Some(l) = lang_switch {
+            ext = l;
+        }
         let marker = fence_marker_for(&content);
         let mut block = String::new();
         block.push_str(&format!("{marker}{ext}"));
+        if ln {
+            block.push_str(":line-numbers");
+        }
         if let Some(label) = label {
             block.push_str(&format!(" [{label}]"));
         }
@@ -151,6 +178,24 @@ impl<'a> Preprocess<'a> {
         block.push('\n');
         Some(block)
     }
+}
+
+/// 1-based line selection ("1,3-4") for `<<<` includes.
+fn pick_lines(content: &str, spec: &str) -> Option<String> {
+    let lines: Vec<&str> = content.split_inclusive('\n').collect();
+    let mut out = String::new();
+    for part in spec.split(',') {
+        if let Some((a, b)) = part.split_once('-') {
+            let (a, b): (usize, usize) = (a.trim().parse().ok()?, b.trim().parse().ok()?);
+            for n in a..=b.min(lines.len()) {
+                out.push_str(lines.get(n - 1)?);
+            }
+        } else {
+            let n: usize = part.trim().parse().ok()?;
+            out.push_str(lines.get(n - 1)?);
+        }
+    }
+    Some(out)
 }
 
 /// `<!--@include: ./file.md-->` → the target path (relative to the page).
@@ -212,7 +257,7 @@ fn fence_marker_for(content: &str) -> String {
 }
 
 /// Pass 2: `:::` containers.
-pub fn expand_containers(md: &str) -> String {
+pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
     #[derive(Clone, Copy)]
     enum Open {
         Tip,
@@ -293,11 +338,27 @@ pub fn expand_containers(md: &str) -> String {
                     ]);
                 }
                 kind => {
+                    // custom containers reuse a builtin kind's styling
+                    let (class, default_label) =
+                        if let Some(cc) = opts.custom.iter().find(|c| c.name == kind) {
+                            (
+                                cc.kind.clone().unwrap_or_else(|| "tip".into()),
+                                cc.label.clone().unwrap_or_else(|| kind.to_uppercase()),
+                            )
+                        } else if matches!(
+                            kind,
+                            "tip" | "warning" | "danger" | "note" | "info" | "important" | "caution"
+                        ) {
+                            (kind.to_string(), opts.label_for(kind))
+                        } else {
+                            out_lines.push(bare.to_string());
+                            continue;
+                        };
                     stack.push((colons, Open::Tip));
                     let (no_title, title) = parse_tip_rest(rest);
-                    out_lines.push(format!("<div class=\"custom-block {kind}\">"));
+                    out_lines.push(format!("<div class=\"custom-block {class}\">"));
                     if !no_title {
-                        let title = title.unwrap_or_else(|| kind.to_uppercase());
+                        let title = title.unwrap_or(default_label);
                         out_lines.push(format!(
                             "<p class=\"custom-block-title\">{}</p>",
                             escape_text(&title)
@@ -427,7 +488,7 @@ pub fn rewrite_fences(md: &str) -> String {
         }
         if let Some((ch, n)) = opening_fence(bare) {
             let info = &bare[n..];
-            let new_line = format!("{} {}", &bare[..n], rewrite_info(info.trim()));
+            let new_line = format!("{}{}", &bare[..n], rewrite_info(info.trim()));
             out.push_str(&new_line);
             out.push('\n');
             fence = Some((ch, n));
@@ -599,7 +660,7 @@ mod tests {
     use super::*;
 
     fn containers(md: &str) -> String {
-        expand_containers(md)
+        expand_containers(md, &ContainerOptions::default())
     }
 
     #[test]
@@ -707,7 +768,7 @@ mod edge_tests {
 
     #[test]
     fn container_directly_after_paragraph_no_blank() {
-        let out = expand_containers("a paragraph\n::: tip\ninner\n:::\nafter\n");
+        let out = expand_containers("a paragraph\n::: tip\ninner\n:::\nafter\n", &ContainerOptions::default());
         // the HTML block must interrupt the paragraph correctly at the
         // comrak layer; here we check the wrapper survives preprocessing
         assert!(out.contains("<div class=\"custom-block tip\">"), "{out}");
@@ -716,14 +777,14 @@ mod edge_tests {
 
     #[test]
     fn adjacent_containers() {
-        let out = expand_containers("::: tip\na\n:::\n::: warning\nb\n:::\n");
+        let out = expand_containers("::: tip\na\n:::\n::: warning\nb\n:::\n", &ContainerOptions::default());
         assert_eq!(out.matches("<div class=\"custom-block").count(), 2, "{out}");
         assert_eq!(out.matches("</div>").count(), 2, "{out}");
     }
 
     #[test]
     fn tilde_fences_protected() {
-        let out = expand_containers("~~~\n::: tip\n~~~\n::: info\nreal\n:::\n");
+        let out = expand_containers("~~~\n::: tip\n~~~\n::: info\nreal\n:::\n", &ContainerOptions::default());
         // ::: inside the tilde fence is literal; the real one expands
         assert!(out.contains("::: tip"), "{out}");
         assert!(out.contains("<div class=\"custom-block info\">"), "{out}");
@@ -732,13 +793,13 @@ mod edge_tests {
     #[test]
     fn fence_with_trailing_spaces_and_info_closer() {
         // closer with trailing spaces; opener with info string
-        let out = expand_containers("```js \n::: tip\n``` \n");
+        let out = expand_containers("```js \n::: tip\n``` \n", &ContainerOptions::default());
         assert!(out.contains("::: tip"), "container inside fence stays literal: {out}");
     }
 
     #[test]
     fn unbalanced_container_closed_at_eof() {
-        let out = expand_containers("::: tip\nnever closed\n");
+        let out = expand_containers("::: tip\nnever closed\n", &ContainerOptions::default());
         assert_eq!(out.matches("<div").count(), out.matches("</div>").count(), "{out}");
     }
 
@@ -766,6 +827,7 @@ mod code_group_tests {
     fn code_group_tabs_built_from_fence_labels() {
         let out = expand_containers(
             "::: code-group\n```sh [npm]\n1\n```\n```sh [pnpm]\n2\n```\n:::\n",
+            &ContainerOptions::default(),
         );
         assert!(out.contains("<div class=\"vp-code-group\" x-data=\"codeGroup\">"), "{out}");
         assert!(out.contains("<div class=\"tabs\">"), "{out}");
@@ -774,7 +836,81 @@ mod code_group_tests {
         assert!(out.contains("<label for=\"group-1-1\">pnpm</label>"), "{out}");
         assert!(out.contains("checked=\"checked\""), "{out}");
         // labels without [label] fall back to the fence language
-        let out2 = expand_containers("::: code-group\n```js\n1\n```\n:::\n");
+        let out2 = expand_containers("::: code-group\n```js\n1\n```\n:::\n", &ContainerOptions::default());
         assert!(out2.contains("<label for=\"group-1-0\">js</label>"), "{out2}");
+    }
+}
+
+#[cfg(test)]
+mod include_and_container_tests {
+    use super::*;
+    use crate::config::{ContainerOptions, CustomContainer};
+    use std::path::Path;
+
+    fn pre() -> Preprocess<'static> {
+        Preprocess {
+            site_root: Path::new("tests/fixtures"),
+            content_dir: Path::new("tests/fixtures/en"),
+            container: ContainerOptions::default(),
+        }
+    }
+
+    #[test]
+    fn include_with_line_selection() {
+        let out = pre()
+            .run("<<< @/snippets/snippet.js{2}\n", "guide/x.md")
+            .unwrap();
+        // only line 2 of snippet.js, fenced as js
+        assert!(out.starts_with("```gdcode lang=js\n"), "{out}");
+        // open fence skipped by skip(1); the closer remains
+        let body: Vec<&str> = out.trim().lines().skip(1).collect();
+        assert_eq!(body.len(), 2, "{out}");
+        assert_eq!(body[0], "  // ..");
+    }
+
+    #[test]
+    fn include_with_range_and_lang_switch() {
+        let out = pre()
+            .run("<<< @/snippets/snippet.js{1-2 ansi}\n", "guide/x.md")
+            .unwrap();
+        assert!(out.contains("```gdcode lang=ansi"), "{out}");
+        let body = out.lines().count() - 2; // minus open/close fences
+        assert_eq!(body, 2, "{out}");
+    }
+
+    #[test]
+    fn include_with_region_and_ln() {
+        let out = pre()
+            .run("<<< @/snippets/snippet-with-region.js#snippet{1 ts:line-numbers}\n", "g/x.md")
+            .unwrap();
+        assert!(out.contains("```gdcode lang=ts ln=true"), "{out}");
+        assert!(out.contains("function foo()"), "region line: {out}");
+        assert_eq!(out.lines().count() - 2, 1, "one content line: {out}");
+    }
+
+    #[test]
+    fn custom_container_renders_with_kind_styling() {
+        let opts = ContainerOptions {
+            custom: vec![CustomContainer {
+                name: "success".into(),
+                kind: Some("tip".into()),
+                label: Some("成功".into()),
+            }],
+            ..Default::default()
+        };
+        let out = expand_containers("::: success\nnice\n:::\n", &opts);
+        assert!(out.contains("<div class=\"custom-block tip\">"), "{out}");
+        assert!(out.contains("成功"), "{out}");
+    }
+
+    #[test]
+    fn container_labels_overridable() {
+        let opts = ContainerOptions { tip_label: Some("提示".into()), ..Default::default() };
+        let out = expand_containers("::: tip\nhi\n:::\n", &opts);
+        assert!(out.contains("提示"), "{out}");
+        // unknown kinds stay literal
+        let out2 = expand_containers("::: mystery\nx\n:::\n", &ContainerOptions::default());
+        assert!(!out2.contains("custom-block"), "{out2}");
+        assert!(out2.contains("::: mystery"), "{out2}");
     }
 }

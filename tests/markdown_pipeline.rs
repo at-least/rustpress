@@ -164,6 +164,18 @@ fn toc_placeholder_becomes_table_of_contents() {
     assert!(
         out.html.contains("<nav class=\"table-of-contents\"><ul><li><a href=\"#one\">One</a><ul><li><a href=\"#deep\">Deep</a></li></ul></li><li><a href=\"#two\">Two</a></li></ul></nav>"),
         "nested toc: {}",
-        &out.html[out.html.find("table-of-contents").map(|i| i.saturating_sub(30)).unwrap_or(0)..].chars().take(260).collect::<String>()
+        out.html[out.html.find("table-of-contents").map(|i| i.saturating_sub(30)).unwrap_or(0)..].chars().take(260).collect::<String>()
     );
+}
+
+#[test]
+fn custom_heading_anchors_replace_slugs() {
+    let out = synthetic("## Deep Dive {#dive}\n\ntext\n\n## Plain\n");
+    assert!(out.html.contains("<h2 id=\"dive\">Deep Dive<a href=\"#dive\""), "custom id: {}",
+        out.html[out.html.find("<h2").unwrap()..].chars().take(160).collect::<String>());
+    assert!(out.html.contains("<h2 id=\"plain\">Plain<a href=\"#plain\""), "plain slug kept");
+    assert!(!out.html.contains("{#dive}"), "attr literal stripped from heading text");
+    assert!(!out.html.contains("id=\"deep-dive\""), "slug replaced");
+    assert_eq!(out.headings[0].id, "dive");
+    assert_eq!(out.headings[0].text, "Deep Dive");
 }

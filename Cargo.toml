@@ -18,7 +18,7 @@ anyhow = "1"
 async-stream = "0.3"
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
 clap = { version = "4", features = ["derive", "wrap_help"] }
-comrak = { version = "0.55", default-features = false }
+comrak = { version = "0.55", default-features = false, features = ["shortcodes"] }
 futures-core = "0.3"
 hypertext = { version = "0.12.1", features = ["alpine"] }
 notify = "8"

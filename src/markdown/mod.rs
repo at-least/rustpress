@@ -26,8 +26,13 @@ pub const THEME_DARK: &str = "github-dark";
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Heading {
     pub level: u8,
+    /// The final anchor id: the `{#custom}` attribute when present,
+    /// else comrak's slug.
     pub id: String,
     pub text: String,
+    /// The slug id comrak rendered (before the custom-anchor
+    /// post-processing swaps it for `id`).
+    pub rendered_id: String,
 }
 
 /// The result of rendering one page's markdown body.
@@ -52,6 +57,7 @@ pub struct MarkdownEngine {
     light: Theme,
     dark: Theme,
     lazy_images: bool,
+    config_container: crate::config::ContainerOptions,
 }
 
 impl MarkdownEngine {
@@ -64,6 +70,8 @@ impl MarkdownEngine {
         ext.autolink = true;
         ext.footnotes = true;
         ext.alerts = true;
+        // :tada:-style emoji shortcodes, like VitePress
+        ext.shortcodes = true;
         // GitHub-style ids on every heading; the trailing `<a
         // class="anchor">` link comrak appends is styled by the theme CSS.
         ext.header_id_prefix = Some(String::new());
@@ -86,6 +94,7 @@ impl MarkdownEngine {
             light,
             dark,
             lazy_images: config.image.lazy_loading,
+            config_container: config.container.clone(),
         })
     }
 
@@ -103,7 +112,7 @@ impl MarkdownEngine {
         site_root: &Path,
         content_dir: &Path,
     ) -> Result<RenderedPage, MarkdownError> {
-        let pre = preprocess::Preprocess { site_root, content_dir };
+        let pre = preprocess::Preprocess { site_root, content_dir, container: self.config_container.clone() };
         let md = pre.run(&page.body, &page.rel)?;
 
         let arena = Arena::new();
@@ -120,6 +129,7 @@ impl MarkdownEngine {
         let mut html = String::new();
         comrak::format_html_with_plugins(root, &self.options, &mut html, &plugins)
             .expect("infallible string write");
+        let html = apply_custom_heading_ids(&html, &headings);
         let mut html = replace_toc(&html, &headings);
         if self.lazy_images {
             html = html.replace("<img ", "<img loading=\"lazy\" ");
@@ -209,11 +219,64 @@ fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
     for node in root.descendants() {
         let data = node.data.borrow();
         if let NodeValue::Heading(nh) = &data.value {
-            let text = node.collect_text();
-            let id = anchorizer.anchorize(&text);
-            out.push(Heading { level: nh.level, id, text });
+            let raw = node.collect_text();
+            let rendered_id = anchorizer.anchorize(&raw);
+            let (text, custom) = split_heading_anchor(&raw);
+            let id = custom.clone().unwrap_or_else(|| rendered_id.clone());
+            out.push(Heading { level: nh.level, id, text, rendered_id });
         }
     }
+    out
+}
+
+/// `Heading {#my-id}` → ("Heading", Some("my-id")).
+fn split_heading_anchor(text: &str) -> (String, Option<String>) {
+    if text.ends_with('}')
+        && let Some(i) = text.rfind("{#") {
+            return (
+                text[..i].trim_end().to_string(),
+                Some(text[i + 2..text.len() - 1].to_string()),
+            );
+        }
+    (text.to_string(), None)
+}
+
+/// Swap each heading's rendered slug for its `{#custom}` id and strip the
+/// literal attribute from the rendered text (VitePress heading anchors).
+/// Heading order in `html` matches `headings` (both are document order).
+fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
+    if !headings.iter().any(|h| h.id != h.rendered_id) {
+        return html.to_string();
+    }
+    let mut out = String::with_capacity(html.len());
+    let mut rest = html;
+    let mut iter = headings.iter();
+    while let Some(open) = rest.find("<h") {
+        let level = rest[open + 2..].chars().next().unwrap_or(' ');
+        if !level.is_ascii_digit() || level > '6' {
+            out.push_str(&rest[..open + 3]);
+            rest = &rest[open + 3..];
+            continue;
+        }
+        let close_tag = format!("</h{}>", level);
+        let Some(close) = rest[open..].find(&close_tag) else {
+            out.push_str(rest);
+            return out;
+        };
+        let segment = &rest[open..open + close + close_tag.len()];
+        let mut fixed = segment.to_string();
+        if let Some(h) = iter.next()
+            && h.id != h.rendered_id {
+                fixed = fixed
+                    .replace(&format!("id=\"{}\"", h.rendered_id), &format!("id=\"{}\"", h.id))
+                    .replace(&format!("href=\"#{}\"", h.rendered_id), &format!("href=\"#{}\"", h.id));
+                fixed = fixed.replace(&format!(" {{#{}}}", h.id), "");
+            }
+        out.push_str(&rest[..open]);
+        out.push_str(&fixed);
+        rest = &rest[open + close + close_tag.len()..];
+    }
+    out.push_str(rest);
     out
 }
 
