@@ -481,8 +481,7 @@ base = "/reference/"
 
     #[test]
     fn bad_base_is_rejected_by_validate() {
-        let mut c = SiteConfig::default();
-        c.base = "docs".into();
+        let c = SiteConfig { base: "docs".into(), ..Default::default() };
         assert!(matches!(c.validate(), Err(ConfigError::Base { .. })));
     }
 }
