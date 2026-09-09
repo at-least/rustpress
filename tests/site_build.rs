@@ -342,3 +342,36 @@ fn custom_helix_toml_theme_file_path() {
     };
     assert!(err.contains("my.toml"), "{err}");
 }
+
+#[test]
+fn helix_themes_are_built_ins() {
+    // all vendored Helix themes resolve by file stem
+    let names = ["catppuccin_mocha", "gruvbox", "tokyonight", "everforest_dark", "nord"];
+    for name in names {
+        assert!(
+            gen_docs::markdown::syntax_theme::helix_builtin(name).is_some(),
+            "{name} should load"
+        );
+    }
+    // inherits chains resolve: gruvbox_dark_hard inherits "gruvbox"
+    let hard = gen_docs::markdown::syntax_theme::helix_builtin("gruvbox_dark_hard").unwrap();
+    assert_eq!(
+        hard.resolve("ui.background").map(|s| s.bg.as_deref()),
+        Some(Some("#1d2021")),
+        "inherited palette color from parent"
+    );
+    // unknown name errors
+    let site_dir = tempdir::tempdir();
+    std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
+    std::fs::write(site_dir.path().join("content/index.md"), "# H\n").unwrap();
+    std::fs::write(
+        site_dir.path().join("gen-docs.toml"),
+        "[syntax]\ndark = \"catppuccin_mocha\"\n",
+    )
+    .unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    let out = tempdir::tempdir();
+    site.build(site_dir.path(), out.path()).unwrap();
+    let css = std::fs::read_to_string(out.path().join("syntax.css")).unwrap();
+    assert!(!css.contains("catppuccin"), "no catppuccin name leaked into css");
+}

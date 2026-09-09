@@ -85,8 +85,8 @@ impl MarkdownEngine {
         options.render.r#unsafe = true;
         options.render.tasklist_classes = true;
         // each syntax theme value is a built-in name (github-light /
-        // github-dark) or a path to a Helix TOML theme file (relative to
-        // base_dir)
+        // github-dark, or any of the vendored Helix themes by file stem)
+        // or a path to a Helix TOML theme file (relative to base_dir)
         let load = |value: &str| -> Result<syntax_theme::SyntaxTheme, MarkdownError> {
             if value.ends_with(".toml") {
                 let path = base_dir.join(value);
@@ -94,10 +94,15 @@ impl MarkdownEngine {
                     value: value.to_string(),
                     detail: e.to_string(),
                 })
+            } else if let Some(theme) = syntax_theme::builtin(value) {
+                Ok(theme)
             } else {
-                syntax_theme::builtin(value).ok_or_else(|| MarkdownError::ThemeLoad {
+                syntax_theme::helix_builtin(value).ok_or_else(|| MarkdownError::ThemeLoad {
                     value: value.to_string(),
-                    detail: "not a built-in name".into(),
+                    detail: format!(
+                        "not a built-in name (built-ins: github-light, github-dark + all {} Helix themes; a value ending in .toml is a file path)",
+                        syntax_theme::helix_count()
+                    ),
                 })
             }
         };
