@@ -1,0 +1,23 @@
+[package]
+name = "gen-docs"
+version = "0.1.0"
+edition = "2024"
+description = "Standalone VitePress-format docs site generator in Rust"
+license = "MIT"
+
+[lib]
+name = "gen_docs"
+path = "src/lib.rs"
+
+[[bin]]
+name = "gen-docs"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive", "wrap_help"] }
+serde = { version = "1", features = ["derive"] }
+serde_norway = "0.9"
+thiserror = "2"
+
+[dev-dependencies]
