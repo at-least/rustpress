@@ -11,6 +11,7 @@ use std::path::Path;
 use comrak::nodes::{NodeLink, NodeValue};
 use comrak::options::{Plugins, RenderPlugins};
 use comrak::{Anchorizer, Arena, Options};
+use std::sync::OnceLock;
 use syntect::highlighting::Theme;
 
 use crate::config::Markdown as MarkdownConfig;
@@ -40,6 +41,8 @@ pub struct Heading {
 pub struct RenderedPage {
     pub html: String,
     pub headings: Vec<Heading>,
+    /// The page contains `$…$` / `$$…$$` math (needs the MathJax script).
+    pub has_math: bool,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -57,6 +60,7 @@ pub struct MarkdownEngine {
     light: Theme,
     dark: Theme,
     lazy_images: bool,
+    math: bool,
     config_container: crate::config::ContainerOptions,
 }
 
@@ -72,6 +76,9 @@ impl MarkdownEngine {
         ext.alerts = true;
         // :tada:-style emoji shortcodes, like VitePress
         ext.shortcodes = true;
+        if config.math {
+            ext.math_dollars = true;
+        }
         // GitHub-style ids on every heading; the trailing `<a
         // class="anchor">` link comrak appends is styled by the theme CSS.
         ext.header_id_prefix = Some(String::new());
@@ -94,6 +101,7 @@ impl MarkdownEngine {
             light,
             dark,
             lazy_images: config.image.lazy_loading,
+            math: config.math,
             config_container: config.container.clone(),
         })
     }
@@ -134,7 +142,23 @@ impl MarkdownEngine {
         if self.lazy_images {
             html = html.replace("<img ", "<img loading=\"lazy\" ");
         }
-        Ok(RenderedPage { html, headings })
+        // comrak emits raw TeX inside data-math-style spans; delimit it
+        // so MathJax's standard page scan picks it up
+        let has_math = html.contains("data-math-style");
+        if self.math && has_math {
+            static INLINE: OnceLock<regex::Regex> = OnceLock::new();
+            static DISPLAY: OnceLock<regex::Regex> = OnceLock::new();
+            let inline = INLINE.get_or_init(|| regex::Regex::new(r#"(<span data-math-style="inline">)(.*?)(</span>)"#).unwrap());
+            let display = DISPLAY.get_or_init(|| regex::Regex::new(r#"(?s)(<span data-math-style="display">)(.*?)(</span>)"#).unwrap());
+            let html = inline.replace_all(&html, "$1\\($2\\)$3");
+            let html = display.replace_all(&html, "$1\\[$2\\]$3");
+            return Ok(RenderedPage {
+                html: html.into_owned(),
+                headings,
+                has_math: true,
+            });
+        }
+        Ok(RenderedPage { html, headings, has_math })
     }
 }
 

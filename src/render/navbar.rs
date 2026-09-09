@@ -32,6 +32,7 @@ pub fn navbar<'a>(site: &'a Site, current_url: &'a str, is_home: bool, has_sideb
     let socials: Vec<_> = site.config.social_links.clone();
     let has_search = site.config.search.is_some();
     let show_social = !socials.is_empty();
+    let toggleable = site.config.appearance.toggleable();
 
     let home_cls = if is_home { " home" } else { "" };
     let navbar_cls = format!(
@@ -96,9 +97,11 @@ pub fn navbar<'a>(site: &'a Site, current_url: &'a str, is_home: bool, has_sideb
                                 </nav>
                             }
 
-                            <div class="flex items-center">
-                                (appearance_switch("VPSwitchAppearance"))
-                            </div>
+                            @if toggleable {
+                                <div class="flex items-center">
+                                    (appearance_switch("VPSwitchAppearance"))
+                                </div>
+                            }
 
                             @if show_social {
                                 <div class="hidden md:flex md:items-center -mr-2 before:content-[''] before:ml-4 before:mr-2 before:w-px before:h-6 before:bg-divider">
@@ -216,6 +219,8 @@ pub fn nav_screen<'a>(site: &'a Site, current_url: &'a str) -> impl Renderable +
     let nav: Vec<&NavItem> = site.config.nav.iter().collect();
     let socials = site.config.social_links.clone();
     let has_nav = !nav.is_empty();
+    let toggleable = site.config.appearance.toggleable();
+    let dark_label = site.config.dark_mode_switch_label.clone();
     rsx! {
         <div class="fixed inset-0 pt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+1px)] pr-8 pl-8 bg-(--vp-nav-screen-bg-color) w-full overflow-y-auto overscroll-contain transition-colors duration-[250ms] pointer-events-auto opacity-100 md:hidden" id="VPNavScreen" x-cloak x-show="$store.ui.screen" @keydown.escape.window="$store.ui.screen = false" x-effect="document.body.style.overflow = $store.ui.screen ? 'hidden' : ''">
             <div class="mx-auto pt-6 pb-24 max-w-[18rem]">
@@ -229,10 +234,12 @@ pub fn nav_screen<'a>(site: &'a Site, current_url: &'a str) -> impl Renderable +
                     </ul>
                 </nav>
 
-                <div class=(format!("appearance flex justify-center items-center pt-3{}", if has_nav { " mt-4" } else { "" }))>
-                    <span class="label mr-3 text-[0.875rem] font-medium text-text-1">"Appearance"</span>
-                    (appearance_switch("VPSwitchAppearanceScreen"))
-                </div>
+                @if toggleable {
+                    <div class=(format!("appearance flex justify-center items-center pt-3{}", if has_nav { " mt-4" } else { "" }))>
+                        <span class="label mr-3 text-[0.875rem] font-medium text-text-1">(dark_label)</span>
+                        (appearance_switch("VPSwitchAppearanceScreen"))
+                    </div>
+                }
 
                 @if !socials.is_empty() {
                     <div class="social-links mt-4">

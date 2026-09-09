@@ -11,7 +11,12 @@ use gen_docs::sidebar::Sidebars;
 
 fn build_fixture() -> (tempdir::Guard, gen_docs::render::BuildStats) {
     let fixtures = Path::new("tests/fixtures");
-    let config: SiteConfig = toml::from_str("title = \"Fixture\"\n\n[search]\nprovider = \"local\"\n").unwrap();
+    // the fixture subset references pages that were not copied — the
+    // dead-link checker would fail the build otherwise
+    let config: SiteConfig = toml::from_str(
+        "title = \"Fixture\"\nignoreDeadLinks = true\n\n[search]\nprovider = \"local\"\n",
+    )
+    .unwrap();
     let content = Content::load(&fixtures.join("en")).unwrap();
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
@@ -104,4 +109,49 @@ fn built_pages_carry_alpine_and_landmarks() {
     ] {
         assert!(html.contains(probe), "missing {probe}");
     }
+}
+
+#[test]
+fn dead_links_fail_the_build_and_ignore_works() {
+    let fixtures = Path::new("tests/fixtures");
+    let mk = |ignore: &str| {
+        let config: SiteConfig = toml::from_str(&format!(
+            "title = \"T\"\nignoreDeadLinks = {}\n\n[search]\nprovider = \"local\"\n",
+            ignore
+        ))
+        .unwrap();
+        let content = Content::load(&fixtures.join("en")).unwrap();
+        Site {
+            sidebars: Sidebars::build(&config, &content),
+            engine: MarkdownEngine::new(&config.markdown).unwrap(),
+            config,
+            content,
+        }
+    };
+    // routing.md links ./deploy — outside the subset
+    let out = tempdir::tempdir();
+    let err = mk("false").build(fixtures, out.path()).unwrap_err();
+    assert!(err.to_string().contains("dead link"), "{err}");
+    assert!(err.to_string().contains("guide/deploy"));
+
+    // ignore all
+    let out2 = tempdir::tempdir();
+    assert!(mk("true").build(fixtures, out2.path()).is_ok());
+
+    // ignore a single prefix: everything else still fails
+    let config: SiteConfig = toml::from_str(
+        "title = \"T\"\nignoreDeadLinks = [\"guide/deploy\"]\n\n[search]\nprovider = \"local\"\n",
+    )
+    .unwrap();
+    let content = Content::load(&fixtures.join("en")).unwrap();
+    let site = Site {
+        sidebars: Sidebars::build(&config, &content),
+        engine: MarkdownEngine::new(&config.markdown).unwrap(),
+        config,
+        content,
+    };
+    let out3 = tempdir::tempdir();
+    let err = site.build(fixtures, out3.path()).unwrap_err();
+    assert!(!err.to_string().contains("guide/deploy"), "ignored prefix filtered: {err}");
+    assert!(err.to_string().contains("guide/custom-theme"), "others still reported");
 }

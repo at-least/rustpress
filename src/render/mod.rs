@@ -14,9 +14,11 @@ pub mod vpdoc;
 
 use std::path::Path;
 
+use std::sync::OnceLock;
+
 use hypertext::prelude::*;
 
-use crate::config::{OutlineLevel, SiteConfig};
+use crate::config::{IgnoreDeadLinks, OutlineLevel, SiteConfig};
 use crate::content::{Content, Page};
 use crate::content::OutlineSetting as PageOutline;
 use crate::markdown::MarkdownEngine;
@@ -32,10 +34,30 @@ pub struct Site {
 impl Site {
     pub fn load(site_dir: &Path) -> Result<Site, BuildError> {
         let config = SiteConfig::load(site_dir)?;
-        let content_dir = site_dir.join("content");
-        let content = Content::load(&content_dir)?;
+        let content_dir = site_dir.join(&config.src_dir);
+        let mut content = Content::load(&content_dir)?;
         let sidebars = Sidebars::build(&config, &content);
         let engine = MarkdownEngine::new(&config.markdown)?;
+        // git timestamps beat mtimes: a fresh clone's mtimes are checkout
+        // time, which would make "last updated" meaningless
+        if config.last_updated {
+            for page in &mut content.pages {
+                let secs = std::process::Command::new("git")
+                    .args(["log", "-1", "--format=%ct", "--"])
+                    .arg(&page.src)
+                    .current_dir(site_dir)
+                    .output()
+                    .ok()
+                    .and_then(|out| String::from_utf8(out.stdout).ok())
+                    .and_then(|text| text.trim().parse::<i64>().ok());
+                if let Some(secs) = secs {
+                    page.modified = Some(
+                        std::time::SystemTime::UNIX_EPOCH
+                            + std::time::Duration::from_secs(secs.max(0) as u64),
+                    );
+                }
+            }
+        }
         Ok(Site { config, content, sidebars, engine })
     }
 
@@ -78,15 +100,7 @@ impl Site {
         let outline = outline_range(&self.config, page);
         let is_home = page.is_home();
 
-        let title = if is_home {
-            self.config.title.clone().unwrap_or_default()
-        } else {
-            match (&self.config.title, &page.front.title) {
-                (Some(site), Some(_)) => format!("{} | {site}", page.title),
-                (Some(site), None) => format!("{} | {site}", page.title),
-                (None, _) => page.title.clone(),
-            }
-        };
+        let title = self.document_title(page, is_home);
         let description = page
             .front
             .description
@@ -100,6 +114,7 @@ impl Site {
             is_home,
             has_sidebar,
             current_url: &page.url,
+            has_math: rendered.has_math,
         };
 
         let body = if is_home {
@@ -118,10 +133,22 @@ impl Site {
         let mut stats = BuildStats::default();
         let mut search_docs: Vec<serde_json::Value> = Vec::new();
         let search_enabled = self.config.search.is_some();
+        let mut dead_links: Vec<(String, Vec<String>)> = Vec::new();
         for page in &self.content.pages {
             let rendered = self
                 .engine
                 .render(page, &self.content, &self.content_root(), &self.content_dir())?;
+            let dead = find_dead_links(&rendered.html, page, self);
+            let dead: Vec<String> = match &self.config.ignore_dead_links {
+                IgnoreDeadLinks::IgnorePrefixes(prefixes) => dead
+                    .into_iter()
+                    .filter(|l| !prefixes.iter().any(|p| l.starts_with(p)))
+                    .collect(),
+                _ => dead,
+            };
+            if !dead.is_empty() {
+                dead_links.push((page.url.clone(), dead));
+            }
             if search_enabled {
                 let title = if page.is_home() {
                     self.config.title.clone().unwrap_or_else(|| page.title.clone())
@@ -144,6 +171,11 @@ impl Site {
         write_file(&out_dir.join("404.html"), not_found.as_bytes())?;
         // generated assets
         write_file(&out_dir.join("syntax.css"), self.engine.syntax_css().as_bytes())?;
+        if let Some(sitemap) = &self.config.sitemap {
+            let xml = self.sitemap_xml(&sitemap.hostname);
+            write_file(&out_dir.join("sitemap.xml"), xml.as_bytes())?;
+            stats.sitemap = true;
+        }
         if search_enabled {
             let json = serde_json::to_string(&search_docs).expect("serializable docs");
             write_file(&out_dir.join("search-docs.json"), json.as_bytes())?;
@@ -162,7 +194,48 @@ impl Site {
                 copy_dir(&root_static, out_dir)?;
             }
         }
+        // dead-link check runs after everything is on disk so asset
+        // references resolve too (like VitePress's build-time check)
+        match &self.config.ignore_dead_links {
+            // IgnoreAll skips the report; Check and IgnorePrefixes both
+            // report (prefix filtering already ran at collection time)
+            IgnoreDeadLinks::Check | IgnoreDeadLinks::IgnorePrefixes(_) => {
+                let mut broken: Vec<String> = Vec::new();
+                for (page_url, links) in &dead_links {
+                    for link in links {
+                        if !path_exists_on_disk(out_dir, link) {
+                            broken.push(format!("  {page_url} → {link}"));
+                        }
+                    }
+                }
+                if !broken.is_empty() {
+                    return Err(BuildError::DeadLinks {
+                        report: format!(
+                            "{} dead link(s) found (ignoreDeadLinks silences this):\n{}",
+                            broken.len(),
+                            broken.join("\n")
+                        ),
+                    });
+                }
+            }
+            IgnoreDeadLinks::IgnoreAll => {}
+        }
         Ok(stats)
+    }
+
+    /// `<title>`: VitePress's `titleTemplate` semantics — `:title` is
+    /// replaced with the page title; without a template it's
+    /// `Page | Site` (home pages use the site title alone).
+    fn document_title(&self, page: &Page, is_home: bool) -> String {
+        let site_title = self.config.title.clone().unwrap_or_default();
+        if is_home || page.title.is_empty() {
+            return site_title;
+        }
+        match &self.config.title_template {
+            Some(t) if t.contains(":title") => t.replace(":title", &page.title),
+            Some(t) => format!("{} — {}", page.title, t),
+            None => format!("{} | {}", page.title, site_title),
+        }
     }
 
     /// render_page with a precomputed markdown render (build renders
@@ -177,16 +250,43 @@ impl Site {
         Ok(html)
     }
 
+    /// sitemap.xml from every page URL, lastmod from the page timestamps.
+    fn sitemap_xml(&self, hostname: &str) -> String {
+        let host = hostname.trim_end_matches('/');
+        let mut xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.push_str("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
+        for page in &self.content.pages {
+            xml.push_str("  <url>\n");
+            xml.push_str(&format!("    <loc>{}{}</loc>\n", host, self.url(&page.url)));
+            if let Some(t) = page.modified {
+                let (date, _) = doc::format_date(t);
+                xml.push_str(&format!("    <lastmod>{}</lastmod>\n", date));
+            }
+            xml.push_str("  </url>\n");
+        }
+        xml.push_str("</urlset>\n");
+        xml
+    }
+
     fn render_404(&self) -> Result<String, BuildError> {
-        let title = format!("Page not found | {}", self.config.title.clone().unwrap_or_default());
+        let nf = self.config.not_found.clone().unwrap_or_default();
+        let title = format!(
+            "{} | {}",
+            nf.title.clone().unwrap_or_else(|| "Page not found".into()),
+            self.config.title.clone().unwrap_or_default()
+        );
         let shell = layout::Shell {
             title,
             description: String::new(),
             is_home: true,
             has_sidebar: false,
             current_url: "/404.html",
+            has_math: false,
         };
         let home = self.url("/");
+        let nf_title = nf.title.clone().unwrap_or_else(|| "Page not found".into());
+        let nf_quote = nf.quote.clone().unwrap_or_else(|| "The page you are looking for does not exist.".into());
+        let nf_link = nf.link_text.clone().unwrap_or_else(|| "Return home".into());
         let content = hypertext::rsx! {
             <div class="w-full pt-8 px-6 pb-24 md:pt-12 md:pb-32 md:px-8 lg:pt-12 lg:pb-0 lg:px-8">
                 <div class="mx-auto w-full lg:flex lg:justify-center lg:max-w-[62rem] 2xl:max-w-[69rem]">
@@ -194,9 +294,9 @@ impl Site {
                         <div class="mx-auto max-w-[43rem]">
                             <main>
                                 <div id="main" class=(vpdoc::vpdoc_class())>
-                                    <h1>"Page not found"</h1>
-                                    <p>"The page you are looking for does not exist."</p>
-                                    <p><a href=(home)>"Return home"</a></p>
+                                    <h1>(nf_title)</h1>
+                                    <p>(nf_quote)</p>
+                                    <p><a href=(home)>(nf_link)</a></p>
                                 </div>
                             </main>
                         </div>
@@ -247,10 +347,13 @@ pub fn outline_range(config: &SiteConfig, page: &Page) -> (u8, u8) {
 #[derive(Debug, Default)]
 pub struct BuildStats {
     pub pages: usize,
+    pub sitemap: bool,
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum BuildError {
+    #[error("{}", .report)]
+    DeadLinks { report: String },
     #[error(transparent)]
     Config(#[from] crate::config::ConfigError),
     #[error(transparent)]
@@ -259,6 +362,82 @@ pub enum BuildError {
     Markdown(#[from] crate::markdown::MarkdownError),
     #[error("cannot write {path}: {source}")]
     Write { path: std::path::PathBuf, source: std::io::Error },
+}
+
+/// Candidates for dead links: internal href/src targets in one page's
+/// html that are neither known pages nor resolvable to an output path.
+/// Absolute (base-free) and relative links are both normalized to
+/// base-free output paths; the disk check happens after the copy.
+fn find_dead_links(html: &str, page: &Page, site: &Site) -> Vec<String> {
+    static HREF: OnceLock<regex::Regex> = OnceLock::new();
+    let re = HREF.get_or_init(|| regex::Regex::new(r#"(?:href|src)="([^"]+)""#).unwrap());
+    let mut out = Vec::new();
+    for cap in re.captures_iter(html) {
+        let raw = &cap[1];
+        if raw.starts_with("http://")
+            || raw.starts_with("https://")
+            || raw.starts_with("mailto:")
+            || raw.starts_with("data:")
+            || raw.starts_with('#')
+        {
+            continue;
+        }
+        let no_frag = raw.split('#').next().unwrap_or(raw);
+        if no_frag.is_empty() {
+            continue;
+        }
+        if no_frag.starts_with('/') {
+            // absolute, base-free: page set or output file
+            let target = no_frag.trim_end_matches('/');
+            if !site.content.by_url.contains_key(&format!("{target}/"))
+                && !site.content.by_url.contains_key(&format!("{target}.html"))
+            {
+                out.push(target.to_string());
+            }
+        } else {
+            // relative: resolve against the page's SOURCE directory, the
+            // VitePress semantics our markdown linker uses too
+            match crate::markdown::resolve_relative(no_frag, &page.rel, &site.content) {
+                Some(_) => {} // alive page
+                None => {
+                    let mut segs: Vec<String> = Path::new(&page.rel)
+                        .parent()
+                        .map(|d| {
+                            d.components()
+                                .map(|c| c.as_os_str().to_string_lossy().into_owned())
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    for seg in no_frag.split('/') {
+                        match seg {
+                            "." => {}
+                            ".." => {
+                                segs.pop();
+                            }
+                            s => segs.push(s.to_string()),
+                        }
+                    }
+                    let path = segs.join("/");
+                    let url = format!("/{}/", path.trim_end_matches('/'));
+                    if !site.content.by_url.contains_key(&url) {
+                        out.push(path);
+                    }
+                }
+            }
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
+/// Disk check for a dead-link candidate: pages already failed the page
+/// set, so this only clears output files/assets.
+fn path_exists_on_disk(out_dir: &Path, link: &str) -> bool {
+    let rel = link.trim_start_matches('/');
+    out_dir.join(rel).is_file()
+        || out_dir.join(rel).join("index.html").is_file()
+        || out_dir.join(format!("{rel}.html")).is_file()
 }
 
 /// Search body text: rendered HTML with tags stripped, entities

@@ -15,10 +15,12 @@ pub struct Shell<'a> {
     pub has_sidebar: bool,
     /// Current page URL (canonical, base-free) for active matching.
     pub current_url: &'a str,
+    /// Page contains math → inject the MathJax loader.
+    pub has_math: bool,
 }
 
 /// The whole HTML document; `content` is the VPContent body.
-pub fn layout<'a>(site: &'a Site, shell: &Shell<'a>, headings: &'a [crate::markdown::Heading], body_html: String) -> impl Renderable + 'a {
+pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::markdown::Heading], body_html: String) -> impl Renderable + 'a {
     let lang = site.config.lang.clone();
     let title = shell.title.clone();
     let description = shell.description.clone();
@@ -31,6 +33,8 @@ pub fn layout<'a>(site: &'a Site, shell: &Shell<'a>, headings: &'a [crate::markd
     let current_url = shell.current_url.to_string();
     let footer = site.config.footer.clone();
     let show_footer = footer.is_some();
+    let head_tags = serialize_head_tags(&site.config.head);
+    let skip_label = site.config.skip_to_content_label.clone();
     let footer_message = footer.as_ref().and_then(|f| f.message.clone());
     let footer_copyright = footer.as_ref().and_then(|f| f.copyright.clone());
 
@@ -49,10 +53,14 @@ pub fn layout<'a>(site: &'a Site, shell: &Shell<'a>, headings: &'a [crate::markd
                 <meta name="description" content=(description)>
                 <link rel="stylesheet" href=(syntax_css)>
                 <link rel="stylesheet" href=(main_css)>
-                (Raw::dangerously_create(FOUC_SCRIPT.to_string()))
+                (Raw::dangerously_create(appearance_script(&site.config.appearance)))
+                @if shell.has_math {
+                    (Raw::dangerously_create(MATHJAX_SCRIPT.to_string()))
+                }
+                (head_tags)
             </head>
             <body class="font-sans bg-bg text-text-1 antialiased [text-rendering:optimizeLegibility] [-moz-osx-font-smoothing:grayscale] [text-autospace:normal] [text-spacing-trim:normal]">
-                <a class="sr-only" href="#main">"Skip to content"</a>
+                <a class="sr-only" href="#main">(skip_label)</a>
 
                 <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" x-cloak x-show="$store.ui.screen || $store.ui.sidebar" @click="$store.ui.screen = false; $store.ui.sidebar = false"></div>
 
@@ -91,15 +99,64 @@ pub fn layout<'a>(site: &'a Site, shell: &Shell<'a>, headings: &'a [crate::markd
     }
 }
 
+/// MathJax (SVG) with the standard delimiters; loaded only on pages
+/// whose markdown contained math. pre/code are skipped so code fences
+/// stay literal.
+pub const MATHJAX_SCRIPT: &str = r#"<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [["\(", "\)"]],
+    displayMath: [["\[", "\]"]],
+    skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
+  },
+  svg: { fontCache: "global" }
+};
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>"#;
+
+
+/// Serialize the `[[head]]` config tags to raw HTML.
+fn serialize_head_tags(tags: &[crate::config::HeadTag]) -> Raw<String> {
+    let mut out = String::new();
+    for tag in tags {
+        out.push('<');
+        out.push_str(&tag.tag);
+        for (k, v) in &tag.attrs {
+            out.push_str(&format!(" {}=\"{}\"", k, v.replace('"', "&quot;")));
+        }
+        if tag.tag == "script" || tag.children.is_some() {
+            out.push('>');
+            out.push_str(tag.children.as_deref().unwrap_or(""));
+            out.push_str(&format!("</{}>", tag.tag));
+        } else {
+            out.push_str("/>");
+        }
+    }
+    Raw::dangerously_create(out)
+}
+
 /// Blocking pre-paint script: resolve the stored appearance preference
-/// (Alpine cannot run before first paint).
-pub const FOUC_SCRIPT: &str = r#"<script>
-      (function () {
-        try {
-          var t = localStorage.getItem('vitepress-theme-appearance') || 'auto';
-          var dark = t === 'dark' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          document.documentElement.classList.toggle('dark', dark);
-        } catch (e) {}
-      })();
-      if (/Mac|iPhone|iPad/.test(navigator.platform)) document.documentElement.classList.add('mac');
-    </script>"#;
+/// (Alpine cannot run before first paint). Behavior follows the
+/// `appearance` setting.
+pub fn appearance_script(appearance: &crate::config::Appearance) -> String {
+    use crate::config::Appearance as A;
+    let body = match appearance {
+        A::Toggleable { default_dark: false } => r#"
+        var t = localStorage.getItem('vitepress-theme-appearance') || 'auto';
+        var dark = t === 'dark' || (t === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', dark);"#.to_string(),
+        A::Toggleable { default_dark: true } => r#"
+        var s = localStorage.getItem('vitepress-theme-appearance');
+        var dark = s !== 'light';
+        document.documentElement.classList.toggle('dark', dark);"#.to_string(),
+        A::LightOnly => r#"
+        document.documentElement.classList.remove('dark');"#.to_string(),
+        A::ForceDark => r#"
+        document.documentElement.classList.add('dark');"#.to_string(),
+        A::ForceAuto => r#"
+        document.documentElement.classList.toggle('dark', window.matchMedia('(prefers-color-scheme: dark)').matches);"#.to_string(),
+    };
+    format!(
+        r#"<script>(function () {{ try {{{body}}} catch (e) {{}} }})(); if (/Mac|iPhone|iPad/.test(navigator.platform)) document.documentElement.classList.add('mac');</script>"#
+    )
+}

@@ -34,6 +34,10 @@ pub fn doc_page<'a>(
         .last_updated
         .then(|| page.modified.map(format_date).map(|d| (d.0, d.1)))
         .flatten();
+    let doc_footer = site.config.doc_footer.clone().unwrap_or_default();
+    let prev_label = doc_footer.prev.clone().unwrap_or_else(|| "Previous page".into());
+    let next_label = doc_footer.next.clone().unwrap_or_else(|| "Next page".into());
+    let updated_label = site.config.last_updated_text.clone();
     let show_footer = edit_link.is_some() || last_updated.is_some() || prev.is_some() || next.is_some();
 
     let wrapper_cls = if has_sidebar {
@@ -94,7 +98,7 @@ pub fn doc_page<'a>(
                                         @if let Some((datetime, display)) = last_updated.clone() {
                                             <div class="last-updated">
                                                 <p class="VPDocFooterLastUpdated">
-                                                    "Last updated: "
+                                                    (format!("{}: ", updated_label))
                                                     <time datetime=(datetime)>(display)</time>
                                                 </p>
                                             </div>
@@ -108,7 +112,7 @@ pub fn doc_page<'a>(
                                         <div class="pager">
                                             @if let Some(p) = prev {
                                                 <a class="block border border-divider rounded-lg px-4 pt-[0.6875rem] pb-[0.8125rem] w-full h-full transition-colors duration-[250ms] hover:border-brand-1" href=(site.url(&p.url))>
-                                                    <span class="block leading-[1.6666667] text-[0.75rem] font-medium text-text-2">"Previous page"</span>
+                                                    <span class="block leading-[1.6666667] text-[0.75rem] font-medium text-text-2">(prev_label.clone())</span>
                                                     <span class="block leading-[1.4285714] text-[0.875rem] font-medium text-brand-1 transition-colors duration-[250ms]">(p.title.clone())</span>
                                                 </a>
                                             }
@@ -116,7 +120,7 @@ pub fn doc_page<'a>(
                                         <div class="pager">
                                             @if let Some(n) = next {
                                                 <a class="block border border-divider rounded-lg px-4 pt-[0.6875rem] pb-[0.8125rem] w-full h-full transition-colors duration-[250ms] hover:border-brand-1 ml-auto text-right" href=(site.url(&n.url))>
-                                                    <span class="block leading-[1.6666667] text-[0.75rem] font-medium text-text-2">"Next page"</span>
+                                                    <span class="block leading-[1.6666667] text-[0.75rem] font-medium text-text-2">(next_label.clone())</span>
                                                     <span class="block leading-[1.4285714] text-[0.875rem] font-medium text-brand-1 transition-colors duration-[250ms]">(n.title.clone())</span>
                                                 </a>
                                             }

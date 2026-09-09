@@ -179,3 +179,31 @@ fn custom_heading_anchors_replace_slugs() {
     assert_eq!(out.headings[0].id, "dive");
     assert_eq!(out.headings[0].text, "Deep Dive");
 }
+
+#[test]
+fn math_renders_with_delimiters_and_flags_page() {
+    let site_root = Path::new("tests/fixtures");
+    let content_dir = site_root.join("en");
+    let config = gen_docs::config::Markdown { math: true, ..Default::default() };
+    let engine = MarkdownEngine::new(&config).expect("engine");
+    let page = Page {
+        rel: "p.md".into(),
+        url: "/p/".into(),
+        title: "P".into(),
+        front: Default::default(),
+        body: "Inline $a^2$ and $$b_c$$ here.\n".into(),
+        modified: None,
+        src: "p.md".into(),
+    };
+    let out = engine.render(&page, &Content::default(), site_root, &content_dir).unwrap();
+    assert!(out.has_math, "page flagged");
+    assert!(out.html.contains(r#"<span data-math-style="inline">\(a^2\)</span>"#), "inline delim: {}",
+        &out.html[..out.html.len().min(500)]);
+    assert!(out.html.contains(r"\[b_c\]"), "display delim");
+}
+
+#[test]
+fn non_math_pages_unflagged_and_untouched() {
+    let out = synthetic("just text $ not math $\n");
+    assert!(!out.has_math);
+}

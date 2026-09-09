@@ -546,7 +546,7 @@ pub struct CustomContainer {
 }
 
 /// `[docFooter]` — prev/next pager labels.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct DocFooter {
     #[serde(default)]
@@ -556,7 +556,7 @@ pub struct DocFooter {
 }
 
 /// `[notFound]` — 404 page texts.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct NotFound {
     #[serde(default)]
