@@ -12,7 +12,7 @@
 //! and code-group tabs. Languages without a tree-sitter grammar fall
 //! back to escaped plain lines.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fmt;
 use std::sync::OnceLock;
 
@@ -465,7 +465,7 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                 // (notation-stripped) source
                 let mut highlighter = Highlighter::new();
                 let events = highlighter
-                    .highlight(config, stripped.as_bytes(), None, |name| config_for(name))
+                    .highlight(config, stripped.as_bytes(), None, config_for)
                     .map_err(|_| fmt::Error)?;
                 let mut segments: Vec<(usize, usize, Option<&'static str>)> = Vec::new();
                 let mut stack: Vec<&'static str> = Vec::new();
