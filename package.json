@@ -7,8 +7,8 @@
     "check": "python3 scripts/check_vpdoc_classes.py",
     "build:css": "tailwindcss -i css/main.css -o static/main.css --minify",
     "watch:css": "tailwindcss -i css/main.css -o static/main.css --watch",
-    "build:js": "esbuild js/main.js --bundle --format=iife --target=es2017 --banner:js='\"use strict\";' --outfile=static/js/app.js",
-    "watch:js": "esbuild js/main.js --bundle --format=iife --target=es2017 --banner:js='\"use strict\";' --outfile=static/js/app.js --watch",
+    "build:js": "esbuild js/alpine-entry.js --bundle --format=iife --target=es2018 --minify --outfile=static/js/app.js",
+    "watch:js": "esbuild js/alpine-entry.js --bundle --format=iife --target=es2018 --outfile=static/js/app.js --watch",
     "build": "npm run build:js && npm run build:css && zola build",
     "dev": "npm run watch:css & npm run watch:js & zola serve & wait"
   },
@@ -18,7 +18,10 @@
   },
   "license": "ISC",
   "devDependencies": {
+    "@alpinejs/collapse": "^3.17.2",
+    "@alpinejs/intersect": "^3.17.2",
     "@tailwindcss/cli": "^4.3.3",
+    "alpinejs": "^3.17.2",
     "esbuild": "^0.28.2"
   },
   "private": true

@@ -688,3 +688,8 @@ button:focus-visible {
     transition-delay: 0s !important;
   }
 }
+
+/* Alpine: hide x-cloak elements until Alpine initializes. */
+[x-cloak] {
+  display: none !important;
+}

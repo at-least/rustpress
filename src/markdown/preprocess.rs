@@ -223,6 +223,7 @@ pub fn expand_containers(md: &str) -> String {
     let mut out_lines: Vec<String> = Vec::new();
     let mut stack: Vec<(usize, Open)> = Vec::new();
     let mut fence: Option<(char, usize)> = None;
+    let mut group_counter = 0usize;
 
     let close_markup = |open: Open, out: &mut Vec<String>| match open {
         Open::Tip => out.extend(["".into(), "</div>".into(), "".into()]),
@@ -231,7 +232,8 @@ pub fn expand_containers(md: &str) -> String {
         Open::VPre => {}
     };
 
-    for line in md.split_inclusive('\n') {
+    let lines: Vec<&str> = md.split_inclusive('\n').collect();
+    for (idx, line) in lines.iter().enumerate() {
         let bare = line.trim_end_matches(['\n', '\r']);
         if let Some((ch, n)) = fence {
             out_lines.push(bare.to_string());
@@ -267,8 +269,11 @@ pub fn expand_containers(md: &str) -> String {
                 }
                 "code-group" => {
                     stack.push((colons, Open::CodeGroup));
+                    group_counter += 1;
+                    let tabs = code_group_tabs(&lines, idx, group_counter);
                     out_lines.extend([
-                        "<div class=\"vp-code-group\">".into(),
+                        "<div class=\"vp-code-group\" x-data=\"codeGroup\">".into(),
+                        tabs,
                         "<div class=\"blocks\">".into(),
                         String::new(),
                     ]);
@@ -309,9 +314,53 @@ pub fn expand_containers(md: &str) -> String {
     out
 }
 
+/// Server-side tab strip for a `::: code-group` opened at `lines[idx]`:
+/// scan ahead for the group's fenced blocks and build radio inputs +
+/// labels from their `[label]` annotations (falling back to the fence
+/// language). Label click wiring is the `codeGroup` Alpine component.
+fn code_group_tabs(lines: &[&str], idx: usize, group_no: usize) -> String {
+    let mut labels: Vec<String> = Vec::new();
+    let mut fence: Option<(char, usize)> = None;
+    for line in lines.iter().skip(idx + 1) {
+        let bare = line.trim_end_matches(['\n', '\r']);
+        if let Some((ch, n)) = fence {
+            if is_closing_fence(bare, ch, n) {
+                fence = None;
+            }
+            continue;
+        }
+        if let Some((ch, n)) = opening_fence(bare) {
+            let info = bare[n..].trim();
+            let label = info
+                .find('[')
+                .and_then(|i| info[i + 1..].find(']').map(|j| info[i + 1..i + 1 + j].to_string()));
+            let lang = info.split_whitespace().next().unwrap_or("").to_string();
+            labels.push(label.filter(|l| !l.is_empty()).unwrap_or(lang));
+            fence = Some((ch, n));
+            continue;
+        }
+        // stop at the container closer (any ::: line)
+        if closing_container(bare.trim()).is_some() || opening_container(bare.trim()).is_some() {
+            break;
+        }
+    }
+    let mut tabs = String::from("<div class=\"tabs\">");
+    for (i, label) in labels.iter().enumerate() {
+        let checked = if i == 0 { " checked=\"checked\"" } else { "" };
+        tabs.push_str(&format!(
+            "<input type=\"radio\" name=\"group-{group_no}\" id=\"group-{group_no}-{i}\"{checked}>"
+        ));
+        tabs.push_str(&format!(
+            "<label for=\"group-{group_no}-{i}\">{}</label>",
+            escape_text(label)
+        ));
+    }
+    tabs.push_str("</div>");
+    tabs
+}
+
 /// `::::` / `::: ` opener: (colons, kind, rest-after-kind).
-fn opening_container(t: &str) -> Option<(usize, &str, &str)> {
-    let colons = t.chars().take_while(|&c| c == ':').count();
+fn opening_container(t: &str) -> Option<(usize, &str, &str)> {    let colons = t.chars().take_while(|&c| c == ':').count();
     if colons < 3 {
         return None;
     }
@@ -564,7 +613,7 @@ mod tests {
         assert!(out.contains("<details class=\"custom-block details\" open>"), "{out}");
         assert!(out.contains("<summary>Click me</summary>"));
         let out = containers("::: code-group\n```js [a]\n1\n```\n:::\n");
-        assert!(out.contains("<div class=\"vp-code-group\">"), "{out}");
+        assert!(out.contains("<div class=\"vp-code-group\" x-data=\"codeGroup\">"), "{out}");
         assert!(out.contains("<div class=\"blocks\">"));
         assert!(out.contains("</div>\n</div>"));
     }
@@ -697,5 +746,26 @@ mod edge_tests {
         assert_eq!(rewrite_info("objective-c++"), "gdcode lang=objective-c++");
         // :line-numbers=N mid-token
         assert_eq!(rewrite_info("md:line-numbers=2"), "gdcode lang=md");
+    }
+}
+
+#[cfg(test)]
+mod code_group_tests {
+    use super::*;
+
+    #[test]
+    fn code_group_tabs_built_from_fence_labels() {
+        let out = expand_containers(
+            "::: code-group\n```sh [npm]\n1\n```\n```sh [pnpm]\n2\n```\n:::\n",
+        );
+        assert!(out.contains("<div class=\"vp-code-group\" x-data=\"codeGroup\">"), "{out}");
+        assert!(out.contains("<div class=\"tabs\">"), "{out}");
+        assert!(out.contains("name=\"group-1\""), "{out}");
+        assert!(out.contains("<label for=\"group-1-0\">npm</label>"), "{out}");
+        assert!(out.contains("<label for=\"group-1-1\">pnpm</label>"), "{out}");
+        assert!(out.contains("checked=\"checked\""), "{out}");
+        // labels without [label] fall back to the fence language
+        let out2 = expand_containers("::: code-group\n```js\n1\n```\n:::\n");
+        assert!(out2.contains("<label for=\"group-1-0\">js</label>"), "{out2}");
     }
 }

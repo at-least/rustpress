@@ -229,6 +229,12 @@ fn copy_dir(from: &Path, to: &Path) -> Result<(), BuildError> {
         if entry.path().is_dir() {
             copy_dir(&entry.path(), &target)?;
         } else {
+            if let Some(parent) = target.parent() {
+                std::fs::create_dir_all(parent).map_err(|source| BuildError::Write {
+                    path: parent.to_path_buf(),
+                    source,
+                })?;
+            }
             std::fs::copy(entry.path(), &target).map_err(|source| BuildError::Write {
                 path: target,
                 source,

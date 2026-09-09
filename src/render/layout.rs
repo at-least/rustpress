@@ -53,7 +53,7 @@ pub fn layout<'a>(site: &'a Site, shell: &Shell<'a>, headings: &'a [crate::markd
             <body class="font-sans bg-bg text-text-1 antialiased [text-rendering:optimizeLegibility] [-moz-osx-font-smoothing:grayscale] [text-autospace:normal] [text-spacing-trim:normal]">
                 <a class="sr-only" href="#main">"Skip to content"</a>
 
-                <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" hidden></div>
+                <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" x-cloak x-show="$store.ui.screen || $store.ui.sidebar" @click="$store.ui.screen = false; $store.ui.sidebar = false"></div>
 
                 <header class="relative top-[var(--vp-layout-top-height,0px)] left-0 z-(--vp-z-index-nav) w-full pointer-events-none lg:fixed">
                     (navbar::navbar(site, &current_url, is_home, has_sidebar))

@@ -145,6 +145,7 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
         let hl: std::collections::HashSet<usize> = spec.hl.iter().copied().collect();
 
         write!(output, "<pre class=\"language-{}\">", escape_attr(&spec.lang))?;
+        write!(output, "{COPY_BUTTON}")?;
         if let Some(label) = &spec.label {
             write!(output, "<span class=\"lang\">{}</span>", escape_text(label))?;
         }
@@ -215,6 +216,10 @@ pub fn syntax_css(light: &Theme, dark: &Theme) -> Result<String, syntect::Error>
     out.push_str("}\n");
     Ok(out)
 }
+
+/// The copy button (icons toggled by the `.copied` class rules in the
+/// vp-doc styles); gdCopyCode lives in the Alpine entry.
+const COPY_BUTTON: &str = "<button class=\"vp-copy-button\" type=\"button\" aria-label=\"Copy code\" onclick=\"gdCopyCode(this)\"><svg class=\"icon-copy\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" aria-hidden=\"true\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/></svg><svg class=\"icon-copied\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" aria-hidden=\"true\"><rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"m9 14l2 2l4-4\"/></svg></button>";
 
 fn escape_attr(s: &str) -> String {
     escape_text(s).replace('\'', "&#39;")

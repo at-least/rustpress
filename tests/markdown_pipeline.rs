@@ -49,8 +49,10 @@ fn getting_started_renders_containers_code_groups_and_highlighting() {
     let html = &out.html;
     assert!(html.contains("<div class=\"custom-block tip\">"), "tip container");
     assert!(html.contains("<p class=\"custom-block-title\">NOTE</p>"), "custom title");
-    assert!(html.matches("<div class=\"vp-code-group\">").count() == 4, "4 code groups");
-    assert!(html.contains("<span class=\"lang\">npm</span>"), "npm tab label");
+    assert!(html.matches("<div class=\"vp-code-group\" x-data=\"codeGroup\">").count() == 4, "4 code groups with tabs component");
+    assert!(html.matches("<div class=\"tabs\">").count() == 4, "tab strips emitted");
+    assert!(html.contains("<label for=\"group-1-0\">npm</label>"), "npm tab label in strip");
+    assert!(html.contains("<span class=\"lang\">npm</span>"), "npm lang label");
     assert!(html.contains("data-name=\"pnpm\""), "pnpm data-name");
     assert!(html.contains("class=\"language-sh\""), "sh fences highlighted");
     assert!(html.contains("st-"), "syntect scope classes");

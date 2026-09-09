@@ -33,13 +33,15 @@ pub fn navbar<'a>(site: &'a Site, current_url: &'a str, is_home: bool, has_sideb
     let has_search = site.config.search.is_some();
     let show_social = !socials.is_empty();
 
+    let home_cls = if is_home { " home" } else { "" };
+    let navbar_cls = format!(
+        "relative z-[1] h-(--vp-nav-height){home_cls} pointer-events-none whitespace-nowrap [--vp-nav-col-offset:0px] [&::before]:content-[''] [&::before]:absolute [&::before]:top-0 [&::before]:right-0 [&::before]:bottom-0 [&::before]:left-(--vp-nav-col-offset) [&::before]:z-[-1] [&::before]:bg-(--vp-nav-bg-color) [&::before]:[backdrop-filter:var(--vp-nav-backdrop-filter)] [&::before]:transition-colors [&::before]:duration-[250ms]{}{}{}",
+        if is_home { " max-lg:[&.home:not(.screen-open)::before]:bg-transparent" } else { "" },
+        if has_sidebar { " lg:[--vp-nav-col-offset:var(--vp-sidebar-width)] 2xl:[--vp-nav-col-offset:calc((100%-var(--vp-layout-max-width))/2+var(--vp-sidebar-width))]" } else { "" },
+        if is_home { " lg:[&.home.top::before]:bg-(--vp-nav-home-bg-color) lg:[&.home.top::before]:[backdrop-filter:none]" } else { "" },
+    );
     rsx! {
-        <div class=(format!(
-            "top relative z-[1] h-(--vp-nav-height) pointer-events-none whitespace-nowrap [--vp-nav-col-offset:0px] [&::before]:content-[''] [&::before]:absolute [&::before]:top-0 [&::before]:right-0 [&::before]:bottom-0 [&::before]:left-(--vp-nav-col-offset) [&::before]:z-[-1] [&::before]:bg-(--vp-nav-bg-color) [&::before]:[backdrop-filter:var(--vp-nav-backdrop-filter)] [&::before]:transition-colors [&::before]:duration-[250ms]{}{}{}",
-            if is_home { " max-lg:[&.home:not(.screen-open)::before]:bg-transparent" } else { "" },
-            if has_sidebar { " lg:[--vp-nav-col-offset:var(--vp-sidebar-width)] 2xl:[--vp-nav-col-offset:calc((100%-var(--vp-layout-max-width))/2+var(--vp-sidebar-width))]" } else { "" },
-            if is_home { " lg:[&.home.top::before]:bg-(--vp-nav-home-bg-color) lg:[&.home.top::before]:[backdrop-filter:none]" } else { "" },
-        )) id="VPNavBar">
+        <div x-data=(r#"{ "top": true }"#) @scroll.window.passive="top = window.scrollY <= 0" :class=(r#"({ 'top': top, 'screen-open': $store.ui.screen })"#) class=(navbar_cls) id="VPNavBar">
             <div class="py-0 pr-2 pl-6 md:pr-8 md:pl-8">
                 <div class="flex justify-between mx-auto max-w-[calc(var(--vp-layout-max-width)-4rem)] h-(--vp-nav-height) pointer-events-none">
                     <div class=(format!(
@@ -110,7 +112,7 @@ pub fn navbar<'a>(site: &'a Site, current_url: &'a str, is_home: bool, has_sideb
                                 </div>
                             }
 
-                            <button type="button" class="group flex justify-center items-center w-12 h-(--vp-nav-height) cursor-pointer md:hidden" id="VPNavBarHamburger" aria-label="Menu" aria-expanded="false">
+                            <button type="button" class="group flex justify-center items-center w-12 h-(--vp-nav-height) cursor-pointer md:hidden" id="VPNavBarHamburger" aria-label="Menu" @click="$store.ui.screen = !$store.ui.screen" :aria-expanded=("$store.ui.screen.toString()") :class=("{ active: $store.ui.screen }")>
                                 <span class="relative w-4 h-[0.875rem] overflow-hidden" aria-hidden="true">
                                     <span class="absolute w-4 h-[2px] top-0 left-0 bg-text-1 [transition:top_0.25s,background-color_0.5s,transform_0.25s] group-hover:translate-x-1 group-[.active]:top-[0.375rem] group-[.active]:translate-x-0! group-[.active]:rotate-[225deg] group-hover:group-[.active]:bg-text-2 group-hover:group-[.active]:[transition:top_0.25s,background-color_0.25s,transform_0.25s]"></span>
                                     <span class="absolute w-4 h-[2px] top-[0.375rem] left-0 translate-x-2 bg-text-1 [transition:top_0.25s,background-color_0.5s,transform_0.25s] group-hover:translate-x-0 group-[.active]:top-[0.375rem] group-[.active]:translate-x-4! group-hover:group-[.active]:bg-text-2 group-hover:group-[.active]:[transition:top_0.25s,background-color_0.25s,transform_0.25s]"></span>
@@ -137,7 +139,8 @@ pub fn navbar<'a>(site: &'a Site, current_url: &'a str, is_home: bool, has_sideb
 
 fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> String {
     let active = nav_item_active(item, current_url);
-    let html = if item.items.is_empty() {
+    
+    if item.items.is_empty() {
         let href = site.url(&item.link.clone().unwrap_or_default());
         let cls = format!(
             "flex items-center min-h-(--vp-nav-height) px-3 leading-normal text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1{}",
@@ -163,8 +166,8 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
         let text = item.text.clone();
         let children: Vec<&NavItem> = item.items.iter().collect();
         rsx! {
-            <div class=(group_cls)>
-                <button type="button" class="button flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" aria-expanded="false" aria-haspopup="true">
+            <div class=(group_cls) :class=("{ open: open }") x-data="{ open: false }" @click.outside="open = false">
+                <button type="button" class="button flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" :aria-expanded=("open.toString()") @click="open = !open" aria-haspopup="true">
                     <span class=(label_cls)>
                         <span>(text)</span>
                         (icon("chevron-down", "ml-1 size-[0.875rem]"))
@@ -188,15 +191,14 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
         }
         .render()
         .into_inner()
-    };
-    html
+    }
 }
 
 /// VPSwitchAppearance — one instance in the navbar, one in the nav
 /// screen; the JS bundle syncs `aria-checked` across both.
 fn appearance_switch(id: &'static str) -> impl Renderable {
     rsx! {
-        <button type="button" id=(id) class="VPSwitch VPSwitchAppearance relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label="Appearance" aria-checked="false" title="Toggle dark mode">
+        <button type="button" id=(id) class="VPSwitch VPSwitchAppearance relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label="Appearance" aria-checked="false" title="Toggle dark mode" @click="gdToggleAppearance()">
             <span class="absolute top-px left-px w-[1.125rem] h-[1.125rem] rounded-full bg-(--vp-c-neutral-inverse) shadow-1 transition-transform duration-[250ms] dark:translate-x-[1.125rem]">
                 <span class="relative block w-[1.125rem] h-[1.125rem] rounded-full overflow-hidden">
                     (icon("sun", "absolute top-[0.1875rem] left-[0.1875rem] size-3 text-text-2 dark:text-text-1 transition-opacity duration-[250ms] opacity-100 dark:opacity-0"))
@@ -215,7 +217,7 @@ pub fn nav_screen<'a>(site: &'a Site, current_url: &'a str) -> impl Renderable +
     let socials = site.config.social_links.clone();
     let has_nav = !nav.is_empty();
     rsx! {
-        <div class="fixed inset-0 pt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+1px)] pr-8 pl-8 bg-(--vp-nav-screen-bg-color) w-full overflow-y-auto overscroll-contain transition-colors duration-[250ms] pointer-events-auto opacity-100 md:hidden" id="VPNavScreen" hidden>
+        <div class="fixed inset-0 pt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+1px)] pr-8 pl-8 bg-(--vp-nav-screen-bg-color) w-full overflow-y-auto overscroll-contain transition-colors duration-[250ms] pointer-events-auto opacity-100 md:hidden" id="VPNavScreen" x-cloak x-show="$store.ui.screen" @keydown.escape.window="$store.ui.screen = false" x-effect="document.body.style.overflow = $store.ui.screen ? 'hidden' : ''">
             <div class="mx-auto pt-6 pb-24 max-w-[18rem]">
                 <nav class="menu" aria-label="Main Navigation">
                     <ul>
@@ -250,7 +252,8 @@ pub fn nav_screen<'a>(site: &'a Site, current_url: &'a str) -> impl Renderable +
 
 fn screen_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> String {
     let active = nav_item_active(item, current_url);
-    let html = if item.items.is_empty() {
+    
+    if item.items.is_empty() {
         let cls = format!(
             "block border-b border-divider pt-3 pb-[0.6875rem] leading-[1.7142857] text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1{}",
             if active { " text-brand-1" } else { "" }
@@ -283,8 +286,7 @@ fn screen_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> 
         }
         .render()
         .into_inner()
-    };
-    html
+    }
 }
 
 fn social_label(icon: &crate::config::SocialIcon) -> String {

@@ -22,17 +22,17 @@ pub fn local_nav<'a>(site: &'a Site, is_home: bool, has_sidebar: bool, headings:
         <div class=(nav_cls) id="VPLocalNav">
             <div class="flex justify-between items-center">
                 @if has_sidebar {
-                    <button type="button" class="flex items-center py-[0.75rem] px-6 pb-[0.6875rem] leading-[2] text-[0.75rem] font-medium text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] cursor-pointer lg:hidden md:px-8" id="VPLocalNavMenu" aria-expanded="false" aria-controls="VPSidebarNav">
+                    <button type="button" class="flex items-center py-[0.75rem] px-6 pb-[0.6875rem] leading-[2] text-[0.75rem] font-medium text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] cursor-pointer lg:hidden md:px-8" id="VPLocalNavMenu" @click="$store.ui.sidebar = true" :aria-expanded=("$store.ui.sidebar.toString()") aria-controls="VPSidebarNav">
                         (icon("align-left", "mr-2 size-[0.875rem]"))
                         <span>"Menu"</span>
                     </button>
                 }
-                <div id="VPLocalNavOutlineDropdown">
-                    <button type="button" class="group/drop relative block py-[0.75rem] px-6 pb-[0.6875rem] leading-[2] text-[0.75rem] font-medium text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] cursor-pointer [&.open]:text-text-1 md:px-8 lg:text-[0.875rem]" id="VPOutlineDropdownButton" aria-expanded="false" aria-controls="VPOutlineDropdownItems">
+                <div id="VPLocalNavOutlineDropdown" x-data="{ open: false }" @click.outside="open = false">
+                    <button type="button" class="group/drop relative block py-[0.75rem] px-6 pb-[0.6875rem] leading-[2] text-[0.75rem] font-medium text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] cursor-pointer [&.open]:text-text-1 md:px-8 lg:text-[0.875rem]" id="VPOutlineDropdownButton" @click="open = !open" :aria-expanded=("open.toString()") :class=("{ open: open }") aria-controls="VPOutlineDropdownItems">
                         <span>(outline_label.clone())</span>
                         (icon("chevron-right", "inline-block align-middle ml-[0.125rem] size-[0.875rem] transition-transform duration-[250ms] group-[.open]/drop:rotate-90 lg:size-[1rem]"))
                     </button>
-                    <div class="absolute top-10 right-4 left-4 grid gap-px border border-border rounded-lg bg-gutter max-h-[calc(var(--vp-vh,100vh)-5.375rem)] overflow-x-hidden overflow-y-auto overscroll-contain shadow-3 lg:right-auto lg:left-[calc(var(--vp-sidebar-width)+2rem)] lg:w-80" id="VPOutlineDropdownItems" hidden>
+                    <div class="absolute top-10 right-4 left-4 grid gap-px border border-border rounded-lg bg-gutter max-h-[calc(var(--vp-vh,100vh)-5.375rem)] overflow-x-hidden overflow-y-auto overscroll-contain shadow-3 lg:right-auto lg:left-[calc(var(--vp-sidebar-width)+2rem)] lg:w-80" id="VPOutlineDropdownItems" x-cloak x-show="open" "x-collapse"="">
                         <div class="bg-bg-soft">
                             <a class="block px-4 leading-[3.4285714] text-[0.875rem] font-medium text-brand-1" href=(root_url)>"Return to top"</a>
                         </div>

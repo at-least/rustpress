@@ -47,7 +47,7 @@ pub fn doc_page<'a>(
     );
 
     rsx! {
-        <div class="w-full pt-8 px-6 pb-24 md:pt-12 md:pb-32 md:px-8 lg:pt-12 lg:pb-0 lg:px-8">
+        <div class="w-full pt-8 px-6 pb-24 md:pt-12 md:pb-32 md:px-8 lg:pt-12 lg:pb-0 lg:px-8" x-data="docPage">
             <div class=(wrapper_cls)>
                 <div class="relative hidden order-2 grow pl-8 w-full max-w-64 xl:block">
                     <div class="fixed bottom-0 z-10 w-56 h-8 bg-[linear-gradient(transparent,var(--vp-c-bg)_70%)] pointer-events-none"></div>
