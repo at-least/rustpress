@@ -94,11 +94,21 @@ pub struct SiteConfig {
     #[serde(default)]
     pub markdown: Markdown,
 
+    /// UI theme: built-in name or a path to a CSS file.
+    #[serde(default)]
+    pub theme: Option<String>,
+
+
     /// Source-code syntax color scheme ([syntax] section) — separate
-    /// from the UI palette (theme.toml). Vendored: github-light /
-    /// github-dark; any syntect bundled theme name also works.
+    /// from the UI palette. Vendored: github-light / github-dark; any
+    /// syntect bundled theme name also works.
     #[serde(default)]
     pub syntax: SyntaxThemes,
+
+    /// UI theme: either a built-in palette name (`vitepress` (default),
+    /// `green`, `purple`, `orange`, `mono`) or a path to a CSS file
+    /// relative to the site dir (values ending in `.css`). One or the
+    /// other — no layering.
 
     /// Dark-mode behavior: `true` (default, toggleable, follows system),
     /// `false` (light only, no toggle), `"dark"` (dark default,

@@ -14,6 +14,7 @@ pub mod vpdoc;
 
 use std::path::Path;
 
+use std::path::PathBuf;
 use std::sync::OnceLock;
 
 use hypertext::prelude::*;
@@ -29,8 +30,9 @@ pub struct Site {
     pub content: Content,
     pub sidebars: Sidebars,
     pub engine: MarkdownEngine,
-    /// The site provides a `theme.css` (UI palette overrides).
-    pub theme_css: bool,
+    /// Resolved UI theme CSS (built-in palette or the user's file), to
+    /// be written as `theme.css`. `None` = the stock look, nothing linked.
+    pub theme_css: Option<String>,
 }
 
 impl Site {
@@ -102,7 +104,36 @@ impl Site {
         // (VitePress "extending the default theme" style — copied
         // verbatim and linked after main.css). Syntax colors are NOT
         // here — they live in the [syntax] section of gen-docs.toml.
-        let theme_css = site_dir.join("theme.css").is_file();
+        // UI theme: one variable, one choice — a built-in palette name or
+        // a path to a CSS file (values ending in `.css`). Unset/`vitepress`
+        // = the stock look, nothing emitted.
+        // unset or the default built-in: the stock look
+        let selected = config.theme.as_deref().filter(|v| *v != crate::palettes::DEFAULT_NAME);
+        let theme_css = match selected {
+            None => None,
+            Some(value) if value.ends_with(".css") => {
+                let path = site_dir.join(value);
+                if !path.is_file() {
+                    return Err(BuildError::ThemeFile {
+                        path: path.clone(),
+                        value: value.to_string(),
+                        available: crate::palettes::available(),
+                    });
+                }
+                Some(std::fs::read_to_string(&path).map_err(|source| BuildError::Write {
+                    path: path.clone(),
+                    source,
+                })?)
+            }
+            Some(name) => Some(
+                crate::palettes::css(name)
+                    .ok_or_else(|| BuildError::Theme {
+                        value: name.to_string(),
+                        available: crate::palettes::available(),
+                    })?
+                    .to_string(),
+            ),
+        };
         Ok(Site { config, content, sidebars, engine, theme_css })
     }
 
@@ -219,10 +250,8 @@ impl Site {
         write_file(&out_dir.join("404.html"), not_found.as_bytes())?;
         // generated assets
         write_file(&out_dir.join("syntax.css"), self.engine.syntax_css().as_bytes())?;
-        if self.theme_css {
-            std::fs::copy(site_dir.join("theme.css"), out_dir.join("theme.css")).map_err(
-                |source| BuildError::Write { path: out_dir.join("theme.css"), source },
-            )?;
+        if let Some(css) = &self.theme_css {
+            write_file(&out_dir.join("theme.css"), css.as_bytes())?;
             stats.theme = true;
         }
         if let Some(sitemap) = &self.config.sitemap {
@@ -452,6 +481,10 @@ pub struct BuildStats {
 
 #[derive(Debug, thiserror::Error)]
 pub enum BuildError {
+    #[error("unknown theme {value:?} — expected a built-in palette ({available}) or a path to a .css file")]
+    Theme { value: String, available: String },
+    #[error("theme file {path:?} not found (theme = {value:?}); built-in palettes: {available}")]
+    ThemeFile { path: PathBuf, value: String, available: String },
     #[error("{}", .report)]
     DeadLinks { report: String },
     #[error(transparent)]
