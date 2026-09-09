@@ -91,10 +91,10 @@ fn start_watcher(site_dir: PathBuf) -> anyhow::Result<()> {
                 let _ = tx.send(ev.paths);
             }
         })
-        .expect("watcher");
+        .unwrap_or_else(|e| panic!("gen-docs: cannot start file watcher: {e}"));
         watcher
             .watch(&site_dir, notify::RecursiveMode::Recursive)
-            .expect("watch site dir");
+            .unwrap_or_else(|e| panic!("gen-docs: cannot watch {}: {e}", site_dir.display()));
         for paths in rx {
             // ignore the build output itself
             if paths.iter().any(|p| p.starts_with(site_dir.join("public"))) {
