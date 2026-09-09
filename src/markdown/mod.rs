@@ -13,8 +13,13 @@ use comrak::options::{Plugins, RenderPlugins};
 use comrak::{Anchorizer, Arena, Options};
 use syntect::highlighting::Theme;
 
-use crate::config::Markdown as MarkdownConfig;
 use crate::content::{Content, Page};
+
+/// The one shipped highlight theme pair (vendored tmThemes; see
+/// assets/themes/). Intentionally not configurable — the generator has a
+/// single design, like the templates.
+pub const THEME_LIGHT: &str = "github-light";
+pub const THEME_DARK: &str = "github-dark";
 
 /// One outline heading with its render-matching anchor id.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -48,7 +53,7 @@ pub struct MarkdownEngine {
 }
 
 impl MarkdownEngine {
-    pub fn new(config: &MarkdownConfig) -> Result<Self, MarkdownError> {
+    pub fn new() -> Result<Self, MarkdownError> {
         let mut options = Options::default();
         let ext = &mut options.extension;
         ext.table = true;
@@ -64,10 +69,10 @@ impl MarkdownEngine {
         // trusted wrappers (containers, badges) as raw HTML too.
         options.render.r#unsafe = true;
         options.render.tasklist_classes = true;
-        let light = highlight::load_theme(&config.theme.light)
-            .ok_or_else(|| MarkdownError::Theme { name: config.theme.light.clone() })?;
-        let dark = highlight::load_theme(&config.theme.dark)
-            .ok_or_else(|| MarkdownError::Theme { name: config.theme.dark.clone() })?;
+        let light = highlight::load_theme(THEME_LIGHT)
+            .ok_or_else(|| MarkdownError::Theme { name: THEME_LIGHT.to_string() })?;
+        let dark = highlight::load_theme(THEME_DARK)
+            .ok_or_else(|| MarkdownError::Theme { name: THEME_DARK.to_string() })?;
         Ok(Self {
             options,
             renderer: highlight::GdCodeRenderer,

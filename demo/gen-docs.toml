@@ -21,10 +21,6 @@ copyright = "Copyright © 2019-present Evan You"
 level = [2, 3]
 label = "On this page"
 
-[markdown.theme]
-light = "github-light"
-dark = "github-dark"
-
 [search]
 provider = "local"
 

@@ -42,7 +42,7 @@ The Rust build needs only `cargo` (no Node). The committed `static/main.css` is 
 
 ## Site shape
 
-- `gen-docs.toml` — site config mirroring VitePress's `themeConfig`: `title`, `nav` (plain links with `activeMatch`, dropdowns), `sidebar` (absent → one auto-derived per top-level section; explicit single array; or VitePress's path-keyed `{ base, items }` map with tri-state `collapsed`), `socialLinks`, `editLink` (`:path` pattern), `footer`, `outline`, `markdown.theme` (light/dark tmTheme names), `search.provider = "local"`.
+- `gen-docs.toml` — site config mirroring VitePress's `themeConfig`: `title`, `nav` (plain links with `activeMatch`, dropdowns), `sidebar` (absent → one auto-derived per top-level section; explicit single array; or VitePress's path-keyed `{ base, items }` map with tri-state `collapsed`), `socialLinks`, `editLink` (`:path` pattern), `footer`, `outline`, `search.provider = "local"`. There is no theme system: one design, compiled in, with a fixed syntax-highlighting pair (vendored github-light/github-dark).
 - `content/**/*.md` — VitePress format. URLs are directory-style: `guide/x.md` → `/guide/x/`, `index.md` → `/`. Titles come from the first H1 (fence-aware); front matter keys honored: `description`, `title`, `layout: home` (+ `hero`/`features`), `outline: deep` (or a level/level-pair).
 - `static/` — copied verbatim into the output root.
 

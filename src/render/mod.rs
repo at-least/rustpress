@@ -35,7 +35,7 @@ impl Site {
         let content_dir = site_dir.join("content");
         let content = Content::load(&content_dir)?;
         let sidebars = Sidebars::build(&config, &content);
-        let engine = MarkdownEngine::new(&config.markdown)?;
+        let engine = MarkdownEngine::new()?;
         Ok(Site { config, content, sidebars, engine })
     }
 

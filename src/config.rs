@@ -23,14 +23,6 @@ fn default_outline_label() -> String {
     "On this page".into()
 }
 
-fn default_light_theme() -> String {
-    "github-light".into()
-}
-
-fn default_dark_theme() -> String {
-    "github-dark".into()
-}
-
 /// The whole `gen-docs.toml`.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
@@ -84,10 +76,6 @@ pub struct SiteConfig {
     /// Right-hand outline ("on this page") settings.
     #[serde(default)]
     pub outline: Outline,
-
-    /// Markdown/highlighting settings.
-    #[serde(default)]
-    pub markdown: Markdown,
 
     /// Local search. Absent → no search index, no search modal.
     #[serde(default)]
@@ -259,35 +247,9 @@ impl Default for Outline {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
-pub struct Markdown {
-    /// Dual syntax-highlighting themes (syntect tmTheme names), matching
-    /// the VitePress default pair.
-    #[serde(default)]
-    pub theme: HighlightThemes,
-}
-
-impl Default for Markdown {
-    fn default() -> Self {
-        toml::from_str("").unwrap()
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
-pub struct HighlightThemes {
-    #[serde(default = "default_light_theme")]
-    pub light: String,
-    #[serde(default = "default_dark_theme")]
-    pub dark: String,
-}
-
-impl Default for HighlightThemes {
-    fn default() -> Self {
-        toml::from_str("").unwrap()
-    }
-}
+// Syntax-highlighting themes are intentionally not configurable: the
+// generator ships one design — the vendored github-light/github-dark
+// pair (see src/markdown/highlight.rs).
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
@@ -327,12 +289,17 @@ mod tests {
         assert_eq!(c.lang, "en");
         assert_eq!(c.base, "/");
         assert_eq!(c.outline.label, "On this page");
-        assert_eq!(c.markdown.theme.light, "github-light");
-        assert_eq!(c.markdown.theme.dark, "github-dark");
         assert!(c.nav.is_empty());
         assert_eq!(c.sidebar, Sidebar::Auto);
         assert!(c.search.is_none());
         assert!(!c.last_updated);
+    }
+
+    #[test]
+    fn markdown_section_is_unknown_now() {
+        // themes are fixed; the old [markdown] table must be rejected
+        let err = toml::from_str::<SiteConfig>("[markdown.theme]\nlight = \"x\"\n").unwrap_err();
+        assert!(err.to_string().contains("markdown"), "{err}");
     }
 
     #[test]
@@ -373,10 +340,6 @@ copyright = "Copyright (c) 2026 Me"
 level = [2, 3]
 label = "On this page"
 
-[markdown.theme]
-light = "github-light"
-dark = "github-dark"
-
 [search]
 provider = "local"
 "#,
@@ -395,7 +358,6 @@ provider = "local"
         );
         assert_eq!(c.outline.level, Some(OutlineLevel::Range((2, 3))));
         assert_eq!(c.search, Some(Search { provider: SearchProvider::Local }));
-        assert_eq!(c.markdown.theme.dark, "github-dark");
     }
 
     #[test]

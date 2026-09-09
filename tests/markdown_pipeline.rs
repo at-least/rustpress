@@ -6,13 +6,12 @@
 //! literal by design. Real rendered constructs live in getting-started /
 //! routing / runtime-api; anything else gets a synthetic-page test here.
 
-use gen_docs::config::Markdown as MarkdownConfig;
 use gen_docs::content::{Content, Page};
 use gen_docs::markdown::MarkdownEngine;
 use std::path::Path;
 
 fn engine() -> MarkdownEngine {
-    MarkdownEngine::new(&MarkdownConfig::default()).expect("engine")
+    MarkdownEngine::new().expect("engine")
 }
 
 fn fixture(url: &str) -> gen_docs::markdown::RenderedPage {
