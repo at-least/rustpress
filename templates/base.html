@@ -77,8 +77,8 @@
 
     {% if config.extra.vitepress_footer_message or config.extra.vitepress_footer_copyright %}
     {# VPFooter #}
-    <footer class="relative z-(--vp-z-index-footer) border-t border-gutter py-8 px-6 bg-bg{% if has_sidebar %} hidden{% endif %}">
-      <div class="mx-auto max-w-(--vp-layout-max-width) text-center">
+    <footer class="relative z-(--vp-z-index-footer) border-t border-gutter py-8 px-6 bg-bg md:px-8{% if has_sidebar %} hidden{% endif %}">
+      <div class="mx-auto max-w-(--vp-layout-max-width) text-center [&_a]:underline [&_a]:underline-offset-[0.125rem] [&_a]:transition-colors [&_a]:duration-[250ms] [&_a:hover]:text-text-1">
         {% if config.extra.vitepress_footer_message %}
         <p class="leading-[1.7142857] text-[0.875rem] font-medium text-text-2">{{ config.extra.vitepress_footer_message | safe }}</p>
         {% endif %}

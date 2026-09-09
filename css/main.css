@@ -638,6 +638,36 @@ button:enabled,
   cursor: pointer;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li,
+p {
+  overflow-wrap: break-word;
+}
+
+pre,
+code,
+kbd,
+samp {
+  text-autospace: no-autospace;
+}
+
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+button:focus-visible {
+  outline: 1px dotted;
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
 /* https://web.dev/articles/prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   *,

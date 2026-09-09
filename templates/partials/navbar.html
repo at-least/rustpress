@@ -1,7 +1,7 @@
 {% set has_languages = config.languages and config.languages | length > 0 %}
 {# VPNavBar — surface is the ::before pseudo; `top`/`screen-open` are
    toggled by js/app.js. #}
-<div class="relative z-[1] h-(--vp-nav-height) pointer-events-none whitespace-nowrap [--vp-nav-col-offset:0px] [&::before]:content-[''] [&::before]:absolute [&::before]:top-0 [&::before]:right-0 [&::before]:bottom-0 [&::before]:left-(--vp-nav-col-offset) [&::before]:z-[-1] [&::before]:bg-(--vp-nav-bg-color) [&::before]:[backdrop-filter:var(--vp-nav-backdrop-filter)] [&::before]:transition-colors [&::before]:duration-[250ms]{% if is_home %} max-lg:[&.home:not(.screen-open)::before]:bg-transparent{% endif %} max-lg:[&.screen-open::before]:bg-(--vp-nav-bg-color) max-lg:[&.screen-open::before]:transition-none lg:[&.home.top::before]:bg-(--vp-nav-home-bg-color) lg:[&.home.top::before]:[backdrop-filter:none]{% if has_sidebar %} lg:[--vp-nav-col-offset:var(--vp-sidebar-width)] 2xl:[--vp-nav-col-offset:calc((100%-var(--vp-layout-max-width))/2+var(--vp-sidebar-width))]{% endif %}" id="VPNavBar">
+<div class="top relative z-[1] h-(--vp-nav-height) pointer-events-none whitespace-nowrap [--vp-nav-col-offset:0px] [&::before]:content-[''] [&::before]:absolute [&::before]:top-0 [&::before]:right-0 [&::before]:bottom-0 [&::before]:left-(--vp-nav-col-offset) [&::before]:z-[-1] [&::before]:bg-(--vp-nav-bg-color) [&::before]:[backdrop-filter:var(--vp-nav-backdrop-filter)] [&::before]:transition-colors [&::before]:duration-[250ms]{% if is_home %} max-lg:[&.home:not(.screen-open)::before]:bg-transparent{% endif %} max-lg:[&.screen-open::before]:bg-(--vp-nav-bg-color) max-lg:[&.screen-open::before]:transition-none lg:[&.home.top::before]:bg-(--vp-nav-home-bg-color) lg:[&.home.top::before]:[backdrop-filter:none]{% if has_sidebar %} lg:[--vp-nav-col-offset:var(--vp-sidebar-width)] 2xl:[--vp-nav-col-offset:calc((100%-var(--vp-layout-max-width))/2+var(--vp-sidebar-width))]{% endif %}" id="VPNavBar">
   <div class="py-0 pr-2 pl-6 md:pr-8 md:pl-8">
     <div class="flex justify-between mx-auto max-w-[calc(var(--vp-layout-max-width)-4rem)] h-(--vp-nav-height) pointer-events-none">
       <div class="title min-w-0 pointer-events-none [&_*]:pointer-events-auto{% if has_sidebar %} lg:max-w-[calc(var(--vp-sidebar-width)-2rem)]{% elif not is_home %} lg:min-w-[calc(var(--vp-sidebar-width)-2rem)]{% endif %}">
@@ -95,7 +95,7 @@
             </button>
             <div class="menu absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-focus-within/flyout:opacity-100 group-focus-within/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
               <div class="rounded-xl p-3 min-w-32 border border-divider bg-bg-elv shadow-3 transition-colors duration-500 max-h-[calc(100vh-var(--vp-nav-height))] overflow-y-auto">
-                <p class="text-[0.875rem] font-bold text-text-1 leading-[2.2857143]">{{ <lang_label code={lang} labels={lang_labels} /> }}</p>
+                <p class="pl-3 pr-6 text-[0.875rem] font-bold text-text-1 leading-[2.2857143]">{{ <lang_label code={lang} labels={lang_labels} /> }}</p>
                 <ul>
                   {{ <lang_links translations={current_translations} lang={lang} labels={lang_labels} default_lang={config.default_language} root_mode={lang_root_mode} base={lang_base} languages={config.languages} mode="menu" /> }}
                 </ul>
