@@ -20,7 +20,7 @@ fn build_fixture() -> (tempdir::Guard, rustpress::render::BuildStats) {
     let content = Content::load(&fixtures.join("en"), &[]).unwrap();
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
-        engine: MarkdownEngine::new(&config.markdown, &config.syntax, Path::new(".")).unwrap(),
+        engine: MarkdownEngine::new(&config.markdown, &config.syntax, Path::new("."), "/").unwrap(),
         theme_css: None,
         config,
         content,
@@ -136,7 +136,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
         let content = Content::load(&fixtures.join("en"), &[]).unwrap();
         Site {
             sidebars: Sidebars::build(&config, &content),
-            engine: MarkdownEngine::new(&config.markdown, &config.syntax, Path::new(".")).unwrap(),
+            engine: MarkdownEngine::new(&config.markdown, &config.syntax, Path::new("."), "/").unwrap(),
         theme_css: None,
             config,
             content,
@@ -160,7 +160,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
     let content = Content::load(&fixtures.join("en"), &[]).unwrap();
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
-        engine: MarkdownEngine::new(&config.markdown, &config.syntax, Path::new(".")).unwrap(),
+        engine: MarkdownEngine::new(&config.markdown, &config.syntax, Path::new("."), "/").unwrap(),
         theme_css: None,
         config,
         content,
@@ -310,6 +310,7 @@ fn syntax_theme_pair_is_selectable() {
                 dark: dark.into(),
             },
             Path::new("."),
+            "/",
         );
         engine.map(|e| e.syntax_css())
     };

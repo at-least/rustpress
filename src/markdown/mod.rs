@@ -56,6 +56,9 @@ pub struct MarkdownEngine {
     lazy_images: bool,
     math: bool,
     config_container: crate::config::ContainerOptions,
+    /// Site `base` (`/` or `/sub/`), prefixed onto root-absolute content
+    /// links and images the way VitePress's link plugin does.
+    base: String,
 }
 
 impl MarkdownEngine {
@@ -63,6 +66,7 @@ impl MarkdownEngine {
         markdown: &MarkdownConfig,
         syntax: &crate::config::SyntaxThemes,
         base_dir: &std::path::Path,
+        base: &str,
     ) -> Result<Self, MarkdownError> {
         let mut options = Options::default();
         let ext = &mut options.extension;
@@ -121,6 +125,7 @@ impl MarkdownEngine {
             lazy_images: markdown.image.lazy_loading,
             math: markdown.math,
             config_container: markdown.container.clone(),
+            base: base.to_string(),
         })
     }
 
@@ -138,12 +143,17 @@ impl MarkdownEngine {
         site_root: &Path,
         content_dir: &Path,
     ) -> Result<RenderedPage, MarkdownError> {
-        let pre = preprocess::Preprocess { site_root, content_dir, container: self.config_container.clone() };
+        let pre = preprocess::Preprocess {
+            site_root,
+            content_dir,
+            container: self.config_container.clone(),
+            base: &self.base,
+        };
         let md = pre.run(&page.body, &page.rel)?;
 
         let arena = Arena::new();
         let root = comrak::parse_document(&arena, &md, &self.options);
-        rewrite_links(&root, page, content);
+        rewrite_links(&root, page, content, &self.base);
         let headings = collect_headings(&root);
 
         let plugins = Plugins {
@@ -181,16 +191,35 @@ impl MarkdownEngine {
 }
 
 /// Rewrite relative/`.md` links against the page's location into
-/// canonical `/page/` URLs (anchors preserved); external links and
-/// unknown targets pass through.
-fn rewrite_links(root: &comrak::Node<'_>, page: &Page, content: &Content) {
+/// canonical `/page/` URLs (anchors preserved), then prefix `base` onto
+/// every root-absolute link and image URL, as VitePress's link plugin
+/// does; external, protocol-relative, anchor-only and mailto URLs and
+/// raw HTML pass through.
+fn rewrite_links(root: &comrak::Node<'_>, page: &Page, content: &Content, base: &str) {
     for node in root.descendants() {
         let replacement = {
             let data = node.data.borrow();
             match &data.value {
-                NodeValue::Link(link) => resolve_relative(&link.url, &page.rel, content).map(|url| {
-                    NodeValue::Link(Box::new(NodeLink { url, ..(**link).clone() }))
-                }),
+                NodeValue::Link(link) => {
+                    let resolved = resolve_relative(&link.url, &page.rel, content);
+                    let url = resolved.as_deref().unwrap_or(&link.url);
+                    let rebased = with_base(base, url);
+                    (rebased != link.url).then(|| {
+                        NodeValue::Link(Box::new(NodeLink {
+                            url: rebased,
+                            ..(**link).clone()
+                        }))
+                    })
+                }
+                NodeValue::Image(image) => {
+                    let rebased = with_base(base, &image.url);
+                    (rebased != image.url).then(|| {
+                        NodeValue::Image(Box::new(NodeLink {
+                            url: rebased,
+                            ..(**image).clone()
+                        }))
+                    })
+                }
                 _ => None,
             }
         };
@@ -198,6 +227,17 @@ fn rewrite_links(root: &comrak::Node<'_>, page: &Page, content: &Content) {
             node.data.borrow_mut().value = value;
         }
     }
+}
+
+/// Join the site `base` onto a root-absolute URL (`/guide/` → `/base/guide/`);
+/// anything else — relative, external, protocol-relative (`//host`),
+/// anchor, mailto — is returned unchanged.
+pub fn with_base(base: &str, url: &str) -> String {
+    let base = base.trim_end_matches('/');
+    if base.is_empty() || !url.starts_with('/') || url.starts_with("//") {
+        return url.to_string();
+    }
+    format!("{base}{url}")
 }
 
 /// `./x.md`, `../y.md`, `./dir/`, `../` → canonical URL of the target

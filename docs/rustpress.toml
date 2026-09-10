@@ -30,8 +30,8 @@ provider = "local"
 math = true
 
 [sitemap]
-# Origin only: page URLs already carry `base`. Switch `base` to "/rustpress/"
-# for a GitHub Pages project site once markdown content links honor it.
+# Origin only: page URLs already carry `base`. For the GitHub Pages project
+# site set `base = "/rustpress/"` (the dev server does not serve under a base yet).
 hostname = "https://at-least.github.io"
 
 [[head]]

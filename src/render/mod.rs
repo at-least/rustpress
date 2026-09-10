@@ -41,7 +41,7 @@ impl Site {
         let content_dir = site_dir.join(&config.src_dir);
         let mut content = Content::load(&content_dir, &config.src_exclude)?;
         let sidebars = Sidebars::build(&config, &content);
-        let engine = MarkdownEngine::new(&config.markdown, &config.syntax, site_dir)?;
+        let engine = MarkdownEngine::new(&config.markdown, &config.syntax, site_dir, &config.base)?;
         // git timestamps beat mtimes: a fresh clone's mtimes are checkout
         // time, which would make "last updated" meaningless
         if config.last_updated {
@@ -653,8 +653,15 @@ fn find_dead_links(html: &str, page: &Page, site: &Site) -> Vec<String> {
             continue;
         }
         if no_frag.starts_with('/') {
-            // absolute, base-free: page set or output file
-            let target = no_frag.trim_end_matches('/');
+            // absolute: content links carry the base prefix now, so strip
+            // it back off before looking up the page set / output file
+            let base = site.config.base.trim_end_matches('/');
+            let no_base = if !base.is_empty() && no_frag.starts_with(&format!("{base}/")) {
+                &no_frag[base.len()..]
+            } else {
+                no_frag
+            };
+            let target = no_base.trim_end_matches('/');
             if !site.content.by_url.contains_key(&format!("{target}/"))
                 && !site.content.by_url.contains_key(&format!("{target}.html"))
             {

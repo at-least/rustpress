@@ -61,8 +61,10 @@ If your site is deployed to a non-root URL, set the [`base`](../reference/site-c
 
 The base is prepended to every URL the theme generates: the navbar, sidebar, logo, hero actions, language switcher, prev/next links, and the stylesheet and script tags in `<head>`.
 
-::: warning Markdown links and images are emitted as written
-Paths inside markdown content do not receive the base. With `base = "/bar/"`, `![x](/image.png)` is emitted as `src="/image.png"`, and a relative page link like `[Guide](./guide)` resolves to `/guide/` rather than `/bar/guide/`. Until this changes, sites deployed under a sub-path should write the base into asset paths themselves (`![x](/bar/image.png)`) and link to pages with root-absolute, base-included paths.
+Root-absolute paths inside markdown get it too, as in VitePress: with `base = "/bar/"`, `![x](/image.png)` is emitted as `src="/bar/image.png"`, `[x](/guide/)` as `href="/bar/guide/"`, and a relative page link like `[Guide](./guide)` resolves to `/bar/guide/`. Write paths as if the site were at the root and let `base` do the rest.
+
+::: warning Raw HTML and `head` entries are emitted as written
+The rewrite covers markdown link and image syntax only. A raw `<a href="/x">` or `<img src="/x">` in your content, and the `href` values of [`[[head]]`](../reference/site-config#head) entries, are copied verbatim, so include the base in those yourself.
 :::
 
 ## Serving Assets from a CDN

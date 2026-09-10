@@ -219,11 +219,7 @@ The base URL path the site is deployed under. Set it if the site lives at a sub 
 base = "/base/"
 ```
 
-`base` is prepended to the URLs the theme generates: navbar and sidebar links, the prev/next pager, the search index, the language switcher, the logo and hero images, and the stylesheet/script tags.
-
-::: warning Links inside markdown are not rebased yet
-Links written in page content — `[x](/guide/a/)`, `[x](./a)`, and raw `<a href="/guide/a/">` — are currently emitted without the `base` prefix, so with a non-root `base` the theme chrome resolves correctly but in-content links point at the domain root. A site with `base = "/"` (the default) is unaffected.
-:::
+`base` is prepended to the URLs the theme generates — navbar and sidebar links, the prev/next pager, the search index, the language switcher, the logo and hero images, the stylesheet/script tags — and, as in VitePress, to every root-absolute link and image written in markdown: `[x](/guide/a/)` becomes `href="/base/guide/a/"`, `![x](/pic.png)` becomes `src="/base/pic.png"`, and relative page links (`[x](./a)`) are resolved to the target page first and then prefixed. Raw HTML in content and [`head`](#head) entries are written out verbatim.
 
 ## Routing
 

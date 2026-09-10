@@ -92,7 +92,7 @@ Links are resolved in *source space*: they name source files, and the page's fin
 
 A relative link that matches no page passes through untouched, and the build reports it as a dead link (see [Dead Links](#dead-links)).
 
-Absolute links (`/guide/getting-started/`) are emitted exactly as written. Note that they are **not** prefixed with [`base`](../reference/site-config#base): the navbar, sidebar and asset URLs are, but links inside markdown are not, so a site deployed under a sub-path should currently prefer relative links.
+Absolute links (`/guide/getting-started/`) are emitted as written, with [`base`](../reference/site-config#base) prepended when the site is deployed under a sub-path; resolved relative links get the same prefix.
 
 Learn more about linking to assets such as images in [Asset Handling](./asset-handling).
 

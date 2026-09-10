@@ -38,6 +38,9 @@ pub struct Preprocess<'a> {
     pub content_dir: &'a Path,
     /// Container labels and custom kinds ([markdown.container]).
     pub container: ContainerOptions,
+    /// Site `base`, prefixed onto root-absolute URLs of `[x](/y){attrs}`
+    /// links (they become raw HTML here and never reach the link rewriter).
+    pub base: &'a str,
 }
 
 const MAX_INCLUDE_DEPTH: u8 = 8;
@@ -46,7 +49,7 @@ impl<'a> Preprocess<'a> {
     pub fn run(&self, body: &str, page_rel: &str) -> Result<String, PreprocessError> {
         let md = self.resolve_includes(body, page_rel, 0)?;
         let md = expand_inline_footnotes(&md);
-        let md = rewrite_link_attrs(&md);
+        let md = rewrite_link_attrs(&md, self.base);
         let md = expand_alerts(&md, &self.container);
         let md = expand_containers(&md, &self.container);
         let md = rewrite_fences(&md);
@@ -502,7 +505,7 @@ fn replace_inline(
 /// (upstream's @mdit/plugin-attrs link form). Rewritten to a raw
 /// anchor, so markdown inside the link text is not re-parsed. Fence-
 /// and inline-code-span aware.
-pub fn rewrite_link_attrs(md: &str) -> String {
+pub fn rewrite_link_attrs(md: &str, base: &str) -> String {
     static RE: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
     let re = RE.get_or_init(|| {
         // [text](url){k="v" k2="v2"} — attrs must contain =" to avoid
@@ -536,7 +539,12 @@ pub fn rewrite_link_attrs(md: &str) -> String {
             let (before, after) = rest.split_at(i);
             let span_end = after[1..].find('`').map(|j| j + 2);
             replaced.push_str(&re.replace_all(before, |c: &regex::Captures| {
-                format!(r#"<a href="{}"{}>{}</a>"#, esc(&c[3]), parse_attrs(&c[4]), esc(&c[2]))
+                format!(
+                    r#"<a href="{}"{}>{}</a>"#,
+                    esc(&super::with_base(base, &c[3])),
+                    parse_attrs(&c[4]),
+                    esc(&c[2])
+                )
             }));
             match span_end.map(|e| &after[..e]) {
                 Some(code) => {
@@ -550,7 +558,12 @@ pub fn rewrite_link_attrs(md: &str) -> String {
             }
         }
         replaced.push_str(&re.replace_all(rest, |c: &regex::Captures| {
-            format!(r#"<a href="{}"{}>{}</a>"#, esc(&c[3]), parse_attrs(&c[4]), esc(&c[2]))
+            format!(
+                r#"<a href="{}"{}>{}</a>"#,
+                esc(&super::with_base(base, &c[3])),
+                parse_attrs(&c[4]),
+                esc(&c[2])
+            )
         }));
         out.push_str(&replaced);
         out.push('\n');
@@ -1304,6 +1317,7 @@ mod include_and_container_tests {
             site_root: Path::new("tests/fixtures"),
             content_dir: Path::new("tests/fixtures/en"),
             container: ContainerOptions::default(),
+            base: "/",
         }
     }
 

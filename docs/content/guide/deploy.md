@@ -38,9 +38,7 @@ The build fails on [dead links](./routing#dead-links) and on unknown config keys
 
 By default, we assume the site is going to be deployed at the root path of a domain (`/`). If your site is going to be served at a sub-path, e.g. `https://mywebsite.com/blog/`, set the [`base`](../reference/site-config#base) option to `"/blog/"`. It must start and end with `/`.
 
-::: warning Base and in-content links
-`base` is currently applied to the theme chrome (navbar, sidebar, pager, search) and to generated assets, but **not** to links inside markdown content, which are emitted as root-absolute paths such as `/guide/x/`. Until that is fixed, prefer deploying at the domain root — a custom domain or a `<user>.github.io` user site — over a sub-path project site. See [Linking Between Pages](./routing#linking-between-pages).
-:::
+The base is applied to the theme chrome, to generated assets and to links and images inside markdown, so pages written for the root keep working under the sub-path. See [Asset Handling](./asset-handling#base-url) for the two things that are emitted verbatim.
 
 ## HTTP Cache Headers
 
@@ -122,7 +120,7 @@ Building the binary on every deploy takes a few minutes. The alternative is to b
    This assumes the site lives inside the rustpress repository (as this documentation does). For a site in its own repository, build rustpress as a separate step: check out the rustpress repository, run its npm build, then `cargo install --path .` (or, once the crate is published, `cargo install rustpress-cli`). The binary carries the theme assets, so nothing has to be copied into the site. Note that `cargo install --git` cannot work: the npm-built `main.css` and `js/app.js` are not committed, and the build refuses to run without them.
 
    ::: warning
-   Make sure the `base` option is properly configured — and read the caveat under [Setting a Public Base Path](#setting-a-public-base-path) before deploying to a `<user>.github.io/<repository>/` project page.
+   Make sure the `base` option is properly configured when deploying to a `<user>.github.io/<repository>/` project page — see [Setting a Public Base Path](#setting-a-public-base-path).
    :::
 
 2. In your repository's settings under "Pages", select "GitHub Actions" in "Build and deployment > Source".
@@ -149,7 +147,7 @@ Building the binary on every deploy takes a few minutes. The alternative is to b
        - main
    ```
 
-2. Set `base` to `"/<repository>/"` if you deploy to `https://<username>.gitlab.io/<repository>/` (mind the caveat above), or leave it at `/` for a custom domain or a unique-domain setting.
+2. Set `base` to `"/<repository>/"` if you deploy to `https://<username>.gitlab.io/<repository>/`, or leave it at `/` for a custom domain or a unique-domain setting.
 
 ### nginx
 
