@@ -116,7 +116,7 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
                     </footer>
                 }
 
-                @if site.config.search.is_some() {
+                @if site.config.search.is_some() && shell.has_navbar {
                     (super::search_modal::search_modal(&search_index_url, site.config.search.as_ref().unwrap()))
                 }
 

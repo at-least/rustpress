@@ -7,8 +7,9 @@ verified against source, not README prose). It complements
 pinned demo pages — this file answers "VitePress shipped a feature we
 never looked at" for the *whole* documented surface.
 
-- **Pinned upstream:** `vuejs/vitepress` @ `3e681e2` (v2.0.0-alpha.20,
-  2026-09-10 audit)
+- **Pinned upstream:** `vuejs/vitepress` @ `3e681e2` (v2.0.0-alpha.20;
+  audited 2026-09-10, statuses updated after the fill-in pass
+  d6b05d2…fe1cdc9)
 - **Coverage gate:** `tests/feature_parity.rs` extracts every `##`/`###`
   heading from the four reference files in `../vitepress/docs/en` and
   fails if a heading is not covered here. No clone checked out → test
@@ -24,7 +25,7 @@ never looked at" for the *whole* documented surface.
 | missing | upstream has it, we don't, no architectural blocker |
 | n/a | needs a runtime gen-docs doesn't have (Vue/Vite/Node/external service) |
 
-Status summary: implemented 49, partial 26, diverged 13, missing 42,
+Status summary: implemented 76, partial 17, diverged 12, missing 25,
 n/a 24 (154 audited rows).
 
 ## How to update on a new release
@@ -56,7 +57,7 @@ load (`src/config.rs:28`).
 | Config Intellisense | n/a | — | no TS types to IntelliSense |
 | Typed Theme Config | n/a | — | single compiled-in theme; no `defineConfig` surface |
 | Vite, Vue & Markdown Config | n/a | — | no Vite/Vue anywhere in the pipeline |
-| Page-Level Overrides | partial | `src/content.rs:17` | only `title`/`description`/`outline` (+ home keys) per page |
+| Page-Level Overrides | partial | `src/content.rs` | 15 front-matter keys honored; only directory-level overrides remain |
 | Directory-Level Overrides | missing | — | no per-directory front matter files |
 
 ### Site Metadata
@@ -64,9 +65,9 @@ load (`src/config.rs:28`).
 | heading | status | ours | note |
 |---|---|---|---|
 | title | implemented | `src/config.rs:31` | navbar text + `<title>` default (`src/render/mod.rs:364`) |
-| titleTemplate | partial | `src/render/mod.rs:364-377` | `:title` + plain-suffix forms; `false` (drop suffix) unsupported |
+| titleTemplate | implemented | `src/render/mod.rs` document_title | string templates + `false` (suffix dropped) |
 | description | implemented | `src/config.rs:36` | meta tag; locale/frontmatter fallback (`src/render/mod.rs:183-189`) |
-| head | partial | `src/config.rs:483`, `src/render/layout.rs:127-144` | site-level `[[head]]` only; no per-page/per-locale head, no dedup/merge |
+| head | partial | `src/render/layout.rs` | site-level + per-page front-matter tags; no per-locale head, no dedup/merge |
 | lang | implemented | `src/config.rs:41` | `<html lang>`; per-locale override (`src/render/mod.rs:356-362`) |
 | base | implemented | `src/config.rs:46` | validated + prepended (`src/render/mod.rs:143-157`) |
 
@@ -82,13 +83,13 @@ load (`src/config.rs:28`).
 | heading | status | ours | note |
 |---|---|---|---|
 | srcDir | implemented | `src/config.rs:140` | default `content` (upstream default `.`) |
-| srcExclude | missing | — | no exclusion globs |
+| srcExclude | implemented | `src/content.rs` glob_match | `*` within a segment, `**` across; matched against source-rel paths |
 | outDir | diverged | `src/render/mod.rs:260` | fixed `<site>/public`, not configurable |
 | assetsDir | n/a | — | no Vite asset pipeline; assets copied verbatim, no hashing |
 | assetsBase | missing | — | CDN prefix for generated assets; nothing hashed to serve |
 | icons | n/a | — | iconify collection pipeline needs Node; our icons are compiled-in SVG |
 | cacheDir | n/a | — | no Vite cache |
-| ignoreDeadLinks | partial | `src/config.rs:445-471` | `true` or array of prefixes; no `localhostLinks`, regex, or function forms |
+| ignoreDeadLinks | partial | `src/config.rs` | true / "localhostLinks" (accepted; no-op — http targets never collected) / prefix list; no regex or function forms |
 | mpa | n/a | — | gen-docs is always a static build with Alpine islands (MPA-shaped by construction) |
 
 ### Theming
@@ -96,7 +97,7 @@ load (`src/config.rs:28`).
 | heading | status | ours | note |
 |---|---|---|---|
 | appearance | implemented | `src/config.rs:396-443` | `true`/`false`/`"dark"`/`"force"`/`"force-auto"` (upstream spells `force-dark`; we accept `force`), anti-FOUC script `src/render/layout.rs:149-170` |
-| lastUpdated | implemented | `src/render/mod.rs:47-64` | git timestamps; upstream uses author date (`%ai`), we use committer date (`%ct`) |
+| lastUpdated | implemented | `src/render/mod.rs` | `false` hides; a date string is displayed instead of the git timestamp |
 
 ### Customization
 
@@ -118,31 +119,31 @@ common `transformHead` use.
 | heading | status | ours | note |
 |---|---|---|---|
 | i18nRouting | diverged | `src/render/mod.rs:324-353` | no toggle; language switcher always targets the same page in the other locale (upstream's default behavior), else the locale root |
-| logo | partial | `src/config.rs:84`, `src/render/navbar.rs:66-68` | string path only; no `{src, alt}` / `{light, dark}` variants |
-| siteTitle | missing | — | navbar always shows config `title`; no `false` to hide |
-| nav | partial | `src/config.rs:234`, `src/render/navbar.rs:94-227` | `text`/`link`/`items`/`activeMatch` incl. flyouts; missing `target`/`rel`/`noIcon`, no overflow `...` collapse menu |
-| sidebar | partial | `src/config.rs:251-295`, `src/sidebar.rs` | array + path-keyed multi-sidebar, tri-state `collapsed`, per-item/section `base`; missing per-item `docFooterText`/`rel`/`target` |
-| aside | missing | — | no way to move the outline left or disable the aside |
-| outline | partial | `src/config.rs:330`, `src/render/doc.rs:61-75` | `level` + `label`; `outline: false` (disable) unsupported |
-| socialLinks | partial | `src/config.rs:299`, `src/render/navbar.rs:135-145` | named icons + `{svg}`; missing `ariaLabel`/`target` |
-| footer | implemented | `src/config.rs:325`, `src/render/layout.rs:87-98` | `message`/`copyright`, hidden when a sidebar is shown (matches upstream) |
-| editLink | implemented | `src/config.rs:315`, `src/render/doc.rs:90-97` | `pattern` (`:path`) + `text`; function pattern form n/a |
+| logo | implemented | `logo_html` `src/render/navbar.rs` | path, `{src, alt}`, `{light, dark}` pair |
+| siteTitle | implemented | `src/render/mod.rs` navbar_site_title | string override or `false` to hide; `<title>` unaffected (upstream scopes it to the navbar) |
+| nav | partial | `src/render/navbar.rs` | text/link/items/activeMatch/target/rel; `noIcon` n/a (items never show icons); overflow `...` collapse still missing |
+| sidebar | implemented | `src/config.rs`, `src/sidebar.rs` | array + multi forms, collapsed, base, per-item target/rel/docFooterText |
+| aside | implemented | `src/render/doc.rs` | `false`/`true`/`"left"` (site config + per-page front matter) |
+| outline | implemented | `OutlineConfig` `src/config.rs` | `false` / bare level / `[a, b]` / `{level, label}` |
+| socialLinks | implemented | `src/render/navbar.rs` | named icons + `{svg}` + ariaLabel/target |
+| footer | implemented | `src/render/layout.rs:87-98` | `message`/`copyright` as inline HTML, hidden when a sidebar is shown |
+| editLink | implemented | `src/render/doc.rs:90-97` | `pattern` (`:path`) + `text`; function pattern form n/a |
 | lastUpdated | diverged | `src/config.rs:151` | ours is the flat `lastUpdatedText` key (upstream nests `lastUpdated.text`); no `formatOptions` — dates are fixed UTC format |
 | algolia | missing | — | external service (README caveat) |
 | carbonAds | missing | — | external service |
-| docFooter | partial | `src/config.rs:590`, `src/render/doc.rs:37-41` | `prev`/`next` labels; `false` to disable one side unsupported |
+| docFooter | implemented | `src/render/doc.rs` | prev/next labels; `false` disables a side; per-item `docFooterText` overrides pager titles |
 | darkModeSwitchLabel | implemented | `src/render/navbar.rs:256,284` | |
-| lightModeSwitchTitle | missing | — | toggle has no hover title |
-| darkModeSwitchTitle | missing | — | toggle has no hover title |
-| sidebarMenuLabel | missing | — | mobile menu heading hardcoded |
-| returnToTopLabel | partial | `src/config.rs:153` | **parsed but never read** — `src/render/local_nav.rs:17` hardcodes "Return to top" (audit finding #1) |
-| langMenuLabel | missing | — | a11y label for the language toggle |
-| navMenuLabel | missing | — | a11y landmark label |
-| mobileMenuLabel | missing | — | a11y label for the hamburger |
+| lightModeSwitchTitle | partial | `src/render/navbar.rs` | static dark-mode title only — no client-side swap between the two titles |
+| darkModeSwitchTitle | implemented | `src/render/navbar.rs` | static `title` on the switch |
+| sidebarMenuLabel | implemented | `src/render/local_nav.rs` | the local-nav "Menu" button (our nav screen has no heading) |
+| returnToTopLabel | implemented | `src/render/local_nav.rs` | was parsed-but-dead; wired in d6b05d2 |
+| langMenuLabel | implemented | `src/render/navbar.rs` |  |
+| navMenuLabel | implemented | `src/render/navbar.rs` | desktop nav + nav screen |
+| mobileMenuLabel | implemented | `src/render/navbar.rs` |  |
 | extraMenuLabel | missing | — | (and the `...` overflow menu itself is missing, see `nav`) |
 | skipToContentLabel | implemented | `src/render/layout.rs:41,71` | |
 | externalLinkIcon | diverged | `src/render/vpdoc.rs:108` | arrow is always on; upstream defaults off, opt-in |
-| gradedContainers | missing | — | no graded severity colors for containers/alerts/badges |
+| gradedContainers | implemented | `vp-graded-containers` body class | the graded palette ships in `styles/vitepress.css`; switch added in fe1cdc9 |
 | useLayout | n/a | — | Vue composable |
 
 ## reference/frontmatter-config.md
@@ -150,21 +151,21 @@ common `transformHead` use.
 | heading | status | ours | note |
 |---|---|---|---|
 | title | implemented | `src/content.rs:22,242-248` | falls back to first H1, then file stem |
-| titleTemplate | missing | — | no per-page template |
+| titleTemplate | implemented | `src/content.rs` | per-page template wins over the site's |
 | description | implemented | `src/content.rs:25` | |
-| head | missing | — | no per-page head tags |
+| head | implemented | `layout::serialize_head_tags` | appended after the site's tags |
 | Default Theme Only | — | — | subsections below |
-| layout | partial | `src/content.rs:28`, `src/render/mod.rs:201-215` | `home` switches to the home renderer; `page` (unstyled) is treated as `doc`; custom component names n/a |
+| layout | implemented | `src/render/mod.rs` | `home` / `doc` / `page` (page = no outline/edit/pager chrome); custom component names n/a |
 | hero | implemented | `src/content.rs:73-106`, `src/render/home.rs` | `name`/`text`/`tagline`/`image{src,alt}`/`actions`; see findings #5 for `target` |
 | features | implemented | `src/content.rs:108-123`, `src/render/home.rs:81-113` | icon as raw HTML/emoji; no `{light,dark}`/`width`/`height` icon forms |
-| navbar | missing | — | no per-page navbar toggle |
-| sidebar | missing | — | no per-page sidebar toggle |
-| aside | missing | — | no per-page aside control |
-| outline | partial | `src/content.rs:31,38-70` | `deep`/level/range; `false` unsupported |
-| lastUpdated | missing | — | no per-page toggle or Date override |
-| editLink | missing | — | no per-page toggle |
-| footer | missing | — | no per-page toggle |
-| pageClass | missing | — | no extra page class hook |
+| navbar | implemented | `src/render/layout.rs` |  |
+| sidebar | implemented | `src/render/mod.rs` | per-page toggle over the sidebar resolution |
+| aside | implemented | `src/render/mod.rs` | front matter wins over the site-level `aside` |
+| outline | implemented | `src/content.rs` | `deep`/level/range/`false`; `false` disables the outline |
+| lastUpdated | implemented | `src/render/mod.rs` | `false` hides; a date string is displayed instead of the git timestamp |
+| editLink | implemented | `src/render/mod.rs` |  |
+| footer | implemented | `src/render/layout.rs` |  |
+| pageClass | implemented | `src/render/layout.rs` | added to the VPContent container |
 | isHome | n/a | — | exists to force home detection for custom (Vue) layouts |
 
 ## guide/markdown.md
@@ -182,7 +183,7 @@ common `transformHead` use.
 | Frontmatter | implemented | `src/content.rs:17` | YAML; unknown keys tolerated |
 | GitHub-Style Tables | implemented | comrak GFM | |
 | Task Lists | implemented | comrak GFM | |
-| Footnotes | partial | comrak footnotes | `[^1]` references + definitions; inline `^[...]` stays literal (comrak doesn't support it — probe 2026-09-10) |
+| Footnotes | implemented | `expand_inline_footnotes` `src/markdown/preprocess.rs` | `[^1]` references + inline `^[…]` (rewritten to reference form); comrak renders |
 | Emoji :tada: | implemented | comrak | shortcodes rendered |
 | Table of Contents | implemented | `src/markdown/preprocess.rs:306`, `src/markdown/mod.rs:329-372` | `[[toc]]` nested h2–h3; `markdown.toc` options n/a |
 
@@ -195,9 +196,9 @@ common `transformHead` use.
 | Custom Title | implemented | `src/markdown/preprocess.rs:350-378` | text after the kind; `{no-title}` too |
 | Registering New Containers | diverged | `src/config.rs:578-588` | `[markdown.container.custom]` `{name, kind, label}` reuses a builtin kind's styling; upstream's are unstyled + your CSS |
 | Nesting | implemented | `src/markdown/preprocess.rs:269-321` | fence-length nesting (`::::`), incl. in list items |
-| Additional Attributes | partial | `src/markdown/preprocess.rs:468-483` | `{open}` on details works; the generic attrs plugin (`{target=...}` on arbitrary elements) does not |
-| raw | missing | — | no `::: raw` / `vp-raw` style isolation (our pages have no client styles to isolate) |
-| GitHub-flavored Alerts | partial | comrak alerts | `> [!NOTE/TIP/IMPORTANT/WARNING/CAUTION]` + custom title text render; `[!DANGER]` (VitePress extension) falls back to a plain blockquote — probe 2026-09-10 |
+| Additional Attributes | partial | `rewrite_link_attrs` | `{target=… rel=…}` on links (rewritten to raw anchors — no markdown inside the text); `{open}`/`{no-title}` on containers; not on arbitrary elements |
+| raw | implemented | `expand_containers` | wraps in `<div class="vp-raw">` |
+| GitHub-flavored Alerts | implemented | `expand_alerts` (preprocess) | all kinds render as containers (styling, labels, custom titles); `[!DANGER]` + registered custom kinds work |
 
 ### Code blocks
 
@@ -211,10 +212,10 @@ common `transformHead` use.
 | Line Numbers | implemented | `src/markdown/highlight.rs:425-442` | `:line-numbers`/`:no-line-numbers`/`=N` + global `markdown.lineNumbers` |
 | Import Code Snippets | implemented | `src/markdown/preprocess.rs:109-242` | `<<< @/`, `#region`, `{lang}`, `[label]`, `{lines}`, `:line-numbers`, `.ansi` stripping; `snippet.stripRegionMarkers`/`silent` options n/a |
 | Code Groups | implemented | `src/markdown/preprocess.rs:329-435` | server-emitted tab strip (radio inputs + Alpine) |
-| Markdown File Inclusion | partial | `src/markdown/preprocess.rs:90-103,201-212` | recursive `<!--@include:-->` (depth 8); no line ranges `{3,}`, `#region`, header-section selection, `include.silent`, `rebaseRelativeUrls` |
-| Including Code Files | missing | probe 2026-09-10 | the include directive inside code fences stays literal; use `<<<` imports instead |
+| Markdown File Inclusion | partial | `load_include` `src/markdown/preprocess.rs` | recursive + `#region`/heading-anchor sections + `{a,b}` line ranges + `@/`-root resolution; relative links inside includes are NOT rebased to the included file |
+| Including Code Files | implemented | fence-mode include branch | the directive inside a fence inserts the selected lines verbatim |
 | Math Equations | diverged | `src/markdown/mod.rs:77-79,164-178` | `$…$`/`$$…$$` via client-side MathJax CDN injected per page; upstream typesets at build |
-| Image Lazy Loading | diverged | `src/config.rs:522-528` | works, but the key is `image.lazyLoading` (upstream: `image.lazyLoad`) |
+| Image Lazy Loading | implemented | `src/config.rs` | both `lazyLoading` and upstream's `lazyLoad` accepted |
 | Advanced Configuration | n/a | — | `markdown.anchor`/`toc`/`config()` need the markdown-it JS engine |
 
 ## guide/routing.md
@@ -223,7 +224,7 @@ common `transformHead` use.
 |---|---|---|---|
 | File-based routing | implemented | `src/content.rs:286-294` | URL shape diverges (directory URLs) |
 | srcDir | implemented | `src/config.rs:140` | |
-| Linking between pages | partial | `src/markdown/mod.rs:183-258` | `.md`/`.html`/relative all resolve; link-attribute syntax `{target="_self"}` unsupported |
+| Linking between pages | implemented | `src/markdown/mod.rs:183-258` | `.md`/`.html`/relative resolve; `{target="_self"}` attribute blocks work (as raw anchors) |
 | cleanUrls | diverged | — | always on (see site-config row) |
 | Route rewrites | partial | `src/render/mod.rs:66-88` | `:rest*` only |
 | Dynamic routes (`[pkg].md` + `paths.js`) | n/a | — | JS data loaders |
@@ -270,7 +271,7 @@ gen-docs deliberately has no replacement for. One exception:
 | Registering global components | n/a | — | no Vue |
 | Layout slots | n/a | — | no Vue |
 | Overriding internal components | n/a | — | one compiled-in design (README) |
-| View Transitions on appearance toggle | missing | — | doable client-side (vanilla), not built |
+| View Transitions on appearance toggle | implemented | `js/alpine-entry.js` | `document.startViewTransition` around the dark flip, instant fallback |
 
 ## guide/data-loading.md
 
@@ -327,12 +328,12 @@ are Vue composables over the SPA runtime.
 | sidebar: nested `base` overrides | implemented | `src/sidebar.rs:170-233` | nearest base wins |
 | edit-link: frontmatter `editLink: false` | missing | — | no per-page frontmatter toggle |
 | last-updated: frontmatter `lastUpdated: false` / Date | missing | — | no per-page control |
-| search: local provider | partial | `src/render/mod.rs:243-254`, `src/render/search_modal.rs` | client-side scored index + modal (Ctrl/Cmd+K, `/`); no `translations`, no `miniSearch` options, no per-page `search: false` frontmatter |
+| search: local provider | partial | `src/render/mod.rs`, `search_modal.rs` | translations wired (button/modal strings, `{q}` no-results); per-page `search: false`; still no `miniSearch` tuning |
 | search: Algolia / DocSearch / Ask AI | missing | — | external service; see extras for our `askAiUrl` |
 | footer: inline HTML in message/copyright | partial | `src/render/layout.rs:87-98` | plain text only |
 | layout: `page` | missing | — | unstyled layout not distinguished from `doc` |
-| home-page: hero `image` light/dark | missing | `src/content.rs:77` | `{src, alt}` only |
-| home-page: hero action `target`/`rel` | missing | finding #5 | parsed in `src/content.rs:92` but not emitted in `src/render/home.rs:129-134` |
+| home-page: hero `image` light/dark | implemented | `hero_image_html` |  |
+| home-page: hero action `target`/`rel` | implemented | `hero_button` | was finding #5; fixed in d6b05d2 |
 | home-page: `markdownStyles` | missing | — | |
 | team page (`VPTeamMembers` etc.) | missing | — | README caveat |
 | `<Badge>` | implemented | `src/markdown/preprocess.rs:574-627`, `src/render/vpdoc.rs:192` | all 7 types, self-closing + paired |
@@ -340,26 +341,26 @@ are Vue composables over the SPA runtime.
 
 ## Audit findings (2026-09-10)
 
-Parsed-but-dead config and other small bugs this audit surfaced — none
-affect the pinned demo pages, all are fixable in an afternoon:
+Parsed-but-dead config and other small bugs this audit surfaced — all
+seven were fixed in the fill-in pass (`d6b05d2`), plus an eighth found
+on the way (feature.link never rendered as a link; alerts had no CSS at
+all — both fixed):
 
-1. **`returnToTopLabel` never read** — `src/config.rs:153` parses it,
+1. **`returnToTopLabel` never read** *(fixed, d6b05d2)* — `src/config.rs:153` parsed it,
    `src/render/local_nav.rs:17` hardcodes `"Return to top"`.
-2. **`[markdown.container] detailsLabel` never read** —
+2. **`[markdown.container] detailsLabel` never read** *(fixed, d6b05d2)* —
    `src/config.rs:552` parses it; `parse_details_rest` hardcodes
    `"Details"` (`src/markdown/preprocess.rs:478`), and `label_for`
    (`src/config.rs:561`) has no `details` arm.
-3. **`[locales.*] title` never used** — parsed (`src/config.rs:623`) but
+3. **`[locales.*] title` never used** *(fixed, d6b05d2)* — parsed but
    `document_title` (`src/render/mod.rs:364-377`) only reads the site
    title, so a locale's `<title>`/navbar title cannot differ.
-4. **`image.lazyLoading` vs upstream `image.lazyLoad`** — accept both
-   or rename (`src/config.rs:522`).
-5. **hero/feature `target` parsed but not emitted** —
+4. **`image.lazyLoading` vs upstream `image.lazyLoad`** *(fixed, d6b05d2)* — both spellings accepted.
+5. **hero/feature `target` parsed but not emitted** *(fixed, d6b05d2)* —
    `src/content.rs:92,109` vs `src/render/home.rs:129-134`.
-6. **`appearance: "force-dark"` rejected** — we accept `"force"`
+6. **`appearance: "force-dark"` rejected** *(fixed, d6b05d2)* — both spellings accepted;
    (`src/config.rs:435`); upstream's documented spelling fails to load.
-7. **`[!DANGER]` renders as a plain blockquote** (probe above) — comrak
-   knows the five GitHub alert kinds only.
+7. **`[!DANGER]` rendered as a plain blockquote** *(fixed, d6b05d2)* — alerts now rewrite into containers.
 
 ## gen-docs-only surface (no upstream counterpart)
 
