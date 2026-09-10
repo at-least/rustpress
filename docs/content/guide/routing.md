@@ -92,7 +92,7 @@ Links are resolved in *source space*: they name source files, and the page's fin
 
 A relative link that matches no page passes through untouched, and the build reports it as a dead link (see [Dead Links](#dead-links)).
 
-Absolute links (`/guide/getting-started/`) are emitted as written, with [`base`](../reference/site-config#base) prepended when the site is deployed under a sub-path; resolved relative links get the same prefix.
+Absolute links that name a page (`/guide/getting-started`, `/guide/getting-started.md`) are rewritten to that page's URL too, so the emitted link always carries the trailing slash a directory-style site needs. Absolute links to anything else are emitted as written. Either way [`base`](../reference/site-config#base) is prepended when the site is deployed under a sub-path; resolved relative links get the same prefix.
 
 Learn more about linking to assets such as images in [Asset Handling](./asset-handling).
 

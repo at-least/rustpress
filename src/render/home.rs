@@ -238,10 +238,22 @@ fn hero_button(site: &Site, action: &HeroAction) -> String {
 /// Hero action links are written relative to the page (VitePress
 /// convention: `./guide/what-is-vitepress` on the home page).
 pub fn resolve_action_link(site: &Site, link: &str) -> String {
-    if link.starts_with("http://") || link.starts_with("https://") || link.starts_with('/') {
+    if link.starts_with("http://") || link.starts_with("https://") {
+        return link.to_string();
+    }
+    // a link naming a page gets the page's URL, like content links do
+    let rooted = if link.starts_with('/') {
+        link.to_string()
+    } else {
+        format!("/{link}")
+    };
+    if let Some(url) = crate::markdown::resolve_root(&rooted, &site.content) {
+        return site.url(&url);
+    }
+    if link.starts_with('/') {
         return site.url(link);
     }
-    // ./guide/x or guide/x from the site root → /guide/x
+    // ./x or x from the site root → /x (static files and the like)
     let mut segs: Vec<&str> = Vec::new();
     for seg in link.split('/') {
         match seg {

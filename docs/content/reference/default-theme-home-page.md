@@ -55,7 +55,7 @@ Each action has:
 | --- | --- |
 | `theme` | Color theme of the button: `brand` (default), `alt`, or `sponsor`. |
 | `text` | Label of the button. |
-| `link` | Destination link. Absolute paths and full URLs are used as-is; relative paths such as `./guide/intro` resolve from the site root, with any `.md` suffix dropped. |
+| `link` | Destination link. Full URLs are used as-is. A path naming a page (`/guide/intro`, `./guide/intro`, `guide/intro.md`, all resolved from the site root) becomes that page's URL, with [`base`](./site-config#base) applied; any other path is emitted as written. |
 | `target` | Link `target` attribute. |
 | `rel` | Link `rel` attribute. |
 

@@ -201,7 +201,8 @@ fn rewrite_links(root: &comrak::Node<'_>, page: &Page, content: &Content, base: 
             let data = node.data.borrow();
             match &data.value {
                 NodeValue::Link(link) => {
-                    let resolved = resolve_relative(&link.url, &page.rel, content);
+                    let resolved = resolve_relative(&link.url, &page.rel, content)
+                        .or_else(|| resolve_root(&link.url, content));
                     let url = resolved.as_deref().unwrap_or(&link.url);
                     let rebased = with_base(base, url);
                     (rebased != link.url).then(|| {
@@ -243,6 +244,18 @@ pub fn with_base(base: &str, url: &str) -> String {
 /// `./x.md`, `../y.md`, `./dir/`, `../` → canonical URL of the target
 /// page when one exists. Absolute (`/…`), external, anchor-only and
 /// unknown targets return None (left untouched).
+/// `/guide/a`, `/guide/a.md`, `/guide/a.html`: a root-absolute link that
+/// names a page resolves to that page's URL (VitePress cleanUrls), so a
+/// directory-style site never emits the slash-less form a static host
+/// cannot serve. Links that name no page are returned unchanged (`None`).
+pub fn resolve_root(url: &str, content: &Content) -> Option<String> {
+    let rest = url.strip_prefix('/')?;
+    if rest.starts_with('/') {
+        return None; // protocol-relative
+    }
+    resolve_relative(rest, "index.md", content)
+}
+
 pub fn resolve_relative(url: &str, page_rel: &str, content: &Content) -> Option<String> {
     if url.is_empty()
         || url.starts_with("http://")
