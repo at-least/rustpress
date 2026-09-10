@@ -9,7 +9,14 @@ use std::path::{Path, PathBuf};
 use rustpress::render::Site;
 
 fn temp_site(name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("rustpress-{name}-{}", std::process::id()));
+    // every test in this file passes the same `name`, and cargo runs them
+    // in parallel threads of one process — key the directory per thread or
+    // the tests clobber each other's temp sites
+    let dir = std::env::temp_dir().join(format!(
+        "rustpress-{name}-{}-{:?}",
+        std::process::id(),
+        std::thread::current().id()
+    ));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(dir.join("content/guide")).unwrap();
     dir

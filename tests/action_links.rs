@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use rustpress::render::Site;
 
 fn temp_site(name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("rustpress-{name}-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("rustpress-{name}-{}-{:?}", std::process::id(), std::thread::current().id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(dir.join("content/guide")).unwrap();
     std::fs::create_dir_all(dir.join("static")).unwrap();
