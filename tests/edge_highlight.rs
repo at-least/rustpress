@@ -1,4 +1,4 @@
-use gen_docs::markdown::highlight::GdCodeRenderer;
+use rustpress::markdown::highlight::GdCodeRenderer;
 use comrak::adapters::CodefenceRendererAdapter;
 
 #[test]

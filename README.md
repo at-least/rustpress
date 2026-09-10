@@ -1,4 +1,4 @@
-# gen-docs
+# rustpress
 
 **A standalone documentation site generator in Rust, speaking VitePress's content format.** Content is ordinary VitePress markdown — YAML front matter, `:::` containers, `[!NOTE]` GitHub alerts, labeled code fences, code groups, `<Badge>` — with no Node runtime at render time: a single Rust binary parses and renders every page (comrak + tree-sitter + hypertext `rsx!` templates), and the little client-side interactivity is Alpine.js over server-rendered markup. Styling is Tailwind CSS v4 with the VitePress default theme's `--vp-*` design tokens.
 
@@ -17,11 +17,11 @@ This repo started life as the VitePress default theme ported to Zola. Zola's con
 ## Layout
 
 ```
-Cargo.toml            crate gen-docs (bin + lib)
+Cargo.toml            crate rustpress (bin + lib)
 src/                  config, content loader, sidebar resolution,
                       markdown pipeline (preprocess/highlight), hypertext
                       renderers, site assembly
-demo/                 dogfood site: gen-docs.toml + content/ (VitePress
+demo/                 dogfood site: rustpress.toml + content/ (VitePress
                       format, mirrored from vitepress.dev) + static/
 assets/themes/        vendored github-light/dark .tmTheme files
 styles/               Tailwind entry (vitepress.css) + Inter @font-face
@@ -35,7 +35,7 @@ tests/fixtures/en/    verbatim subset of vitepress/docs/en used by tests
 npm install          # tailwindcss CLI + esbuild + alpinejs (assets only)
 npm run build        # bundle app.js, build main.css, cargo build + demo build
 npm test             # cargo test + full demo build + upstream parity gate
-npm run dev          # tailwind/esbuild watch + gen-docs serve (stage 8)
+npm run dev          # tailwind/esbuild watch + rustpress serve (stage 8)
 ```
 
 The Rust build needs only `cargo` (no Node). The committed `static/main.css` is built by the Tailwind CLI from `styles/vitepress.css` + class strings living in `src/**/*.rs` (`@source "../src"`), so `cargo build` alone suffices for Rust-side changes that don't touch classes.
@@ -44,17 +44,17 @@ The Rust build needs only `cargo` (no Node). The committed `static/main.css` is 
 
 When VitePress ships a new version, `npm run parity:refresh` (theme axis: re-pin landmark fingerprints from the deployed site and diff old→new) and `npm run diff:upstream` (content axis: byte-diff `demo/content` against a vuejs/vitepress clone) mechanically show what changed upstream, and `npm run check:parity` gates `npm test` until every divergence is fixed or reviewed into `parity/known-deltas.json`. See [PARITY.md](PARITY.md).
 
-The **feature-surface** audit — every documented upstream config option, markdown extension, and theme feature against what gen-docs implements, with source references — lives in [FEATURE-PARITY.md](FEATURE-PARITY.md); `cargo test --test feature_parity` fails when upstream docs grow headings the audit doesn't cover.
+The **feature-surface** audit — every documented upstream config option, markdown extension, and theme feature against what rustpress implements, with source references — lives in [FEATURE-PARITY.md](FEATURE-PARITY.md); `cargo test --test feature_parity` fails when upstream docs grow headings the audit doesn't cover.
 
 ## Site shape
 
-- `gen-docs.toml` — site config mirroring VitePress's `themeConfig`: `title` + `titleTemplate` (`:title`), `description`, `lang`, `base`, `srcDir`, `nav` (plain links with `activeMatch`, dropdowns), `sidebar` (absent → one auto-derived per top-level section; explicit single array; or VitePress's path-keyed `{ base, items }` map with tri-state `collapsed`), `socialLinks`, `editLink` (`:path` pattern), `footer`, `outline` (level + label), `search.provider = "local"`, `appearance` (`true`/`false`/`"dark"`/`"force"`/`"force-auto"`), `lastUpdated` (git-based) + `lastUpdatedText`, `ignoreDeadLinks` (`true` or link prefixes), `[sitemap]` (hostname → sitemap.xml), `[[head]]` extra tags, `[docFooter]` prev/next labels, `[notFound]` title/quote/linkText, `returnToTopLabel`, `darkModeSwitchLabel`, `skipToContentLabel`, `[rewrites]` (source-path mapping with `:rest*`), `[locales]` (multi-language sites), `[markdown]` (lineNumbers, codeCopyButton, math, image.lazyLoading, container labels + custom containers), `[syntax]` (the source-code color scheme — a separate setting from the UI palette). There is no swappable theme system: one design, compiled in. Colors are customizable two ways (see below).
+- `rustpress.toml` — site config mirroring VitePress's `themeConfig`: `title` + `titleTemplate` (`:title`), `description`, `lang`, `base`, `srcDir`, `nav` (plain links with `activeMatch`, dropdowns), `sidebar` (absent → one auto-derived per top-level section; explicit single array; or VitePress's path-keyed `{ base, items }` map with tri-state `collapsed`), `socialLinks`, `editLink` (`:path` pattern), `footer`, `outline` (level + label), `search.provider = "local"`, `appearance` (`true`/`false`/`"dark"`/`"force"`/`"force-auto"`), `lastUpdated` (git-based) + `lastUpdatedText`, `ignoreDeadLinks` (`true` or link prefixes), `[sitemap]` (hostname → sitemap.xml), `[[head]]` extra tags, `[docFooter]` prev/next labels, `[notFound]` title/quote/linkText, `returnToTopLabel`, `darkModeSwitchLabel`, `skipToContentLabel`, `[rewrites]` (source-path mapping with `:rest*`), `[locales]` (multi-language sites), `[markdown]` (lineNumbers, codeCopyButton, math, image.lazyLoading, container labels + custom containers), `[syntax]` (the source-code color scheme — a separate setting from the UI palette). There is no swappable theme system: one design, compiled in. Colors are customizable two ways (see below).
 - `content/**/*.md` — VitePress format. URLs are directory-style: `guide/x.md` → `/guide/x/`, `index.md` → `/`. Titles come from the first H1 (fence-aware); front matter keys honored: `description`, `title`, `titleTemplate`, `head`, `layout` (`home` + `hero`/`features`, `doc`, `page`), `outline` (`deep`, a level/level-pair, or `false`), `navbar`, `sidebar`, `aside`, `editLink`, `footer`, `lastUpdated` (bool or a date string), `pageClass`, `search: false`, and `prev`/`next` (text, `{text, link}`, or `false`).
 - `static/` — copied verbatim into the output root.
 
 ### Markdown extensions supported
 
-| VitePress | gen-docs |
+| VitePress | rustpress |
 | --- | --- |
 | `::: tip` / `warning` / `danger` / `note` / `info` / `important` / `caution` (custom titles, `{no-title}`, nested `::::`) | same syntax; labels + custom container kinds configurable |
 | `::: details SUMMARY {open}` | same |
@@ -81,7 +81,7 @@ Relative `.md`/`.html` links resolve to canonical page URLs at build time (unkno
 
 ### Color customization (`theme.toml` + `[markdown.theme]`)
 
-Following VitePress's "extending the default theme", UI colors are customized by overriding root-level CSS custom properties. Create a `theme.toml` next to `gen-docs.toml`:
+Following VitePress's "extending the default theme", UI colors are customized by overriding root-level CSS custom properties. Create a `theme.toml` next to `rustpress.toml`:
 
 ```toml
 [light]
@@ -95,7 +95,7 @@ c-brand-1 = "#83aa63"
 
 The build generates `theme.css` (`:root` / `.dark` custom-property overrides) and every page links it after `main.css`. Because Tailwind utilities (`text-brand-1`, `bg-bg`, …) and the hand-written component rules both reference the `--vp-*` variables via `@theme inline`, overriding the variable reaches everything — no new classes, no CSS rebuild.
 
-The **source-code syntax color scheme is a separate setting** — `[syntax]` in `gen-docs.toml`. Each of `light`/`dark` takes either a built-in name or a path to your own Helix TOML theme file (relative to the site dir). Built-in names: `github-light` / `github-dark` (vendored defaults), plus **all 218 Helix editor themes** are bundled and selectable by file stem:
+The **source-code syntax color scheme is a separate setting** — `[syntax]` in `rustpress.toml`. Each of `light`/`dark` takes either a built-in name or a path to your own Helix TOML theme file (relative to the site dir). Built-in names: `github-light` / `github-dark` (vendored defaults), plus **all 218 Helix editor themes** are bundled and selectable by file stem:
 
 ```toml
 [syntax]

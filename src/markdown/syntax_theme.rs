@@ -276,7 +276,7 @@ fn collect_chain(
     let raw = match RawTheme::parse(src) {
         Ok(raw) => raw,
         Err(e) => {
-            eprintln!("gen-docs: skipping theme ({key}): {e}");
+            eprintln!("rustpress: skipping theme ({key}): {e}");
             return;
         }
     };

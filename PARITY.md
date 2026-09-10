@@ -1,11 +1,11 @@
 # Upstream parity: tracking VitePress releases
 
-gen-docs re-implements the VitePress default theme, but its DOM
+rustpress re-implements the VitePress default theme, but its DOM
 intentionally diverges (Tailwind utilities instead of upstream's
 semantic classes, Alpine.js instead of Vue, tree-sitter `tk-*` code
 spans instead of Shiki). So parity is *not* DOM identity — it is two
 mechanical checks that together answer the question: **"VitePress
-released a new version — which parts of gen-docs need to change?"**
+released a new version — which parts of rustpress need to change?"**
 
 ## The two axes
 
@@ -41,7 +41,7 @@ git -C ../vitepress checkout origin/main
 npm run diff:upstream          # byte diff demo/content vs docs/en
 #   → re-copy changed pages from ../vitepress/docs/en into demo/content
 #     (plus snippets/components when include targets change),
-#     and update demo/gen-docs.toml when their sidebar/nav config changed
+#     and update demo/rustpress.toml when their sidebar/nav config changed
 
 # 2. theme axis: re-pin the baseline and see what changed upstream
 npm run parity:refresh
@@ -49,7 +49,7 @@ npm run parity:refresh
 #     rewrites parity/upstream.json, and prints the old→new landmark diff
 #   → each line names the page + landmark that changed upstream
 
-# 3. fix gen-docs until the gate is green
+# 3. fix rustpress until the gate is green
 npm run check:parity
 #   → every unexplained divergence prints as
 #     "<page>: <landmark>: upstream X != ours Y" and exits non-zero
@@ -81,7 +81,7 @@ entry requires a `reason`.
 | `hero` / `features` | `VPHero` / `VPFeature` | `src/render/home.rs` |
 | `has_search` | `VPNavBarSearch` | `src/render/navbar.rs` + `src/render/search_modal.rs` |
 | `block_counts` | `.vp-doc` content | `src/markdown/` (preprocess + comrak) |
-| extraction/check engine | — | `src/parity.rs` (`gen-docs parity check/snapshot/diff`) |
+| extraction/check engine | — | `src/parity.rs` (`rustpress parity check/snapshot/diff`) |
 
 ## Reference source
 
@@ -101,6 +101,6 @@ deployed generator version and per-page etags are recorded in
   either side's markup changes (`local-*` comes from `demo/public`).
 - `parity/cache/` is transient fetched HTML — not committed.
 - The checker is a gate, not a goal: a divergence means *something
-  changed upstream* — fix gen-docs, or review it into
+  changed upstream* — fix rustpress, or review it into
   `parity/known-deltas.json` with a reason. Never widen the checker to
   make noise disappear.

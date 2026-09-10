@@ -3,13 +3,13 @@
 
 use std::path::Path;
 
-use gen_docs::config::SiteConfig;
-use gen_docs::content::Content;
-use gen_docs::markdown::MarkdownEngine;
-use gen_docs::render::Site;
-use gen_docs::sidebar::Sidebars;
+use rustpress::config::SiteConfig;
+use rustpress::content::Content;
+use rustpress::markdown::MarkdownEngine;
+use rustpress::render::Site;
+use rustpress::sidebar::Sidebars;
 
-fn build_fixture() -> (tempdir::Guard, gen_docs::render::BuildStats) {
+fn build_fixture() -> (tempdir::Guard, rustpress::render::BuildStats) {
     let fixtures = Path::new("tests/fixtures");
     // the fixture subset references pages that were not copied — the
     // dead-link checker would fail the build otherwise
@@ -50,7 +50,7 @@ mod tempdir {
 
     pub fn tempdir() -> Guard {
         let dir = std::env::temp_dir().join(format!(
-            "gen-docs-test-{}-{}",
+            "rustpress-test-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -183,7 +183,7 @@ fn locales_and_rewrites_end_to_end() {
     std::fs::write(content.join("en/guide/page.md"), page_body).unwrap();
     std::fs::write(content.join("zh/guide/page.md"), "---\ndescription: 目录\n---\n\n# 页面\n\n内容\n").unwrap();
     std::fs::write(
-        site_dir.path().join("gen-docs.toml"),
+        site_dir.path().join("rustpress.toml"),
         r#"
 title = "Docs"
 
@@ -237,7 +237,7 @@ fn theme_one_variable_built_in_or_file() {
         std::fs::create_dir_all(dir.path().join("content")).unwrap();
         std::fs::write(dir.path().join("content/index.md"), "# Home\n").unwrap();
         std::fs::write(
-            dir.path().join("gen-docs.toml"),
+            dir.path().join("rustpress.toml"),
             format!("title = \"T\"\n{}\n", theme_line),
         )
         .unwrap();
@@ -304,8 +304,8 @@ fn syntax_theme_pair_is_selectable() {
     // the UI palette; unknown names fail at engine construction
     let mk = |dark: &str| {
         let engine = MarkdownEngine::new(
-            &gen_docs::config::Markdown::default(),
-            &gen_docs::config::SyntaxThemes {
+            &rustpress::config::Markdown::default(),
+            &rustpress::config::SyntaxThemes {
                 light: "github-light".into(),
                 dark: dark.into(),
             },
@@ -322,12 +322,12 @@ fn syntax_theme_pair_is_selectable() {
 
 #[test]
 fn custom_helix_toml_theme_file_path() {
-    // a Helix TOML theme next to gen-docs.toml, selected by path
+    // a Helix TOML theme next to rustpress.toml, selected by path
     let site_dir = tempdir::tempdir();
     std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
     std::fs::write(site_dir.path().join("content/index.md"), "# Home\n").unwrap();
     std::fs::write(
-        site_dir.path().join("gen-docs.toml"),
+        site_dir.path().join("rustpress.toml"),
         "[syntax]\nlight = \"my.toml\"\ndark = \"github-dark\"\n",
     )
     .unwrap();
@@ -361,12 +361,12 @@ fn helix_themes_are_built_ins() {
     let names = ["catppuccin_mocha", "gruvbox", "tokyonight", "everforest_dark", "nord"];
     for name in names {
         assert!(
-            gen_docs::markdown::syntax_theme::helix_builtin(name).is_some(),
+            rustpress::markdown::syntax_theme::helix_builtin(name).is_some(),
             "{name} should load"
         );
     }
     // inherits chains resolve: gruvbox_dark_hard inherits "gruvbox"
-    let hard = gen_docs::markdown::syntax_theme::helix_builtin("gruvbox_dark_hard").unwrap();
+    let hard = rustpress::markdown::syntax_theme::helix_builtin("gruvbox_dark_hard").unwrap();
     assert_eq!(
         hard.resolve("ui.background").map(|s| s.bg.as_deref()),
         Some(Some("#1d2021")),
@@ -377,7 +377,7 @@ fn helix_themes_are_built_ins() {
     std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
     std::fs::write(site_dir.path().join("content/index.md"), "# H\n").unwrap();
     std::fs::write(
-        site_dir.path().join("gen-docs.toml"),
+        site_dir.path().join("rustpress.toml"),
         "[syntax]\ndark = \"catppuccin_mocha\"\n",
     )
     .unwrap();

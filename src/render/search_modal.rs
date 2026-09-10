@@ -1,7 +1,7 @@
 //! VPLocalSearchBox modal shell (ported verbatim from
 //! partials/search_modal.html). Result markup is built client-side and
 //! styled through the `[&_...]` variants on the results list. The search
-//! index URL is handed to the client via `window.genDocs` (stage 6 moves
+//! index URL is handed to the client via `window.rustPress` (stage 6 moves
 //! the whole modal to Alpine).
 
 use hypertext::prelude::*;

@@ -1,5 +1,5 @@
-//! `gen-docs serve`: build once, watch the site for changes, rebuild on
-//! them, and serve `public/` over HTTP. `/@gen-docs/livereload` is an
+//! `rustpress serve`: build once, watch the site for changes, rebuild on
+//! them, and serve `public/` over HTTP. `/@rustpress/livereload` is an
 //! SSE stream every HTML page subscribes to (one injected `<script>`),
 //! so edits show up in the browser without a manual refresh.
 
@@ -32,7 +32,7 @@ pub async fn run(site_dir: PathBuf, port: u16) -> anyhow::Result<()> {
     start_watcher(site_dir.clone())?;
 
     let app = Router::new()
-        .route("/@gen-docs/livereload", get(livereload))
+        .route("/@rustpress/livereload", get(livereload))
         .fallback(move |uri: axum::http::Uri| {
             let state = Arc::clone(&state);
             async move { serve_file(&state, &uri) }
@@ -43,7 +43,7 @@ pub async fn run(site_dir: PathBuf, port: u16) -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(addr)
         .await
         .with_context(|| format!("binding {addr}"))?;
-    println!("gen-docs: serving {} on http://{addr}", root.display());
+    println!("rustpress: serving {} on http://{addr}", root.display());
 
     axum::serve(listener, app).await.context("server")
 }
@@ -91,20 +91,20 @@ fn start_watcher(site_dir: PathBuf) -> anyhow::Result<()> {
                 let _ = tx.send(ev.paths);
             }
         })
-        .unwrap_or_else(|e| panic!("gen-docs: cannot start file watcher: {e}"));
+        .unwrap_or_else(|e| panic!("rustpress: cannot start file watcher: {e}"));
         watcher
             .watch(&site_dir, notify::RecursiveMode::Recursive)
-            .unwrap_or_else(|e| panic!("gen-docs: cannot watch {}: {e}", site_dir.display()));
+            .unwrap_or_else(|e| panic!("rustpress: cannot watch {}: {e}", site_dir.display()));
         for paths in rx {
             // ignore the build output itself
             if paths.iter().any(|p| p.starts_with(site_dir.join("public"))) {
                 continue;
             }
             if let Err(e) = rebuild(&site_dir) {
-                eprintln!("gen-docs: rebuild failed: {e:#}");
+                eprintln!("rustpress: rebuild failed: {e:#}");
                 continue;
             }
-            println!("gen-docs: rebuilt");
+            println!("rustpress: rebuilt");
             // Signal readers via a shared generation counter — the SSE
             // task polls the atomic and emits when it moves.
             GENERATION.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
@@ -181,7 +181,7 @@ fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
 }
 
 fn inject_livereload(body: Vec<u8>) -> Vec<u8> {
-    const SCRIPT: &[u8] = b"<script>new EventSource('/@gen-docs/livereload').addEventListener('reload',()=>location.reload());</script>";
+    const SCRIPT: &[u8] = b"<script>new EventSource('/@rustpress/livereload').addEventListener('reload',()=>location.reload());</script>";
     if let Ok(s) = std::str::from_utf8(&body)
         && let Some(i) = s.rfind("</body>") {
             let mut out = body;

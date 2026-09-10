@@ -6,24 +6,24 @@
 //! literal by design. Real rendered constructs live in getting-started /
 //! routing / runtime-api; anything else gets a synthetic-page test here.
 
-use gen_docs::content::{Content, Page};
-use gen_docs::markdown::MarkdownEngine;
+use rustpress::content::{Content, Page};
+use rustpress::markdown::MarkdownEngine;
 use std::path::Path;
 
 fn engine() -> MarkdownEngine {
-    engine_with(&gen_docs::config::Markdown::default())
+    engine_with(&rustpress::config::Markdown::default())
 }
 
-fn engine_with(md: &gen_docs::config::Markdown) -> MarkdownEngine {
+fn engine_with(md: &rustpress::config::Markdown) -> MarkdownEngine {
     MarkdownEngine::new(
         md,
-        &gen_docs::config::SyntaxThemes::default(),
+        &rustpress::config::SyntaxThemes::default(),
         std::path::Path::new("tests/fixtures"),
     )
     .expect("engine")
 }
 
-fn fixture(url: &str) -> gen_docs::markdown::RenderedPage {
+fn fixture(url: &str) -> rustpress::markdown::RenderedPage {
     let site_root = Path::new("tests/fixtures");
     let content_dir = site_root.join("en");
     let content = Content::load(&content_dir, &[]).expect("content");
@@ -33,7 +33,7 @@ fn fixture(url: &str) -> gen_docs::markdown::RenderedPage {
         .expect("render")
 }
 
-fn synthetic(body: &str) -> gen_docs::markdown::RenderedPage {
+fn synthetic(body: &str) -> rustpress::markdown::RenderedPage {
     let site_root = Path::new("tests/fixtures");
     let content_dir = site_root.join("en");
     let content = Content::default();
@@ -136,7 +136,7 @@ fn danger_alert_and_custom_alert_titles() {
 
 #[test]
 fn custom_container_alert_kind() {
-    let md = gen_docs::config::Markdown {
+    let md = rustpress::config::Markdown {
         container: toml::from_str(
             "[[custom]]\nname = \"success\"\nkind = \"tip\"\nlabel = \"SUCCESS\"\n",
         )
@@ -218,7 +218,7 @@ fn custom_heading_anchors_replace_slugs() {
 fn math_renders_with_delimiters_and_flags_page() {
     let site_root = Path::new("tests/fixtures");
     let content_dir = site_root.join("en");
-    let config = gen_docs::config::Markdown { math: true, ..Default::default() };
+    let config = rustpress::config::Markdown { math: true, ..Default::default() };
     let engine = engine_with(&config);
     let page = Page {
         rel: "p.md".into(),
@@ -245,7 +245,7 @@ fn non_math_pages_unflagged_and_untouched() {
 
 // ---- stage-4 markdown engine features ---------------------------------
 
-fn include_site(files: &[(&str, &str)], page_body: &str) -> gen_docs::markdown::RenderedPage {
+fn include_site(files: &[(&str, &str)], page_body: &str) -> rustpress::markdown::RenderedPage {
     static SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     let dir = std::env::temp_dir().join(format!(
         "gd-include-{}-{}",

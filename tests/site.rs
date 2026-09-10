@@ -3,9 +3,9 @@
 //! of vuejs/vitepress) — so the loader is exercised against genuine
 //! VitePress-format content, not hand-written samples.
 
-use gen_docs::config::SiteConfig;
-use gen_docs::content::{Content, FeatureIcon, OutlineSetting};
-use gen_docs::sidebar::Sidebars;
+use rustpress::config::SiteConfig;
+use rustpress::content::{Content, FeatureIcon, OutlineSetting};
+use rustpress::sidebar::Sidebars;
 
 fn fixtures() -> Content {
     Content::load(std::path::Path::new("tests/fixtures/en"), &[]).expect("fixture content loads")

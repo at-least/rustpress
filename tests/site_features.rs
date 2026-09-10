@@ -3,7 +3,7 @@
 //! The fixture-corpus tests live in site_build.rs; this file covers
 //! config/frontmatter features the fixtures don't exercise.
 
-use gen_docs::render::Site;
+use rustpress::render::Site;
 
 // Minimal tempdir (dev-dependency-free), mirroring site_build.rs.
 mod tempdir {
@@ -27,7 +27,7 @@ mod tempdir {
         static SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
         let n = SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let dir = std::env::temp_dir().join(format!(
-            "gen-docs-feat-{}-{n}-{}",
+            "rustpress-feat-{}-{n}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -41,7 +41,7 @@ mod tempdir {
 
 fn build_site(config: &str, files: &[(&str, &str)]) -> (tempdir::Guard, tempdir::Guard) {
     let site_dir = tempdir::tempdir();
-    std::fs::write(site_dir.path().join("gen-docs.toml"), config).unwrap();
+    std::fs::write(site_dir.path().join("rustpress.toml"), config).unwrap();
     for (rel, body) in files {
         let path = site_dir.path().join("content").join(rel);
         if let Some(parent) = path.parent() {

@@ -103,7 +103,7 @@ impl Site {
         // theme.css: UI palette overrides as CSS custom properties
         // (VitePress "extending the default theme" style — copied
         // verbatim and linked after main.css). Syntax colors are NOT
-        // here — they live in the [syntax] section of gen-docs.toml.
+        // here — they live in the [syntax] section of rustpress.toml.
         // UI theme: one variable, one choice — a built-in palette name or
         // a path to a CSS file (values ending in `.css`). Unset/`vitepress`
         // = the stock look, nothing emitted.
@@ -297,7 +297,7 @@ impl Site {
         // site static/ copied verbatim; when the site lives nested under
         // a repo root that also has a static/ dir (the dogfood layout),
         // the root's built assets (app.js, main.css) are layered on top
-        // so a plain `gen-docs build` produces a complete deployable site
+        // so a plain `rustpress build` produces a complete deployable site
         let static_dir = site_dir.join("static");
         if static_dir.is_dir() {
             copy_dir(&static_dir, out_dir)?;

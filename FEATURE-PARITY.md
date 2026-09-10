@@ -1,7 +1,7 @@
-# Feature parity: gen-docs vs upstream VitePress
+# Feature parity: rustpress vs upstream VitePress
 
 This is the **feature-surface audit**: every documented upstream
-capability, row by row, against what gen-docs actually does (claims
+capability, row by row, against what rustpress actually does (claims
 verified against source, not README prose). It complements
 [PARITY.md](PARITY.md), whose two mechanical gates cover only the 14
 pinned demo pages — this file answers "VitePress shipped a feature we
@@ -23,7 +23,7 @@ never looked at" for the *whole* documented surface.
 | partial | subset of upstream; the note names what is missing |
 | diverged | works, but by a documented different mechanism/shape |
 | missing | upstream has it, we don't, no architectural blocker |
-| n/a | needs a runtime gen-docs doesn't have (Vue/Vite/Node/external service) |
+| n/a | needs a runtime rustpress doesn't have (Vue/Vite/Node/external service) |
 
 Status summary: implemented 76, partial 17, diverged 12, missing 25,
 n/a 24 (154 audited rows).
@@ -47,13 +47,13 @@ git -C ../vitepress diff <pinned>..HEAD --name-only -- docs/en
 ### Overview
 
 Config resolution / intellisense / typed-theme-config are TypeScript &
-tooling concerns of the `.vitepress/config.ts` ecosystem — gen-docs has
-a single `gen-docs.toml` with `deny_unknown_fields`, so typos fail at
+tooling concerns of the `.vitepress/config.ts` ecosystem — rustpress has
+a single `rustpress.toml` with `deny_unknown_fields`, so typos fail at
 load (`src/config.rs:28`).
 
 | heading | status | ours | note |
 |---|---|---|---|
-| Config Resolution | n/a | `gen-docs.toml` | no JS config cascade; one TOML file (`src/config.rs:205`) |
+| Config Resolution | n/a | `rustpress.toml` | no JS config cascade; one TOML file (`src/config.rs:205`) |
 | Config Intellisense | n/a | — | no TS types to IntelliSense |
 | Typed Theme Config | n/a | — | single compiled-in theme; no `defineConfig` surface |
 | Vite, Vue & Markdown Config | n/a | — | no Vite/Vue anywhere in the pipeline |
@@ -75,7 +75,7 @@ load (`src/config.rs:28`).
 
 | heading | status | ours | note |
 |---|---|---|---|
-| cleanUrls | diverged | `src/content.rs:286-294` | gen-docs *always* emits directory URLs (`/guide/x/`); there is no `.html`-suffix mode to disable |
+| cleanUrls | diverged | `src/content.rs:286-294` | rustpress *always* emits directory URLs (`/guide/x/`); there is no `.html`-suffix mode to disable |
 | rewrites | partial | `src/render/mod.rs:66-88` | static map + `:rest*` suffix capture only; no multi-param `:pkg/:slug*` patterns |
 
 ### Build
@@ -90,7 +90,7 @@ load (`src/config.rs:28`).
 | icons | n/a | — | iconify collection pipeline needs Node; our icons are compiled-in SVG |
 | cacheDir | n/a | — | no Vite cache |
 | ignoreDeadLinks | partial | `src/config.rs` | true / "localhostLinks" (accepted; no-op — http targets never collected) / prefix list; no regex or function forms |
-| mpa | n/a | — | gen-docs is always a static build with Alpine islands (MPA-shaped by construction) |
+| mpa | n/a | — | rustpress is always a static build with Alpine islands (MPA-shaped by construction) |
 
 ### Theming
 
@@ -110,7 +110,7 @@ load (`src/config.rs:28`).
 ### Build Hooks
 
 buildEnd / postRender / transformHead / transformHtml / transformPageData —
-all **n/a**: JavaScript build hooks need the Node build process gen-docs
+all **n/a**: JavaScript build hooks need the Node build process rustpress
 replaces. The Rust binary has no plugin ABI; `[[head]]` covers the
 common `transformHead` use.
 
@@ -253,7 +253,7 @@ common `transformHead` use.
 ## guide/using-vue.md
 
 Everything here is **n/a** — markdown-as-Vue-SFC needs the Vue runtime
-gen-docs deliberately has no replacement for. One exception:
+rustpress deliberately has no replacement for. One exception:
 
 | feature | status | ours | note |
 |---|---|---|---|
@@ -287,14 +287,14 @@ at build time; no plugin ABI in the Rust binary.
 
 ## guide/mpa-mode.md
 
-n/a — gen-docs output is always zero-framework static HTML + one Alpine
+n/a — rustpress output is always zero-framework static HTML + one Alpine
 bundle; there is no SPA/SSR mode to trade away. `<script client>` is a
 VitePress-only tag for that pipeline.
 
 ## guide/ssr-compat.md
 
 n/a — `<ClientOnly>`, `defineClientComponent`, `import.meta.env.SSR`
-guarding solve SSR/hydration problems gen-docs doesn't have.
+guarding solve SSR/hydration problems rustpress doesn't have.
 
 ## guide/cms.md
 
@@ -310,8 +310,8 @@ theme is customized only via CSS variables (`theme.toml`) and
 
 | feature | status | ours | note |
 |---|---|---|---|
-| `build [root]` | implemented | `src/main.rs:101` | `gen-docs build <site>`; no `--base`/`--outDir` flags |
-| `dev [root]` | implemented | `src/serve.rs:24` | `gen-docs serve`: rebuild-on-change + livereload SSE |
+| `build [root]` | implemented | `src/main.rs:101` | `rustpress build <site>`; no `--base`/`--outDir` flags |
+| `dev [root]` | implemented | `src/serve.rs:24` | `rustpress serve`: rebuild-on-change + livereload SSE |
 | `preview [root]` | implemented | `src/serve.rs` | same server serves the built `public/` |
 | `init` wizard | missing | — | no scaffold command |
 
@@ -362,7 +362,7 @@ all — both fixed):
    (`src/config.rs:435`); upstream's documented spelling fails to load.
 7. **`[!DANGER]` rendered as a plain blockquote** *(fixed, d6b05d2)* — alerts now rewrite into containers.
 
-## gen-docs-only surface (no upstream counterpart)
+## rustpress-only surface (no upstream counterpart)
 
 Tracking our own extras here keeps the tables above honest about
 direction: upstream → us.
@@ -375,4 +375,4 @@ direction: upstream → us.
 - `askAiUrl` navbar link — upstream's Ask AI lives inside Algolia search.
 - `[notFound]` title/quote/linkText — upstream 404 is slot-based.
 - hero action `theme: "sponsor"` — upstream has brand/alt only.
-- `gen-docs serve` with SSE livereload; the parity tooling itself.
+- `rustpress serve` with SSE livereload; the parity tooling itself.

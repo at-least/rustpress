@@ -1,4 +1,4 @@
-//! gen-docs: a standalone docs site generator that reads VitePress-format
+//! rustpress: a standalone docs site generator that reads VitePress-format
 //! content (YAML front matter, `:::` containers, labeled code fences) and
 //! renders a static site in Rust — hypertext `rsx!` templates, Alpine.js
 //! interactivity, Tailwind CSS styling.

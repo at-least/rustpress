@@ -4,7 +4,7 @@
 
 use std::path::Path;
 
-use gen_docs::parity::{self, Deltas, Mode};
+use rustpress::parity::{self, Deltas, Mode};
 use serde_json::{json, Value};
 
 const UPSTREAM_DOC: &str = "tests/parity/fixtures/upstream-doc-page.html";
@@ -167,7 +167,7 @@ fn diff_mode_reports_upstream_changes() {
 fn snapshot_is_byte_stable_and_check_names_breakages() {
     // cache dir with two fetched pages (any HTML works for stability)
     let tmp = std::env::temp_dir().join(format!(
-        "gen-docs-parity-test-{}-{}",
+        "rustpress-parity-test-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)

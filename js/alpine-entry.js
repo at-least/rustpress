@@ -1,4 +1,4 @@
-/* gen-docs front-end: Alpine.js replaces the old vanilla bundle.
+/* rustpress front-end: Alpine.js replaces the old vanilla bundle.
    The FOUC anti-flash script stays inline in <head> (Alpine cannot run
    pre-paint); everything else — menus, flyouts, sidebar drawer and
    carets, appearance switch, code copy buttons, code-group tabs,

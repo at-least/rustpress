@@ -1,4 +1,4 @@
-//! Built-in UI palettes for the `[theme]` section of gen-docs.toml.
+//! Built-in UI palettes for the `[theme]` section of rustpress.toml.
 //!
 //! Each palette re-points the brand aliases (`--vp-c-brand-*`) at one of
 //! the palette ramps already defined in styles/vitepress.css (or, for

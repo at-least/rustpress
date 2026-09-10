@@ -1,16 +1,16 @@
 [package]
-name = "gen-docs"
+name = "rustpress"
 version = "0.1.0"
 edition = "2024"
 description = "Standalone VitePress-format docs site generator in Rust"
 license = "MIT"
 
 [lib]
-name = "gen_docs"
+name = "rustpress"
 path = "src/lib.rs"
 
 [[bin]]
-name = "gen-docs"
+name = "rustpress"
 path = "src/main.rs"
 
 [dependencies]

@@ -1,5 +1,5 @@
 // Fetch the pinned upstream pages (vitepress.dev — the deployed
-// VitePress release) into parity/cache/ for `gen-docs parity snapshot`.
+// VitePress release) into parity/cache/ for `rustpress parity snapshot`.
 // Zero-dependency on purpose: Node 22+ global fetch.
 // See PARITY.md for the full workflow.
 import { mkdir, readFile, writeFile } from 'node:fs/promises'

@@ -1,4 +1,4 @@
-//! gen-docs CLI: `build` renders a site to `public/`, `serve` (later)
+//! rustpress CLI: `build` renders a site to `public/`, `serve` (later)
 //! watches and serves.
 
 use std::path::PathBuf;
@@ -8,7 +8,7 @@ use clap::{Parser, Subcommand};
 
 
 #[derive(Parser)]
-#[command(name = "gen-docs", version, about = "VitePress-format docs site generator")]
+#[command(name = "rustpress", version, about = "VitePress-format docs site generator")]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -18,7 +18,7 @@ struct Cli {
 enum Command {
     /// Build the site in SITE (default: current directory) into public/.
     Build {
-        /// Site directory containing gen-docs.toml + content/.
+        /// Site directory containing rustpress.toml + content/.
         #[arg(value_name = "SITE", default_value = ".")]
         site: PathBuf,
     },
@@ -84,19 +84,19 @@ async fn main() -> anyhow::Result<()> {
     match cli.command {
         Command::Build { site } => {
             let started = std::time::Instant::now();
-            let site_model = gen_docs::render::Site::load(&site)
+            let site_model = rustpress::render::Site::load(&site)
                 .with_context(|| format!("loading site from {}", site.display()))?;
             let out_dir = site.join("public");
             let stats = site_model.build(&site, &out_dir)?;
             println!(
-                "gen-docs: {} pages + 404 + syntax.css + static/ → {} ({:.1}s)",
+                "rustpress: {} pages + 404 + syntax.css + static/ → {} ({:.1}s)",
                 stats.pages,
                 out_dir.display(),
                 started.elapsed().as_secs_f32()
             );
             Ok(())
         }
-        Command::Serve { site, port } => gen_docs::serve::run(site, port)
+        Command::Serve { site, port } => rustpress::serve::run(site, port)
             .await,
         Command::Parity { cmd } => match cmd {
             ParityCmd::Check {
@@ -104,10 +104,10 @@ async fn main() -> anyhow::Result<()> {
                 baseline,
                 deltas,
             } => {
-                let base = gen_docs::parity::load_baseline(&baseline)
+                let base = rustpress::parity::load_baseline(&baseline)
                     .with_context(|| format!("loading baseline {}", baseline.display()))?;
-                let deltas = gen_docs::parity::Deltas::load(&deltas)?;
-                let mismatches = gen_docs::parity::check(&site, &base, &deltas);
+                let deltas = rustpress::parity::Deltas::load(&deltas)?;
+                let mismatches = rustpress::parity::check(&site, &base, &deltas);
                 if mismatches.is_empty() {
                     println!(
                         "parity: {} page(s) match the pinned upstream ({})",
@@ -134,7 +134,7 @@ async fn main() -> anyhow::Result<()> {
                 pages,
                 meta,
             } => {
-                let page_list = gen_docs::parity::parse_pages(
+                let page_list = rustpress::parity::parse_pages(
                     &std::fs::read_to_string(&pages)
                         .with_context(|| format!("reading page list {}", pages.display()))?,
                 );
@@ -150,7 +150,7 @@ async fn main() -> anyhow::Result<()> {
                         }
                     }
                 }
-                let baseline = gen_docs::parity::snapshot(&cache, &page_list, meta_map)?;
+                let baseline = rustpress::parity::snapshot(&cache, &page_list, meta_map)?;
                 let json = serde_json::to_string_pretty(&baseline)?;
                 if let Some(parent) = out.parent() {
                     std::fs::create_dir_all(parent)?;
@@ -169,9 +169,9 @@ async fn main() -> anyhow::Result<()> {
                     println!("parity: no previous baseline at {} — this is the initial pin", old.display());
                     return Ok(());
                 }
-                let old_base = gen_docs::parity::load_baseline(&old)?;
-                let new_base = gen_docs::parity::load_baseline(&new)?;
-                let changes = gen_docs::parity::diff(&old_base, &new_base);
+                let old_base = rustpress::parity::load_baseline(&old)?;
+                let new_base = rustpress::parity::load_baseline(&new)?;
+                let changes = rustpress::parity::diff(&old_base, &new_base);
                 if changes.is_empty() {
                     println!("parity: upstream unchanged");
                 } else {

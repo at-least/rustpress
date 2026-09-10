@@ -1,4 +1,4 @@
-//! Site configuration: `gen-docs.toml`, a static-file mirror of VitePress's
+//! Site configuration: `rustpress.toml`, a static-file mirror of VitePress's
 //! `themeConfig` schema (VitePress's config is TypeScript, which a Rust
 //! binary cannot execute; the keys intentionally keep VitePress's camelCase
 //! names so the mapping is mechanical).
@@ -47,7 +47,7 @@ fn default_mobile_menu_label() -> String {
     "Menu".into()
 }
 
-/// The whole `gen-docs.toml`.
+/// The whole `rustpress.toml`.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct SiteConfig {
@@ -265,9 +265,9 @@ impl Default for SiteConfig {
 }
 
 impl SiteConfig {
-    pub const CONFIG_FILE: &'static str = "gen-docs.toml";
+    pub const CONFIG_FILE: &'static str = "rustpress.toml";
 
-    /// Load `gen-docs.toml` from a site directory and validate it.
+    /// Load `rustpress.toml` from a site directory and validate it.
     pub fn load(site_dir: &Path) -> Result<SiteConfig, ConfigError> {
         let path = site_dir.join(Self::CONFIG_FILE);
         let raw = std::fs::read_to_string(&path).map_err(|source| ConfigError::Read {
@@ -872,7 +872,7 @@ pub struct Locale {
     pub description: Option<String>,
 }
 
-/// Errors loading or validating `gen-docs.toml`.
+/// Errors loading or validating `rustpress.toml`.
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
     #[error("cannot read {path}: {source}")]
