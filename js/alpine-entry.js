@@ -84,14 +84,23 @@ Alpine.data("docPage", () => ({
    localStorage key the anti-flash script reads, and syncs aria-checked
    on both switches (navbar + nav screen). */
 window.gdToggleAppearance = () => {
-  const dark = !document.documentElement.classList.contains("dark");
-  document.documentElement.classList.toggle("dark", dark);
-  try {
-    localStorage.setItem("vitepress-theme-appearance", dark ? "dark" : "light");
-  } catch (e) {}
-  document.querySelectorAll(".VPSwitchAppearance").forEach((el) => {
-    el.setAttribute("aria-checked", dark ? "true" : "false");
-  });
+  const apply = () => {
+    const dark = !document.documentElement.classList.contains("dark");
+    document.documentElement.classList.toggle("dark", dark);
+    try {
+      localStorage.setItem("vitepress-theme-appearance", dark ? "dark" : "light");
+    } catch (e) {}
+    document.querySelectorAll(".VPSwitchAppearance").forEach((el) => {
+      el.setAttribute("aria-checked", dark ? "true" : "false");
+    });
+  };
+  // View Transitions API: smooth cross-fade on the color flip
+  // (upstream does the same; browsers without it flip immediately)
+  if (document.startViewTransition) {
+    document.startViewTransition(apply);
+  } else {
+    apply();
+  }
 };
 
 /* Copy button handler for code blocks (button markup is server-side). */
@@ -261,7 +270,9 @@ Alpine.data("searchModal", () => ({
     if (!this.results.length) {
       return (
         '<li class="no-results">' +
-        (this.q.trim() ? 'No results for "<b>' + this.esc(this.q.trim()) + '</b>"' : "") +
+        (this.q.trim()
+          ? (this.$el.closest('[data-no-results]')?.dataset.noResults || 'No results for "{q}"').replace('{q}', '<b>' + this.esc(this.q.trim()) + '</b>')
+          : "") +
         "</li>"
       );
     }

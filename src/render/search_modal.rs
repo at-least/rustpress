@@ -8,7 +8,14 @@ use hypertext::prelude::*;
 
 use super::icons::icon;
 
-pub fn search_modal(index_url: &str) -> impl Renderable + '_ {
+pub fn search_modal<'a>(index_url: &'a str, search: &'a crate::config::Search) -> impl Renderable + 'a {
+    let button_aria = search.translations.button_aria_label.clone();
+    let placeholder = search.translations.placeholder.clone();
+    let no_results = search.translations.no_results_text.clone();
+    let reset_title = search.translations.reset_button_title.clone();
+    let navigate_text = search.translations.navigate_text.clone();
+    let select_text = search.translations.select_text.clone();
+    let close_text = search.translations.close_text.clone();
     let kbd_cls = "bg-[rgba(128,128,128,0.1)] rounded-[0.25rem] px-[0.375rem] py-[0.1875rem] min-w-6 inline-block text-center align-middle border border-[rgba(128,128,128,0.15)] shadow-[0_2px_2px_0_rgba(0,0,0,0.1)] font-[inherit]";
     let results_cls = concat!(
         "flex flex-col gap-[0.375rem] overflow-x-hidden overflow-y-auto overscroll-contain",
@@ -23,11 +30,11 @@ pub fn search_modal(index_url: &str) -> impl Renderable + '_ {
         " [&_mark]:bg-(--vp-local-search-highlight-bg) [&_mark]:text-(--vp-local-search-highlight-text) [&_mark]:rounded-[0.125rem] [&_mark]:px-[0.125rem]",
     );
     rsx! {
-        <div class="fixed inset-0 z-[100] flex" id="VPLocalSearchBox" x-cloak x-show="$store.ui.search" x-data="searchModal" data-index-url=(index_url) role="dialog" aria-modal="true">
+        <div class="fixed inset-0 z-[100] flex" id="VPLocalSearchBox" x-cloak x-show="$store.ui.search" x-data="searchModal" data-index-url=(index_url) data-no-results=(no_results.clone()) role="dialog" aria-modal="true">
             <div class="absolute inset-0 bg-(--vp-backdrop-bg-color) transition-opacity duration-500" id="VPSearchBackdrop" @click="close()"></div>
             <div class="relative p-3 my-16 mx-auto flex flex-col gap-4 bg-(--vp-local-search-bg) w-[min(100vw-3.75rem,56.25rem)] h-min max-h-[min(100vh-8rem,56.25rem)] rounded-md max-md:my-0 max-md:w-screen max-md:h-screen max-md:max-h-none max-md:rounded-none">
                 <form class="border border-divider rounded-[0.25rem] flex items-center px-3 cursor-text focus-within:border-brand-1 max-md:px-2" id="VPSearchBar" onsubmit="return false">
-                    <label id="localsearch-label" for="localsearch-input" title="Search">
+                    <label id="localsearch-label" for="localsearch-input" title=(button_aria.clone())>
                         (icon("search", "block m-2 text-[1.125rem] max-md:hidden"))
                     </label>
                     <input
@@ -46,10 +53,10 @@ pub fn search_modal(index_url: &str) -> impl Renderable + '_ {
                         spellcheck="false"
                         maxlength="64"
                         type="search"
-                        placeholder="Search docs"
+                        placeholder=(placeholder.clone())
                     >
                     <div class="flex gap-1">
-                        <button type="button" class="p-2 not-disabled:hover:text-brand-1 cursor-pointer" id="VPSearchClear" title="Clear" @click="clear()" :disabled=("q.trim() === ''")>
+                        <button type="button" class="p-2 not-disabled:hover:text-brand-1 cursor-pointer" id="VPSearchClear" title=(reset_title.clone()) @click="clear()" :disabled=("q.trim() === ''")>
                             (icon("delete", ""))
                         </button>
                     </div>
@@ -58,9 +65,9 @@ pub fn search_modal(index_url: &str) -> impl Renderable + '_ {
                 <ul class=(results_cls) id="VPSearchResults" x-ref="results" x-html=(r#"resultsHtml"#) @click="pick($event)" :class=("(results.length) ? '' : 'flex-1'") role="listbox" aria-labelledby="localsearch-label"></ul>
 
                 <div class="text-[0.8rem] opacity-75 flex flex-wrap gap-4 leading-[1.09375] max-md:hidden" id="VPSearchShortcuts">
-                    <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"←"</kbd><kbd class=(kbd_cls)>"→"</kbd>" to navigate"</span>
-                    <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"Enter"</kbd>" to select"</span>
-                    <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"Esc"</kbd>" to close"</span>
+                    <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"←"</kbd><kbd class=(kbd_cls)>"→"</kbd>(navigate_text.clone())</span>
+                    <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"Enter"</kbd>(select_text.clone())</span>
+                    <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"Esc"</kbd>(close_text.clone())</span>
                 </div>
             </div>
         </div>

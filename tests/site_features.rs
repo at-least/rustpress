@@ -361,3 +361,27 @@ fn layout_page_strips_doc_chrome() {
     let plain = page(&out, "/plain/");
     assert!(plain.contains("VPOutlineMarker"), "doc layout keeps outline");
 }
+
+#[test]
+fn graded_containers_and_search_translations() {
+    let (_, out) = build_site(
+        r#"title = "T"
+gradedContainers = true
+
+[search]
+provider = "local"
+
+[search.translations]
+buttonText = "Suchen"
+placeholder = "Dokumente durchsuchen"
+noResultsText = "Nichts gefunden für {q}"
+navigateText = "zum Navigieren""#,
+        &[("guide/a.md", "# A\n")],
+    );
+    let html = page(&out, "/guide/a/");
+    assert!(html.contains("vp-graded-containers"), "graded body class");
+    assert!(html.contains("<span class=\"hidden md:inline md:text-[0.8125rem]\">Suchen</span>"), "button text");
+    assert!(html.contains("placeholder=\"Dokumente durchsuchen\""), "placeholder");
+    assert!(html.contains("data-no-results=\"Nichts gefunden für {q}\""), "no-results string");
+    assert!(html.contains(">zum Navigieren</span>"), "footer hint");
+}

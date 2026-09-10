@@ -106,6 +106,11 @@ pub struct SiteConfig {
     #[serde(default)]
     pub aside: Option<crate::content::AsideSetting>,
 
+    /// Grade container/alert/badge severity colors (danger red,
+    /// warning orange, caution yellow) instead of GitHub's palette.
+    #[serde(default)]
+    pub graded_containers: bool,
+
     /// Local search. Absent → no search index, no search modal.
     #[serde(default)]
     pub search: Option<Search>,
@@ -506,11 +511,80 @@ impl OutlineConfig {
 // generator ships one design — the vendored github-light/github-dark
 // pair (see src/markdown/highlight.rs).
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct Search {
     /// Only `local` is supported (documents JSON + modal).
     pub provider: SearchProvider,
+    /// UI strings for the button and modal (upstream
+    /// `search.options.translations` subset).
+    #[serde(default)]
+    pub translations: SearchTranslations,
+}
+
+/// Translatable local-search strings. Keys follow upstream's
+/// `translations`; `{q}` in `noResultsText` is the query placeholder.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct SearchTranslations {
+    /// Navbar button label.
+    #[serde(default = "default_search_button_text")]
+    pub button_text: String,
+    /// Navbar button aria-label.
+    #[serde(default = "default_search_button_text")]
+    pub button_aria_label: String,
+    /// Modal input placeholder.
+    #[serde(default = "default_search_placeholder")]
+    pub placeholder: String,
+    /// Shown when a query matches nothing; `{q}` = the query.
+    #[serde(default = "default_search_no_results")]
+    pub no_results_text: String,
+    /// Clear-button title.
+    #[serde(default = "default_search_reset")]
+    pub reset_button_title: String,
+    /// Footer hint after the arrow keys.
+    #[serde(default = "default_search_navigate")]
+    pub navigate_text: String,
+    /// Footer hint after Enter.
+    #[serde(default = "default_search_select")]
+    pub select_text: String,
+    /// Footer hint after Esc.
+    #[serde(default = "default_search_close")]
+    pub close_text: String,
+}
+
+impl Default for SearchTranslations {
+    fn default() -> Self {
+        toml::from_str("").unwrap()
+    }
+}
+
+fn default_search_button_text() -> String {
+    "Search".into()
+}
+
+fn default_search_placeholder() -> String {
+    "Search docs".into()
+}
+
+fn default_search_no_results() -> String {
+    "No results for \"{q}\"".into()
+}
+
+fn default_search_reset() -> String {
+    "Clear".into()
+}
+
+fn default_search_navigate() -> String {
+    "to navigate".into()
+}
+
+fn default_search_select() -> String {
+    "to select".into()
+}
+
+fn default_search_close() -> String {
+    "to close".into()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -900,7 +974,8 @@ provider = "local"
             "https://github.com/me/repo/edit/main/docs/:path"
         );
         assert_eq!(c.outline.level(), Some(OutlineLevel::Range((2, 3))));
-        assert_eq!(c.search, Some(Search { provider: SearchProvider::Local }));
+        assert_eq!(c.search.as_ref().map(|s| s.provider), Some(SearchProvider::Local));
+        assert_eq!(c.search.unwrap().translations.button_text, "Search");
     }
 
     #[test]

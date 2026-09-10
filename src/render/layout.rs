@@ -84,7 +84,7 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
                 (head_tags)
                 (head_extra)
             </head>
-            <body class="font-sans bg-bg text-text-1 antialiased [text-rendering:optimizeLegibility] [-moz-osx-font-smoothing:grayscale] [text-autospace:normal] [text-spacing-trim:normal]">
+            <body class=(format!("font-sans bg-bg text-text-1 antialiased [text-rendering:optimizeLegibility] [-moz-osx-font-smoothing:grayscale] [text-autospace:normal] [text-spacing-trim:normal]{}", if site.config.graded_containers { " vp-graded-containers" } else { "" }))>
                 <a class="sr-only" href="#main">(skip_label)</a>
 
                 <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" x-cloak x-show="$store.ui.screen || $store.ui.sidebar" @click="$store.ui.screen = false; $store.ui.sidebar = false"></div>
@@ -117,7 +117,7 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
                 }
 
                 @if site.config.search.is_some() {
-                    (super::search_modal::search_modal(&search_index_url))
+                    (super::search_modal::search_modal(&search_index_url, site.config.search.as_ref().unwrap()))
                 }
 
                 <script src=(app_js) defer></script>
