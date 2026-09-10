@@ -17,7 +17,10 @@ released a new version — which parts of gen-docs need to change?"**
 The pinned baseline was extracted from the deployed upstream site
 (vitepress.dev, `<meta name="generator">` records the exact version —
 currently `VitePress v2.0.0-alpha.20`) for the 14 pages in
-`parity/pages.txt`. Each page's fingerprint stores landmarks only:
+`parity/pages.txt`. These gates cover the *pinned pages*; the whole
+documented feature surface (every config option, markdown extension,
+theme feature) is audited in [FEATURE-PARITY.md](FEATURE-PARITY.md),
+gated by `cargo test --test feature_parity`. Each page's fingerprint stores landmarks only:
 text, hrefs, order, presence — never class names or markup. Fields the
 upstream side cannot see are recorded as `null`/`[]` and skipped by the
 checker (e.g. the deployed site hydrates outline items client-side);
@@ -51,6 +54,12 @@ npm run check:parity
 #   → every unexplained divergence prints as
 #     "<page>: <landmark>: upstream X != ours Y" and exits non-zero
 npm test                       # full suite, parity gate included
+
+# 4. feature surface: audit new/changed upstream options
+cargo test --test feature_parity
+#   → fails on every docs/en reference heading FEATURE-PARITY.md
+#     doesn't cover yet; update its rows (it also lists parsed-but-dead
+#     config keys and intentional divergences with source refs)
 ```
 
 To map a changed landmark to code, use the owner table below. When a
