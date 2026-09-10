@@ -500,8 +500,19 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                 // start; it has no content and no notation entry
                 starts.retain(|&s| s < bytes.len() || s == 0);
                 for (idx, &start) in starts.iter().enumerate() {
-                    let end = starts.get(idx + 1).copied().unwrap_or(bytes.len());
+                    let next = starts.get(idx + 1).copied().unwrap_or(bytes.len());
+                    // the newline goes BETWEEN the line spans, never inside:
+                    // `.line` is an inline-block in a `white-space: pre`
+                    // container and only stacks at a break between spans
+                    let end = if next > start && bytes[next - 1] == b'\n' {
+                        next - 1
+                    } else {
+                        next
+                    };
                     let class = line_class(idx + 1, &hl, &notation_classes[idx]);
+                    if idx > 0 {
+                        output.write_str("\n")?;
+                    }
                     write!(output, "<span class=\"{class}\">")?;
                     let mut pos = start;
                     for (s, e, capture) in &segments {
@@ -535,7 +546,11 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
             None => {
                 for (idx, line) in lines.iter().enumerate() {
                     let class = line_class(idx + 1, &hl, &notation_classes[idx]);
-                    write!(output, "<span class=\"{class}\">{}</span>", escape_text(line))?;
+                    let text = line.strip_suffix('\n').unwrap_or(line);
+                    if idx > 0 {
+                        output.write_str("\n")?;
+                    }
+                    write!(output, "<span class=\"{class}\">{}</span>", escape_text(text))?;
                 }
             }
         }
