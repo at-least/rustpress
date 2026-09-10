@@ -22,6 +22,11 @@ struct ServeState {
 }
 
 pub async fn run(site_dir: PathBuf, port: u16) -> anyhow::Result<()> {
+    // notify reports absolute paths, so the `public/` filter in the
+    // watcher only works against an absolute site dir
+    let site_dir = site_dir
+        .canonicalize()
+        .with_context(|| format!("cannot resolve site dir {}", site_dir.display()))?;
     // initial build (fail hard: a broken site should not serve stale output)
     rebuild(&site_dir)?;
     let root = site_dir.join("public");
@@ -87,7 +92,12 @@ fn start_watcher(site_dir: PathBuf) -> anyhow::Result<()> {
         use notify::Watcher as _;
         let (tx, rx) = std::sync::mpsc::channel();
         let mut watcher = notify::recommended_watcher(move |res: Result<notify::Event, _>| {
-            if let Ok(ev) = res {
+            // reads (the build itself opens content/, static/ and the
+            // config) must not count as changes, or every rebuild
+            // triggers the next one
+            if let Ok(ev) = res
+                && !matches!(ev.kind, notify::EventKind::Access(_))
+            {
                 let _ = tx.send(ev.paths);
             }
         })
