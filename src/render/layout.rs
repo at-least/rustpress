@@ -21,6 +21,8 @@ pub struct Shell<'a> {
     pub lang: String,
     /// (label, href, current) language switcher entries.
     pub translations: Vec<(String, String, bool)>,
+    /// The navbar/site title for this page (locale-aware).
+    pub site_title: String,
 }
 
 /// The whole HTML document; `content` is the VPContent body.
@@ -73,7 +75,7 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
                 <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" x-cloak x-show="$store.ui.screen || $store.ui.sidebar" @click="$store.ui.screen = false; $store.ui.sidebar = false"></div>
 
                 <header class="relative top-[var(--vp-layout-top-height,0px)] left-0 z-(--vp-z-index-nav) w-full pointer-events-none lg:fixed">
-                    (navbar::navbar(site, &current_url, is_home, has_sidebar, &shell.translations))
+                    (navbar::navbar(site, &current_url, is_home, has_sidebar, &shell.translations, &shell.site_title))
                     (navbar::nav_screen(site, &current_url, &shell.translations))
                 </header>
 

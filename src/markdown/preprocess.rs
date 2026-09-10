@@ -45,6 +45,7 @@ const MAX_INCLUDE_DEPTH: u8 = 8;
 impl<'a> Preprocess<'a> {
     pub fn run(&self, body: &str, page_rel: &str) -> Result<String, PreprocessError> {
         let md = self.resolve_includes(body, page_rel, 0)?;
+        let md = expand_alerts(&md, &self.container);
         let md = expand_containers(&md, &self.container);
         let md = rewrite_fences(&md);
         Ok(rewrite_badges(&md))
@@ -256,6 +257,94 @@ fn fence_marker_for(content: &str) -> String {
     "`".repeat(longest + 1)
 }
 
+/// Pass 1.5: `> [!KIND] [title]` GitHub-flavored alerts → `::: kind`
+/// containers, which is exactly what VitePress does (alerts ARE
+/// containers there): same styling, same `[markdown.container]` labels,
+/// and `[!DANGER]` plus registered custom kinds work. Fence-aware —
+/// example alerts inside code fences stay literal.
+pub fn expand_alerts(md: &str, opts: &ContainerOptions) -> String {
+    let mut out_lines: Vec<String> = Vec::new();
+    let mut fence: Option<(char, usize)> = None;
+    let lines: Vec<&str> = md.split_inclusive('\n').collect();
+    let mut i = 0usize;
+    while i < lines.len() {
+        let bare = lines[i].trim_end_matches(['\n', '\r']);
+        if let Some((ch, n)) = fence {
+            out_lines.push(bare.to_string());
+            if is_closing_fence(bare, ch, n) {
+                fence = None;
+            }
+            i += 1;
+            continue;
+        }
+        if let Some((ch, n)) = opening_fence(bare) {
+            out_lines.push(bare.to_string());
+            fence = Some((ch, n));
+            i += 1;
+            continue;
+        }
+        if let Some((indent, kind, title)) = alert_opener(bare, opts) {
+            let title_suffix = if title.is_empty() {
+                String::new()
+            } else {
+                format!(" {title}")
+            };
+            out_lines.push(format!("{indent}::: {kind}{title_suffix}"));
+            i += 1;
+            // Body: the blockquote's `>`-prefixed lines (a `>`-only line
+            // is a blank line *inside* the quote and continues it; any
+            // non-`>` line ends the quote).
+            while i < lines.len() {
+                let b = lines[i].trim_end_matches(['\n', '\r']);
+                let t = b.trim_start();
+                let ind = &b[..b.len() - t.len()];
+                if let Some(rest) = t.strip_prefix('>') {
+                    let rest = rest.strip_prefix(' ').unwrap_or(rest);
+                    out_lines.push(format!("{ind}{rest}"));
+                    i += 1;
+                } else {
+                    break;
+                }
+            }
+            out_lines.push(format!("{indent}:::"));
+            out_lines.push(String::new());
+            continue;
+        }
+        out_lines.push(bare.to_string());
+        i += 1;
+    }
+    let mut out = out_lines.join("\n");
+    out.push('\n');
+    out
+}
+
+/// `> [!KIND] [title]` → (indent, kind, title). Recognized kinds: the
+/// builtin container kinds (incl. VitePress's `[!DANGER]` extension)
+/// and registered custom containers — upstream lets registered
+/// containers appear as alerts too.
+fn alert_opener(line: &str, opts: &ContainerOptions) -> Option<(String, String, String)> {
+    let t = line.trim_start();
+    let indent = &line[..line.len() - t.len()];
+    let rest = t.strip_prefix('>')?.strip_prefix(' ').unwrap_or("").trim();
+    if !rest.starts_with("[!") {
+        return None;
+    }
+    let end = rest.find(']')?;
+    let kind = rest[2..end].trim().to_lowercase();
+    if kind.is_empty() || !kind.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-') {
+        return None;
+    }
+    let known = matches!(
+        kind.as_str(),
+        "note" | "tip" | "important" | "warning" | "caution" | "danger" | "info"
+    ) || opts.custom.iter().any(|c| c.name.eq_ignore_ascii_case(&kind));
+    if !known {
+        return None;
+    }
+    let title = rest[end + 1..].trim();
+    Some((indent.to_string(), kind, title.to_string()))
+}
+
 /// Pass 2: `:::` containers.
 pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
     #[derive(Clone, Copy)]
@@ -339,6 +428,8 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
                 }
                 "details" => {
                     let (summary, open) = parse_details_rest(rest);
+                    let summary =
+                        if summary.is_empty() { opts.label_for("details") } else { summary };
                     stack.push((colons, Open::Details));
                     let open_attr = if open { " open" } else { "" };
                     out_lines.extend([
@@ -476,7 +567,7 @@ fn parse_details_rest(rest: &str) -> (String, bool) {
             }
         }
     if rest.is_empty() {
-        ("Details".to_string(), false)
+        (String::new(), false)
     } else {
         (rest.to_string(), false)
     }

@@ -7,7 +7,7 @@ use hypertext::{prelude::*, Raw};
 use super::icons::icon;
 use super::Site;
 use crate::config::SocialIcon;
-use crate::content::HeroAction;
+use crate::content::{Feature, HeroAction};
 use crate::content::Page;
 
 pub fn home_page<'a>(site: &'a Site, page: &'a Page) -> impl Renderable + 'a {
@@ -60,7 +60,7 @@ pub fn home_page<'a>(site: &'a Site, page: &'a Page) -> impl Renderable + 'a {
                             ))>
                                 @for action in &hero.actions {
                                     <div class="shrink-0 p-[0.375rem]">
-                                        (hero_button(site, action))
+                                        (Raw::dangerously_create(hero_button(site, action)))
                                     </div>
                                 }
                             </div>
@@ -84,27 +84,7 @@ pub fn home_page<'a>(site: &'a Site, page: &'a Page) -> impl Renderable + 'a {
                         <ul class="flex flex-wrap m-[-0.5rem]">
                             @for feature in &features {
                                 <li class=(format!("p-2 w-full{grid}"))>
-                                    <div class="block border border-bg-soft rounded-xl h-full bg-bg-soft transition-colors duration-[250ms]">
-                                        <article class="flex flex-col p-6 h-full">
-                                            @if let Some(icon_html) = feature.icon.clone() {
-                                                <div class="flex justify-center items-center mb-5 rounded-md bg-default-soft w-12 h-12 text-[1.5rem] transition-colors duration-[250ms]">
-                                                    (Raw::dangerously_create(icon_html))
-                                                </div>
-                                            }
-                                            <h2 class="leading-[1.5] text-[1rem] font-semibold">(feature.title.clone())</h2>
-                                            @if let Some(details) = feature.details.clone() {
-                                                <p class="grow pt-2 leading-[1.7142857] text-[0.875rem] font-medium text-text-2">(details)</p>
-                                            }
-                                            @if let Some(link_text) = feature.link_text.clone() {
-                                                <div class="pt-2">
-                                                    <p class="flex items-center text-[0.875rem] font-medium text-brand-1">
-                                                        (link_text)
-                                                        (icon("chevron-right", "ml-[0.375rem] size-[0.875rem]"))
-                                                    </p>
-                                                </div>
-                                            }
-                                        </article>
-                                    </div>
+                                    (Raw::dangerously_create(feature_card(site, feature)))
                                 </li>
                             }
                         </ul>
@@ -115,9 +95,59 @@ pub fn home_page<'a>(site: &'a Site, page: &'a Page) -> impl Renderable + 'a {
     }
 }
 
+/// VPFeature card. With `link` the whole card is the anchor (upstream
+/// VPFeature); `target`/`rel` pass through on both features and hero
+/// action buttons.
+fn feature_card(site: &Site, feature: &Feature) -> String {
+    let body = rsx! {
+        <article class="flex flex-col p-6 h-full">
+            @if let Some(icon_html) = feature.icon.clone() {
+                <div class="flex justify-center items-center mb-5 rounded-md bg-default-soft w-12 h-12 text-[1.5rem] transition-colors duration-[250ms]">
+                    (Raw::dangerously_create(icon_html))
+                </div>
+            }
+            <h2 class="leading-[1.5] text-[1rem] font-semibold">(feature.title.clone())</h2>
+            @if let Some(details) = feature.details.clone() {
+                <p class="grow pt-2 leading-[1.7142857] text-[0.875rem] font-medium text-text-2">(details)</p>
+            }
+            @if let Some(link_text) = feature.link_text.clone() {
+                <div class="pt-2">
+                    <p class="flex items-center text-[0.875rem] font-medium text-brand-1">
+                        (link_text)
+                        (icon("chevron-right", "ml-[0.375rem] size-[0.875rem]"))
+                    </p>
+                </div>
+            }
+        </article>
+    }
+    .render()
+    .into_inner();
+    let card_cls = "block border border-bg-soft rounded-xl h-full bg-bg-soft transition-colors duration-[250ms]";
+    match &feature.link {
+        Some(link) => {
+            let href = resolve_action_link(site, link);
+            let mut open = format!(r#"<a class="{card_cls} cursor-pointer" href="{}""#, escape_attr(&href));
+            if let Some(t) = &feature.target {
+                open.push_str(&format!(r#" target="{}""#, escape_attr(t)));
+            }
+            if let Some(r) = &feature.rel {
+                open.push_str(&format!(r#" rel="{}""#, escape_attr(r)));
+            }
+            format!("{open}>{body}</a>")
+        }
+        None => format!(r#"<div class="{card_cls}">{body}</div>"#),
+    }
+}
+
+fn escape_attr(s: &str) -> String {
+    s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;")
+}
+
 /// VPButton — `theme`: brand | alt | sponsor, build-time known so the
-/// per-theme custom properties are emitted directly.
-fn hero_button<'a>(site: &'a Site, action: &'a HeroAction) -> impl Renderable + 'a {
+/// per-theme custom properties are emitted directly. `target`/`rel`
+/// pass through when set (built as a string: rsx renders `None` attrs
+/// as empty `target=""`, upstream omits them).
+fn hero_button(site: &Site, action: &HeroAction) -> String {
     let theme_cls = match action.theme.as_deref() {
         Some("alt") => "border-(--vp-button-alt-border) text-(--vp-button-alt-text) bg-(--vp-button-alt-bg) hover:border-(--vp-button-alt-hover-border) hover:text-(--vp-button-alt-hover-text) hover:bg-(--vp-button-alt-hover-bg) active:border-(--vp-button-alt-active-border) active:text-(--vp-button-alt-active-text) active:bg-(--vp-button-alt-active-bg)",
         Some("sponsor") => "border-(--vp-button-sponsor-border) text-(--vp-button-sponsor-text) bg-(--vp-button-sponsor-bg) hover:border-(--vp-button-sponsor-hover-border) hover:text-(--vp-button-sponsor-hover-text) hover:bg-(--vp-button-sponsor-hover-bg) active:border-(--vp-button-sponsor-active-border) active:text-(--vp-button-sponsor-active-text) active:bg-(--vp-button-sponsor-active-bg)",
@@ -125,10 +155,17 @@ fn hero_button<'a>(site: &'a Site, action: &'a HeroAction) -> impl Renderable + 
     };
     let href = resolve_action_link(site, &action.link);
     let cls = format!("inline-flex items-center justify-center {theme_cls} h-10 rounded-[1.25rem] px-5 text-[0.875rem] border text-center font-semibold whitespace-nowrap no-underline transition-colors duration-[250ms] active:duration-100");
-    let text = action.text.clone();
-    rsx! {
-        <a class=(cls) href=(href)>(text)</a>
+    let mut open = format!(r#"<a class="{cls}" href="{}""#, escape_attr(&href));
+    if let Some(t) = &action.target {
+        open.push_str(&format!(r#" target="{}""#, escape_attr(t)));
     }
+    if let Some(r) = &action.rel {
+        open.push_str(&format!(r#" rel="{}""#, escape_attr(r)));
+    }
+    format!(
+        "{open}>{}</a>",
+        action.text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+    )
 }
 
 /// Hero action links are written relative to the page (VitePress

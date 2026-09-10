@@ -14,7 +14,7 @@ pub fn local_nav<'a>(site: &'a Site, is_home: bool, has_sidebar: bool, headings:
     }
     let outline_label = site.config.outline.label.clone();
     let root_url = site.url("/");
-    let return_label = "Return to top";
+    let return_label = site.config.return_to_top_label.clone();
     let nav_cls = format!(
         "sticky top-0 left-0 z-(--vp-z-index-local-nav) w-full pt-[var(--vp-layout-top-height,0px)] border-b border-(--vp-local-nav-divider-color) [&::before]:content-[''] [&::before]:absolute [&::before]:inset-0 [&::before]:z-[-1] [&::before]:bg-(--vp-local-nav-bg-color) [&::before]:[backdrop-filter:var(--vp-nav-backdrop-filter)] [&::before]:transition-colors [&::before]:duration-[250ms] lg:top-(--vp-nav-height) lg:[&::before]:top-[calc(-1*var(--vp-nav-height))]{} xl:hidden",
         if has_sidebar { " lg:pl-(--vp-sidebar-width)" } else { "" }

@@ -37,16 +37,7 @@ fn synthetic(body: &str) -> gen_docs::markdown::RenderedPage {
     let site_root = Path::new("tests/fixtures");
     let content_dir = site_root.join("en");
     let content = Content::default();
-    let page = Page {
-        rel: "page.md".into(),
-        url: "/page/".into(),
-        title: "P".into(),
-        front: Default::default(),
-        body: body.to_string(),
-        modified: None,
-        src: "page.md".into(),
-        locale: "root".into(),
-    };
+    let page = Page { body: body.to_string(), ..synthetic_page() };
     engine()
         .render(&page, &content, site_root, &content_dir)
         .expect("render")
@@ -123,9 +114,57 @@ fn headings_toc_ids_match_rendered_anchors() {
 #[test]
 fn github_alerts_and_details_render() {
     let out = synthetic("> [!NOTE]\n> this is a note\n\n::: details Click {open}\ncontent\n:::\n");
-    assert!(out.html.contains("markdown-alert"), "alert div");
+    // alerts ARE containers here (VitePress semantics): styled, labelable
+    assert!(out.html.contains("<div class=\"custom-block note\">"), "note container");
+    assert!(out.html.contains("<p class=\"custom-block-title\">NOTE</p>"), "default title");
     assert!(out.html.contains("<details class=\"custom-block details\" open>"), "details");
     assert!(out.html.contains("<summary>Click</summary>"));
+}
+
+#[test]
+fn danger_alert_and_custom_alert_titles() {
+    let out = synthetic(
+        "> [!DANGER]\n> boom\n\n> [!WARNING] Watch out\n> careful\n\n> [!TIP]\n> multi\n>\n> paragraph\n",
+    );
+    assert!(out.html.contains("<div class=\"custom-block danger\">"), "danger container");
+    assert!(out.html.contains("<p class=\"custom-block-title\">Watch out</p>"), "alert custom title");
+    // a `>`-only line continues the alert body as a paragraph break
+    let tip = out.html.find("custom-block tip").expect("tip container");
+    let after = &out.html[tip..];
+    assert!(after.contains("<p>multi</p>") && after.contains("<p>paragraph</p>"), "split paragraphs");
+}
+
+#[test]
+fn custom_container_alert_kind() {
+    let md = gen_docs::config::Markdown {
+        container: toml::from_str(
+            "[[custom]]\nname = \"success\"\nkind = \"tip\"\nlabel = \"SUCCESS\"\n",
+        )
+        .unwrap(),
+        ..Default::default()
+    };
+    let out = engine_with(&md);
+    let site_root = std::path::Path::new("tests/fixtures");
+    let content_dir = site_root.join("en");
+    let page = Page { body: "> [!SUCCESS]\n> yes\n".into(), ..synthetic_page() };
+    let out = out
+        .render(&page, &Content::default(), site_root, &content_dir)
+        .expect("render");
+    assert!(out.html.contains("<div class=\"custom-block tip\">"), "custom kind styling");
+    assert!(out.html.contains("<p class=\"custom-block-title\">SUCCESS</p>"), "custom label");
+}
+
+fn synthetic_page() -> Page {
+    Page {
+        rel: "page.md".into(),
+        url: "/page/".into(),
+        title: "P".into(),
+        front: Default::default(),
+        body: String::new(),
+        modified: None,
+        src: "page.md".into(),
+        locale: "root".into(),
+    }
 }
 
 #[test]

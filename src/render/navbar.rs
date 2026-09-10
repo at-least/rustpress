@@ -25,13 +25,10 @@ pub fn navbar<'a>(
     is_home: bool,
     has_sidebar: bool,
     translations: &'a [(String, String, bool)],
+    site_title: &'a str,
 ) -> impl Renderable + 'a {
     let home = site.url("/");
-    let site_title = site
-        .config
-        .title
-        .clone()
-        .unwrap_or_default();
+    let site_title = site_title.to_string();
     let logo = site.config.logo.as_ref().map(|l| site.url(l));
     let ask_ai = site.config.ask_ai_url.clone();
     let nav: Vec<&NavItem> = site.config.nav.iter().collect();

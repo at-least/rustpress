@@ -196,6 +196,7 @@ impl Site {
             has_math: rendered.has_math,
             lang: self.locale_lang(page),
             translations: self.translations_for(page),
+            site_title: self.site_title_for(page),
         };
 
         let body = if is_home {
@@ -361,11 +362,22 @@ impl Site {
             .unwrap_or_else(|| self.config.lang.clone())
     }
 
+    /// The navbar/`<title>` site title for a page: its locale's title
+    /// when set, else the site title (upstream `locales.*.title`).
+    pub fn site_title_for(&self, page: &Page) -> String {
+        self.config
+            .locales
+            .get(&page.locale)
+            .and_then(|l| l.title.clone())
+            .or_else(|| self.config.title.clone())
+            .unwrap_or_default()
+    }
+
     /// `<title>`: VitePress's `titleTemplate` semantics — `:title` is
     /// replaced with the page title; without a template it's
     /// `Page | Site` (home pages use the site title alone).
     fn document_title(&self, page: &Page, is_home: bool) -> String {
-        let site_title = self.config.title.clone().unwrap_or_default();
+        let site_title = self.site_title_for(page);
         if is_home || page.title.is_empty() {
             return site_title;
         }
@@ -422,6 +434,13 @@ impl Site {
             has_math: false,
             lang: self.config.lang.clone(),
             translations: Vec::new(),
+            site_title: self
+                .config
+                .locales
+                .get("root")
+                .and_then(|l| l.title.clone())
+                .or_else(|| self.config.title.clone())
+                .unwrap_or_default(),
         };
         let home = self.url("/");
         let nf_title = nf.title.clone().unwrap_or_else(|| "Page not found".into());

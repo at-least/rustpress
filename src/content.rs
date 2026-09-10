@@ -103,6 +103,8 @@ pub struct HeroAction {
     pub link: String,
     #[serde(default)]
     pub target: Option<String>,
+    #[serde(default)]
+    pub rel: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Deserialize)]
@@ -120,6 +122,8 @@ pub struct Feature {
     pub link_text: Option<String>,
     #[serde(default)]
     pub target: Option<String>,
+    #[serde(default)]
+    pub rel: Option<String>,
 }
 
 /// One loaded page.

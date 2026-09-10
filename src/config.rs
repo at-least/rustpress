@@ -432,10 +432,10 @@ impl<'de> Deserialize<'de> for Appearance {
             Raw::Bool(false) => Ok(Appearance::LightOnly),
             Raw::Word(w) => match w.as_str() {
                 "dark" => Ok(Appearance::Toggleable { default_dark: true }),
-                "force" => Ok(Appearance::ForceDark),
+                "force" | "force-dark" => Ok(Appearance::ForceDark),
                 "force-auto" => Ok(Appearance::ForceAuto),
                 other => Err(D::Error::custom(format!(
-                    "unknown appearance {other:?}: expected true, false, \"dark\", \"force\", \"force-auto\""
+                    "unknown appearance {other:?}: expected true, false, \"dark\", \"force\", \"force-dark\", \"force-auto\""
                 ))),
             },
         }
@@ -522,8 +522,9 @@ impl Default for Markdown {
 #[derive(Debug, Clone, Default, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct ImageOptions {
-    /// Add `loading="lazy"` to content images.
-    #[serde(default)]
+    /// Add `loading="lazy"` to content images. Accepts upstream's
+    /// `lazyLoad` spelling too.
+    #[serde(default, alias = "lazyLoad")]
     pub lazy_loading: bool,
 }
 
@@ -568,6 +569,10 @@ impl ContainerOptions {
             "info" => self.info_label.clone(),
             "important" => self.important_label.clone(),
             "caution" => self.caution_label.clone(),
+            "details" => self
+                .details_label
+                .clone()
+                .or_else(|| Some("Details".into())),
             _ => None,
         }
         .unwrap_or(upper)
@@ -825,5 +830,38 @@ base = "/reference/"
     fn bad_base_is_rejected_by_validate() {
         let c = SiteConfig { base: "docs".into(), ..Default::default() };
         assert!(matches!(c.validate(), Err(ConfigError::Base { .. })));
+    }
+
+    #[test]
+    fn appearance_accepts_upstream_force_dark_spelling() {
+        let c = parse("appearance = \"force-dark\"\n");
+        assert_eq!(c.appearance, Appearance::ForceDark);
+        assert!(!c.appearance.toggleable());
+    }
+
+    #[test]
+    fn image_lazyload_alias() {
+        let c = parse("[markdown.image]\nlazyLoad = true\n");
+        assert!(c.markdown.image.lazy_loading);
+        let c = parse("[markdown.image]\nlazyLoading = true\n");
+        assert!(c.markdown.image.lazy_loading);
+    }
+
+    #[test]
+    fn container_labels_including_details() {
+        let opts: ContainerOptions = toml::from_str("detailsLabel = \"Details der Seite\"\n").unwrap();
+        assert_eq!(opts.label_for("details"), "Details der Seite");
+        assert_eq!(ContainerOptions::default().label_for("details"), "Details");
+    }
+
+    #[test]
+    fn markdown_container_section_parses_custom_kinds() {
+        let c = parse(
+            "[markdown.container]\nnoteLabel = \"Nota\"\n\n[[markdown.container.custom]]\nname = \"success\"\nkind = \"tip\"\nlabel = \"SUCCESS\"\n",
+        );
+        assert_eq!(c.markdown.container.label_for("note"), "Nota");
+        assert_eq!(c.markdown.container.custom.len(), 1);
+        assert_eq!(c.markdown.container.custom[0].name, "success");
+        assert_eq!(c.markdown.container.custom[0].kind.as_deref(), Some("tip"));
     }
 }
