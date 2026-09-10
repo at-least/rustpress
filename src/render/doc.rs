@@ -13,10 +13,13 @@ pub fn doc_page<'a>(
     site: &'a Site,
     page: &'a Page,
     rendered: &'a RenderedPage,
-    prev: Option<(&'a Page, &'a str)>,
-    next: Option<(&'a Page, &'a str)>,
+    prev: Option<&'a super::PagerLink>,
+    next: Option<&'a super::PagerLink>,
     has_sidebar: bool,
     outline: Option<(u8, u8)>,
+    aside: Option<bool>,
+    edit_on: bool,
+    last_updated: Option<&'a (String, String)>,
 ) -> impl Renderable + 'a {
     let outline_label = site.config.outline.label();
     let headings: Vec<&Heading> = match outline {
@@ -28,15 +31,12 @@ pub fn doc_page<'a>(
         None => Vec::new(),
     };
     let show_outline = !headings.is_empty();
-    let edit_link = site.config.edit_link.as_ref().map(|e| {
+    let aside_left = aside == Some(true);
+    let edit_link = site.config.edit_link.as_ref().filter(|_| edit_on).map(|e| {
         let text = e.text.clone().unwrap_or_else(|| "Edit this page on GitHub".into());
         (e.pattern.replace(":path", &page.rel), text)
     });
-    let last_updated = site
-        .config
-        .last_updated
-        .then(|| page.modified.map(format_date).map(|d| (d.0, d.1)))
-        .flatten();
+    let last_updated = last_updated.cloned();
     let doc_footer = site.config.doc_footer.clone().unwrap_or_default();
     // `docFooter.prev/next: false` disables that pager side
     let (prev, prev_label) = match pager_label(&doc_footer.prev, "Previous page") {
@@ -56,15 +56,21 @@ pub fn doc_page<'a>(
     } else {
         "mx-auto w-full lg:flex lg:justify-center lg:max-w-[62rem] 2xl:max-w-[69rem]"
     };
+    let aside_cls = format!(
+        "relative hidden grow pl-8 w-full max-w-64 xl:block{}",
+        if aside_left { " xl:order-1" } else { " order-2" }
+    );
     let content_cls = format!(
-        "relative mx-auto w-full lg:px-8 lg:pb-32 xl:order-1 xl:m-0 xl:min-w-[40rem]{}",
+        "relative mx-auto w-full lg:px-8 lg:pb-32 xl:m-0 xl:min-w-[40rem]{}{}",
+        if aside_left { " xl:order-2" } else { " xl:order-1" },
         if !has_sidebar { " lg:max-w-[47rem] 2xl:max-w-[49rem]" } else { "" }
     );
 
     rsx! {
         <div class="w-full pt-8 px-6 pb-24 md:pt-12 md:pb-32 md:px-8 lg:pt-12 lg:pb-0 lg:px-8" x-data="docPage">
             <div class=(wrapper_cls)>
-                <div class="relative hidden order-2 grow pl-8 w-full max-w-64 xl:block">
+                @if aside.is_some() {
+                    <div class=(aside_cls)>
                     <div class="fixed bottom-0 z-10 w-56 h-8 bg-[linear-gradient(transparent,var(--vp-c-bg)_70%)] pointer-events-none"></div>
                     <div class="fixed top-0 pt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+var(--vp-doc-top-height,0px)+3rem)] w-56 h-screen overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         <div class="flex flex-col grow min-h-[calc(100vh-(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+3rem))] pb-8">
@@ -72,7 +78,7 @@ pub fn doc_page<'a>(
                                 @if show_outline {
                                     <nav class="VPDocAsideOutline block" aria-labelledby="doc-outline-aria-label">
                                         <div class="relative border-l border-divider pl-4 text-[0.8125rem] font-medium">
-                                            <div class="absolute top-8 left-[-1px] z-0 opacity-0 w-[2px] rounded-[2px] h-[1.125rem] bg-brand-1 [transition:top_0.25s_cubic-bezier(0,1,0.5,1),background-color_0.5s,opacity_0.25s]" id="VPOutlineMarker"></div>
+                                            <div class="absolute top-8 left-[-1px] z-0 opacity-0 w-[2px] rounded-[2px] h-[1.125rem] bg-brand-1 [transition:top_0.25s_cubic-bezier(0.1,1,0.5,1),background-color_0.5s,opacity_0.25s]" id="VPOutlineMarker"></div>
                                             <div class="leading-[2.2857143] text-[0.875rem] font-semibold" id="doc-outline-aria-label" role="heading" aria-level="2">
                                                 (outline_label.clone())
                                             </div>
@@ -84,7 +90,8 @@ pub fn doc_page<'a>(
                             </div>
                         </div>
                     </div>
-                </div>
+                    </div>
+                }
 
                 <div class=(content_cls)>
                     <div class="mx-auto max-w-[43rem]">
@@ -121,18 +128,18 @@ pub fn doc_page<'a>(
                                     <nav class="border-t border-divider pt-6 grid gap-y-2 sm:grid-cols-2 sm:gap-x-4" aria-labelledby="doc-footer-aria-label">
                                         <span class="sr-only" id="doc-footer-aria-label">"Pager"</span>
                                         <div class="pager">
-                                            @if let Some((p, ptitle)) = prev {
-                                                <a class="block border border-divider rounded-lg px-4 pt-[0.6875rem] pb-[0.8125rem] w-full h-full transition-colors duration-[250ms] hover:border-brand-1" href=(site.url(&p.url))>
+                                            @if let Some(p) = prev {
+                                                <a class="block border border-divider rounded-lg px-4 pt-[0.6875rem] pb-[0.8125rem] w-full h-full transition-colors duration-[250ms] hover:border-brand-1" href=(p.href.clone())>
                                                     <span class="block leading-[1.6666667] text-[0.75rem] font-medium text-text-2">(prev_label.clone())</span>
-                                                    <span class="block leading-[1.4285714] text-[0.875rem] font-medium text-brand-1 transition-colors duration-[250ms]">(ptitle.to_string())</span>
+                                                    <span class="block leading-[1.4285714] text-[0.875rem] font-medium text-brand-1 transition-colors duration-[250ms]">(p.text.clone())</span>
                                                 </a>
                                             }
                                         </div>
                                         <div class="pager">
-                                            @if let Some((n, ntitle)) = next {
-                                                <a class="block border border-divider rounded-lg px-4 pt-[0.6875rem] pb-[0.8125rem] w-full h-full transition-colors duration-[250ms] hover:border-brand-1 ml-auto text-right" href=(site.url(&n.url))>
+                                            @if let Some(n) = next {
+                                                <a class="block border border-divider rounded-lg px-4 pt-[0.6875rem] pb-[0.8125rem] w-full h-full transition-colors duration-[250ms] hover:border-brand-1 ml-auto text-right" href=(n.href.clone())>
                                                     <span class="block leading-[1.6666667] text-[0.75rem] font-medium text-text-2">(next_label.clone())</span>
-                                                    <span class="block leading-[1.4285714] text-[0.875rem] font-medium text-brand-1 transition-colors duration-[250ms]">(ntitle.to_string())</span>
+                                                    <span class="block leading-[1.4285714] text-[0.875rem] font-medium text-brand-1 transition-colors duration-[250ms]">(n.text.clone())</span>
                                                 </a>
                                             }
                                         </div>

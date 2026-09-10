@@ -247,3 +247,117 @@ fn a11y_labels_are_configurable() {
     assert!(html.contains(r#"aria-label="Menü""#));
     assert!(html.contains("<span>Seitenleiste</span>"));
 }
+
+#[test]
+fn frontmatter_page_toggles() {
+    let (_, out) = build_site(
+        "title = \"T\"\nlastUpdated = false\n\n[footer]\nmessage = \"m\"\ncopyright = \"c\"\n\n[editLink]\npattern = \"https://x/:path\"\n",
+        &[
+            ("plain.md", "# Plain\n"),
+            ("bare.md", "---\nnavbar: false\nsidebar: false\nfooter: false\neditLink: false\npageClass: custom-page\n---\n\n# Bare\n"),
+        ],
+    );
+    // plain page keeps everything (auto sidebar exists since guide-less content
+    // — a top-level page has no sidebar section, so use navbar/footer/edit)
+    let plain = page(&out, "/plain/");
+    assert!(plain.contains("VPNavBar"), "navbar on");
+    assert!(plain.contains("Released") || plain.contains("VPFooter") || plain.contains("footer"), "footer on");
+    let bare = page(&out, "/bare/");
+    assert!(!bare.contains("VPNavBar"), "navbar hidden");
+    assert!(!bare.contains("id=\"VPFooter\"") && !bare.contains("<footer"), "footer hidden");
+    assert!(!bare.contains("Edit this page"), "edit link hidden");
+    assert!(bare.contains("custom-page"), "pageClass applied");
+}
+
+#[test]
+fn frontmatter_last_updated_date_override() {
+    let (_, out) = build_site(
+        "title = \"T\"\n",
+        &[
+            ("a.md", "---\nlastUpdated: 2020-01-02\n---\n\n# A\n"),
+            ("b.md", "# B\n"),
+        ],
+    );
+    let a = page(&out, "/a/");
+    assert!(a.contains("2020-01-02"), "date override shown");
+    let b = page(&out, "/b/");
+    assert!(!b.contains("Last updated"), "no timestamp without lastUpdated config");
+}
+
+#[test]
+fn frontmatter_aside_and_outline_false() {
+    let (_, out) = build_site(
+        "title = \"T\"\n",
+        &[
+            ("a.md", "---\naside: false\n---\n\n# A\n\n## S1\n"),
+            ("b.md", "---\noutline: false\n---\n\n# B\n\n## S2\n"),
+            ("c.md", "---\naside: left\n---\n\n# C\n\n## S3\n"),
+            ("d.md", "# D\n\n## S4\n"),
+        ],
+    );
+    assert!(!page(&out, "/a/").contains("VPOutlineMarker"), "aside:false hides outline column");
+    assert!(!page(&out, "/b/").contains("VPOutlineMarker"), "outline:false hides outline");
+    assert!(page(&out, "/c/").contains("xl:order-1") && page(&out, "/c/").contains("xl:order-2"), "left aside orders swapped");
+    assert!(page(&out, "/d/").contains("VPOutlineMarker"), "default aside present");
+}
+
+#[test]
+fn frontmatter_prev_next_overrides() {
+    let (_, out) = build_site(
+        r#"title = "T"
+
+[[sidebar]]
+text = "S"
+
+  [[sidebar.items]]
+  text = "A"
+  link = "/a/"
+
+  [[sidebar.items]]
+  text = "B"
+  link = "/b/"
+"#,
+        &[
+            ("a.md", "# A\n"),
+            ("b.md", "---\nprev: Back to start\nnext:\n  text: External next\n  link: https://example.com/n\n---\n\n# B\n"),
+        ],
+    );
+    let b = page(&out, "/b/");
+    assert!(b.contains("Back to start"), "prev text override");
+    assert!(b.contains("External next"), "next object override");
+    assert!(b.contains(r#"href="https://example.com/n""#), "next custom link");
+}
+
+#[test]
+fn frontmatter_search_false_and_head_and_title_template() {
+    let (_, out) = build_site(
+        "title = \"Base\"\n\n[search]\nprovider = \"local\"\n",
+        &[
+            ("a.md", "---\nsearch: false\ntitleTemplate: \":title!!\"\nhead:\n  - tag: meta\n    attrs:\n      name: \"x-page\"\n      content: \"yes\"\n---\n\n# A\n"),
+            ("b.md", "# B\n"),
+        ],
+    );
+    let index = std::fs::read_to_string(out.path().join("search-docs.json")).unwrap();
+    assert!(!index.contains("\"/a/\""), "page excluded from search");
+    assert!(index.contains("\"/b/\""), "other page indexed");
+    let a = page(&out, "/a/");
+    assert!(a.contains("<title>A!!</title>"), "page titleTemplate wins");
+    assert!(a.contains(r#"<meta content="yes" name="x-page"/>"#), "per-page head tag");
+}
+
+#[test]
+fn layout_page_strips_doc_chrome() {
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[editLink]\npattern = \"https://x/:path\"\n",
+        &[
+            ("plain.md", "# P\n\n## Sub\n"),
+            ("bare.md", "---\nlayout: page\n---\n\n# Bare\n\n## Sub\n"),
+        ],
+    );
+    let bare = page(&out, "/bare/");
+    assert!(!bare.contains("VPOutlineMarker"), "no outline");
+    assert!(!bare.contains("Edit this page"), "no edit link");
+    assert!(!bare.contains("Previous page"), "no pager");
+    let plain = page(&out, "/plain/");
+    assert!(plain.contains("VPOutlineMarker"), "doc layout keeps outline");
+}

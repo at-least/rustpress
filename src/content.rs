@@ -26,21 +26,139 @@ pub struct PageFrontMatter {
     /// `doc` (default), `home`, `page`.
     #[serde(default)]
     pub layout: Option<String>,
-    /// `deep` or a level/level-pair overriding the site outline depth.
+    /// `deep`, a level/level-pair, or `false` (no outline).
     #[serde(default)]
     pub outline: Option<OutlineSetting>,
     #[serde(default)]
     pub hero: Option<Hero>,
     #[serde(default)]
     pub features: Vec<Feature>,
+
+    /// Per-page title suffix override (`string | false`).
+    #[serde(default)]
+    pub title_template: Option<FrontmatterTitleTemplate>,
+    /// Extra `<head>` tags for this page (merged after the site's).
+    #[serde(default)]
+    pub head: Vec<crate::config::HeadTag>,
+    /// Show the navbar (default true).
+    #[serde(default)]
+    pub navbar: Option<bool>,
+    /// Show the sidebar (default true).
+    #[serde(default)]
+    pub sidebar: Option<bool>,
+    /// Aside position: `false` | `true` | `"left"` (default right).
+    #[serde(default)]
+    pub aside: Option<AsideSetting>,
+    /// Show last-updated, or a date string to display instead.
+    #[serde(default)]
+    pub last_updated: Option<LastUpdatedSetting>,
+    /// Show the edit link (default true).
+    #[serde(default)]
+    pub edit_link: Option<bool>,
+    /// Show the site footer (default true).
+    #[serde(default)]
+    pub footer: Option<bool>,
+    /// Extra class on the page's content container.
+    #[serde(default)]
+    pub page_class: Option<String>,
+    /// Include this page in the local search index (default true).
+    #[serde(default)]
+    pub search: Option<bool>,
+    /// Override the previous page: text, `{ text, link }`, or `false`.
+    #[serde(default)]
+    pub prev: Option<PrevNext>,
+    /// Override the next page: text, `{ text, link }`, or `false`.
+    #[serde(default)]
+    pub next: Option<PrevNext>,
 }
 
-/// `outline: deep` | `outline: 2` | `outline: [2, 3]`. Hand-written
-/// `Deserialize` because an untagged unit variant only matches null, not
-/// the string `"deep"`.
+/// `titleTemplate: "…"` or `false` in front matter.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum FrontmatterTitleTemplate {
+    Tmpl(String),
+    Off(bool),
+}
+
+/// `aside: false | true | "left"` (front matter and themeConfig).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AsideSetting {
+    Off,
+    Left,
+    Right,
+}
+
+impl<'de> Deserialize<'de> for AsideSetting {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error as _;
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Raw {
+            Flag(bool),
+            Word(String),
+        }
+        match Raw::deserialize(deserializer)? {
+            Raw::Flag(false) => Ok(AsideSetting::Off),
+            Raw::Flag(true) => Ok(AsideSetting::Right),
+            Raw::Word(w) if w == "left" => Ok(AsideSetting::Left),
+            Raw::Word(other) => Err(D::Error::custom(format!(
+                "unknown aside {other:?}: expected false, true, or \"left\""
+            ))),
+        }
+    }
+}
+
+impl AsideSetting {
+    /// (render the aside, on the left side)
+    pub fn position(&self) -> Option<bool> {
+        match self {
+            AsideSetting::Off => None,
+            AsideSetting::Left => Some(true),
+            AsideSetting::Right => Some(false),
+        }
+    }
+
+    /// Page front matter wins over the site setting; default = right.
+    pub fn resolve(page: Option<&Self>, site: Option<&Self>) -> Option<bool> {
+        page.or(site).map(|a| a.position()).unwrap_or(Some(false))
+    }
+}
+
+/// `lastUpdated: false | true | <date string>` in front matter.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum LastUpdatedSetting {
+    Toggle(bool),
+    Date(String),
+}
+
+/// `prev`/`next` in front matter: `false`, a text override, or a full
+/// `{ text, link, target?, rel? }` object.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum PrevNext {
+    Off(bool),
+    Text(String),
+    Obj {
+        text: String,
+        link: String,
+        #[serde(default)]
+        target: Option<String>,
+        #[serde(default)]
+        rel: Option<String>,
+    },
+}
+
+/// `outline: deep` | `outline: 2` | `outline: [2, 3]` | `outline: false`.
+/// Hand-written `Deserialize` because an untagged unit variant only
+/// matches null, not the string `"deep"`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OutlineSetting {
     Deep,
+    Off,
     Level(u8),
     Range((u8, u8)),
 }
@@ -54,14 +172,20 @@ impl<'de> Deserialize<'de> for OutlineSetting {
         #[derive(Deserialize)]
         #[serde(untagged)]
         enum Raw {
+            Flag(bool),
             Word(String),
             Level(u8),
             Pair((u8, u8)),
         }
         match Raw::deserialize(deserializer)? {
+            Raw::Flag(false) => Ok(OutlineSetting::Off),
+            Raw::Flag(true) => Err(D::Error::custom(
+                "outline: true has no meaning — remove it or use \"deep\" or a level",
+            )),
             Raw::Word(w) if w == "deep" => Ok(OutlineSetting::Deep),
+            Raw::Word(w) if w == "false" => Ok(OutlineSetting::Off),
             Raw::Word(other) => Err(D::Error::custom(format!(
-                "unknown outline setting {other:?}: expected \"deep\" or a heading level"
+                "unknown outline setting {other:?}: expected \"deep\", false, or a heading level"
             ))),
             Raw::Level(l) => Ok(OutlineSetting::Level(l)),
             Raw::Pair((a, b)) => Ok(OutlineSetting::Range((a, b))),

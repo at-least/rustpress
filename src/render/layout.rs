@@ -12,7 +12,13 @@ pub struct Shell<'a> {
     pub title: String,
     pub description: String,
     pub is_home: bool,
+    pub has_navbar: bool,
     pub has_sidebar: bool,
+    pub show_footer: bool,
+    /// Extra class on the content container (front matter `pageClass`).
+    pub page_class: Option<String>,
+    /// Serialized per-page `head` tags, appended after the site's.
+    pub head_extra: String,
     /// Current page URL (canonical, base-free) for active matching.
     pub current_url: &'a str,
     /// Page contains math → inject the MathJax loader.
@@ -39,17 +45,24 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
     let has_sidebar = shell.has_sidebar;
     let current_url = shell.current_url.to_string();
     let footer = site.config.footer.clone();
-    let show_footer = footer.is_some();
+    let show_footer = shell.show_footer && footer.is_some();
     let head_tags = serialize_head_tags(&site.config.head);
+    let head_extra = Raw::dangerously_create(shell.head_extra.clone());
     let skip_label = site.config.skip_to_content_label.clone();
     let theme_link = site.theme_css.as_ref().map(|_| site.url("theme.css"));
     let footer_message = footer.as_ref().and_then(|f| f.message.clone());
     let footer_copyright = footer.as_ref().and_then(|f| f.copyright.clone());
 
     let content_class = if has_sidebar {
-        "grow shrink-0 m-0 w-full lg:mt-[var(--vp-layout-top-height,0px)] lg:pt-(--vp-nav-height) lg:pl-(--vp-sidebar-width) 2xl:pr-[calc((100%-var(--vp-layout-max-width))/2)] 2xl:pl-[calc((100%-var(--vp-layout-max-width))/2+var(--vp-sidebar-width))]"
+        format!(
+            "grow shrink-0 m-0 w-full lg:mt-[var(--vp-layout-top-height,0px)] lg:pt-(--vp-nav-height) lg:pl-(--vp-sidebar-width) 2xl:pr-[calc((100%-var(--vp-layout-max-width))/2)] 2xl:pl-[calc((100%-var(--vp-layout-max-width))/2+var(--vp-sidebar-width))]{}",
+            shell.page_class.as_ref().map(|c| format!(" {c}")).unwrap_or_default()
+        )
     } else {
-        "grow shrink-0 w-full mx-auto mt-[var(--vp-layout-top-height,0px)] max-w-full lg:pt-(--vp-nav-height)"
+        format!(
+            "grow shrink-0 w-full mx-auto mt-[var(--vp-layout-top-height,0px)] max-w-full lg:pt-(--vp-nav-height){}",
+            shell.page_class.as_ref().map(|c| format!(" {c}")).unwrap_or_default()
+        )
     };
 
     rsx! {
@@ -69,16 +82,19 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
                     (Raw::dangerously_create(MATHJAX_SCRIPT.to_string()))
                 }
                 (head_tags)
+                (head_extra)
             </head>
             <body class="font-sans bg-bg text-text-1 antialiased [text-rendering:optimizeLegibility] [-moz-osx-font-smoothing:grayscale] [text-autospace:normal] [text-spacing-trim:normal]">
                 <a class="sr-only" href="#main">(skip_label)</a>
 
                 <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" x-cloak x-show="$store.ui.screen || $store.ui.sidebar" @click="$store.ui.screen = false; $store.ui.sidebar = false"></div>
 
-                <header class="relative top-[var(--vp-layout-top-height,0px)] left-0 z-(--vp-z-index-nav) w-full pointer-events-none lg:fixed">
-                    (navbar::navbar(site, &current_url, is_home, has_sidebar, &shell.translations, shell.site_title.as_deref()))
-                    (navbar::nav_screen(site, &current_url, &shell.translations))
-                </header>
+                @if shell.has_navbar {
+                    <header class="relative top-[var(--vp-layout-top-height,0px)] left-0 z-(--vp-z-index-nav) w-full pointer-events-none lg:fixed">
+                        (navbar::navbar(site, &current_url, is_home, has_sidebar, &shell.translations, shell.site_title.as_deref()))
+                        (navbar::nav_screen(site, &current_url, &shell.translations))
+                    </header>
+                }
 
                 (Raw::dangerously_create(super::local_nav::local_nav(site, is_home, has_sidebar, headings)))
                 (Raw::dangerously_create(super::sidebar::sidebar(site, &current_url)))
@@ -127,7 +143,11 @@ window.MathJax = {
 
 
 /// Serialize the `[[head]]` config tags to raw HTML.
-fn serialize_head_tags(tags: &[crate::config::HeadTag]) -> Raw<String> {
+pub(crate) fn serialize_head_tags_to_string(tags: &[crate::config::HeadTag]) -> String {
+    serialize_head_tags(tags).into_inner()
+}
+
+pub(crate) fn serialize_head_tags(tags: &[crate::config::HeadTag]) -> Raw<String> {
     let mut out = String::new();
     for tag in tags {
         out.push('<');

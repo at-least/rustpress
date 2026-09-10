@@ -101,6 +101,11 @@ pub struct SiteConfig {
     #[serde(default)]
     pub outline: OutlineConfig,
 
+    /// Aside (outline column) position: `false` | `true` | `"left"`
+    /// (default right; per-page front matter wins).
+    #[serde(default)]
+    pub aside: Option<crate::content::AsideSetting>,
+
     /// Local search. Absent → no search index, no search modal.
     #[serde(default)]
     pub search: Option<Search>,

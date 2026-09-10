@@ -169,14 +169,33 @@ impl Site {
         page: &Page,
         rendered: &crate::markdown::RenderedPage,
     ) -> Result<String, BuildError> {
-        let has_sidebar = self.sidebars.for_url(&page.url).is_some();
-        let (prev, next) = self.sidebars.neighbors(&page.url);
-        // pager labels come from the sidebar config (VitePress behavior);
-        // the page is only carried for its URL
-        let prev = prev.and_then(|(text, u)| self.content.get(&u).map(|p| (p, text)));
-        let next = next.and_then(|(text, u)| self.content.get(&u).map(|p| (p, text)));
-        let outline = outline_range(&self.config, page);
+        use crate::content::{AsideSetting, LastUpdatedSetting};
+
+        // per-page toggles (front matter wins)
+        let has_sidebar =
+            self.sidebars.for_url(&page.url).is_some() && page.front.sidebar != Some(false);
+        let has_navbar = page.front.navbar != Some(false);
+        let show_footer = self.config.footer.is_some() && page.front.footer != Some(false);
+        let edit_on = page.front.edit_link != Some(false);
+        let aside_left = AsideSetting::resolve(page.front.aside.as_ref(), self.config.aside.as_ref());
         let is_home = page.is_home();
+        let is_page_layout = page.front.layout.as_deref() == Some("page");
+
+        // pager: sidebar flat order, then front-matter prev/next overrides
+        let (prev, next) = self.sidebars.neighbors(&page.url);
+        let prev = apply_pager_override(page.front.prev.as_ref(), prev, self);
+        let next = apply_pager_override(page.front.next.as_ref(), next, self);
+        let outline = outline_range(&self.config, page);
+        // last-updated: page Date override > git/mtime > front-matter off
+        let last_updated = match &page.front.last_updated {
+            Some(LastUpdatedSetting::Toggle(false)) => None,
+            Some(LastUpdatedSetting::Date(d)) => Some((d.clone(), d.clone())),
+            _ => self
+                .config
+                .last_updated
+                .then(|| page.modified.map(doc::format_date).map(|d| (d.0, d.1)))
+                .flatten(),
+        };
 
         let title = self.document_title(page, is_home);
         let locale = self.config.locales.get(&page.locale).cloned();
@@ -191,7 +210,11 @@ impl Site {
             title,
             description,
             is_home,
+            has_navbar,
             has_sidebar,
+            show_footer,
+            page_class: page.front.page_class.clone(),
+            head_extra: layout::serialize_head_tags_to_string(&page.front.head),
             current_url: &page.url,
             has_math: rendered.has_math,
             lang: self.locale_lang(page),
@@ -202,14 +225,24 @@ impl Site {
         let body = if is_home {
             home::home_page(self, page).render().into_inner()
         } else {
+            // `layout: page` strips the doc chrome (aside, edit link,
+            // timestamps, pager) like upstream's VPPage
+            let (aside, edit_on, last_updated, outline) = if is_page_layout {
+                (None, false, None, None)
+            } else {
+                (aside_left, edit_on, last_updated, outline)
+            };
             doc::doc_page(
                 self,
                 page,
                 rendered,
-                prev.as_ref().map(|(p, t)| (*p, t.as_str())),
-                next.as_ref().map(|(p, t)| (*p, t.as_str())),
+                prev.as_ref(),
+                next.as_ref(),
                 has_sidebar,
                 outline,
+                aside,
+                edit_on,
+                last_updated.as_ref(),
             )
             .render()
             .into_inner()
@@ -241,7 +274,7 @@ impl Site {
             if !dead.is_empty() {
                 dead_links.push((page.url.clone(), dead));
             }
-            if search_enabled {
+            if search_enabled && page.front.search != Some(false) {
                 let title = if page.is_home() {
                     self.config.title.clone().unwrap_or_else(|| page.title.clone())
                 } else {
@@ -394,19 +427,25 @@ impl Site {
     /// `<title>`: VitePress's `titleTemplate` semantics — `:title` is
     /// replaced with the page title; `false` drops the suffix; without
     /// a template it's `Page | Site` (home pages use the site title
-    /// alone).
+    /// alone). The page's front-matter template wins over the site's.
     fn document_title(&self, page: &Page, is_home: bool) -> String {
         let site_title = self.document_site_title(page);
         if is_home || page.title.is_empty() {
             return site_title;
         }
-        match &self.config.title_template {
-            Some(crate::config::TitleTemplate::Off(_)) => page.title.clone(),
-            Some(crate::config::TitleTemplate::Tmpl(t)) if t.contains(":title") => {
-                t.replace(":title", &page.title)
-            }
-            Some(crate::config::TitleTemplate::Tmpl(t)) => format!("{} — {}", page.title, t),
-            None => format!("{} | {}", page.title, site_title),
+        use crate::content::FrontmatterTitleTemplate as FTT;
+        match &page.front.title_template {
+            Some(FTT::Off(_)) => page.title.clone(),
+            Some(FTT::Tmpl(t)) if t.contains(":title") => t.replace(":title", &page.title),
+            Some(FTT::Tmpl(t)) => format!("{} — {}", page.title, t),
+            None => match &self.config.title_template {
+                Some(crate::config::TitleTemplate::Off(_)) => page.title.clone(),
+                Some(crate::config::TitleTemplate::Tmpl(t)) if t.contains(":title") => {
+                    t.replace(":title", &page.title)
+                }
+                Some(crate::config::TitleTemplate::Tmpl(t)) => format!("{} — {}", page.title, t),
+                None => format!("{} | {}", page.title, site_title),
+            },
         }
     }
 
@@ -451,7 +490,11 @@ impl Site {
             title,
             description: String::new(),
             is_home: true,
+            has_navbar: true,
             has_sidebar: false,
+            show_footer: false,
+            page_class: None,
+            head_extra: String::new(),
             current_url: "/404.html",
             has_math: false,
             lang: self.config.lang.clone(),
@@ -508,8 +551,7 @@ impl Site {
 }
 
 /// Effective outline heading-level range: page front matter overrides
-/// the site config (`deep` → 2–6). `None` = the outline is disabled
-/// (config `outline: false`).
+/// the site config (`deep` → 2–6, `false` → none). `None` = disabled.
 pub fn outline_range(config: &SiteConfig, page: &Page) -> Option<(u8, u8)> {
     if !config.outline.enabled() {
         return None;
@@ -519,12 +561,42 @@ pub fn outline_range(config: &SiteConfig, page: &Page) -> Option<(u8, u8)> {
         Some(OutlineLevel::Range((a, b))) => (a, b),
         None => (2, 3),
     };
-    Some(match &page.front.outline {
-        Some(PageOutline::Deep) => (2, 6),
-        Some(PageOutline::Level(n)) => (*n, *n),
-        Some(PageOutline::Range((a, b))) => (*a, *b),
-        None => site,
-    })
+    match &page.front.outline {
+        Some(PageOutline::Off) => None,
+        Some(PageOutline::Deep) => Some((2, 6)),
+        Some(PageOutline::Level(n)) => Some((*n, *n)),
+        Some(PageOutline::Range((a, b))) => Some((*a, *b)),
+        None => Some(site),
+    }
+}
+
+/// One pager entry (prev or next): display text + target URL.
+pub struct PagerLink {
+    pub text: String,
+    pub href: String,
+}
+
+/// Front-matter `prev`/`next` on the sidebar-derived neighbor:
+/// `false` hides the side, a string swaps the display text, and an
+/// object is a full custom link (upstream prev-next.ts semantics).
+fn apply_pager_override(
+    setting: Option<&crate::content::PrevNext>,
+    derived: Option<(String, String)>,
+    site: &Site,
+) -> Option<PagerLink> {
+    use crate::content::PrevNext;
+    match setting {
+        Some(PrevNext::Off(_)) => None,
+        None => derived.map(|(text, url)| PagerLink { text, href: site.url(&url) }),
+        Some(PrevNext::Text(text)) => derived.map(|(_, url)| PagerLink {
+            text: text.clone(),
+            href: site.url(&url),
+        }),
+        Some(PrevNext::Obj { text, link, .. }) => Some(PagerLink {
+            text: text.clone(),
+            href: site.url(link),
+        }),
+    }
 }
 
 #[derive(Debug, Default)]
