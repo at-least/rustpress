@@ -1,0 +1,190 @@
+# rustpress's own documentation site (dogfood). The page tree mirrors
+# vitepress.dev's, rewritten for what rustpress actually implements.
+#
+#   cargo run -- build docs      # → docs/public
+#   cargo run -- serve docs      # live-reloading dev server
+
+title = "rustpress"
+description = "A standalone documentation site generator in Rust that speaks VitePress's content format."
+lang = "en"
+base = "/"
+lastUpdated = true
+logo = "logo.svg"
+
+[editLink]
+pattern = "https://github.com/at-least/rustpress/edit/main/docs/content/:path"
+text = "Edit this page on GitHub"
+
+[footer]
+message = "Released under the MIT License."
+copyright = "Copyright © 2026-present newlix"
+
+[outline]
+level = [2, 3]
+label = "On this page"
+
+[search]
+provider = "local"
+
+[markdown]
+math = true
+
+[sitemap]
+# Origin only: page URLs already carry `base`. Switch `base` to "/rustpress/"
+# for a GitHub Pages project site once markdown content links honor it.
+hostname = "https://at-least.github.io"
+
+[[head]]
+tag = "link"
+attrs = { rel = "icon", type = "image/svg+xml", href = "/logo.svg" }
+
+[[nav]]
+text = "Guide"
+link = "/guide/what-is-rustpress/"
+activeMatch = "/guide/"
+
+[[nav]]
+text = "Reference"
+link = "/reference/site-config/"
+activeMatch = "/reference/"
+
+[[nav]]
+text = "0.1.0"
+items = [
+  { text = "Changelog", link = "https://github.com/at-least/rustpress/commits/main" },
+  { text = "Feature parity with VitePress", link = "https://github.com/at-least/rustpress/blob/main/FEATURE-PARITY.md" },
+]
+
+[[socialLinks]]
+icon = "github"
+link = "https://github.com/at-least/rustpress"
+
+[sidebar."/guide/"]
+base = "/guide/"
+
+  [[sidebar."/guide/".items]]
+  text = "Introduction"
+  collapsed = false
+
+    [[sidebar."/guide/".items.items]]
+    text = "What is rustpress?"
+    link = "what-is-rustpress"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Getting Started"
+    link = "getting-started"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Routing"
+    link = "routing"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Deploy"
+    link = "deploy"
+
+  [[sidebar."/guide/".items]]
+  text = "Writing"
+  collapsed = false
+
+    [[sidebar."/guide/".items.items]]
+    text = "Markdown Extensions"
+    link = "markdown"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Asset Handling"
+    link = "asset-handling"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Frontmatter"
+    link = "frontmatter"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Internationalization"
+    link = "i18n"
+
+  [[sidebar."/guide/".items]]
+  text = "Customization"
+  collapsed = false
+
+    [[sidebar."/guide/".items.items]]
+    text = "Theming"
+    link = "theming"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Sitemap Generation"
+    link = "sitemap-generation"
+
+    [[sidebar."/guide/".items.items]]
+    text = "Coming from VitePress"
+    link = "coming-from-vitepress"
+
+  [[sidebar."/guide/".items]]
+  text = "Config Reference"
+  base = "/reference/"
+  link = "site-config"
+
+[sidebar."/reference/"]
+base = "/reference/"
+
+  [[sidebar."/reference/".items]]
+  text = "Reference"
+
+    [[sidebar."/reference/".items.items]]
+    text = "Site Config"
+    link = "site-config"
+
+    [[sidebar."/reference/".items.items]]
+    text = "Frontmatter Config"
+    link = "frontmatter-config"
+
+    [[sidebar."/reference/".items.items]]
+    text = "CLI"
+    link = "cli"
+
+    [[sidebar."/reference/".items.items]]
+    text = "Default Theme"
+    base = "/reference/default-theme-"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Overview"
+      link = "config"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Nav"
+      link = "nav"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Sidebar"
+      link = "sidebar"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Home Page"
+      link = "home-page"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Footer"
+      link = "footer"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Layout"
+      link = "layout"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Badge"
+      link = "badge"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Prev / Next Links"
+      link = "prev-next-links"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Edit Link"
+      link = "edit-link"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Last Updated Timestamp"
+      link = "last-updated"
+
+      [[sidebar."/reference/".items.items.items]]
+      text = "Search"
+      link = "search"

@@ -11,3 +11,4 @@ pub mod parity;
 pub mod render;
 pub mod serve;
 pub mod sidebar;
+pub mod theme_assets;

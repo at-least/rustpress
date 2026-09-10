@@ -1,10 +1,12 @@
 {
   "name": "rustpress",
   "version": "1.0.0",
-  "description": "VitePress default theme ported to Zola (Tailwind CSS)",
+  "description": "Standalone VitePress-format docs site generator in Rust",
   "scripts": {
-    "test": "cargo test --quiet && npm run build:js && npm run build:css && npm run check:demo && npm run check:parity",
+    "test": "npm run build:js && npm run build:css && cargo test --quiet && npm run check:demo && npm run check:parity",
     "check:demo": "cargo run --quiet -- build demo",
+    "build:docs": "cargo run --quiet -- build docs",
+    "dev:docs": "npm run watch:css & npm run watch:js & cargo run -- serve docs & wait",
     "check:parity": "cargo run --quiet -- parity check demo/public",
     "parity:refresh": "cp parity/upstream.json parity/upstream.prev.json 2>/dev/null; node scripts/parity-refresh.mjs && cargo run --quiet -- parity snapshot parity/cache --meta parity/cache/meta.json && cargo run --quiet -- parity diff parity/upstream.prev.json parity/upstream.json; rm -f parity/upstream.prev.json",
     "diff:upstream": "bash scripts/diff-upstream.sh",
@@ -17,9 +19,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/newlix/rustpress.git"
+    "url": "git+https://github.com/at-least/rustpress.git"
   },
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@alpinejs/collapse": "^3.17.2",
     "@alpinejs/intersect": "^3.17.2",

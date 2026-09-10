@@ -7,5 +7,6 @@ node_modules/
 /static/main.css
 /static/js/app.js
 /demo/public/
+/docs/public/
 /parity/cache/
 /parity/upstream.prev.json

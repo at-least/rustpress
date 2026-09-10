@@ -17,13 +17,18 @@ This repo started life as the VitePress default theme ported to Zola. Zola's con
 ## Layout
 
 ```
-Cargo.toml            crate rustpress (bin + lib)
+Cargo.toml            crate rustpress-cli (bin + lib both named rustpress)
 src/                  config, content loader, sidebar resolution,
                       markdown pipeline (preprocess/highlight), hypertext
                       renderers, site assembly
-demo/                 dogfood site: rustpress.toml + content/ (VitePress
-                      format, mirrored from vitepress.dev) + static/
+docs/                 rustpress's own documentation, built by rustpress
+                      (the vitepress.dev page tree rewritten for what
+                      rustpress implements): `npm run build:docs`
+demo/                 parity site: rustpress.toml + content/ (VitePress
+                      format, mirrored verbatim from vitepress.dev) + static/
 assets/themes/        vendored github-light/dark .tmTheme files
+static/               theme assets embedded into the binary: fonts +
+                      the npm-built main.css and js/app.js (gitignored)
 styles/               Tailwind entry (vitepress.css) + Inter @font-face
 js/alpine-entry.js    the Alpine bundle source
 tests/fixtures/en/    verbatim subset of vitepress/docs/en used by tests
@@ -35,10 +40,16 @@ tests/fixtures/en/    verbatim subset of vitepress/docs/en used by tests
 npm install          # tailwindcss CLI + esbuild + alpinejs (assets only)
 npm run build        # bundle app.js, build main.css, cargo build + demo build
 npm test             # cargo test + full demo build + upstream parity gate
-npm run dev          # tailwind/esbuild watch + rustpress serve (stage 8)
+npm run dev          # tailwind/esbuild watch + rustpress serve demo
+npm run build:docs   # build docs/ (rustpress's own documentation) → docs/public
+npm run dev:docs     # same watch loop over docs/
 ```
 
-The Rust build needs only `cargo` (no Node). The committed `static/main.css` is built by the Tailwind CLI from `styles/vitepress.css` + class strings living in `src/**/*.rs` (`@source "../src"`), so `cargo build` alone suffices for Rust-side changes that don't touch classes.
+The user-facing documentation lives in `docs/` and is itself a rustpress
+site; `cargo test --test docs_site` builds it and validates every link and
+anchor.
+
+`static/main.css` and `static/js/app.js` are embedded into the binary at compile time (`build.rs` refuses to build without them), so run `npm install && npm run build:js && npm run build:css` once before the first `cargo build`. `main.css` is built by the Tailwind CLI from `styles/vitepress.css` + class strings living in `src/**/*.rs` (`@source "../src"`); after that, `cargo build` alone suffices for Rust-side changes that don't touch classes. A binary installed from the crate is self-contained.
 
 ## Upstream parity
 

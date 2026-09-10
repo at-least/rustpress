@@ -294,10 +294,15 @@ impl Site {
         // 404
         let not_found = self.render_404()?;
         write_file(&out_dir.join("404.html"), not_found.as_bytes())?;
-        // site static/ copied verbatim; when the site lives nested under
-        // a repo root that also has a static/ dir (the dogfood layout),
-        // the root's built assets (app.js, main.css) are layered on top
-        // so a plain `rustpress build` produces a complete deployable site
+        // theme assets embedded in the binary go first; the site's own
+        // static/ is copied over them, and when the site lives nested
+        // under a repo root that also has a static/ dir (the dogfood
+        // layout) the root's freshly built assets are layered on top so
+        // `npm run dev` picks up CSS/JS changes without a Rust rebuild
+        crate::theme_assets::extract(out_dir).map_err(|source| BuildError::Write {
+            path: out_dir.to_path_buf(),
+            source,
+        })?;
         let static_dir = site_dir.join("static");
         if static_dir.is_dir() {
             copy_dir(&static_dir, out_dir)?;

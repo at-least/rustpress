@@ -1,9 +1,26 @@
 [package]
-name = "rustpress"
+name = "rustpress-cli"
 version = "0.1.0"
 edition = "2024"
 description = "Standalone VitePress-format docs site generator in Rust"
 license = "MIT"
+repository = "https://github.com/at-least/rustpress"
+readme = "README.md"
+keywords = ["vitepress", "documentation", "static-site", "markdown", "docs"]
+categories = ["command-line-utilities", "web-programming", "text-processing"]
+# The crate name is `rustpress-cli` because `rustpress` on crates.io belongs to
+# another project; the library and the installed binary are still `rustpress`.
+# Only the sources plus the compile-time embedded assets/ (syntax themes) and
+# static/ (built theme CSS/JS, fonts) go to crates.io; `include` also brings in
+# the gitignored static/main.css and static/js/app.js.
+include = [
+    "/src",
+    "/assets",
+    "/static",
+    "/build.rs",
+    "/README.md",
+    "/LICENSE",
+]
 
 [lib]
 name = "rustpress"
