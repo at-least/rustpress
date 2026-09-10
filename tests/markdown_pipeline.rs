@@ -242,3 +242,104 @@ fn non_math_pages_unflagged_and_untouched() {
     let out = synthetic("just text $ not math $\n");
     assert!(!out.has_math);
 }
+
+// ---- stage-4 markdown engine features ---------------------------------
+
+fn include_site(files: &[(&str, &str)], page_body: &str) -> gen_docs::markdown::RenderedPage {
+    static SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let dir = std::env::temp_dir().join(format!(
+        "gd-include-{}-{}",
+        std::process::id(),
+        SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+    ));
+    for (rel, body) in files {
+        let path = dir.join("content").join(rel);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, body).unwrap();
+    }
+    let content_dir = dir.join("content");
+    let page = Page { body: page_body.to_string(), ..synthetic_page() };
+    let out = engine()
+        .render(&page, &Content::default(), &dir, &content_dir)
+        .expect("render");
+    let _ = std::fs::remove_dir_all(&dir);
+    out
+}
+
+#[test]
+fn markdown_include_selectors() {
+    let out = include_site(
+        &[(
+            "parts/basics.md",
+            "line one\nline two\nline three\nline four\n",
+        )],
+        "A\n\n<!--@include: ./parts/basics.md{2,3}-->\n\nB\n",
+    );
+    assert!(out.html.contains("line two") && out.html.contains("line three"));
+    assert!(!out.html.contains("line one") && !out.html.contains("line four"), "range applied");
+
+    let out = include_site(
+        &[(
+            "parts/sections.md",
+            "# Top\n\nintro\n\n## My Base Section\n\nbase body\n\n### My Sub Section\n\nsub body\n\n## Another Section\n\nother body\n",
+        )],
+        "<!--@include: ./parts/sections.md#my-base-section-->\n",
+    );
+    assert!(out.html.contains("base body") && out.html.contains("sub body"), "section + nested");
+    assert!(!out.html.contains("other body"), "stops at same-level heading");
+    assert!(!out.html.contains("intro"), "starts at the matched heading");
+
+    let out = include_site(
+        &[("parts/r.md", "// #region demo\nkept line\n// #endregion\ndropped\n")],
+        "<!--@include: ./parts/r.md#demo-->\n",
+    );
+    assert!(out.html.contains("kept line") && !out.html.contains("dropped"), "region selected");
+}
+
+#[test]
+fn include_directive_inside_code_fence_inserts_verbatim() {
+    let out = include_site(
+        &[("snip.txt", "raw text line\n")],
+        "```md\n<!--@include: ./snip.txt-->\n```\n",
+    );
+    assert!(out.html.contains("raw text line"), "fence include expanded");
+    assert!(
+        !out.html.contains("&lt;!--@include"),
+        "directive itself must not appear"
+    );
+}
+
+#[test]
+fn inline_footnotes_render() {
+    let out = include_site(
+        &[],
+        "An inline^[careful reader] footnote and code `keep ^[this]` literal.\n",
+    );
+    assert!(!out.html.contains("^[") || out.html.contains("<code>keep ^[this]</code>"));
+    assert!(out.html.contains("footnote-ref"), "became a footnote reference");
+    assert!(out.html.contains("careful reader"), "content kept");
+}
+
+#[test]
+fn link_attribute_blocks() {
+    let out = include_site(
+        &[],
+        "[Home](/guide/){target=\"_self\"}\n\n[Plain](/other/)\n",
+    );
+    assert!(
+        out.html.contains(r#"<a href="/guide/" target="_self">Home</a>"#),
+        "attrs applied"
+    );
+    assert!(
+        out.html.contains(r#"><a href="/other/">Plain</a>"#)
+            || out.html.contains(r#"<a href="/other/">Plain</a>"#),
+        "plain link untouched"
+    );
+}
+
+#[test]
+fn raw_container_wraps_vp_raw() {
+    let out = synthetic("::: raw\n<b>embedded</b>\n:::\n");
+    assert!(out.html.contains("<div class=\"vp-raw\">"), "vp-raw wrapper");
+    assert!(out.html.contains("<b>embedded</b>"));
+}

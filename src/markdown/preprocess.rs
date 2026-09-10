@@ -45,6 +45,8 @@ const MAX_INCLUDE_DEPTH: u8 = 8;
 impl<'a> Preprocess<'a> {
     pub fn run(&self, body: &str, page_rel: &str) -> Result<String, PreprocessError> {
         let md = self.resolve_includes(body, page_rel, 0)?;
+        let md = expand_inline_footnotes(&md);
+        let md = rewrite_link_attrs(&md);
         let md = expand_alerts(&md, &self.container);
         let md = expand_containers(&md, &self.container);
         let md = rewrite_fences(&md);
@@ -53,16 +55,27 @@ impl<'a> Preprocess<'a> {
 
     /// Pass 1: `<<<` code includes and `<!--@include:-->` markdown
     /// includes. `page_rel` is the page's source-relative path.
+    /// Include targets take an optional `#section` (VS Code region or
+    /// heading anchor) and an optional `{a,b}` line range; inside code
+    /// fences the directive inserts the selected lines verbatim
+    /// (upstream "Including Code Files").
     fn resolve_includes(&self, md: &str, page_rel: &str, depth: u8) -> Result<String, PreprocessError> {
         let mut out = String::with_capacity(md.len());
         let mut fence: Option<(char, usize)> = None;
         let page_dir = self.content_dir.join(Path::new(page_rel).parent().unwrap_or(Path::new("")));
         for line in md.split_inclusive('\n') {
             let bare = line.trim_end_matches(['\n', '\r']);
+            let t = bare.trim();
             if let Some((ch, n)) = fence {
-                out.push_str(line);
-                if is_closing_fence(bare, ch, n) {
-                    fence = None;
+                if let Some(target) = md_include_target(t) {
+                    // verbatim insertion — the raw selected lines join
+                    // the code block content
+                    out.push_str(&self.load_include(&target, &page_dir, depth)?);
+                } else {
+                    out.push_str(line);
+                    if is_closing_fence(bare, ch, n) {
+                        fence = None;
+                    }
                 }
                 continue;
             }
@@ -71,7 +84,6 @@ impl<'a> Preprocess<'a> {
                 fence = Some((ch, n));
                 continue;
             }
-            let t = bare.trim();
             if t.starts_with("<<<") {
                 match self.expand_code_include(t, &page_dir) {
                     Some(block) => {
@@ -88,14 +100,12 @@ impl<'a> Preprocess<'a> {
                 }
                 continue;
             }
-            if let Some(path) = md_include_target(t) {
+            if let Some(target) = md_include_target(t) {
                 if depth >= MAX_INCLUDE_DEPTH {
-                    return Err(PreprocessError::Depth { path });
+                    return Err(PreprocessError::Depth { path: target.raw_path() });
                 }
-                let file = page_dir.join(path);
-                let raw = std::fs::read_to_string(&file)
-                    .map_err(|source| PreprocessError::Read { path: file.clone(), source })?;
-                let inner = self.resolve_includes(&raw, page_rel, depth + 1)?;
+                let inner = self.load_include(&target, &page_dir, depth)?;
+                let inner = self.resolve_includes(&inner, page_rel, depth + 1)?;
                 out.push_str(&inner);
                 if !inner.ends_with('\n') {
                     out.push('\n');
@@ -105,6 +115,38 @@ impl<'a> Preprocess<'a> {
             out.push_str(line);
         }
         Ok(out)
+    }
+
+    /// Read an include target and apply its `#section` + `{range}`
+    /// selectors. `@/`-prefixed paths resolve against the site root,
+    /// everything else against the including page's directory.
+    fn load_include(
+        &self,
+        target: &IncludeTarget,
+        page_dir: &Path,
+        depth: u8,
+    ) -> Result<String, PreprocessError> {
+        if depth >= MAX_INCLUDE_DEPTH {
+            return Err(PreprocessError::Depth { path: target.raw_path() });
+        }
+        let file = if let Some(rel) = target.path.strip_prefix("@/") {
+            self.site_root.join(rel)
+        } else {
+            page_dir.join(&target.path)
+        };
+        let mut content = std::fs::read_to_string(&file).map_err(|source| PreprocessError::Read {
+            path: file.clone(),
+            source,
+        })?;
+        if let Some(section) = &target.section {
+            content = extract_region(&content, section)
+                .or_else(|| extract_heading_section(&content, section))
+                .unwrap_or_default();
+        }
+        if let Some(range) = &target.range {
+            content = apply_line_range(&content, range);
+        }
+        Ok(content)
     }
 
     /// `<<< @/snippets/x.ts` / `<<< ../y.js` / `<<< ./z.vue [label]` → a
@@ -199,8 +241,22 @@ fn pick_lines(content: &str, spec: &str) -> Option<String> {
     Some(out)
 }
 
-/// `<!--@include: ./file.md-->` → the target path (relative to the page).
-fn md_include_target(line: &str) -> Option<PathBuf> {
+/// `<!--@include: ./file.md-->` target: `path`, optional `#section`
+/// (VS Code region name or heading anchor), optional `{a,b}` line
+/// range — `path#section{range}` in that order (upstream syntax).
+pub struct IncludeTarget {
+    pub path: String,
+    pub section: Option<String>,
+    pub range: Option<String>,
+}
+
+impl IncludeTarget {
+    pub fn raw_path(&self) -> PathBuf {
+        PathBuf::from(&self.path)
+    }
+}
+
+fn md_include_target(line: &str) -> Option<IncludeTarget> {
     let t = line.trim();
     let inner = t
         .strip_prefix("<!--@include:")
@@ -209,7 +265,117 @@ fn md_include_target(line: &str) -> Option<PathBuf> {
     if inner.is_empty() {
         return None;
     }
-    Some(PathBuf::from(inner.strip_prefix("@/").unwrap_or(inner)))
+    let (rest, range) = match inner.rfind('{') {
+        Some(i) if inner.ends_with('}') && inner[i..].contains(',') => {
+            (&inner[..i], Some(inner[i + 1..inner.len() - 1].to_string()))
+        }
+        _ => (inner, None),
+    };
+    let (path, section) = match rest.find('#') {
+        Some(i) => (&rest[..i], Some(rest[i + 1..].to_string())),
+        None => (rest, None),
+    };
+    if path.is_empty() {
+        return None;
+    }
+    Some(IncludeTarget {
+        path: path.to_string(),
+        section,
+        range,
+    })
+}
+
+/// `{a,b}` / `{a,}` / `{,b}` / `{a,b-c}` 1-based line selection for
+/// markdown includes (upstream "Markdown File Inclusion").
+fn apply_line_range(content: &str, spec: &str) -> String {
+    let lines: Vec<&str> = content.split_inclusive('\n').collect();
+    let pick = |nums: &mut dyn Iterator<Item = usize>| {
+        let mut out = String::new();
+        for n in nums {
+            if let Some(l) = lines.get(n.saturating_sub(1)) {
+                out.push_str(l);
+            }
+        }
+        out
+    };
+    let (a, b) = spec.split_once(',').unwrap_or((spec, ""));
+    let a: Option<usize> = a.trim().parse().ok();
+    let b: Option<usize> = b.trim().parse().ok();
+    let from = a.unwrap_or(1);
+    let to = b.unwrap_or(lines.len()).min(lines.len());
+    if from == 0 || to < from {
+        return String::new();
+    }
+    pick(&mut (from..=to))
+}
+
+/// Heading-anchor section extraction: from the heading whose auto slug
+/// (or explicit `{#id}`) matches, up to (not including) the next
+/// heading of the same or higher level. Fence-aware.
+fn extract_heading_section(content: &str, anchor: &str) -> Option<String> {
+    fn slugify(text: &str) -> String {
+        let mut out = String::new();
+        for ch in text.chars() {
+            match ch {
+                ' ' => out.push('-'),
+                c if c.is_ascii_alphanumeric() || c == '-' || c == '_' => {
+                    out.push(c.to_ascii_lowercase())
+                }
+                _ => {}
+            }
+        }
+        out.trim_matches('-').to_string()
+    }
+    let mut fence: Option<(char, usize)> = None;
+    let mut level = 0usize;
+    let mut started = false;
+    let mut out = String::new();
+    for line in content.split_inclusive('\n') {
+        let bare = line.trim_end_matches(['\n', '\r']);
+        if let Some((ch, n)) = fence {
+            if started {
+                out.push_str(line);
+            }
+            if is_closing_fence(bare, ch, n) {
+                fence = None;
+            }
+            continue;
+        }
+        if let Some((ch, n)) = opening_fence(bare) {
+            if started {
+                out.push_str(line);
+            }
+            fence = Some((ch, n));
+            continue;
+        }
+        let t = bare.trim_start();
+        if let Some(rest) = t.strip_prefix('#') {
+            let hashes = rest.chars().take_while(|&c| c == '#').count() + 1;
+            let text = t[hashes..].trim();
+            if started {
+                if hashes <= level {
+                    return Some(out);
+                }
+                out.push_str(line);
+            } else {
+                let explicit = text
+                    .rfind("{#")
+                    .filter(|_| text.ends_with('}'))
+                    .map(|i| text[i + 2..text.len() - 1].to_string());
+                let plain = text.split("{#").next().unwrap_or(text).trim();
+                if explicit.as_deref() == Some(anchor) || slugify(plain) == anchor {
+                    level = hashes;
+                    started = true;
+                    out.push_str(line);
+                }
+            }
+            continue;
+        }
+        if started {
+            out.push_str(line);
+        }
+    }
+    started.then_some(out)
 }
 
 fn extract_region(content: &str, name: &str) -> Option<String> {
@@ -257,6 +423,151 @@ fn fence_marker_for(content: &str) -> String {
     "`".repeat(longest + 1)
 }
 
+/// Pass 1.6: inline footnotes `^[content]` (comrak only knows reference
+/// footnotes) → `[^fni-N]` references with the definitions appended at
+/// the end of the document, where comrak renders them like any other
+/// footnote. Fence- and inline-code-span aware.
+pub fn expand_inline_footnotes(md: &str) -> String {
+    static RE: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
+    let re = RE.get_or_init(|| Regex::new(r"\^\[([^\[\]]+)\]").unwrap());
+    let mut fence: Option<(char, usize)> = None;
+    let mut counter = 0usize;
+    let mut defs: Vec<String> = Vec::new();
+    let mut out = String::with_capacity(md.len());
+    for line in md.split_inclusive('\n') {
+        let bare = line.trim_end_matches(['\n', '\r']);
+        if let Some((ch, n)) = fence {
+            out.push_str(line);
+            if is_closing_fence(bare, ch, n) {
+                fence = None;
+            }
+            continue;
+        }
+        if let Some((ch, n)) = opening_fence(bare) {
+            out.push_str(line);
+            fence = Some((ch, n));
+            continue;
+        }
+        // skip matches inside inline code spans on this line
+        let mut replaced = String::new();
+        let mut rest = bare;
+        while let Some(i) = rest.find('`') {
+            let (before, after) = rest.split_at(i);
+            let span_end = after[1..].find('`').map(|j| j + 2);
+            let code = span_end.map(|e| &after[..e]);
+            replaced.push_str(&replace_inline(before, re, &mut counter, &mut defs));
+            match code {
+                Some(c) => {
+                    replaced.push_str(c);
+                    rest = &after[c.len()..];
+                }
+                None => {
+                    // unclosed backtick: the rest is literal
+                    replaced.push_str(after);
+                    rest = "";
+                }
+            }
+        }
+        replaced.push_str(&replace_inline(rest, re, &mut counter, &mut defs));
+        out.push_str(&replaced);
+        out.push('\n');
+    }
+    if defs.is_empty() {
+        return out;
+    }
+    out.push('\n');
+    for d in &defs {
+        out.push_str(d);
+        out.push('\n');
+    }
+    out
+}
+
+fn replace_inline(
+    text: &str,
+    re: &Regex,
+    counter: &mut usize,
+    defs: &mut Vec<String>,
+) -> String {
+    re.replace_all(text, |c: &regex::Captures| {
+        *counter += 1;
+        let label = format!("fni-{counter}");
+        defs.push(format!("[^{label}]: {}", &c[1]));
+        format!("[^{label}]")
+    })
+    .into_owned()
+}
+
+/// Pass 1.7: link attribute blocks — `[text](url){target="_self" …}`
+/// (upstream's @mdit/plugin-attrs link form). Rewritten to a raw
+/// anchor, so markdown inside the link text is not re-parsed. Fence-
+/// and inline-code-span aware.
+pub fn rewrite_link_attrs(md: &str) -> String {
+    static RE: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
+    let re = RE.get_or_init(|| {
+        // [text](url){k="v" k2="v2"} — attrs must contain =" to avoid
+        // eating unrelated braces right after links
+        Regex::new(r#"(?m)(!?)\[([^\]\n]*)\]\(([^)\s]+)\)\{([^{}]*="[^}"]*"[^{}]*)\}"#).unwrap()
+    });
+    fn esc(s: &str) -> String {
+        s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;").replace('>', "&gt;")
+    }
+    let mut fence: Option<(char, usize)> = None;
+    let mut out = String::with_capacity(md.len());
+    for line in md.split_inclusive('\n') {
+        let bare = line.trim_end_matches(['\n', '\r']);
+        if let Some((ch, n)) = fence {
+            out.push_str(line);
+            if is_closing_fence(bare, ch, n) {
+                fence = None;
+            }
+            continue;
+        }
+        if let Some((ch, n)) = opening_fence(bare) {
+            out.push_str(line);
+            fence = Some((ch, n));
+            continue;
+        }
+        // leave lines whose only {…} follow code spans alone: split the
+        // line at inline code spans and only rewrite outside them
+        let mut replaced = String::new();
+        let mut rest = bare;
+        while let Some(i) = rest.find('`') {
+            let (before, after) = rest.split_at(i);
+            let span_end = after[1..].find('`').map(|j| j + 2);
+            replaced.push_str(&re.replace_all(before, |c: &regex::Captures| {
+                format!(r#"<a href="{}"{}>{}</a>"#, esc(&c[3]), parse_attrs(&c[4]), esc(&c[2]))
+            }));
+            match span_end.map(|e| &after[..e]) {
+                Some(code) => {
+                    replaced.push_str(code);
+                    rest = &after[code.len()..];
+                }
+                None => {
+                    replaced.push_str(after);
+                    rest = "";
+                }
+            }
+        }
+        replaced.push_str(&re.replace_all(rest, |c: &regex::Captures| {
+            format!(r#"<a href="{}"{}>{}</a>"#, esc(&c[3]), parse_attrs(&c[4]), esc(&c[2]))
+        }));
+        out.push_str(&replaced);
+        out.push('\n');
+    }
+    out
+}
+
+/// `k="v" k2="v2"` → ` k="v" k2="v2"` with sanitized names/values.
+fn parse_attrs(raw: &str) -> String {
+    static PAIR: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
+    let pair = PAIR.get_or_init(|| Regex::new(r#"([a-zA-Z-]+)="([^"]*)""#).unwrap());
+    let mut out = String::new();
+    for c in pair.captures_iter(raw) {
+        out.push_str(&format!(r#" {}="{}""#, &c[1], c[2].replace('"', "&quot;")));
+    }
+    out
+}
 /// Pass 1.5: `> [!KIND] [title]` GitHub-flavored alerts → `::: kind`
 /// containers, which is exactly what VitePress does (alerts ARE
 /// containers there): same styling, same `[markdown.container]` labels,
@@ -353,6 +664,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
         Details,
         CodeGroup,
         VPre,
+        Raw,
     }
     let mut out_lines: Vec<String> = Vec::new();
     let mut stack: Vec<(usize, Open)> = Vec::new();
@@ -371,6 +683,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
             format!("{indent}</div>"),
             "".into(),
         ]),
+        Open::Raw => out.extend(["".into(), format!("{indent}</div>"), "".into()]),
         Open::VPre => {}
     };
 
@@ -414,6 +727,15 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
                 "v-pre" => {
                     stack.push((colons, Open::VPre));
                     continue; // markers vanish; content passes through
+                }
+                "raw" => {
+                    // upstream's style-isolation wrapper for embedded
+                    // component demos (vp-raw class)
+                    stack.push((colons, Open::Raw));
+                    out_lines.extend([
+                        format!("{indent}<div class=\"vp-raw\">"),
+                        String::new(),
+                    ]);
                 }
                 "code-group" => {
                     stack.push((colons, Open::CodeGroup));
@@ -875,14 +1197,20 @@ mod tests {
     #[test]
     fn md_include_target_parses() {
         // "./"-prefixed paths join fine as-is
+        let t = md_include_target("<!--@include: ./parts/x.md-->").unwrap();
         assert_eq!(
-            md_include_target("<!--@include: ./parts/x.md-->").unwrap(),
-            PathBuf::from("./parts/x.md")
+            (t.path.as_str(), t.section.is_none(), t.range.is_none()),
+            ("./parts/x.md", true, true)
         );
-        assert_eq!(
-            md_include_target("<!--@include: parts/x.md-->").unwrap(),
-            PathBuf::from("parts/x.md")
-        );
+        let t = md_include_target("<!--@include: parts/x.md-->").unwrap();
+        assert_eq!(t.path, "parts/x.md");
+        // section + range in upstream order: path#section{range}
+        let t = md_include_target("<!--@include: parts/x.md#basic-usage{,2}-->").unwrap();
+        assert_eq!(t.path, "parts/x.md");
+        assert_eq!(t.section.as_deref(), Some("basic-usage"));
+        assert_eq!(t.range.as_deref(), Some(",2"));
+        let t = md_include_target("<!--@include: parts/x.md{3,}-->").unwrap();
+        assert_eq!(t.range.as_deref(), Some("3,"));
     }
 }
 
