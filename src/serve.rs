@@ -105,11 +105,17 @@ fn start_watcher(site_dir: PathBuf) -> anyhow::Result<()> {
         watcher
             .watch(&site_dir, notify::RecursiveMode::Recursive)
             .unwrap_or_else(|e| panic!("rustpress: cannot watch {}: {e}", site_dir.display()));
-        for paths in rx {
+        let public = site_dir.join("public");
+        let is_change = |paths: &[PathBuf]| !paths.iter().any(|p| p.starts_with(&public));
+        while let Ok(paths) = rx.recv() {
             // ignore the build output itself
-            if paths.iter().any(|p| p.starts_with(site_dir.join("public"))) {
+            if !is_change(&paths) {
                 continue;
             }
+            // debounce: one save can arrive as several events (editors
+            // that write a temp file and rename it produce ~8), and each
+            // rebuild also reloads every open browser tab
+            while rx.recv_timeout(DEBOUNCE).is_ok() {}
             if let Err(e) = rebuild(&site_dir) {
                 eprintln!("rustpress: rebuild failed: {e:#}");
                 continue;
@@ -122,6 +128,9 @@ fn start_watcher(site_dir: PathBuf) -> anyhow::Result<()> {
     });
     Ok(())
 }
+
+/// Quiet period after the last filesystem event before rebuilding.
+const DEBOUNCE: std::time::Duration = std::time::Duration::from_millis(100);
 
 static GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
@@ -191,7 +200,12 @@ fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
 }
 
 fn inject_livereload(body: Vec<u8>) -> Vec<u8> {
-    const SCRIPT: &[u8] = b"<script>new EventSource('/@rustpress/livereload').addEventListener('reload',()=>location.reload());</script>";
+    // One EventSource per origin, not per tab: browsers allow only six
+    // HTTP/1.1 connections per host, so a seventh tab would hang while
+    // six tabs each hold a live-reload stream. The tab holding the Web
+    // Lock connects and rebroadcasts; the others listen on the channel
+    // and take the lock over when it closes.
+    const SCRIPT: &[u8] = b"<script>(function(){var ch='BroadcastChannel' in window?new BroadcastChannel('rustpress-livereload'):null;if(ch)ch.onmessage=function(){location.reload()};function connect(){new EventSource('/@rustpress/livereload').addEventListener('reload',function(){if(ch)ch.postMessage('reload');location.reload()})}if(ch&&navigator.locks)navigator.locks.request('rustpress-livereload',function(){connect();return new Promise(function(){})});else connect()})();</script>";
     if let Ok(s) = std::str::from_utf8(&body)
         && let Some(i) = s.rfind("</body>") {
             let mut out = body;
