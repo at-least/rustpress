@@ -110,8 +110,20 @@ fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usi
     let href = n.url.clone().map(|u| site.url(&u));
     let has_children = !children.is_empty();
 
+    // an empty `:class=""` is a JavaScript syntax error once Alpine
+    // evaluates it, so plain sections get no bindings at all
+    let section_open = if collapsible {
+        format!(
+            r#"<section class="{section_cls}" x-data="{}" :class="{}">"#,
+            section_x_data.replace('"', "&quot;"),
+            section_bind.replace('"', "&quot;")
+        )
+    } else {
+        format!(r#"<section class="{section_cls}">"#)
+    };
+
     rsx! {
-        <section class=(section_cls) x-data=(section_x_data) :class=(section_bind)>
+        (Raw::dangerously_create(section_open.clone()))
             <div class=(row_cls)>
                 <div class=(indicator_cls)></div>
                 @if let Some(href) = href.clone() {
@@ -146,7 +158,7 @@ fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usi
                     </li>
                 </ul>
             }
-        </section>
+        (Raw::dangerously_create("</section>"))
     }
     .render()
     .into_inner()

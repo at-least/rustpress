@@ -23,6 +23,13 @@ pub fn icon(name: &str, class: &str) -> Raw<String> {
         "copy-checked" => r#"<svg class="inline-block size-[1em] {c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14l2 2l4-4"/></svg>"#,
         _ => "",
     };
+    // `size-[1em]` is the default only: it sorts after `size-3`/`size-5`
+    // in the compiled stylesheet and would override a caller's size
+    let base = if class.split_whitespace().any(|c| c.starts_with("size-")) {
+        base.replace("size-[1em] ", "")
+    } else {
+        base.to_string()
+    };
     Raw::dangerously_create(base.replace("{c}", class))
 }
 

@@ -40,6 +40,7 @@ pub fn navbar<'a>(
     let lang_menu_label = site.config.lang_menu_label.clone();
     let mobile_menu_label = site.config.mobile_menu_label.clone();
     let dark_switch_title = site.config.dark_mode_switch_title.clone();
+    let light_switch_title = site.config.light_mode_switch_title.clone();
 
     let home_cls = if is_home { " home" } else { "" };
     let navbar_cls = format!(
@@ -131,7 +132,7 @@ pub fn navbar<'a>(
 
                             @if toggleable {
                                 <div class="flex items-center">
-                                    (Raw::dangerously_create(appearance_switch("VPSwitchAppearance", &dark_switch_title)))
+                                    (Raw::dangerously_create(appearance_switch("VPSwitchAppearance", &dark_switch_title, &light_switch_title)))
                                 </div>
                             }
 
@@ -273,11 +274,12 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
 }
 
 /// VPSwitchAppearance — one instance in the navbar, one in the nav
-/// screen; the JS bundle syncs `aria-checked` across both. The title
-/// is the static dark-mode one (what clicking does while light).
-fn appearance_switch(id: &'static str, dark_title: &str) -> String {
+/// screen. The markup is the light-mode state; the JS bundle syncs
+/// `aria-checked` and picks the title (what clicking will do) from the
+/// two `data-title-*` attributes on load and on every toggle.
+fn appearance_switch(id: &'static str, dark_title: &str, light_title: &str) -> String {
     rsx! {
-        <button type="button" id=(id) class="VPSwitch VPSwitchAppearance relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label="Appearance" aria-checked="false" title=(dark_title.to_string()) @click="gdToggleAppearance()">
+        <button type="button" id=(id) class="VPSwitch VPSwitchAppearance relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label="Appearance" aria-checked="false" title=(dark_title.to_string()) data-title-dark=(dark_title.to_string()) data-title-light=(light_title.to_string()) @click="gdToggleAppearance()">
             <span class="absolute top-px left-px w-[1.125rem] h-[1.125rem] rounded-full bg-(--vp-c-neutral-inverse) shadow-1 transition-transform duration-[250ms] dark:translate-x-[1.125rem]">
                 <span class="relative block w-[1.125rem] h-[1.125rem] rounded-full overflow-hidden">
                     (icon("sun", "absolute top-[0.1875rem] left-[0.1875rem] size-3 text-text-2 dark:text-text-1 transition-opacity duration-[250ms] opacity-100 dark:opacity-0"))
@@ -303,6 +305,7 @@ pub fn nav_screen<'a>(
     let dark_label = site.config.dark_mode_switch_label.clone();
     let nav_menu_label = site.config.nav_menu_label.clone();
     let dark_switch_title = site.config.dark_mode_switch_title.clone();
+    let light_switch_title = site.config.light_mode_switch_title.clone();
     rsx! {
         <div class="fixed inset-0 pt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+1px)] pr-8 pl-8 bg-(--vp-nav-screen-bg-color) w-full overflow-y-auto overscroll-contain transition-colors duration-[250ms] pointer-events-auto opacity-100 md:hidden" id="VPNavScreen" x-cloak x-show="$store.ui.screen" @keydown.escape.window="$store.ui.screen = false" x-effect="document.body.style.overflow = $store.ui.screen ? 'hidden' : ''">
             <div class="mx-auto pt-6 pb-24 max-w-[18rem]">
@@ -331,7 +334,7 @@ pub fn nav_screen<'a>(
                 @if toggleable {
                     <div class=(format!("appearance flex justify-center items-center pt-3{}", if has_nav { " mt-4" } else { "" }))>
                         <span class="label mr-3 text-[0.875rem] font-medium text-text-1">(dark_label)</span>
-                        (Raw::dangerously_create(appearance_switch("VPSwitchAppearanceScreen", &dark_switch_title)))
+                        (Raw::dangerously_create(appearance_switch("VPSwitchAppearanceScreen", &dark_switch_title, &light_switch_title)))
                     </div>
                 }
 

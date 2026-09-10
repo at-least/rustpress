@@ -83,6 +83,19 @@ Alpine.data("docPage", () => ({
    only flips the class, persists the preference under the same
    localStorage key the anti-flash script reads, and syncs aria-checked
    on both switches (navbar + nav screen). */
+const syncAppearanceSwitches = () => {
+  const dark = document.documentElement.classList.contains("dark");
+  document.querySelectorAll(".VPSwitchAppearance").forEach((el) => {
+    el.setAttribute("aria-checked", dark ? "true" : "false");
+    // the tooltip names what a click will do
+    const title = el.dataset[dark ? "titleLight" : "titleDark"];
+    if (title) el.setAttribute("title", title);
+  });
+};
+// the markup is the light-mode state; the anti-flash script may already
+// have switched <html> to dark before this bundle runs
+syncAppearanceSwitches();
+
 window.gdToggleAppearance = () => {
   const apply = () => {
     const dark = !document.documentElement.classList.contains("dark");
@@ -90,9 +103,7 @@ window.gdToggleAppearance = () => {
     try {
       localStorage.setItem("vitepress-theme-appearance", dark ? "dark" : "light");
     } catch (e) {}
-    document.querySelectorAll(".VPSwitchAppearance").forEach((el) => {
-      el.setAttribute("aria-checked", dark ? "true" : "false");
-    });
+    syncAppearanceSwitches();
   };
   // View Transitions API: smooth cross-fade on the color flip
   // (upstream does the same; browsers without it flip immediately)
