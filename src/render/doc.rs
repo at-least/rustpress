@@ -211,8 +211,11 @@ fn escape_text(s: &str) -> String {
     s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
 }
 
-/// (datetime, display) for a file modification time — `YYYY-MM-DD` /
-/// `YYYY/MM/DD`, UTC (civil-from-days; no chrono dependency).
+/// (datetime, display) for a file modification time — ISO `YYYY-MM-DD`
+/// for the `<time>` attribute plus the VitePress-style medium label
+/// ("Aug 13, 2026, 4:52:09 PM", what `toLocaleString(…, { dateStyle:
+/// "medium", timeStyle: "medium" })` renders in an en-US locale), UTC
+/// (civil-from-days; no chrono dependency).
 pub fn format_date(t: std::time::SystemTime) -> (String, String) {
     let secs = t
         .duration_since(std::time::UNIX_EPOCH)
@@ -220,7 +223,17 @@ pub fn format_date(t: std::time::SystemTime) -> (String, String) {
         .unwrap_or(0);
     let days = secs.div_euclid(86_400);
     let (y, m, d) = civil_from_days(days);
-    (format!("{y:04}-{m:02}-{d:02}"), format!("{y:04}/{m:02}/{d:02}"))
+    let day_secs = secs.rem_euclid(86_400);
+    let (hh, mi, ss) = (day_secs / 3600, day_secs % 3600 / 60, day_secs % 60);
+    const MONTHS: [&str; 12] = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+    let hour12 = match hh { 0 => 12, h if h > 12 => h - 12, h => h };
+    let suffix = if hh < 12 { "AM" } else { "PM" };
+    (
+        format!("{y:04}-{m:02}-{d:02}"),
+        format!("{} {d}, {y:04}, {hour12}:{mi:02}:{ss:02} {suffix}", MONTHS[(m - 1) as usize]),
+    )
 }
 
 /// Howard Hinnant's civil-from-days algorithm.

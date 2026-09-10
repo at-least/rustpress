@@ -127,9 +127,9 @@ fn hero_image_html(site: &Site, image: &crate::content::HeroImage) -> String {
 fn feature_card(site: &Site, feature: &Feature) -> String {
     let icon_html = feature.icon.as_ref().map(|i| feature_icon_html(site, i));
     let body = rsx! {
-        <article class="flex flex-col p-6 h-full">
+        <article class="VPFeature flex flex-col p-6 h-full">
             @if let Some(icon_html) = icon_html.clone() {
-                <div class="flex justify-center items-center mb-5 rounded-md bg-default-soft w-12 h-12 text-[1.5rem] transition-colors duration-[250ms]">
+                <div class="icon flex justify-center items-center mb-5 rounded-md bg-default-soft w-12 h-12 text-[1.5rem] transition-colors duration-[250ms]">
                     (Raw::dangerously_create(icon_html))
                 </div>
             }
@@ -198,7 +198,11 @@ fn feature_icon_html(site: &Site, icon: &crate::content::FeatureIcon) -> String 
         out
     }
     match icon {
-        crate::content::FeatureIcon::Text(text) => esc(text),
+        // VitePress treats `features[].icon` strings as raw inline HTML —
+        // the upstream theme ships `<span class="memo">`-style slots that
+        // its custom CSS paints into icons, so they must pass through
+        // unescaped
+        crate::content::FeatureIcon::Text(text) => text.clone(),
         crate::content::FeatureIcon::Image { src, alt, width, height } => {
             img(site, src, alt.as_deref().unwrap_or(""), *width, *height, "")
         }

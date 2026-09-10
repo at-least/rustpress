@@ -43,12 +43,20 @@ impl Site {
         let sidebars = Sidebars::build(&config, &content);
         let engine = MarkdownEngine::new(&config.markdown, &config.syntax, site_dir, &config.base)?;
         // git timestamps beat mtimes: a fresh clone's mtimes are checkout
-        // time, which would make "last updated" meaningless
+        // time, which would make "last updated" meaningless. `page.src` is
+        // relative to the process cwd (`demo/content/…` for `rustpress
+        // build demo`), so the pathspec must be re-based onto the site dir
+        // before git runs there — as-is it resolves one level too deep,
+        // matches nothing, and every page silently falls back to its mtime.
         if config.last_updated {
             for page in &mut content.pages {
+                let pathspec = page
+                    .src
+                    .strip_prefix(site_dir)
+                    .unwrap_or(&page.src);
                 let secs = std::process::Command::new("git")
                     .args(["log", "-1", "--format=%ct", "--"])
-                    .arg(&page.src)
+                    .arg(&pathspec)
                     .current_dir(site_dir)
                     .output()
                     .ok()

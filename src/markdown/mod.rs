@@ -318,13 +318,36 @@ fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
     for node in root.descendants() {
         let data = node.data.borrow();
         if let NodeValue::Heading(nh) = &data.value {
-            let raw = node.collect_text();
+            let raw = collect_text_with_shortcodes(node);
             let rendered_id = anchorizer.anchorize(&raw);
             let (text, custom) = split_heading_anchor(&raw);
             let id = custom.clone().unwrap_or_else(|| rendered_id.clone());
             out.push(Heading { level: nh.level, id, text, rendered_id });
         }
     }
+    out
+}
+
+/// comrak's `collect_text` skips `ShortCode` nodes, which would drop the
+/// emoji from outline labels and heading aria-labels ("Emoji 🎉" became
+/// "Emoji"); mirror it but append the resolved emoji.
+fn collect_text_with_shortcodes<'a>(node: &'a comrak::arena_tree::Node<'a, std::cell::RefCell<comrak::nodes::Ast>>) -> String {
+    fn walk<'a>(node: &'a comrak::arena_tree::Node<'a, std::cell::RefCell<comrak::nodes::Ast>>, out: &mut String) {
+        match &node.data.borrow().value {
+            NodeValue::Text(literal) => out.push_str(&literal),
+            NodeValue::Code(code) => out.push_str(&code.literal),
+            NodeValue::LineBreak | NodeValue::SoftBreak => out.push(' '),
+            NodeValue::Math(math) => out.push_str(math.literal.trim_end()),
+            NodeValue::ShortCode(shortcode) => out.push_str(&shortcode.emoji),
+            _ => {
+                for child in node.children() {
+                    walk(child, out);
+                }
+            }
+        }
+    }
+    let mut out = String::new();
+    walk(node, &mut out);
     out
 }
 

@@ -121,7 +121,7 @@ pub fn navbar<'a>(
                                             <ul>
                                                 @for (label, href, current) in translations {
                                                     <li>
-                                                        <a class=(format!("block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap text-text-1 transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft{}", if *current { " text-brand-1" } else { "" })) href=(href)>(label.clone())</a>
+                                                        <a class=(format!("block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap{} transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft", if *current { " text-brand-1" } else { " text-text-1" })) href=(href)>(label.clone())</a>
                                                     </li>
                                                 }
                                             </ul>
@@ -220,9 +220,12 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
 
     if item.items.is_empty() {
         let href = site.url(&item.link.clone().unwrap_or_default());
+        // active swaps the base color rather than appending a second one:
+        // two color utilities on one element resolve by stylesheet order,
+        // not by class order, so `text-text-1 text-brand-1` stays gray
         let cls = format!(
-            "flex items-center min-h-(--vp-nav-height) px-3 leading-normal text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1{}",
-            if active { " text-brand-1" } else { "" }
+            "flex items-center min-h-(--vp-nav-height) px-3 leading-normal text-[0.875rem] font-medium{} transition-colors duration-[250ms] hover:text-brand-1",
+            if active { " text-brand-1" } else { " text-text-1" }
         );
         let attrs = link_attrs(item.target.as_deref(), item.rel.as_deref());
         let text = item.text
@@ -255,8 +258,8 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
                             @for child in &children {
                                 <li>
                                     (Raw::dangerously_create(format!(
-                                        r#"<a class="block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap text-text-1 transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft{}" href="{}"{}>{}</a>"#,
-                                        if child.link.as_deref().is_some_and(|l| current_url.contains(l)) { " text-brand-1" } else { "" },
+                                        r#"<a class="block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap{} transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft" href="{}"{}>{}</a>"#,
+                                        if child.link.as_deref().is_some_and(|l| current_url.contains(l)) { " text-brand-1" } else { " text-text-1" },
                                         site.url(&child.link.clone().unwrap_or_default()),
                                         link_attrs(child.target.as_deref(), child.rel.as_deref()),
                                         child.text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;"),
@@ -324,7 +327,7 @@ pub fn nav_screen<'a>(
                         <ul>
                             @for (label, href, current) in translations {
                                 <li>
-                                    <a class=(format!("leading-[2.4615385] text-[0.8125rem] text-text-1{}", if *current { " text-brand-1" } else { "" })) href=(href)>(label.clone())</a>
+                                    <a class=(format!("leading-[2.4615385] text-[0.8125rem]{}", if *current { " text-brand-1" } else { " text-text-1" })) href=(href)>(label.clone())</a>
                                 </li>
                             }
                         </ul>
@@ -359,8 +362,8 @@ fn screen_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> 
 
     if item.items.is_empty() {
         let cls = format!(
-            "block border-b border-divider pt-3 pb-[0.6875rem] leading-[1.7142857] text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1{}",
-            if active { " text-brand-1" } else { "" }
+            "block border-b border-divider pt-3 pb-[0.6875rem] leading-[1.7142857] text-[0.875rem] font-medium{} transition-colors duration-[250ms] hover:text-brand-1",
+            if active { " text-brand-1" } else { " text-text-1" }
         );
         let href = site.url(&item.link.clone().unwrap_or_default());
         let attrs = link_attrs(item.target.as_deref(), item.rel.as_deref());

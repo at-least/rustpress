@@ -77,10 +77,31 @@ pub const CAPTURE_NAMES: &[&str] = &[
     "markup.raw.inline",
     "diff.plus",
     "diff.minus",
+    // legacy capture names still used by the markdown grammars
+    "text.title",
+    "text.literal",
+    "text.uri",
+    "text.emphasis",
+    "text.strong",
+    "text.quote",
+    "text.underline",
+    "text.strike",
+    "text.reference",
 ];
 
-/// CSS class for a capture name (dots become dashes).
+/// CSS class for a capture name (dots become dashes). The markdown
+/// grammars emit the legacy `text.*` capture set; they are normalized
+/// onto the modern scopes `syntax.css` already carries.
 fn tk_class(capture: &str) -> String {
+    let capture = match capture {
+        "text.title" => "markup.heading",
+        "text.literal" => "markup.raw.inline",
+        "text.uri" | "text.reference" => "markup.link.url",
+        "text.emphasis" | "text.underline" | "text.strike" => "markup.italic",
+        "text.strong" => "markup.bold",
+        "text.quote" => "markup.quote",
+        other => other,
+    };
     format!("tk-{}", capture.replace('.', "-"))
 }
 
@@ -276,6 +297,9 @@ const LANGUAGES: &[LanguageDef] = &[
         injections: "",
         language: || tree_sitter_cpp::LANGUAGE.into(),
     },
+    // markdown is registered in `configs()` below — its injections need a
+    // patched query (see the comment there) and its inline grammar needs
+    // registering alongside the block grammar
 ];
 
 /// Compile every grammar's `HighlightConfiguration` once; the map is
@@ -296,6 +320,7 @@ fn configs() -> &'static HashMap<&'static str, &'static HighlightConfiguration> 
                 def.injections,
                 "",
             ))) else {
+                eprintln!("syntax: {} query failed to compile", def.tokens[0]);
                 continue;
             };
             config.configure(CAPTURE_NAMES);
@@ -303,15 +328,62 @@ fn configs() -> &'static HashMap<&'static str, &'static HighlightConfiguration> 
                 map.insert(*token, &*config);
             }
         }
+        // The markdown injections ship without `injection.include-children`,
+        // but `(inline)` and `code_fence_content` are container nodes —
+        // without the predicate the injected ranges come back empty and
+        // nothing inside a markdown fence ever gets styled. Re-add the
+        // affected patterns with the predicate set.
+        let md_injections: &'static str = Box::leak(
+            format!(
+                "{}\n\
+                 ((inline) @injection.content\n\
+                 \x20 (#set! injection.language \"markdown_inline\")\n\
+                 \x20 (#set! injection.include-children))\n\
+                 ((fenced_code_block\n\
+                 \x20  (info_string (language) @injection.language)\n\
+                 \x20  (code_fence_content) @injection.content)\n\
+                 \x20 (#set! injection.include-children))\n",
+                tree_sitter_md::INJECTION_QUERY_BLOCK
+            )
+            .into_boxed_str(),
+        );
+        let Ok(md) = Box::leak(Box::new(HighlightConfiguration::new(
+            tree_sitter_md::LANGUAGE.into(),
+            "markdown",
+            tree_sitter_md::HIGHLIGHT_QUERY_BLOCK,
+            md_injections,
+            "",
+        ))) else {
+            eprintln!("syntax: markdown query failed to compile");
+            return map;
+        };
+        md.configure(CAPTURE_NAMES);
+        for token in ["markdown", "md"] {
+            map.insert(token, &*md);
+        }
+        // the block grammar injects `markdown_inline` for paragraph text;
+        // the inline grammar then injects fenced-code languages by name
+        let Ok(inline) = Box::leak(Box::new(HighlightConfiguration::new(
+            tree_sitter_md::INLINE_LANGUAGE.into(),
+            "markdown-inline",
+            tree_sitter_md::HIGHLIGHT_QUERY_INLINE,
+            tree_sitter_md::INJECTION_QUERY_INLINE,
+            "",
+        ))) else {
+            eprintln!("syntax: markdown-inline query failed to compile");
+            return map;
+        };
+        inline.configure(CAPTURE_NAMES);
+        for token in ["markdown_inline", "markdown-inline"] {
+            map.insert(token, &*inline);
+        }
         map
     })
 }
 
 fn config_for(token: &str) -> Option<&'static HighlightConfiguration> {
     let token = token.trim().to_lowercase();
-    if token.is_empty()
-        || matches!(token.as_str(), "text" | "txt" | "plain" | "ansi" | "md" | "markdown")
-    {
+    if token.is_empty() || matches!(token.as_str(), "text" | "txt" | "plain" | "ansi") {
         return None;
     }
     configs().get(token.as_str()).copied()
@@ -444,9 +516,11 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
         if self.options.copy_button {
             write!(output, "{COPY_BUTTON}")?;
         }
-        if let Some(label) = &spec.label {
-            write!(output, "<span class=\"lang\">{}</span>", escape_text(label))?;
-        }
+        // VitePress always renders the corner label: the fence's `[title]`
+        // when present, otherwise the language name (empty for plain
+        // fences, which renders invisible)
+        let label = spec.label.as_deref().unwrap_or(spec.lang.as_str());
+        write!(output, "<span class=\"lang\">{}</span>", escape_text(label))?;
         write!(
             output,
             "<code class=\"language-{}\" data-lang=\"{}\"",

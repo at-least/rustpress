@@ -1,20 +1,20 @@
-# GitHub light syntax palette (Helix theme format), approximating the
-# vendored github-light colors. Scopes are tree-sitter capture names;
+# GitHub light syntax palette (Helix theme format), colors sampled from
+# the shiki output on vitepress.dev. Scopes are tree-sitter capture names;
 # a capture falls back to its shortest defined parent scope.
 
 "attribute" = "#e36209"
-"comment" = "#6a737d"
+"comment" = "#62687b"
 "constant" = "#005cc5"
 "constant.builtin" = "#005cc5"
 "constructor" = "#6f42c1"
 "function" = "#6f42c1"
 "function.builtin" = "#005cc5"
 "function.macro" = "#6f42c1"
-"keyword" = "#d73a49"
-"keyword.operator" = "#d73a49"
+"keyword" = "#c62739"
+"keyword.operator" = "#c62739"
 "label" = "#032f62"
 "namespace" = "#e36209"
-"operator" = "#d73a49"
+"operator" = "#c62739"
 "punctuation" = "#24292e"
 "punctuation.bracket" = "#24292e"
 "punctuation.delimiter" = "#24292e"

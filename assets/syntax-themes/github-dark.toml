@@ -1,8 +1,9 @@
-# GitHub dark syntax palette (Helix theme format). Block backgrounds
+# GitHub dark syntax palette (Helix theme format), colors sampled from
+# the shiki output on vitepress.dev. Block backgrounds
 # come from --vp-code-block-bg; these are token colors only.
 
 "attribute" = "#b392f0"
-"comment" = "#6a737d"
+"comment" = "#818e99"
 "constant" = "#79b8ff"
 "constant.builtin" = "#79b8ff"
 "constructor" = "#b392f0"

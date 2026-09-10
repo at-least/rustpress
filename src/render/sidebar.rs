@@ -42,8 +42,11 @@ pub fn sidebar(site: &Site, current_url: &str) -> String {
             <div class="lg:sticky lg:top-[calc(var(--vp-nav-height)*-1)] lg:left-0 lg:z-[1] lg:-mt-(--vp-nav-height) lg:-mr-8 lg:-ml-8 lg:h-(--vp-nav-height) lg:bg-(--vp-sidebar-bg-color)"></div>
             <nav class="outline-0" id="VPSidebarNav" aria-labelledby="sidebar-aria-label" tabindex="-1">
                 <span class="sr-only" id="sidebar-aria-label">"Sidebar Navigation"</span>
-                <div class=(format!("group {GROUP_CLS}"))>
-                    @for item in &items {
+                @for item in &items {
+                    // one `.group` wrapper per root item: the `.group + .group`
+                    // divider rule needs adjacent wrapper siblings, which the
+                    // old single-wrapper layout could never produce
+                    <div class=(format!("group {GROUP_CLS}"))>
                         @if item.children.is_empty() && item.url.is_some() {
                             // Root-level bare links render one level deep,
                             // wrapped in a headless item — like VitePress's
@@ -57,8 +60,8 @@ pub fn sidebar(site: &Site, current_url: &str) -> String {
                         } @else {
                             (Raw::dangerously_create(node(site, item, current_url, 0)))
                         }
-                    }
-                </div>
+                    </div>
+                }
             </nav>
         </aside>
     }
@@ -77,7 +80,10 @@ fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usi
     } else {
         format!(
             "text grow py-1 leading-[1.7142857] text-[0.875rem] transition-colors duration-[250ms] font-medium{}",
-            if has_active || is_active { " text-text-1" } else { " text-text-2" }
+            // the active color arrives from the leaf link below; emitting
+            // `text-text-1` here too would win on stylesheet order and
+            // wash the brand color out
+            if is_active { "" } else if has_active { " text-text-1" } else { " text-text-2" }
         )
     };
     let section_cls = format!(
@@ -122,6 +128,14 @@ fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usi
         format!(r#"<section class="{section_cls}">"#)
     };
 
+    // the link supplies the color itself; stripping only the trailing
+    // color utility keeps a single color class on the <p> (two would
+    // resolve by stylesheet order) while depth-0 headers keep `font-bold`
+    let link_text_cls = text_cls
+        .trim_end_matches(" text-text-1")
+        .trim_end_matches(" text-text-2")
+        .to_string();
+
     rsx! {
         (Raw::dangerously_create(section_open.clone()))
             <div class=(row_cls)>
@@ -131,7 +145,7 @@ fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usi
                         r#"<a class="link flex items-center grow group/link" href="{href}"{}{}><p class="{}{}">{}</p></a>"#,
                         if is_active { r#" aria-current="page""# } else { "" },
                         opt_attrs(n.target.as_deref(), n.rel.as_deref()),
-                        text_cls.trim_end_matches("font-bold text-text-1"),
+                        link_text_cls,
                         if is_active { " text-brand-1" } else if depth == 0 { " text-text-1" } else { " text-text-2" },
                         text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;"),
                     )))
