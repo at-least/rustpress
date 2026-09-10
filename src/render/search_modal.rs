@@ -20,13 +20,13 @@ pub fn search_modal<'a>(index_url: &'a str, search: &'a crate::config::Search) -
     let results_cls = concat!(
         "flex flex-col gap-[0.375rem] overflow-x-hidden overflow-y-auto overscroll-contain",
         " [&_.result]:flex [&_.result]:items-center [&_.result]:gap-2 [&_.result]:rounded-[0.25rem] [&_.result]:leading-none [&_.result]:border-2 [&_.result]:border-solid",
-        " [&_.result]:border-(--vp-local-search-result-border) [&_.result]:outline-none [&_.result>div]:m-3 [&_.result>div]:w-full [&_.result>div]:overflow-hidden max-md:[&_.result>div]:m-2",
+        " [&_.result]:border-(--vp-local-search-result-border) [&_.result]:bg-(--vp-local-search-result-bg) [&_.result]:outline-none [&_.result>div]:m-3 [&_.result>div]:w-full [&_.result>div]:overflow-hidden max-md:[&_.result>div]:m-2",
         " [&_.titles]:flex [&_.titles]:flex-wrap [&_.titles]:gap-1 [&_.titles]:relative [&_.titles]:z-[1001] [&_.titles]:py-[0.125rem]",
-        " [&_.title]:flex [&_.title]:items-center [&_.title]:gap-1 [&_.title]:text-[0.875rem] [&_.title]:leading-[1.6] [&_.title.main]:font-medium",
-        " [&_.title]:after:content-['/'] [&_.title]:after:opacity-50 [&_.title]:after:font-medium [&_.title:last-child]:after:content-none",
-        " [&_.excerpt]:opacity-50 [&_.excerpt]:pointer-events-none [&_.excerpt]:max-h-[8.75rem] [&_.excerpt]:overflow-hidden [&_.excerpt]:relative [&_.excerpt]:mt-1",
-        " [&_.result.selected]:border-(--vp-local-search-result-selected-border) [&_.result.selected_.excerpt]:opacity-100",
-        " [&_.no-results]:py-4 [&_.no-results]:px-3 [&_.no-results]:text-[0.875rem] [&_.no-results]:text-text-2",
+        " [&_.title]:flex [&_.title]:items-center [&_.title]:gap-1 [&_.title.main]:font-medium",
+        " [&_.title-icon]:opacity-50 [&_.title-icon]:font-medium [&_.title-icon]:text-brand-1",
+        " [&_.excerpt]:opacity-50 [&_.excerpt]:pointer-events-none [&_.excerpt]:max-h-[8.75rem] [&_.excerpt]:overflow-hidden [&_.excerpt]:relative [&_.excerpt]:mt-1 [&_.excerpt]:text-[0.8rem] [&_.excerpt]:leading-[1.3]",
+        " [&_.result.selected]:border-(--vp-local-search-result-selected-border) [&_.result.selected_.excerpt]:opacity-100 [&_.result.selected_.titles]:text-brand-1",
+        " [&_.no-results]:p-3 [&_.no-results]:text-[0.9rem] [&_.no-results]:text-center",
         " [&_mark]:bg-(--vp-local-search-highlight-bg) [&_mark]:text-(--vp-local-search-highlight-text) [&_mark]:rounded-[0.125rem] [&_mark]:px-[0.125rem]",
     );
     rsx! {
@@ -56,8 +56,8 @@ pub fn search_modal<'a>(index_url: &'a str, search: &'a crate::config::Search) -
                         placeholder=(placeholder.clone())
                     >
                     <div class="flex gap-1">
-                        <button type="button" class="p-2 not-disabled:hover:text-brand-1 cursor-pointer" id="VPSearchClear" title=(reset_title.clone()) @click="clear()" :disabled=("q.trim() === ''")>
-                            (icon("delete", ""))
+                        <button type="button" class="p-2 not-disabled:hover:text-brand-1 cursor-pointer disabled:opacity-[0.37]" id="VPSearchClear" title=(reset_title.clone()) @click="clear()" :disabled=("q.trim() === ''")>
+                            (icon("delete", "size-[1.125rem]"))
                         </button>
                     </div>
                 </form>

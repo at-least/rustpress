@@ -181,7 +181,9 @@ Alpine.data("searchModal", () => ({
 
   load() {
     if (!this.docsPromise) {
-      this.docsPromise = fetch(this.$el.dataset.indexUrl)
+      // `$el` is the element that triggered the call (the <input>);
+      // the data attributes sit on the component root
+      this.docsPromise = fetch(this.$root.dataset.indexUrl)
         .then((r) => {
           if (!r.ok) throw new Error("search index " + r.status);
           return r.json();
@@ -282,7 +284,7 @@ Alpine.data("searchModal", () => ({
       return (
         '<li class="no-results">' +
         (this.q.trim()
-          ? (this.$el.closest('[data-no-results]')?.dataset.noResults || 'No results for "{q}"').replace('{q}', '<b>' + this.esc(this.q.trim()) + '</b>')
+          ? (this.$root.dataset.noResults || 'No results for "{q}"').replace('{q}', '<b>' + this.esc(this.q.trim()) + '</b>')
           : "") +
         "</li>"
       );
@@ -291,11 +293,14 @@ Alpine.data("searchModal", () => ({
     return this.results
       .map((r) => {
         const path = (r.entry.url || "").replace(/^https?:\/\/[^/]+/, "").split("/").filter(Boolean);
-        let titles = '<div class="titles">';
+        const chevron =
+          '<svg class="inline-block size-[0.875rem] opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><path d="m9 18l6-6l-6-6"/></svg>';
+        let titles = '<div class="titles"><span class="title-icon">#</span>';
         path.slice(0, -1).forEach((seg) => {
-          titles += '<p class="title">' + this.esc(seg) + "</p>";
+          titles += '<span class="title"><span class="text">' + this.esc(seg) + "</span>" + chevron + "</span>";
         });
-        titles += '<p class="title main">' + this.mark(r.entry.title || r.entry.url, tokens) + "</p></div>";
+        titles +=
+          '<span class="title main"><span class="text">' + this.mark(r.entry.title || r.entry.url, tokens) + "</span></span></div>";
         const excerpt =
           '<p class="excerpt">' + this.mark(this.excerpt(r.entry.body || "", tokens), tokens) + "</p>";
         return (
