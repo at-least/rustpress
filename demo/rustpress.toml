@@ -8,6 +8,7 @@ lang = "en"
 base = "/"
 lastUpdated = true
 logo = "vitepress-logo-mini.svg"
+theme = "theme.css"
 
 [editLink]
 pattern = "https://github.com/vuejs/vitepress/edit/main/docs/en/:path"
