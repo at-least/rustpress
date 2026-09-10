@@ -26,7 +26,7 @@ fn engine_with(md: &gen_docs::config::Markdown) -> MarkdownEngine {
 fn fixture(url: &str) -> gen_docs::markdown::RenderedPage {
     let site_root = Path::new("tests/fixtures");
     let content_dir = site_root.join("en");
-    let content = Content::load(&content_dir).expect("content");
+    let content = Content::load(&content_dir, &[]).expect("content");
     let page = content.get(url).expect("page").clone();
     engine()
         .render(&page, &content, site_root, &content_dir)

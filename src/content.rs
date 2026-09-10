@@ -85,12 +85,22 @@ pub struct Hero {
     pub actions: Vec<HeroAction>,
 }
 
+/// `hero.image`: a path, `{ src, alt }`, or `{ light, dark, alt }`.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct HeroImage {
-    pub src: String,
-    #[serde(default)]
-    pub alt: Option<String>,
+#[serde(untagged)]
+pub enum HeroImage {
+    Simple(String),
+    Detailed {
+        src: String,
+        #[serde(default)]
+        alt: Option<String>,
+    },
+    Dual {
+        light: String,
+        dark: String,
+        #[serde(default)]
+        alt: Option<String>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -110,9 +120,9 @@ pub struct HeroAction {
 #[derive(Debug, Clone, Default, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Feature {
-    /// Raw HTML (VitePress convention) or emoji text.
+    /// Emoji/text, `{ src, alt, width, height }`, or `{ light, dark }`.
     #[serde(default)]
-    pub icon: Option<String>,
+    pub icon: Option<FeatureIcon>,
     pub title: String,
     #[serde(default)]
     pub details: Option<String>,
@@ -124,6 +134,32 @@ pub struct Feature {
     pub target: Option<String>,
     #[serde(default)]
     pub rel: Option<String>,
+}
+
+/// `features[].icon` (VitePress `FeatureIcon`).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum FeatureIcon {
+    Text(String),
+    Image {
+        src: String,
+        #[serde(default)]
+        alt: Option<String>,
+        #[serde(default)]
+        width: Option<u32>,
+        #[serde(default)]
+        height: Option<u32>,
+    },
+    Dual {
+        light: String,
+        dark: String,
+        #[serde(default)]
+        alt: Option<String>,
+        #[serde(default)]
+        width: Option<u32>,
+        #[serde(default)]
+        height: Option<u32>,
+    },
 }
 
 /// One loaded page.
@@ -171,10 +207,12 @@ impl Content {
     }
 
     /// Load every `.md` under `content_dir` (dotfiles/dirs skipped).
-    pub fn load(content_dir: &Path) -> Result<Content, ContentError> {
+    /// `excludes` are `srcExclude` glob patterns (`*` within a segment,
+    /// `**` across segments) matched against source-relative paths.
+    pub fn load(content_dir: &Path, excludes: &[String]) -> Result<Content, ContentError> {
         let mut content = Content::default();
         let mut seen = std::collections::HashSet::new();
-        walk(content_dir, "", &mut content, &mut seen)?;
+        walk(content_dir, "", &mut content, &mut seen, excludes)?;
         content.pages.sort_by(|a, b| natural_cmp(&a.url, &b.url));
         content.by_url = content
             .pages
@@ -197,6 +235,7 @@ fn walk(
     rel_dir: &str,
     out: &mut Content,
     seen: &mut std::collections::HashSet<String>,
+    excludes: &[String],
 ) -> Result<(), ContentError> {
     let mut entries: Vec<_> = std::fs::read_dir(dir)
         .map_err(|source| ContentError::Read {
@@ -217,8 +256,10 @@ fn walk(
         let rel = if rel_dir.is_empty() { name.clone() } else { format!("{rel_dir}/{name}") };
         let path = entry.path();
         if path.is_dir() {
-            walk(&path, &rel, out, seen)?;
-        } else if name.ends_with(".md") {
+            walk(&path, &rel, out, seen, excludes)?;
+        } else if name.ends_with(".md")
+            && !excludes.iter().any(|p| glob_match(p, &rel))
+        {
             let page = load_page(&path, &rel)?;
             if !seen.insert(page.url.clone()) {
                 return Err(ContentError::Duplicate { url: page.url });
@@ -227,6 +268,27 @@ fn walk(
         }
     }
     Ok(())
+}
+
+/// `srcExclude` glob: `*` matches within a path segment, `**` across
+/// segments, everything else matches literally (whole path).
+pub fn glob_match(pattern: &str, path: &str) -> bool {
+    fn go(p: &[char], s: &[char]) -> bool {
+        if p.is_empty() {
+            return s.is_empty();
+        }
+        match p[0] {
+            '*' if p.len() > 1 && p[1] == '*' => {
+                (0..=s.len()).any(|i| go(&p[2..], &s[i..]))
+            }
+            '*' => {
+                // stop at the segment boundary
+                (0..=s.len()).take_while(|i| *i == 0 || s[*i - 1] != '/').any(|i| go(&p[1..], &s[i..]))
+            }
+            c => !s.is_empty() && s[0] == c && go(&p[1..], &s[1..]),
+        }
+    }
+    go(&pattern.chars().collect::<Vec<_>>(), &path.chars().collect::<Vec<_>>())
 }
 
 fn load_page(path: &Path, rel: &str) -> Result<Page, ContentError> {
@@ -423,7 +485,10 @@ mod tests {
         assert_eq!(fm.outline, Some(OutlineSetting::Deep));
         assert_eq!(fm.hero.as_ref().unwrap().actions[0].text, "Start");
         assert_eq!(fm.features[0].link_text.as_deref(), Some("More"));
-        assert!(fm.features[0].icon.as_deref().unwrap().contains("span"));
+        assert!(matches!(
+            &fm.features[0].icon,
+            Some(FeatureIcon::Text(t)) if t.contains("span")
+        ));
     }
 
     #[test]

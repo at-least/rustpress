@@ -18,6 +18,13 @@ pub struct SidebarNode {
     pub url: Option<String>,
     pub children: Vec<SidebarNode>,
     pub collapsed: Option<bool>,
+    /// Display text when this node is a prev/next pager target
+    /// (VitePress `docFooterText`), else the label.
+    pub doc_footer: Option<String>,
+    /// Link `target` attribute override.
+    pub target: Option<String>,
+    /// Link `rel` attribute override.
+    pub rel: Option<String>,
 }
 
 /// One sidebar, applying to every URL under `prefix`.
@@ -73,11 +80,12 @@ impl Sidebars {
     }
 
     /// Leaves (internal links only) of `tree` in display order — the
-    /// prev/next sequence.
+    /// prev/next sequence, each as `(display text, url)` where the
+    /// display text honors `docFooterText`.
     pub fn flatten(tree: &SidebarTree) -> Vec<(String, String)> {
         fn walk(n: &SidebarNode, out: &mut Vec<(String, String)>) {
             if let Some(url) = &n.url {
-                out.push((n.text.clone(), url.clone()));
+                out.push((n.doc_footer.clone().unwrap_or_else(|| n.text.clone()), url.clone()));
             }
             for c in &n.children {
                 walk(c, out);
@@ -139,6 +147,9 @@ fn auto_trees(content: &Content) -> Vec<SidebarTree> {
                     url: Some(p.url.clone()),
                     children: Vec::new(),
                     collapsed: None,
+                    doc_footer: None,
+                    target: None,
+                    rel: None,
                 });
             }
             let (text, url) = match index {
@@ -147,7 +158,15 @@ fn auto_trees(content: &Content) -> Vec<SidebarTree> {
             };
             SidebarTree {
                 prefix: root,
-                items: vec![SidebarNode { text, url, children, collapsed: Some(false) }],
+                items: vec![SidebarNode {
+                    text,
+                    url,
+                    children,
+                    collapsed: Some(false),
+                    doc_footer: None,
+                    target: None,
+                    rel: None,
+                }],
             }
         })
         .collect()
@@ -178,6 +197,9 @@ fn resolve_items(items: &[SidebarItem], base: &str, content: &Content) -> Vec<Si
                 url,
                 children: resolve_items(&item.items, effective_base, content),
                 collapsed: item.collapsed,
+                doc_footer: item.doc_footer_text.clone(),
+                target: item.target.clone(),
+                rel: item.rel.clone(),
             }
         })
         .collect()

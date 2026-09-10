@@ -23,6 +23,30 @@ fn default_outline_label() -> String {
     "On this page".into()
 }
 
+fn default_light_mode_switch_title() -> String {
+    "Switch to light theme".into()
+}
+
+fn default_dark_mode_switch_title() -> String {
+    "Switch to dark theme".into()
+}
+
+fn default_sidebar_menu_label() -> String {
+    "Menu".into()
+}
+
+fn default_lang_menu_label() -> String {
+    "Change language".into()
+}
+
+fn default_nav_menu_label() -> String {
+    "Main Navigation".into()
+}
+
+fn default_mobile_menu_label() -> String {
+    "Menu".into()
+}
+
 /// The whole `gen-docs.toml`.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
@@ -75,16 +99,26 @@ pub struct SiteConfig {
 
     /// Right-hand outline ("on this page") settings.
     #[serde(default)]
-    pub outline: Outline,
+    pub outline: OutlineConfig,
 
     /// Local search. Absent → no search index, no search modal.
     #[serde(default)]
     pub search: Option<Search>,
 
-    /// Navbar logo path, relative to the site's static/ directory
-    /// (VitePress `themeConfig.logo`).
+    /// Navbar logo (VitePress `themeConfig.logo`): a path, `{ src, alt }`
+    /// or `{ light, dark, alt }`.
     #[serde(default)]
-    pub logo: Option<String>,
+    pub logo: Option<ThemeableImage>,
+
+    /// Navbar title override (`themeConfig.siteTitle`); `false` hides
+    /// the title next to the logo.
+    #[serde(default)]
+    pub site_title: Option<SiteTitleSetting>,
+
+    /// Glob patterns for content files to exclude (`srcExclude`).
+    /// `*` matches within a path segment, `**` across segments.
+    #[serde(default)]
+    pub src_exclude: Vec<String>,
 
     /// Optional "Ask AI" sparkle link in the navbar.
     #[serde(default)]
@@ -132,8 +166,9 @@ pub struct SiteConfig {
     pub head: Vec<HeadTag>,
 
     /// Document title template; `:title` is replaced by the page title.
+    /// `false` (upstream spelling) disables the suffix entirely.
     #[serde(default)]
-    pub title_template: Option<String>,
+    pub title_template: Option<TitleTemplate>,
 
     /// Directory (inside the site dir) holding the markdown content.
     #[serde(default = "default_src_dir")]
@@ -155,6 +190,24 @@ pub struct SiteConfig {
 
     #[serde(default = "default_dark_mode_switch_label")]
     pub dark_mode_switch_label: String,
+
+    #[serde(default = "default_light_mode_switch_title")]
+    pub light_mode_switch_title: String,
+
+    #[serde(default = "default_dark_mode_switch_title")]
+    pub dark_mode_switch_title: String,
+
+    #[serde(default = "default_sidebar_menu_label")]
+    pub sidebar_menu_label: String,
+
+    #[serde(default = "default_lang_menu_label")]
+    pub lang_menu_label: String,
+
+    #[serde(default = "default_nav_menu_label")]
+    pub nav_menu_label: String,
+
+    #[serde(default = "default_mobile_menu_label")]
+    pub mobile_menu_label: String,
 
     #[serde(default = "default_skip_to_content")]
     pub skip_to_content_label: String,
@@ -243,6 +296,12 @@ pub struct NavItem {
     /// Dropdown entries.
     #[serde(default)]
     pub items: Vec<NavItem>,
+    /// Link `target` attribute override.
+    #[serde(default)]
+    pub target: Option<String>,
+    /// Link `rel` attribute override.
+    #[serde(default)]
+    pub rel: Option<String>,
 }
 
 /// VitePress's `sidebar` accepts one array (single sidebar) or an object
@@ -292,6 +351,15 @@ pub struct SidebarItem {
     pub collapsed: Option<bool>,
     #[serde(default)]
     pub base: Option<String>,
+    /// Custom text shown when this item is a prev/next pager target.
+    #[serde(default)]
+    pub doc_footer_text: Option<String>,
+    /// Link `target` attribute override.
+    #[serde(default)]
+    pub target: Option<String>,
+    /// Link `rel` attribute override.
+    #[serde(default)]
+    pub rel: Option<String>,
 }
 
 /// A navbar social icon: a known name (`github`, `twitter`, `discord`, …)
@@ -308,6 +376,47 @@ pub enum SocialIcon {
 pub struct SocialLink {
     pub icon: SocialIcon,
     pub link: String,
+    /// Accessible label override (default: the icon's name).
+    #[serde(default)]
+    pub aria_label: Option<String>,
+    /// Link `target` override (default `_blank`).
+    #[serde(default)]
+    pub target: Option<String>,
+}
+
+/// `themeConfig.logo` / hero images: a plain path, `{ src, alt }`, or a
+/// `{ light, dark }` pair switched by the color scheme.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum ThemeableImage {
+    Simple(String),
+    Detailed {
+        src: String,
+        #[serde(default)]
+        alt: Option<String>,
+    },
+    Dual {
+        light: String,
+        dark: String,
+        #[serde(default)]
+        alt: Option<String>,
+    },
+}
+
+/// `themeConfig.siteTitle`: a string override or `false` to hide.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum SiteTitleSetting {
+    Text(String),
+    Hide(bool),
+}
+
+/// `titleTemplate`: `":title …"` template or `false` (no suffix).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum TitleTemplate {
+    Tmpl(String),
+    Off(bool),
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -348,6 +457,43 @@ pub struct Outline {
 impl Default for Outline {
     fn default() -> Self {
         toml::from_str("").unwrap()
+    }
+}
+
+/// The `outline` setting: `false` (no outline), a bare level
+/// (`outline = 2` / `[2, 3]`), or the `{ level, label }` table.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum OutlineConfig {
+    Off(bool),
+    Level(OutlineLevel),
+    Full(Outline),
+}
+
+impl Default for OutlineConfig {
+    fn default() -> Self {
+        OutlineConfig::Full(Outline::default())
+    }
+}
+
+impl OutlineConfig {
+    pub fn enabled(&self) -> bool {
+        !matches!(self, OutlineConfig::Off(false))
+    }
+
+    pub fn label(&self) -> String {
+        match self {
+            OutlineConfig::Full(o) => o.label.clone(),
+            _ => default_outline_label(),
+        }
+    }
+
+    pub fn level(&self) -> Option<OutlineLevel> {
+        match self {
+            OutlineConfig::Off(_) => None,
+            OutlineConfig::Level(l) => Some(*l),
+            OutlineConfig::Full(o) => o.level,
+        }
     }
 }
 
@@ -442,12 +588,15 @@ impl<'de> Deserialize<'de> for Appearance {
     }
 }
 
-/// `ignoreDeadLinks`: `true` (ignore all) or a list of link prefixes.
+/// `ignoreDeadLinks`: `true` (ignore all), `"localhostLinks"` (never
+/// check localhost URLs — ours skips all http(s) targets anyway, so
+/// this parses but behaves like checking), or a list of link prefixes.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub enum IgnoreDeadLinks {
     #[default]
     Check,
     IgnoreAll,
+    IgnoreLocalhost,
     IgnorePrefixes(Vec<String>),
 }
 
@@ -460,11 +609,16 @@ impl<'de> Deserialize<'de> for IgnoreDeadLinks {
         #[serde(untagged)]
         enum Raw {
             Bool(bool),
+            Word(String),
             Prefixes(Vec<String>),
         }
         match Raw::deserialize(deserializer)? {
             Raw::Bool(true) => Ok(IgnoreDeadLinks::IgnoreAll),
             Raw::Bool(false) => Ok(IgnoreDeadLinks::Check),
+            Raw::Word(w) if w == "localhostLinks" => Ok(IgnoreDeadLinks::IgnoreLocalhost),
+            Raw::Word(other) => Err(serde::de::Error::custom(format!(
+                "unknown ignoreDeadLinks {other:?}: expected true, false, \"localhostLinks\", or a list of prefixes"
+            ))),
             Raw::Prefixes(v) => Ok(IgnoreDeadLinks::IgnorePrefixes(v)),
         }
     }
@@ -592,14 +746,22 @@ pub struct CustomContainer {
     pub label: Option<String>,
 }
 
-/// `[docFooter]` — prev/next pager labels.
+/// `[docFooter]` — prev/next pager labels; `false` on either side
+/// disables that pager.
 #[derive(Debug, Clone, Default, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct DocFooter {
     #[serde(default)]
-    pub prev: Option<String>,
+    pub prev: Option<PagerLabel>,
     #[serde(default)]
-    pub next: Option<String>,
+    pub next: Option<PagerLabel>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum PagerLabel {
+    Text(String),
+    Off(bool),
 }
 
 /// `[notFound]` — 404 page texts.
@@ -655,7 +817,7 @@ mod tests {
         let c = SiteConfig::default();
         assert_eq!(c.lang, "en");
         assert_eq!(c.base, "/");
-        assert_eq!(c.outline.label, "On this page");
+        assert_eq!(c.outline.label(), "On this page");
         assert!(c.nav.is_empty());
         assert_eq!(c.sidebar, Sidebar::Auto);
         assert!(c.search.is_none());
@@ -732,7 +894,7 @@ provider = "local"
             c.edit_link.as_ref().unwrap().pattern,
             "https://github.com/me/repo/edit/main/docs/:path"
         );
-        assert_eq!(c.outline.level, Some(OutlineLevel::Range((2, 3))));
+        assert_eq!(c.outline.level(), Some(OutlineLevel::Range((2, 3))));
         assert_eq!(c.search, Some(Search { provider: SearchProvider::Local }));
     }
 
@@ -817,7 +979,7 @@ base = "/reference/"
     #[test]
     fn outline_level_single_number() {
         let c = parse("outline.level = 2\n");
-        assert_eq!(c.outline.level, Some(OutlineLevel::Single(2)));
+        assert_eq!(c.outline.level(), Some(OutlineLevel::Single(2)));
     }
 
     #[test]

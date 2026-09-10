@@ -4,11 +4,11 @@
 //! VitePress-format content, not hand-written samples.
 
 use gen_docs::config::SiteConfig;
-use gen_docs::content::{Content, OutlineSetting};
+use gen_docs::content::{Content, FeatureIcon, OutlineSetting};
 use gen_docs::sidebar::Sidebars;
 
 fn fixtures() -> Content {
-    Content::load(std::path::Path::new("tests/fixtures/en")).expect("fixture content loads")
+    Content::load(std::path::Path::new("tests/fixtures/en"), &[]).expect("fixture content loads")
 }
 
 #[test]
@@ -54,10 +54,10 @@ fn home_page_front_matter() {
     );
     assert!(hero.actions.iter().any(|a| a.link == "./guide/what-is-vitepress"));
     assert!(home.front.features.iter().any(|f| f.title == "Focus on your content"));
-    assert!(home.front.features[0]
-        .icon
-        .as_deref()
-        .is_some_and(|i| i.starts_with("<span")));
+    assert!(matches!(
+        &home.front.features[0].icon,
+        Some(FeatureIcon::Text(t)) if t.starts_with("<span")
+    ));
 }
 
 #[test]

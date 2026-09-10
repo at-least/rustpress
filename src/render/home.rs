@@ -71,7 +71,7 @@ pub fn home_page<'a>(site: &'a Site, page: &'a Page) -> impl Renderable + 'a {
                         <div class="order-1 m-[-4.75rem_-1.5rem_-3rem] sm:m-[-6.75rem_-1.5rem_-3rem] lg:order-2 lg:grow lg:m-0 lg:min-h-full">
                             <div class="relative mx-auto w-80 h-80 sm:w-[24.5rem] sm:h-[24.5rem] lg:flex lg:justify-center lg:items-center lg:w-full lg:h-full lg:[transform:translate(-2rem,-2rem)]">
                                 <div class="absolute top-1/2 left-1/2 rounded-full w-48 h-48 [background-image:var(--vp-home-hero-image-background-image)] [filter:var(--vp-home-hero-image-filter)] [transform:translate(-50%,-50%)] sm:w-64 sm:h-64 lg:w-80 lg:h-80"></div>
-                                <img class="absolute top-1/2 left-1/2 max-w-48 max-h-48 w-full h-full object-contain [transform:translate(-50%,-50%)] [filter:drop-shadow(-2px_4px_6px_rgba(0,0,0,0.2))] p-[1.125rem] sm:max-w-64 sm:max-h-64 lg:max-w-80 lg:max-h-80" src=(site.url(&image.src)) alt=(image.alt.clone().unwrap_or_default())>
+                                (Raw::dangerously_create(hero_image_html(site, &image)))
                             </div>
                         </div>
                     }
@@ -95,13 +95,40 @@ pub fn home_page<'a>(site: &'a Site, page: &'a Page) -> impl Renderable + 'a {
     }
 }
 
+/// The hero `<img>`(s): one image, or a light/dark pair switched by the
+/// color scheme.
+fn hero_image_html(site: &Site, image: &crate::content::HeroImage) -> String {
+    fn esc(s: &str) -> String {
+        s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;")
+    }
+    fn img(site: &Site, src: &str, alt: &str, extra: &str) -> String {
+        format!(
+            r#"<img class="absolute top-1/2 left-1/2 max-w-48 max-h-48 w-full h-full object-contain [transform:translate(-50%,-50%)] [filter:drop-shadow(-2px_4px_6px_rgba(0,0,0,0.2))] p-[1.125rem] sm:max-w-64 sm:max-h-64 lg:max-w-80 lg:max-h-80{extra}" src="{}" alt="{}">"#,
+            esc(&site.url(src)),
+            esc(alt)
+        )
+    }
+    match image {
+        crate::content::HeroImage::Simple(src) => img(site, src, "", ""),
+        crate::content::HeroImage::Detailed { src, alt } => {
+            img(site, src, alt.as_deref().unwrap_or(""), "")
+        }
+        crate::content::HeroImage::Dual { light, dark, alt } => [
+            img(site, light, alt.as_deref().unwrap_or(""), " dark:hidden"),
+            img(site, dark, alt.as_deref().unwrap_or(""), " hidden dark:block"),
+        ]
+        .concat(),
+    }
+}
+
 /// VPFeature card. With `link` the whole card is the anchor (upstream
 /// VPFeature); `target`/`rel` pass through on both features and hero
 /// action buttons.
 fn feature_card(site: &Site, feature: &Feature) -> String {
+    let icon_html = feature.icon.as_ref().map(|i| feature_icon_html(site, i));
     let body = rsx! {
         <article class="flex flex-col p-6 h-full">
-            @if let Some(icon_html) = feature.icon.clone() {
+            @if let Some(icon_html) = icon_html.clone() {
                 <div class="flex justify-center items-center mb-5 rounded-md bg-default-soft w-12 h-12 text-[1.5rem] transition-colors duration-[250ms]">
                     (Raw::dangerously_create(icon_html))
                 </div>
@@ -141,6 +168,46 @@ fn feature_card(site: &Site, feature: &Feature) -> String {
 
 fn escape_attr(s: &str) -> String {
     s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;")
+}
+
+/// `features[].icon`: emoji/HTML text, an image, or a light/dark pair.
+fn feature_icon_html(site: &Site, icon: &crate::content::FeatureIcon) -> String {
+    fn esc(s: &str) -> String {
+        s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;")
+    }
+    fn img(
+        site: &Site,
+        src: &str,
+        alt: &str,
+        width: Option<u32>,
+        height: Option<u32>,
+        extra: &str,
+    ) -> String {
+        let mut out = format!(
+            r#"<img src="{}" alt="{}" class="w-12 h-12 rounded-md{extra}""#,
+            esc(&site.url(src)),
+            esc(alt)
+        );
+        if let Some(w) = width {
+            out.push_str(&format!(r#" width="{w}""#));
+        }
+        if let Some(h) = height {
+            out.push_str(&format!(r#" height="{h}""#));
+        }
+        out.push('>');
+        out
+    }
+    match icon {
+        crate::content::FeatureIcon::Text(text) => esc(text),
+        crate::content::FeatureIcon::Image { src, alt, width, height } => {
+            img(site, src, alt.as_deref().unwrap_or(""), *width, *height, "")
+        }
+        crate::content::FeatureIcon::Dual { light, dark, alt, width, height } => [
+            img(site, light, alt.as_deref().unwrap_or(""), *width, *height, " dark:hidden"),
+            img(site, dark, alt.as_deref().unwrap_or(""), *width, *height, " hidden dark:block"),
+        ]
+        .concat(),
+    }
 }
 
 /// VPButton — `theme`: brand | alt | sponsor, build-time known so the

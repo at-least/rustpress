@@ -39,7 +39,7 @@ impl Site {
     pub fn load(site_dir: &Path) -> Result<Site, BuildError> {
         let config = SiteConfig::load(site_dir)?;
         let content_dir = site_dir.join(&config.src_dir);
-        let mut content = Content::load(&content_dir)?;
+        let mut content = Content::load(&content_dir, &config.src_exclude)?;
         let sidebars = Sidebars::build(&config, &content);
         let engine = MarkdownEngine::new(&config.markdown, &config.syntax, site_dir)?;
         // git timestamps beat mtimes: a fresh clone's mtimes are checkout
@@ -196,7 +196,7 @@ impl Site {
             has_math: rendered.has_math,
             lang: self.locale_lang(page),
             translations: self.translations_for(page),
-            site_title: self.site_title_for(page),
+            site_title: self.navbar_site_title(page),
         };
 
         let body = if is_home {
@@ -293,9 +293,12 @@ impl Site {
             stats.sitemap = true;
         }
         match &self.config.ignore_dead_links {
-            // IgnoreAll skips the report; Check and IgnorePrefixes both
-            // report (prefix filtering already ran at collection time)
-            IgnoreDeadLinks::Check | IgnoreDeadLinks::IgnorePrefixes(_) => {
+            // IgnoreAll skips the report; Check, IgnoreLocalhost (a
+            // no-op: http(s) targets are never collected as dead links)
+            // and IgnorePrefixes report (prefix filtering ran earlier)
+            IgnoreDeadLinks::Check
+            | IgnoreDeadLinks::IgnoreLocalhost
+            | IgnoreDeadLinks::IgnorePrefixes(_) => {
                 let mut broken: Vec<String> = Vec::new();
                 for (page_url, links) in &dead_links {
                     for link in links {
@@ -362,28 +365,47 @@ impl Site {
             .unwrap_or_else(|| self.config.lang.clone())
     }
 
-    /// The navbar/`<title>` site title for a page: its locale's title
-    /// when set, else the site title (upstream `locales.*.title`).
-    pub fn site_title_for(&self, page: &Page) -> String {
+    /// The site title a locale's pages carry (its `title` override, else
+    /// the site title).
+    fn locale_title(&self, locale: &str) -> Option<String> {
         self.config
             .locales
-            .get(&page.locale)
+            .get(locale)
             .and_then(|l| l.title.clone())
             .or_else(|| self.config.title.clone())
-            .unwrap_or_default()
+    }
+
+    /// The site-title part of `<title>` (locale-aware, NOT affected by
+    /// `siteTitle`, which upstream scopes to the navbar).
+    fn document_site_title(&self, page: &Page) -> String {
+        self.locale_title(&page.locale).unwrap_or_default()
+    }
+
+    /// The navbar title: `siteTitle` wins (text override, or hidden),
+    /// else the locale-aware site title.
+    fn navbar_site_title(&self, page: &Page) -> Option<String> {
+        match &self.config.site_title {
+            Some(crate::config::SiteTitleSetting::Text(t)) => Some(t.clone()),
+            Some(crate::config::SiteTitleSetting::Hide(_)) => None,
+            None => Some(self.document_site_title(page)),
+        }
     }
 
     /// `<title>`: VitePress's `titleTemplate` semantics — `:title` is
-    /// replaced with the page title; without a template it's
-    /// `Page | Site` (home pages use the site title alone).
+    /// replaced with the page title; `false` drops the suffix; without
+    /// a template it's `Page | Site` (home pages use the site title
+    /// alone).
     fn document_title(&self, page: &Page, is_home: bool) -> String {
-        let site_title = self.site_title_for(page);
+        let site_title = self.document_site_title(page);
         if is_home || page.title.is_empty() {
             return site_title;
         }
         match &self.config.title_template {
-            Some(t) if t.contains(":title") => t.replace(":title", &page.title),
-            Some(t) => format!("{} — {}", page.title, t),
+            Some(crate::config::TitleTemplate::Off(_)) => page.title.clone(),
+            Some(crate::config::TitleTemplate::Tmpl(t)) if t.contains(":title") => {
+                t.replace(":title", &page.title)
+            }
+            Some(crate::config::TitleTemplate::Tmpl(t)) => format!("{} — {}", page.title, t),
             None => format!("{} | {}", page.title, site_title),
         }
     }
@@ -434,13 +456,11 @@ impl Site {
             has_math: false,
             lang: self.config.lang.clone(),
             translations: Vec::new(),
-            site_title: self
-                .config
-                .locales
-                .get("root")
-                .and_then(|l| l.title.clone())
-                .or_else(|| self.config.title.clone())
-                .unwrap_or_default(),
+            site_title: match &self.config.site_title {
+                Some(crate::config::SiteTitleSetting::Text(t)) => Some(t.clone()),
+                Some(crate::config::SiteTitleSetting::Hide(_)) => None,
+                None => self.locale_title("root"),
+            },
         };
         let home = self.url("/");
         let nf_title = nf.title.clone().unwrap_or_else(|| "Page not found".into());
@@ -488,19 +508,23 @@ impl Site {
 }
 
 /// Effective outline heading-level range: page front matter overrides
-/// the site config (`deep` → 2–6).
-pub fn outline_range(config: &SiteConfig, page: &Page) -> (u8, u8) {
-    let site = match config.outline.level {
+/// the site config (`deep` → 2–6). `None` = the outline is disabled
+/// (config `outline: false`).
+pub fn outline_range(config: &SiteConfig, page: &Page) -> Option<(u8, u8)> {
+    if !config.outline.enabled() {
+        return None;
+    }
+    let site = match config.outline.level() {
         Some(OutlineLevel::Single(n)) => (n, n),
         Some(OutlineLevel::Range((a, b))) => (a, b),
         None => (2, 3),
     };
-    match &page.front.outline {
+    Some(match &page.front.outline {
         Some(PageOutline::Deep) => (2, 6),
         Some(PageOutline::Level(n)) => (*n, *n),
         Some(PageOutline::Range((a, b))) => (*a, *b),
         None => site,
-    }
+    })
 }
 
 #[derive(Debug, Default)]

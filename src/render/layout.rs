@@ -21,8 +21,9 @@ pub struct Shell<'a> {
     pub lang: String,
     /// (label, href, current) language switcher entries.
     pub translations: Vec<(String, String, bool)>,
-    /// The navbar/site title for this page (locale-aware).
-    pub site_title: String,
+    /// The navbar title for this page (locale-aware; `None` = hidden
+    /// via `siteTitle: false`).
+    pub site_title: Option<String>,
 }
 
 /// The whole HTML document; `content` is the VPContent body.
@@ -75,7 +76,7 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
                 <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" x-cloak x-show="$store.ui.screen || $store.ui.sidebar" @click="$store.ui.screen = false; $store.ui.sidebar = false"></div>
 
                 <header class="relative top-[var(--vp-layout-top-height,0px)] left-0 z-(--vp-z-index-nav) w-full pointer-events-none lg:fixed">
-                    (navbar::navbar(site, &current_url, is_home, has_sidebar, &shell.translations, &shell.site_title))
+                    (navbar::navbar(site, &current_url, is_home, has_sidebar, &shell.translations, shell.site_title.as_deref()))
                     (navbar::nav_screen(site, &current_url, &shell.translations))
                 </header>
 
@@ -90,10 +91,10 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
                     <footer class=(format!("relative z-(--vp-z-index-footer) border-t border-gutter py-8 px-6 bg-bg md:px-8{}", if has_sidebar { " hidden" } else { "" }))>
                         <div class="mx-auto max-w-(--vp-layout-max-width) text-center [&_a]:underline [&_a]:underline-offset-[0.125rem] [&_a]:transition-colors [&_a]:duration-[250ms] [&_a:hover]:text-text-1">
                             @if let Some(message) = footer_message.clone() {
-                                <p class="leading-[1.7142857] text-[0.875rem] font-medium text-text-2">(message)</p>
+                                <p class="leading-[1.7142857] text-[0.875rem] font-medium text-text-2">(Raw::dangerously_create(message))</p>
                             }
                             @if let Some(copyright) = footer_copyright.clone() {
-                                <p class="leading-[1.7142857] text-[0.875rem] font-medium text-text-2">(copyright)</p>
+                                <p class="leading-[1.7142857] text-[0.875rem] font-medium text-text-2">(Raw::dangerously_create(copyright))</p>
                             }
                         </div>
                     </footer>

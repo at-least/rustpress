@@ -17,7 +17,7 @@ fn build_fixture() -> (tempdir::Guard, gen_docs::render::BuildStats) {
         "title = \"Fixture\"\nignoreDeadLinks = true\n\n[search]\nprovider = \"local\"\n",
     )
     .unwrap();
-    let content = Content::load(&fixtures.join("en")).unwrap();
+    let content = Content::load(&fixtures.join("en"), &[]).unwrap();
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
         engine: MarkdownEngine::new(&config.markdown, &config.syntax, Path::new(".")).unwrap(),
@@ -133,7 +133,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
             ignore
         ))
         .unwrap();
-        let content = Content::load(&fixtures.join("en")).unwrap();
+        let content = Content::load(&fixtures.join("en"), &[]).unwrap();
         Site {
             sidebars: Sidebars::build(&config, &content),
             engine: MarkdownEngine::new(&config.markdown, &config.syntax, Path::new(".")).unwrap(),
@@ -157,7 +157,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
         "title = \"T\"\nignoreDeadLinks = [\"guide/deploy\"]\n\n[search]\nprovider = \"local\"\n",
     )
     .unwrap();
-    let content = Content::load(&fixtures.join("en")).unwrap();
+    let content = Content::load(&fixtures.join("en"), &[]).unwrap();
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
         engine: MarkdownEngine::new(&config.markdown, &config.syntax, Path::new(".")).unwrap(),

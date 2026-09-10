@@ -19,6 +19,19 @@ const CARET_BTN_CLS: &str = "caret flex justify-center items-center -mr-[0.4375r
 const CARET_ICON_CLS: &str =
     "text-[1.125rem] rotate-90 transition-transform duration-[250ms] group-[.collapsed]/side:rotate-0";
 
+/// Optional link attributes, omitted (not empty) when unset.
+fn opt_attrs(target: Option<&str>, rel: Option<&str>) -> String {
+    let esc = |s: &str| s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;");
+    let mut out = String::new();
+    if let Some(t) = target {
+        out.push_str(&format!(r#" target="{}""#, esc(t)));
+    }
+    if let Some(r) = rel {
+        out.push_str(&format!(r#" rel="{}""#, esc(r)));
+    }
+    out
+}
+
 pub fn sidebar(site: &Site, current_url: &str) -> String {
     let Some(tree) = site.sidebars.for_url(current_url) else {
         return String::new();
@@ -95,7 +108,6 @@ fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usi
     let text = n.text.clone();
     let children: Vec<&SidebarNode> = n.children.iter().collect();
     let href = n.url.clone().map(|u| site.url(&u));
-    let aria_current = if is_active { Some("page") } else { None };
     let has_children = !children.is_empty();
 
     rsx! {
@@ -103,13 +115,14 @@ fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usi
             <div class=(row_cls)>
                 <div class=(indicator_cls)></div>
                 @if let Some(href) = href.clone() {
-                    <a class="link flex items-center grow group/link" href=(href) aria-current=(aria_current)>
-                        <p class=(format!(
-                            "{}{}",
-                            text_cls.trim_end_matches("font-bold text-text-1"),
-                            if is_active { " text-brand-1" } else if depth == 0 { " text-text-1" } else { " text-text-2" }
-                        ))>(text.clone())</p>
-                    </a>
+                    (Raw::dangerously_create(format!(
+                        r#"<a class="link flex items-center grow group/link" href="{href}"{}{}><p class="{}{}">{}</p></a>"#,
+                        if is_active { r#" aria-current="page""# } else { "" },
+                        opt_attrs(n.target.as_deref(), n.rel.as_deref()),
+                        text_cls.trim_end_matches("font-bold text-text-1"),
+                        if is_active { " text-brand-1" } else if depth == 0 { " text-text-1" } else { " text-text-2" },
+                        text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;"),
+                    )))
                 } @else {
                     <h3 class=(text_cls)>(text.clone())</h3>
                 }

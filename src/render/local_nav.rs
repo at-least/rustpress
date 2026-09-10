@@ -12,9 +12,11 @@ pub fn local_nav<'a>(site: &'a Site, is_home: bool, has_sidebar: bool, headings:
     if is_home {
         return String::new();
     }
-    let outline_label = site.config.outline.label.clone();
+    let outline_label = site.config.outline.label();
+    let outline_enabled = site.config.outline.enabled();
     let root_url = site.url("/");
     let return_label = site.config.return_to_top_label.clone();
+    let menu_label = site.config.sidebar_menu_label.clone();
     let nav_cls = format!(
         "sticky top-0 left-0 z-(--vp-z-index-local-nav) w-full pt-[var(--vp-layout-top-height,0px)] border-b border-(--vp-local-nav-divider-color) [&::before]:content-[''] [&::before]:absolute [&::before]:inset-0 [&::before]:z-[-1] [&::before]:bg-(--vp-local-nav-bg-color) [&::before]:[backdrop-filter:var(--vp-nav-backdrop-filter)] [&::before]:transition-colors [&::before]:duration-[250ms] lg:top-(--vp-nav-height) lg:[&::before]:top-[calc(-1*var(--vp-nav-height))]{} xl:hidden",
         if has_sidebar { " lg:pl-(--vp-sidebar-width)" } else { "" }
@@ -25,10 +27,11 @@ pub fn local_nav<'a>(site: &'a Site, is_home: bool, has_sidebar: bool, headings:
                 @if has_sidebar {
                     <button type="button" class="flex items-center py-[0.75rem] px-6 pb-[0.6875rem] leading-[2] text-[0.75rem] font-medium text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] cursor-pointer lg:hidden md:px-8" id="VPLocalNavMenu" @click="$store.ui.sidebar = true" :aria-expanded=("$store.ui.sidebar.toString()") aria-controls="VPSidebarNav">
                         (icon("align-left", "mr-2 size-[0.875rem]"))
-                        <span>"Menu"</span>
+                        <span>(menu_label)</span>
                     </button>
                 }
-                <div id="VPLocalNavOutlineDropdown" x-data="{ open: false }" @click.outside="open = false">
+                @if outline_enabled {
+                    <div id="VPLocalNavOutlineDropdown" x-data="{ open: false }" @click.outside="open = false">
                     <button type="button" class="group/drop relative block py-[0.75rem] px-6 pb-[0.6875rem] leading-[2] text-[0.75rem] font-medium text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] cursor-pointer [&.open]:text-text-1 md:px-8 lg:text-[0.875rem]" id="VPOutlineDropdownButton" @click="open = !open" :aria-expanded=("open.toString()") :class=("{ open: open }") aria-controls="VPOutlineDropdownItems">
                         <span>(outline_label.clone())</span>
                         (icon("chevron-right", "inline-block align-middle ml-[0.125rem] size-[0.875rem] transition-transform duration-[250ms] group-[.open]/drop:rotate-90 lg:size-[1rem]"))
@@ -41,7 +44,8 @@ pub fn local_nav<'a>(site: &'a Site, is_home: bool, has_sidebar: bool, headings:
                             (outline_list(headings, false))
                         </div>
                     </div>
-                </div>
+                    </div>
+                }
             </div>
         </div>
     }

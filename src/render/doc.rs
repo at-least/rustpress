@@ -16,14 +16,17 @@ pub fn doc_page<'a>(
     prev: Option<(&'a Page, &'a str)>,
     next: Option<(&'a Page, &'a str)>,
     has_sidebar: bool,
-    outline: (u8, u8),
+    outline: Option<(u8, u8)>,
 ) -> impl Renderable + 'a {
-    let outline_label = site.config.outline.label.clone();
-    let headings: Vec<&Heading> = rendered
-        .headings
-        .iter()
-        .filter(|h| h.level >= outline.0 && h.level <= outline.1)
-        .collect();
+    let outline_label = site.config.outline.label();
+    let headings: Vec<&Heading> = match outline {
+        Some((lo, hi)) => rendered
+            .headings
+            .iter()
+            .filter(|h| h.level >= lo && h.level <= hi)
+            .collect(),
+        None => Vec::new(),
+    };
     let show_outline = !headings.is_empty();
     let edit_link = site.config.edit_link.as_ref().map(|e| {
         let text = e.text.clone().unwrap_or_else(|| "Edit this page on GitHub".into());
@@ -35,10 +38,18 @@ pub fn doc_page<'a>(
         .then(|| page.modified.map(format_date).map(|d| (d.0, d.1)))
         .flatten();
     let doc_footer = site.config.doc_footer.clone().unwrap_or_default();
-    let prev_label = doc_footer.prev.clone().unwrap_or_else(|| "Previous page".into());
-    let next_label = doc_footer.next.clone().unwrap_or_else(|| "Next page".into());
+    // `docFooter.prev/next: false` disables that pager side
+    let (prev, prev_label) = match pager_label(&doc_footer.prev, "Previous page") {
+        Ok(label) => (prev, label),
+        Err(()) => (None, String::new()),
+    };
+    let (next, next_label) = match pager_label(&doc_footer.next, "Next page") {
+        Ok(label) => (next, label),
+        Err(()) => (None, String::new()),
+    };
     let updated_label = site.config.last_updated_text.clone();
-    let show_footer = edit_link.is_some() || last_updated.is_some() || prev.is_some() || next.is_some();
+    let show_footer =
+        edit_link.is_some() || last_updated.is_some() || prev.is_some() || next.is_some();
 
     let wrapper_cls = if has_sidebar {
         "mx-auto w-full xl:flex xl:justify-center"
@@ -133,6 +144,16 @@ pub fn doc_page<'a>(
                 </div>
             </div>
         </div>
+    }
+}
+
+/// `None` = use the default label; `Some(Ok(text))` = override;
+/// `Some(Err(()))` = `false`, that pager side is disabled.
+fn pager_label(label: &Option<crate::config::PagerLabel>, default: &str) -> Result<String, ()> {
+    match label {
+        None => Ok(default.to_string()),
+        Some(crate::config::PagerLabel::Text(t)) => Ok(t.clone()),
+        Some(crate::config::PagerLabel::Off(_)) => Err(()),
     }
 }
 

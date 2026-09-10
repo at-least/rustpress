@@ -25,17 +25,21 @@ pub fn navbar<'a>(
     is_home: bool,
     has_sidebar: bool,
     translations: &'a [(String, String, bool)],
-    site_title: &'a str,
+    site_title: Option<&'a str>,
 ) -> impl Renderable + 'a {
     let home = site.url("/");
-    let site_title = site_title.to_string();
-    let logo = site.config.logo.as_ref().map(|l| site.url(l));
+    let site_title = site_title.map(str::to_string);
+    let logo = site.config.logo.as_ref().map(|l| logo_html(site, l));
     let ask_ai = site.config.ask_ai_url.clone();
     let nav: Vec<&NavItem> = site.config.nav.iter().collect();
     let socials: Vec<_> = site.config.social_links.clone();
     let has_search = site.config.search.is_some();
     let show_social = !socials.is_empty();
     let toggleable = site.config.appearance.toggleable();
+    let nav_menu_label = site.config.nav_menu_label.clone();
+    let lang_menu_label = site.config.lang_menu_label.clone();
+    let mobile_menu_label = site.config.mobile_menu_label.clone();
+    let dark_switch_title = site.config.dark_mode_switch_title.clone();
 
     let home_cls = if is_home { " home" } else { "" };
     let navbar_cls = format!(
@@ -61,9 +65,11 @@ pub fn navbar<'a>(
                                 if has_sidebar { " lg:shrink-0" } else { "" }
                             )) href=(home)>
                                 @if let Some(logo) = logo.clone() {
-                                    <img class="shrink-0 mr-0 h-(--vp-nav-logo-height)" src=(logo) alt="Logo">
+                                    (Raw::dangerously_create(logo))
                                 }
-                                <span>(site_title)</span>
+                                @if let Some(title) = site_title.clone() {
+                                    <span>(title)</span>
+                                }
                             </a>
                         </div>
                     </div>
@@ -89,7 +95,7 @@ pub fn navbar<'a>(
                             </div>
 
                             @if !nav.is_empty() {
-                                <nav class="relative hidden md:flex md:grow md:justify-end min-w-0" aria-label="Main Navigation">
+                                <nav class="relative hidden md:flex md:grow md:justify-end min-w-0" aria-label=(nav_menu_label.clone())>
                                     <ul class="flex justify-end">
                                         @for item in &nav {
                                             <li>
@@ -103,7 +109,7 @@ pub fn navbar<'a>(
                             @if !translations.is_empty() {
                                 <div class="VPFlyout relative hidden md:flex md:items-center md:justify-end md:pl-[17px] group/flyout hover:text-brand-1 transition-colors duration-[250ms]"
                                     x-data="{ open: false }" @click.outside="open = false">
-                                    <button type="button" class="flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" :aria-expanded=("open.toString()") @click="open = !open" aria-haspopup="true" aria-label="Change language">
+                                    <button type="button" class="flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" :aria-expanded=("open.toString()") @click="open = !open" aria-haspopup="true" aria-label=(lang_menu_label.clone())>
                                         <span class="flex items-center leading-(--vp-nav-height) text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] group-hover/flyout:text-text-2">
                                             (icon("languages", "size-[1rem]"))
                                             (icon("chevron-down", "ml-1 size-[0.875rem]"))
@@ -125,7 +131,7 @@ pub fn navbar<'a>(
 
                             @if toggleable {
                                 <div class="flex items-center">
-                                    (appearance_switch("VPSwitchAppearance"))
+                                    (Raw::dangerously_create(appearance_switch("VPSwitchAppearance", &dark_switch_title)))
                                 </div>
                             }
 
@@ -133,7 +139,7 @@ pub fn navbar<'a>(
                                 <div class="hidden md:flex md:items-center -mr-2 before:content-[''] before:ml-4 before:mr-2 before:w-px before:h-6 before:bg-divider">
                                     <div class="flex">
                                         @for s in &socials {
-                                            <a class="flex justify-center items-center w-9 h-9 text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms]" href=(s.link.clone()) aria-label=(social_label(&s.icon)) target="_blank" rel="noopener">
+                                            <a class="flex justify-center items-center w-9 h-9 text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms]" href=(s.link.clone()) aria-label=(s.aria_label.clone().unwrap_or_else(|| social_label(&s.icon))) target=(s.target.clone().unwrap_or_else(|| "_blank".into())) rel="noopener">
                                                 (social_link_icon(&s.icon))
                                             </a>
                                         }
@@ -141,7 +147,7 @@ pub fn navbar<'a>(
                                 </div>
                             }
 
-                            <button type="button" class="group flex justify-center items-center w-12 h-(--vp-nav-height) cursor-pointer md:hidden" id="VPNavBarHamburger" aria-label="Menu" @click="$store.ui.screen = !$store.ui.screen" :aria-expanded=("$store.ui.screen.toString()") :class=("{ active: $store.ui.screen }")>
+                            <button type="button" class="group flex justify-center items-center w-12 h-(--vp-nav-height) cursor-pointer md:hidden" id="VPNavBarHamburger" aria-label=(mobile_menu_label.clone()) @click="$store.ui.screen = !$store.ui.screen" :aria-expanded=("$store.ui.screen.toString()") :class=("{ active: $store.ui.screen }")>
                                 <span class="relative w-4 h-[0.875rem] overflow-hidden" aria-hidden="true">
                                     <span class="absolute w-4 h-[2px] top-0 left-0 bg-text-1 [transition:top_0.25s,background-color_0.5s,transform_0.25s] group-hover:translate-x-1 group-[.active]:top-[0.375rem] group-[.active]:translate-x-0! group-[.active]:rotate-[225deg] group-hover:group-[.active]:bg-text-2 group-hover:group-[.active]:[transition:top_0.25s,background-color_0.25s,transform_0.25s]"></span>
                                     <span class="absolute w-4 h-[2px] top-[0.375rem] left-0 translate-x-2 bg-text-1 [transition:top_0.25s,background-color_0.5s,transform_0.25s] group-hover:translate-x-0 group-[.active]:top-[0.375rem] group-[.active]:translate-x-4! group-hover:group-[.active]:bg-text-2 group-hover:group-[.active]:[transition:top_0.25s,background-color_0.25s,transform_0.25s]"></span>
@@ -166,23 +172,63 @@ pub fn navbar<'a>(
     }
 }
 
+/// The navbar logo: one `<img>` or a light/dark pair switched by the
+/// color scheme.
+fn logo_html(site: &Site, logo: &crate::config::ThemeableImage) -> String {
+    fn esc(s: &str) -> String {
+        s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;")
+    }
+    fn img(site: &Site, src: &str, alt: &str, extra: &str) -> String {
+        format!(
+            r#"<img class="shrink-0 mr-0 h-(--vp-nav-logo-height){extra}" src="{}" alt="{}">"#,
+            esc(&site.url(src)),
+            esc(alt)
+        )
+    }
+    match logo {
+        crate::config::ThemeableImage::Simple(src) => img(site, src, "Logo", ""),
+        crate::config::ThemeableImage::Detailed { src, alt } => {
+            img(site, src, alt.as_deref().unwrap_or("Logo"), "")
+        }
+        crate::config::ThemeableImage::Dual { light, dark, alt } => [
+            img(site, light, alt.as_deref().unwrap_or("Logo"), " dark:hidden"),
+            img(site, dark, alt.as_deref().unwrap_or("Logo"), " hidden dark:block"),
+        ]
+        .concat(),
+    }
+}
+
+/// Anchor open tag with optional `target`/`rel` (built as a string so
+/// the attrs are omitted, not emitted empty).
+fn link_attrs(target: Option<&str>, rel: Option<&str>) -> String {
+    let mut out = String::new();
+    fn esc(s: &str) -> String {
+        s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;")
+    }
+    if let Some(t) = target {
+        out.push_str(&format!(r#" target="{}""#, esc(t)));
+    }
+    if let Some(r) = rel {
+        out.push_str(&format!(r#" rel="{}""#, esc(r)));
+    }
+    out
+}
+
 fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> String {
     let active = nav_item_active(item, current_url);
-    
+
     if item.items.is_empty() {
         let href = site.url(&item.link.clone().unwrap_or_default());
         let cls = format!(
             "flex items-center min-h-(--vp-nav-height) px-3 leading-normal text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1{}",
             if active { " text-brand-1" } else { "" }
         );
-        let text = item.text.clone();
-        rsx! {
-            <a class=(cls) href=(href)>
-                <span>(text)</span>
-            </a>
-        }
-        .render()
-        .into_inner()
+        let attrs = link_attrs(item.target.as_deref(), item.rel.as_deref());
+        let text = item.text
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;");
+        format!(r#"<a class="{cls}" href="{href}"{attrs}><span>{text}</span></a>"#)
     } else {
         let group_cls = format!(
             "VPFlyout relative group/flyout hover:text-brand-1 transition-colors duration-[250ms]{}",
@@ -207,10 +253,13 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
                         <ul>
                             @for child in &children {
                                 <li>
-                                    <a class=(format!(
-                                        "block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap text-text-1 transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft{}",
-                                        if child.link.as_deref().is_some_and(|l| current_url.contains(l)) { " text-brand-1" } else { "" }
-                                    )) href=(site.url(&child.link.clone().unwrap_or_default()))>(child.text.clone())</a>
+                                    (Raw::dangerously_create(format!(
+                                        r#"<a class="block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap text-text-1 transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft{}" href="{}"{}>{}</a>"#,
+                                        if child.link.as_deref().is_some_and(|l| current_url.contains(l)) { " text-brand-1" } else { "" },
+                                        site.url(&child.link.clone().unwrap_or_default()),
+                                        link_attrs(child.target.as_deref(), child.rel.as_deref()),
+                                        child.text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;"),
+                                    )))
                                 </li>
                             }
                         </ul>
@@ -224,10 +273,11 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
 }
 
 /// VPSwitchAppearance — one instance in the navbar, one in the nav
-/// screen; the JS bundle syncs `aria-checked` across both.
-fn appearance_switch(id: &'static str) -> impl Renderable {
+/// screen; the JS bundle syncs `aria-checked` across both. The title
+/// is the static dark-mode one (what clicking does while light).
+fn appearance_switch(id: &'static str, dark_title: &str) -> String {
     rsx! {
-        <button type="button" id=(id) class="VPSwitch VPSwitchAppearance relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label="Appearance" aria-checked="false" title="Toggle dark mode" @click="gdToggleAppearance()">
+        <button type="button" id=(id) class="VPSwitch VPSwitchAppearance relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label="Appearance" aria-checked="false" title=(dark_title.to_string()) @click="gdToggleAppearance()">
             <span class="absolute top-px left-px w-[1.125rem] h-[1.125rem] rounded-full bg-(--vp-c-neutral-inverse) shadow-1 transition-transform duration-[250ms] dark:translate-x-[1.125rem]">
                 <span class="relative block w-[1.125rem] h-[1.125rem] rounded-full overflow-hidden">
                     (icon("sun", "absolute top-[0.1875rem] left-[0.1875rem] size-3 text-text-2 dark:text-text-1 transition-opacity duration-[250ms] opacity-100 dark:opacity-0"))
@@ -251,10 +301,12 @@ pub fn nav_screen<'a>(
     let has_nav = !nav.is_empty();
     let toggleable = site.config.appearance.toggleable();
     let dark_label = site.config.dark_mode_switch_label.clone();
+    let nav_menu_label = site.config.nav_menu_label.clone();
+    let dark_switch_title = site.config.dark_mode_switch_title.clone();
     rsx! {
         <div class="fixed inset-0 pt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+1px)] pr-8 pl-8 bg-(--vp-nav-screen-bg-color) w-full overflow-y-auto overscroll-contain transition-colors duration-[250ms] pointer-events-auto opacity-100 md:hidden" id="VPNavScreen" x-cloak x-show="$store.ui.screen" @keydown.escape.window="$store.ui.screen = false" x-effect="document.body.style.overflow = $store.ui.screen ? 'hidden' : ''">
             <div class="mx-auto pt-6 pb-24 max-w-[18rem]">
-                <nav class="menu" aria-label="Main Navigation">
+                <nav class="menu" aria-label=(nav_menu_label.clone())>
                     <ul>
                         @for item in &nav {
                             <li>
@@ -279,7 +331,7 @@ pub fn nav_screen<'a>(
                 @if toggleable {
                     <div class=(format!("appearance flex justify-center items-center pt-3{}", if has_nav { " mt-4" } else { "" }))>
                         <span class="label mr-3 text-[0.875rem] font-medium text-text-1">(dark_label)</span>
-                        (appearance_switch("VPSwitchAppearanceScreen"))
+                        (Raw::dangerously_create(appearance_switch("VPSwitchAppearanceScreen", &dark_switch_title)))
                     </div>
                 }
 
@@ -287,7 +339,7 @@ pub fn nav_screen<'a>(
                     <div class="social-links mt-4">
                         <div class="flex">
                             @for s in &socials {
-                                <a class="flex justify-center items-center w-9 h-9 text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms]" href=(s.link.clone()) aria-label=(social_label(&s.icon)) target="_blank" rel="noopener">
+                                <a class="flex justify-center items-center w-9 h-9 text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms]" href=(s.link.clone()) aria-label=(s.aria_label.clone().unwrap_or_else(|| social_label(&s.icon))) target=(s.target.clone().unwrap_or_else(|| "_blank".into())) rel="noopener">
                                     (social_link_icon(&s.icon))
                                 </a>
                             }
@@ -301,19 +353,19 @@ pub fn nav_screen<'a>(
 
 fn screen_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> String {
     let active = nav_item_active(item, current_url);
-    
+
     if item.items.is_empty() {
         let cls = format!(
             "block border-b border-divider pt-3 pb-[0.6875rem] leading-[1.7142857] text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1{}",
             if active { " text-brand-1" } else { "" }
         );
         let href = site.url(&item.link.clone().unwrap_or_default());
-        let text = item.text.clone();
-        rsx! {
-            <a class=(cls) href=(href)>(text)</a>
-        }
-        .render()
-        .into_inner()
+        let attrs = link_attrs(item.target.as_deref(), item.rel.as_deref());
+        let text = item.text
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;");
+        format!(r#"<a class="{cls}" href="{href}"{attrs}>{text}</a>"#)
     } else {
         let group_cls = format!("VPNavScreenMenuGroup group{}", if active { " active" } else { "" });
         let text = item.text.clone();
@@ -327,7 +379,12 @@ fn screen_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> 
                 <ul class="items" hidden>
                     @for child in &children {
                         <li>
-                            <a class="block border-b border-divider pt-3 pb-[0.6875rem] leading-[1.7142857] text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1" href=(site.url(&child.link.clone().unwrap_or_default()))>(child.text.clone())</a>
+                            (Raw::dangerously_create(format!(
+                                r#"<a class="block border-b border-divider pt-3 pb-[0.6875rem] leading-[1.7142857] text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1" href="{}"{}>{}</a>"#,
+                                site.url(&child.link.clone().unwrap_or_default()),
+                                link_attrs(child.target.as_deref(), child.rel.as_deref()),
+                                child.text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;"),
+                            )))
                         </li>
                     }
                 </ul>
