@@ -150,7 +150,8 @@ pub struct SiteConfig {
     pub syntax: SyntaxThemes,
 
     /// UI theme: either a built-in palette name (`vitepress` (default),
-    /// `green`, `purple`, `orange`, `mono`) or a path to a CSS file
+    /// `green`, `purple`, `orange`, `mono`, `ocean`, `sakura`, `ember`)
+    /// or a path to a CSS file
     /// relative to the site dir (values ending in `.css`). One or the
     /// other — no layering.
 

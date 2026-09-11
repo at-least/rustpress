@@ -6,6 +6,7 @@
     "test": "npm run build:js && npm run build:css && cargo test --quiet && npm run check:demo && npm run check:parity",
     "check:demo": "cargo run --quiet -- build demo",
     "build:docs": "cargo run --quiet -- build docs",
+    "build:showcase": "cargo run --quiet --bin build_theme_showcase",
     "dev:docs": "npm run watch:css & npm run watch:js & cargo run -- serve docs & wait",
     "check:parity": "cargo run --quiet -- parity check demo/public",
     "parity:refresh": "cp parity/upstream.json parity/upstream.prev.json 2>/dev/null; node scripts/parity-refresh.mjs && cargo run --quiet -- parity snapshot parity/cache --meta parity/cache/meta.json && cargo run --quiet -- parity diff parity/upstream.prev.json parity/upstream.json; rc=$?; rm -f parity/upstream.prev.json; exit $rc",

@@ -1,54 +1,42 @@
-//! Built-in UI palettes for the `[theme]` section of rustpress.toml.
-//!
-//! Each palette re-points the brand aliases (`--vp-c-brand-*`) at one of
-//! the palette ramps already defined in styles/vitepress.css (or, for
-//! `mono`, at literal neutrals) in both `:root` and `.dark` — the ramp
-//! values themselves are mode-aware, so dark mode resolves automatically.
+/* rustpress theme gallery: paint any container with a built-in palette.
+ *
+ * Usage: <div x-data="themePreview('green')">…anything…</div>
+ *
+ * The palette definitions are inlined below (generated from rustpress's
+ * palettes.rs at build time by build_theme_showcase.rs) so the gallery
+ * works when served from any subpath — no fetch needed. Each preview
+ * injects one <style> scoped to a generated class, so it is independent
+ * of the page's own theme. Dark mode follows the site's .dark class
+ * on <html>.
+ */
 
-pub const DEFAULT_NAME: &str = "vitepress";
-
-pub struct Palette {
-    pub name: &'static str,
-    pub css: &'static str,
-}
-
-pub const PALETTES: &[Palette] = &[
-    Palette {
-        name: "green",
-        css: r#"
+/* START generated */
+const PALETTES = {
+  "green": `
 :root, .dark {
   --vp-c-brand-1: var(--vp-c-green-1);
   --vp-c-brand-2: var(--vp-c-green-2);
   --vp-c-brand-3: var(--vp-c-green-3);
   --vp-c-brand-soft: var(--vp-c-green-soft);
 }
-"#,
-    },
-    Palette {
-        name: "purple",
-        css: r#"
+`,
+  "purple": `
 :root, .dark {
   --vp-c-brand-1: var(--vp-c-purple-1);
   --vp-c-brand-2: var(--vp-c-purple-2);
   --vp-c-brand-3: var(--vp-c-purple-3);
   --vp-c-brand-soft: var(--vp-c-purple-soft);
 }
-"#,
-    },
-    Palette {
-        name: "orange",
-        css: r#"
+`,
+  "orange": `
 :root, .dark {
   --vp-c-brand-1: var(--vp-c-orange-1);
   --vp-c-brand-2: var(--vp-c-orange-2);
   --vp-c-brand-3: var(--vp-c-orange-3);
   --vp-c-brand-soft: var(--vp-c-orange-soft);
 }
-"#,
-    },
-    Palette {
-        name: "mono",
-        css: r#"
+`,
+  "mono": `
 :root {
   --vp-c-brand-1: #242424;
   --vp-c-brand-2: #4a4a4a;
@@ -62,11 +50,8 @@ pub const PALETTES: &[Palette] = &[
   --vp-c-brand-3: #9a9a9a;
   --vp-c-brand-soft: rgba(160, 160, 160, 0.16);
 }
-"#,
-    },
-    Palette {
-        name: "ocean",
-        css: r#"
+`,
+  "ocean": `
 :root {
   --vp-c-brand-1: #0969da;
   --vp-c-brand-2: #218bff;
@@ -80,11 +65,8 @@ pub const PALETTES: &[Palette] = &[
   --vp-c-brand-3: #1f6feb;
   --vp-c-brand-soft: rgba(88, 166, 255, 0.14);
 }
-"#,
-    },
-    Palette {
-        name: "sakura",
-        css: r#"
+`,
+  "sakura": `
 :root {
   --vp-c-brand-1: #bf3989;
   --vp-c-brand-2: #d93b9d;
@@ -98,29 +80,32 @@ pub const PALETTES: &[Palette] = &[
   --vp-c-brand-3: #c94596;
   --vp-c-brand-soft: rgba(245, 127, 192, 0.15);
 }
-"#,
-    },
-    Palette {
-        name: "ember",
-        css: r#"
+`,
+  "ember": `
 :root, .dark {
   --vp-c-brand-1: var(--vp-c-red-1);
   --vp-c-brand-2: var(--vp-c-red-2);
   --vp-c-brand-3: var(--vp-c-red-3);
   --vp-c-brand-soft: var(--vp-c-red-soft);
 }
-"#,
+`,
+};
+/* END generated */
+
+document.addEventListener("alpine:init", () => {
+  Alpine.data("themePreview", () => ({
+    init() {
+      const name = this.$el.getAttribute("x-data").match(/'([^']+)'/)?.[1];
+      const css = name && PALETTES[name];
+      if (!name || !css) {
+        this.$el.dataset.missing = name || "?";
+        return;
+      }
+      const cls = `rp-tp-${name.replace(/[^a-z0-9-]/gi, "")}`;
+      this.$el.classList.add(cls);
+      const style = document.createElement("style");
+      style.textContent = css.replaceAll(":root", `.${cls}`).replaceAll(".dark", `.dark .${cls}`);
+      document.head.appendChild(style);
     },
-];
-
-/// The override CSS for a built-in palette name.
-pub fn css(name: &str) -> Option<&'static str> {
-    PALETTES.iter().find(|p| p.name == name).map(|p| p.css)
-}
-
-/// Human-readable list for error messages.
-pub fn available() -> String {
-    let mut names: Vec<String> = PALETTES.iter().map(|p| p.name.to_string()).collect();
-    names.insert(0, format!("{DEFAULT_NAME} (default)"));
-    names.join(", ")
-}
+  }));
+});

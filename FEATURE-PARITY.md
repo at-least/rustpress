@@ -369,8 +369,8 @@ direction: upstream → us.
 
 - `[syntax]` Helix TOML themes (218 bundled + custom file paths,
   light/dark split) — upstream colors code via Shiki `markdown` options.
-- `theme.toml` palettes + builtins (`green`, `purple`, `orange`,
-  `mono`) — upstream theming is CSS files.
+- `theme.toml` palettes + builtins (`green`, `purple`, `orange`, `mono`,
+  `ocean`, `sakura`, `ember`) — upstream theming is CSS files.
 - `[markdown] codeCopyButton` toggle — upstream has no such option.
 - `askAiUrl` navbar link — upstream's Ask AI lives inside Algolia search.
 - `[notFound]` title/quote/linkText — upstream 404 is slot-based.

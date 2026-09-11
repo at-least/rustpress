@@ -1,0 +1,51 @@
+/* rustpress theme gallery — scoped preview cards. Loaded only on the
+ * gallery page via frontmatter [[head]]. */
+
+.theme-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.theme-preview {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  padding: 1rem;
+  background: var(--vp-c-bg);
+}
+
+.theme-preview[data-missing]::after {
+  content: "unknown palette: " attr(data-missing);
+  display: block;
+  color: var(--vp-c-red-1);
+  font-size: 0.85rem;
+}
+
+.theme-preview .tp-name {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.theme-preview .tp-name a {
+  color: var(--vp-c-brand-1);
+  text-decoration: none;
+}
+
+.theme-preview .tp-name a:hover {
+  text-decoration: underline;
+  color: var(--vp-c-brand-2);
+}
+
+.theme-preview .tp-swatches {
+  display: flex;
+  gap: 6px;
+}
+
+.theme-preview .tp-swatches span {
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  border: 1px solid var(--vp-c-divider);
+}

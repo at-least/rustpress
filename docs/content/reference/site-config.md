@@ -341,7 +341,7 @@ lastUpdated = true
 - Type: `string`
 - Default: `"vitepress"`
 
-The UI color palette. Either one of the built-in palettes — `vitepress` (the stock look), `green`, `purple`, `orange`, `mono` — or a path (relative to the site directory, ending in `.css`) to your own CSS file of `--vp-*` custom-property overrides. The result is written as `theme.css` and linked after the main stylesheet on every page.
+The UI color palette. Either one of the built-in palettes — `vitepress` (the stock look), `green`, `purple`, `orange`, `mono`, `ocean`, `sakura`, `ember` — or a path (relative to the site directory, ending in `.css`) to your own CSS file of `--vp-*` custom-property overrides. The result is written as `theme.css` and linked after the main stylesheet on every page.
 
 ```toml
 theme = "green"

@@ -263,6 +263,18 @@ impl Site {
 
     /// Build the whole site into `out_dir`.
     pub fn build(&self, site_dir: &Path, out_dir: &Path) -> Result<BuildStats, BuildError> {
+        self.build_with_extra_assets(site_dir, out_dir, &[])
+    }
+
+    /// Like [`build`], plus extra generated files (relative path, bytes)
+    /// written after the theme assets and static copies. Used by the
+    /// theme showcase to emit one `theme.css` per built-in palette.
+    pub fn build_with_extra_assets(
+        &self,
+        site_dir: &Path,
+        out_dir: &Path,
+        extra_assets: &[(&str, &[u8])],
+    ) -> Result<BuildStats, BuildError> {
         let mut stats = BuildStats::default();
         let mut search_docs: Vec<serde_json::Value> = Vec::new();
         let search_enabled = self.config.search.is_some();
@@ -332,6 +344,16 @@ impl Site {
         if let Some(css) = &self.theme_css {
             write_file(&out_dir.join("theme.css"), css.as_bytes())?;
             stats.theme = true;
+        }
+        for (rel, bytes) in extra_assets {
+            let path = out_dir.join(rel);
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent).map_err(|source| BuildError::Write {
+                    path: parent.to_path_buf(),
+                    source,
+                })?;
+            }
+            write_file(&path, bytes)?;
         }
         if let Some(sitemap) = &self.config.sitemap {
             let xml = self.sitemap_xml(&sitemap.hostname);

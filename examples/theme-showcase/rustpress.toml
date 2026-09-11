@@ -1,0 +1,23 @@
+# Theme showcase: every built-in UI palette as its own page, plus a matrix
+# of vendored Helix syntax color schemes. Generated into docs/public/themes/
+# by `npm run build:showcase` (src/bin/build_theme_showcase.rs).
+#
+# `theme` is unset in this base config: the gallery root shows the stock
+# VitePress look, and each per-palette rebuild inserts a `theme = "<name>"`
+# line before the first section header.
+#
+# ignoreDeadLinks: palette pages link between palettes via relative
+# `<a href="../<name>/">` chains; the 9 rebuilds make every such link valid
+# in the deployed output, but the checker sees each build in isolation.
+
+title = "rustpress themes"
+description = "Every built-in rustpress UI palette and syntax color scheme."
+lang = "en"
+base = "/"
+ignoreDeadLinks = true
+
+# No navbar/sidebar chrome on the showcase: these pages exist to display
+# the palette variables, not to serve as docs. Keeping `search` enabled
+# gives every rebuild its own search-docs.json for free.
+[search]
+provider = "local"

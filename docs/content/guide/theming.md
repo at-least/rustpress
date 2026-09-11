@@ -27,10 +27,11 @@ theme = "green"
 | name | effect |
 | --- | --- |
 | `vitepress` (default) | the stock VitePress look; nothing extra is emitted |
-| `green`, `purple`, `orange` | re-point the brand color (`--vp-c-brand-*`) at that color ramp, in both light and dark mode |
+| `green`, `purple`, `orange`, `ember` | re-point the brand color (`--vp-c-brand-*`) at that color ramp, in both light and dark mode |
+| `ocean`, `sakura` | GitHub-blue / rose-pink brand colors, literals tuned per mode (dark enough for light mode, pastel enough for dark) |
 | `mono` | neutral grays for the brand color (dark text on light, light text on dark) |
 
-Anything else fails at load time with a message listing the available names.
+Anything else fails at load time with a message listing the available names. See the [theme showcase](/themes/) for a live gallery of every built-in palette (click through to see a page rebuilt with each one).
 
 ### Customizing CSS
 
