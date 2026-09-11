@@ -532,6 +532,14 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
         }
         output.write_str(">")?;
 
+        if spec.lang.eq_ignore_ascii_case("ansi") {
+            // SGR escape sequences → classed spans, like Shiki's `ansi`
+            // grammar upstream; tree-sitter has no grammar to offer here
+            render_ansi(output, &lines, &hl, &notation_classes)?;
+            output.write_str("</code></pre>")?;
+            return Ok(());
+        }
+
         let stripped = lines.concat();
         match config_for(&spec.lang) {
             Some(config) => {
@@ -667,6 +675,231 @@ pub fn syntax_css(light: &SyntaxTheme, dark: &SyntaxTheme) -> String {
     let mut out = String::from("@layer syntax {\n");
     block(light, "", &mut out);
     block(dark, "html.dark ", &mut out);
+    out.push_str(ANSI_CSS);
     out.push_str("}\n");
     out
 }
+
+/// SGR classes for one segment; empty when the state is plain.
+impl SgrState {
+    fn classes(&self) -> String {
+        let mut parts: Vec<&str> = Vec::new();
+        if self.bold {
+            parts.push("ansi-bold");
+        }
+        if self.dim {
+            parts.push("ansi-dim");
+        }
+        if self.italic {
+            parts.push("ansi-italic");
+        }
+        if self.underline {
+            parts.push("ansi-underline");
+        }
+        if let Some(fg) = self.fg {
+            parts.push(fg);
+        }
+        parts.join(" ")
+    }
+
+    fn apply_sgr(&mut self, params: &str) {
+        let nums: Vec<u16> = params
+            .split(';')
+            .map(|p| p.parse::<u16>().unwrap_or(0))
+            .collect();
+        let mut i = 0;
+        while i < nums.len() {
+            match nums[i] {
+                0 => {
+                    self.fg = None;
+                    self.bold = false;
+                    self.dim = false;
+                    self.italic = false;
+                    self.underline = false;
+                }
+                1 => self.bold = true,
+                2 => self.dim = true,
+                3 => self.italic = true,
+                4 => self.underline = true,
+                // 21 is "doubly underlined" per ECMA-48 but "bold off" in
+                // every mainstream terminal emulator
+                21 | 22 => {
+                    self.bold = false;
+                    self.dim = false;
+                }
+                23 => self.italic = false,
+                24 => self.underline = false,
+                30..=37 => self.fg = Some(FG_CLASSES[(nums[i] - 30) as usize]),
+                38 | 48 | 58 => {
+                    // extended color: `5;N` (256-color) or `2;R;G;B` —
+                    // consume the arguments so following codes survive;
+                    // the docs corpus only ever uses the basics, so the
+                    // color itself stays untouched
+                    let step = match nums.get(i + 1) {
+                        Some(5) => 2,
+                        Some(2) => 5,
+                        _ => 1,
+                    };
+                    i += step;
+                }
+                // SGR 39 = terminal default foreground: shiki gives it the
+                // theme's editor foreground, which differs from the code
+                // block's muted base color
+                39 => self.fg = Some("ansi-fg-default"),
+                90..=97 => self.fg = Some(FG_CLASSES[(nums[i] - 90 + 8) as usize]),
+                // 40–47/49/100–107: backgrounds, not styled
+                _ => {}
+            }
+            i += 1;
+        }
+    }
+
+    /// Split one rendered line into (class-list, text) segments, carrying
+    /// SGR state across segment (and via `&mut self`, line) boundaries.
+    fn segments(&mut self, text: &str) -> Vec<(String, String)> {
+        let bytes = text.as_bytes();
+        let mut out: Vec<(String, String)> = Vec::new();
+        let mut plain = String::new();
+        let mut i = 0;
+        while i < bytes.len() {
+            if bytes[i] == 0x1b && i + 1 < bytes.len() && bytes[i + 1] == b'[' {
+                let params_start = i + 2;
+                let mut j = params_start;
+                while j < bytes.len() && (0x30..=0x3f).contains(&bytes[j]) {
+                    j += 1;
+                }
+                let params_end = j;
+                // intermediate bytes, then one final byte 0x40–0x7e
+                while j < bytes.len() && (0x20..=0x2f).contains(&bytes[j]) {
+                    j += 1;
+                }
+                if j < bytes.len() && (0x40..=0x7e).contains(&bytes[j]) {
+                    if bytes[j] == b'm' {
+                        if !plain.is_empty() {
+                            out.push((self.classes(), std::mem::take(&mut plain)));
+                        }
+                        self.apply_sgr(&text[params_start..params_end]);
+                    }
+                    i = j + 1;
+                    continue;
+                }
+                // unterminated CSI: drop it, there is no sane rendering
+                i = params_start;
+                continue;
+            }
+            let ch_len = text[i..].chars().next().map(char::len_utf8).unwrap_or(1);
+            plain.push_str(&text[i..i + ch_len]);
+            i += ch_len;
+        }
+        if !plain.is_empty() {
+            out.push((self.classes(), plain));
+        }
+        out
+    }
+}
+
+fn render_ansi(
+    output: &mut dyn fmt::Write,
+    lines: &[String],
+    hl: &std::collections::HashSet<usize>,
+    notation_classes: &[Vec<&'static str>],
+) -> fmt::Result {
+    let mut sgr = SgrState::default();
+    for (idx, line) in lines.iter().enumerate() {
+        let class = line_class(idx + 1, hl, &notation_classes[idx]);
+        let text = line.strip_suffix('\n').unwrap_or(line);
+        if idx > 0 {
+            output.write_str("\n")?;
+        }
+        write!(output, "<span class=\"{class}\">")?;
+        for (classes, seg) in sgr.segments(text) {
+            if seg.is_empty() {
+                continue;
+            }
+            if classes.is_empty() {
+                output.write_str(&escape_text(&seg))?;
+            } else {
+                write!(
+                    output,
+                    "<span class=\"{classes}\">{}</span>",
+                    escape_text(&seg)
+                )?;
+            }
+        }
+        output.write_str("</span>")?;
+    }
+    Ok(())
+}
+
+#[derive(Default)]
+struct SgrState {
+    fg: Option<&'static str>,
+    bold: bool,
+    dim: bool,
+    italic: bool,
+    underline: bool,
+}
+
+/// Class fragments for SGR 30–37/90–97.
+const FG_CLASSES: [&str; 16] = [
+    "ansi-fg-black",
+    "ansi-fg-red",
+    "ansi-fg-green",
+    "ansi-fg-yellow",
+    "ansi-fg-blue",
+    "ansi-fg-magenta",
+    "ansi-fg-cyan",
+    "ansi-fg-white",
+    "ansi-fg-bright-black",
+    "ansi-fg-bright-red",
+    "ansi-fg-bright-green",
+    "ansi-fg-bright-yellow",
+    "ansi-fg-bright-blue",
+    "ansi-fg-bright-magenta",
+    "ansi-fg-bright-cyan",
+    "ansi-fg-bright-white",
+];
+
+/// github-light/dark terminal palette. The light entries for green, cyan
+/// and bright-black — and every dark entry the rendered docs use — are
+/// measured off the deployed vitepress.dev, whose pinned shiki predates
+/// the current @shikijs/themes palette; the rest follow @shikijs/themes.
+const ANSI_CSS: &str = r#"  .ansi-bold { font-weight: 700; }
+  .ansi-dim { opacity: 0.67; }
+  .ansi-italic { font-style: italic; }
+  .ansi-underline { text-decoration: underline; }
+  .ansi-fg-default { color: #24292e; }
+  .ansi-fg-black { color: #24292e; }
+  .ansi-fg-red { color: #d73a49; }
+  .ansi-fg-green { color: #0e790b; }
+  .ansi-fg-yellow { color: #dbab09; }
+  .ansi-fg-blue { color: #0366d6; }
+  .ansi-fg-magenta { color: #5a32a3; }
+  .ansi-fg-cyan { color: #06747a; }
+  .ansi-fg-white { color: #6a737d; }
+  .ansi-fg-bright-black { color: #6c676f; }
+  .ansi-fg-bright-red { color: #cb2431; }
+  .ansi-fg-bright-green { color: #22863a; }
+  .ansi-fg-bright-yellow { color: #b08800; }
+  .ansi-fg-bright-blue { color: #005cc5; }
+  .ansi-fg-bright-magenta { color: #5a32a3; }
+  .ansi-fg-bright-cyan { color: #3192aa; }
+  .ansi-fg-bright-white { color: #d1d5da; }
+  html.dark .ansi-fg-default { color: #e1e4e8; }
+  html.dark .ansi-fg-black { color: #586069; }
+  html.dark .ansi-fg-red { color: #ea4a5a; }
+  html.dark .ansi-fg-green { color: #34d058; }
+  html.dark .ansi-fg-yellow { color: #ffea7f; }
+  html.dark .ansi-fg-blue { color: #2188ff; }
+  html.dark .ansi-fg-magenta { color: #b392f0; }
+  html.dark .ansi-fg-cyan { color: #39c5cf; }
+  html.dark .ansi-fg-white { color: #d1d5da; }
+  html.dark .ansi-fg-bright-black { color: #959da5; }
+  html.dark .ansi-fg-bright-red { color: #f97583; }
+  html.dark .ansi-fg-bright-green { color: #85e89d; }
+  html.dark .ansi-fg-bright-yellow { color: #ffea7f; }
+  html.dark .ansi-fg-bright-blue { color: #79b8ff; }
+  html.dark .ansi-fg-bright-magenta { color: #b392f0; }
+  html.dark .ansi-fg-bright-cyan { color: #56d4dd; }
+  html.dark .ansi-fg-bright-white { color: #fafbfc; }
+"#;

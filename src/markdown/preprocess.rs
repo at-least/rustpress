@@ -200,9 +200,8 @@ impl<'a> Preprocess<'a> {
             .extension()
             .map(|e| e.to_string_lossy().into_owned())
             .unwrap_or_default();
-        if ext == "ansi" {
-            content = strip_ansi(&content);
-        }
+        // .ansi keeps its SGR escape sequences: the codefence renderer
+        // walks them into classed spans (Shiki's `ansi` grammar upstream)
         if let Some(l) = lang_switch {
             ext = l;
         }
@@ -402,13 +401,6 @@ fn extract_region(content: &str, name: &str) -> Option<String> {
     } else {
         None
     }
-}
-
-fn strip_ansi(s: &str) -> String {
-    static ANSI: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
-    ANSI.get_or_init(|| Regex::new(r"\x1b\[[0-9;?]*[ -/]*[@-~]").unwrap())
-        .replace_all(s, "")
-        .into_owned()
 }
 
 /// A fence marker longer than any backtick run inside the content.
@@ -1201,11 +1193,26 @@ mod tests {
     }
 
     #[test]
+    fn ansi_fences_keep_their_escapes() {
+        // the renderer walks SGR sequences into classed spans; stripping
+        // them here would render the block monochrome
+        let out = Preprocess {
+            site_root: Path::new("tests/fixtures"),
+            content_dir: Path::new("tests/fixtures/en"),
+            container: crate::config::ContainerOptions::default(),
+            base: "/",
+        }
+        .run("```ansi\n\x1b[32mok\x1b[0m\n```\n", "guide/x.md")
+        .unwrap();
+        assert!(out.contains("\x1b[32m"), "{out}");
+    }
+
+    #[test]
     fn ansi_and_region_extraction() {
-        assert_eq!(strip_ansi("\x1b[32mok\x1b[0m\n"), "ok\n");
         let src = "// #region setup\nconst a = 1;\n// #endregion\nrest\n";
         assert_eq!(extract_region(src, "setup").unwrap(), "const a = 1;\n");
     }
+
 
     #[test]
     fn md_include_target_parses() {
