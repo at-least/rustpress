@@ -1,0 +1,6 @@
+# The vuejs/vitepress tag that demo/content, tests/fixtures/en, and the
+# parity baseline (parity/upstream.json) are pinned to. Bump it when
+# adopting an upstream release; `bash scripts/sync-upstream.sh` checks
+# out this ref, and the drift-watch CI workflow opens a PR that bumps it
+# mechanically. Line 1 that is non-comment is the ref.
+v2.0.0-alpha.20

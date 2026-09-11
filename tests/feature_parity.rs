@@ -2,12 +2,14 @@
 //! pinned upstream reference docs must appear in the audit doc, so a new
 //! upstream option/feature fails `npm test` until it gets a row.
 //!
-//! Reads `../vitepress/docs/en` (the vuejs/vitepress clone PARITY.md
-//! uses as content source). When the clone is absent the test skips —
-//! same contract as `npm run diff:upstream`.
+//! Reads `../vitepress/docs/en` (the vuejs/vitepress clone pinned by
+//! parity/upstream-ref.txt; see tests/common). When the clone is absent
+//! the test FAILS with the fix — same contract as the other upstream
+//! gates; `RUSTPRESS_ALLOW_NO_UPSTREAM=1` restores a visible skip.
+
+mod common;
 
 use std::fmt::Write as _;
-use std::path::PathBuf;
 
 const REFERENCE_FILES: &[&str] = &[
     "reference/site-config.md",
@@ -100,14 +102,11 @@ fn strip_markup(s: &str) -> String {
 
 #[test]
 fn feature_parity_doc_covers_upstream_reference_headings() {
-    let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let docs = manifest.parent().unwrap().join("vitepress/docs/en");
-    if !docs.is_dir() {
-        eprintln!("feature_parity: ../vitepress/docs/en not found — skipping");
-        return;
-    }
-    let doc = std::fs::read_to_string(manifest.join("FEATURE-PARITY.md"))
-        .expect("FEATURE-PARITY.md next to Cargo.toml");
+    let Some(docs) = common::ensure_upstream() else { return };
+    let doc = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("FEATURE-PARITY.md"),
+    )
+    .expect("FEATURE-PARITY.md next to Cargo.toml");
 
     let mut missing = String::new();
     let mut covered = 0usize;
