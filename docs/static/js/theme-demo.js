@@ -1,13 +1,13 @@
-/* rustpress docs: live bundled-theme demo.
+/* rustpress docs: Theme Gallery.
  *
  * Every rustpress build ships all bundled themes under /themes/, so
- * trying one is a stylesheet link away: this script swaps that link
+ * trying one is a stylesheet link away: picking a card swaps that link
  * and the whole site re-skins instantly. The choice lasts for the
  * browser session only (sessionStorage) — stock (no link) is the
- * default. The gallery buttons on /guide/theming are rendered from
- * <base>themes.json, generated at build time from static/themes/.
- * Storage may be blocked (sandboxed iframes, private mode); a failure
- * there just means the choice is not remembered — the demo still works.
+ * default. Cards are rendered from <base>themes.json, generated at
+ * build time from static/themes/. Storage may be blocked (sandboxed
+ * iframes, private mode); a failure there just means the choice is
+ * not remembered — the demo still works.
  */
 (function () {
   var KEY = "rustpress-theme-demo";
@@ -58,65 +58,102 @@
     if (!host) return;
 
     var chosen = store.get() || "";
-    var buttons = [];
+    var cards = [];
 
     function pick(name) {
       chosen = name;
       store.set(name || null);
       apply(name || null);
-      buttons.forEach(function (b) {
-        b.setAttribute("aria-pressed", b.dataset.theme === chosen ? "true" : "false");
+      cards.forEach(function (c) {
+        c.setAttribute("aria-pressed", c.dataset.theme === chosen ? "true" : "false");
       });
     }
 
-    function button(name, label) {
+    function swatch(color, bordered) {
+      var dot = document.createElement("span");
+      dot.title = color;
+      Object.assign(dot.style, {
+        display: "inline-block",
+        width: "14px",
+        height: "14px",
+        borderRadius: "9999px",
+        margin: "-2px 6px 0 0",
+        verticalAlign: "middle",
+        backgroundColor: color,
+        border: bordered ? "1px solid var(--vp-c-border)" : "1px solid transparent",
+      });
+      return dot;
+    }
+
+    function card(entry) {
       var el = document.createElement("button");
       el.type = "button";
-      el.textContent = label;
-      el.dataset.theme = name;
-      el.setAttribute("aria-pressed", name === chosen ? "true" : "false");
-      el.onclick = function () { pick(name); };
+      el.dataset.theme = entry.name;
+      el.setAttribute("aria-pressed", entry.name === chosen ? "true" : "false");
+      el.onclick = function () { pick(entry.name); };
       Object.assign(el.style, {
-        margin: "0 0 5px 0",
-        marginRight: "8px",
-        padding: "5px 14px",
-        borderRadius: "9999px",
+        display: "block",
+        width: "100%",
+        padding: "14px 16px",
+        textAlign: "left",
+        borderRadius: "10px",
         border: "1px solid var(--vp-c-border)",
         background: "var(--vp-c-bg)",
         color: "var(--vp-c-text-1)",
         font: "inherit",
-        fontSize: "0.875rem",
-        fontWeight: "500",
         cursor: "pointer",
       });
-      buttons.push(el);
+      var name = document.createElement("strong");
+      name.textContent = entry.name || "stock";
+      Object.assign(name.style, { display: "block", fontSize: "0.95rem" });
+      el.appendChild(name);
+      if (entry.desc) {
+        var desc = document.createElement("span");
+        desc.textContent = entry.desc;
+        Object.assign(desc.style, {
+          display: "block",
+          margin: "4px 0 8px",
+          fontSize: "0.875rem",
+          color: "var(--vp-c-text-2)",
+        });
+        el.appendChild(desc);
+      }
+      var row = document.createElement("span");
+      row.style.display = "block";
+      ["bg", "text", "brand"].forEach(function (k) {
+        if (entry[k]) row.appendChild(swatch(entry[k], k === "bg"));
+      });
+      el.appendChild(row);
+      cards.push(el);
       return el;
     }
 
     host.setAttribute("role", "group");
     host.setAttribute("aria-label", "Live bundled-theme demo");
-    host.appendChild(button("", "stock"));
+    host.appendChild(card({ name: "", desc: "the default VitePress look" }));
+
+    var wrap = document.createElement("div");
+    Object.assign(wrap.style, {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+      gap: "12px",
+      margin: "12px 0",
+    });
 
     fetch(base + "themes.json")
       .then(function (r) { return r.json(); })
-      .then(function (names) {
-        names.forEach(function (name) {
-          host.appendChild(button(name, name));
+      .then(function (entries) {
+        entries.forEach(function (entry) {
+          var cell = document.createElement("div");
+          cell.appendChild(card(entry));
+          wrap.appendChild(cell);
         });
+        host.appendChild(wrap);
       })
       .catch(function () {
         var note = document.createElement("p");
         note.textContent = "(theme index unavailable — run npm run build:docs)";
         host.appendChild(note);
       });
-
-    var hint = document.createElement("p");
-    hint.textContent = "Pick a theme and every page of this site re-skins for the rest of the session — links, containers, code blocks, dark mode, everything. “stock” is the default VitePress look.";
-    Object.assign(hint.style, {
-      margin: "12px 0 0",
-      fontSize: "0.875rem",
-      color: "var(--vp-c-text-2)",
-    });
-    host.appendChild(hint);
   });
 })();

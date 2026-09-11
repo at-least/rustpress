@@ -297,6 +297,8 @@ fn frontmatter_aside_and_outline_false() {
     );
     assert!(!page(&out, "/a/").contains("VPOutlineMarker"), "aside:false hides outline column");
     assert!(!page(&out, "/b/").contains("VPOutlineMarker"), "outline:false hides outline");
+    assert!(!page(&out, "/b/").contains("VPOutlineDropdownButton"), "outline:false hides the local-nav dropdown too");
+    assert!(page(&out, "/d/").contains("VPOutlineDropdownButton"), "default page keeps the local-nav dropdown");
     assert!(page(&out, "/c/").contains("xl:order-1") && page(&out, "/c/").contains("xl:order-2"), "left aside orders swapped");
     assert!(page(&out, "/d/").contains("VPOutlineMarker"), "default aside present");
 }

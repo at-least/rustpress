@@ -20,7 +20,7 @@ The two are deliberately separate: switching the UI to a purple brand color does
 
 ### Bundled themes
 
-Set `theme` to a bare name:
+Set `theme` to a bare name (`github`, `catppuccin`, `nord`, `rose-pine` — see the [Theme Gallery](/themes/)):
 
 ```toml [rustpress.toml]
 theme = "catppuccin"
@@ -28,24 +28,13 @@ theme = "catppuccin"
 
 A bundled theme is a **complete design**: one file defining every design token the structure consumes — surfaces, text, borders, the brand ramp, the neutral ramp, the seven semantic colors (tip/note/success/important/warning/danger/caution) and the shadow scale — with light and dark values of its own. Linked after `vitepress.css`, it leaves none of the stock *color* design in effect — what survives from the base is the structural layer (layout, components, utility classes), which resolves through these tokens, plus a few opt-in knobs like fonts and the backdrop scrim a theme may also override by declaring the same custom properties.
 
-| name | character |
-| --- | --- |
-| `github` | GitHub Primer, light and dark — the look of github.com |
-| `catppuccin` | Latte / Mocha — pastel, low-noise, dark-first |
-| `nord` | Polar Night / Snow Storm — cold, bluish, calm |
-| `rose-pine` | Rosé Pine Dawn / main — warm, rosy, natural pine accents |
-
 Two repo tests hold every bundled theme to that bar: **completeness** (the required token set is derived from what the base stylesheet actually references; each theme must define all of it in both `:root` and `.dark`) and **WCAG contrast** (body text ≥ 7:1, secondary text ≥ 4.5:1 also on the sidebar and code-block surfaces, links ≥ 4.5:1, badge text vs its own soft container background ≥ 4.5:1, button backgrounds vs white text ≥ 3:1 in every state — in both modes). Where a published palette's accent cannot hold those ratios in a foreground role, the theme deepens it and says so in its header comment.
 
 Every bundled theme is a plain CSS file shipped in the binary under `themes/`; all of them land in the output's `themes/` directory, and the selected one is linked as `/themes/<name>.css`. An unknown name fails at load time with an error listing the bundled names.
 
-::: raw
-<div id="theme-gallery">
-  <noscript><p><em>Enable JavaScript to try the bundled themes live on this site.</em></p></noscript>
-</div>
+::: tip {no-title}
+See them before you choose — the [Theme Gallery](/themes/) re-skins this entire site, live, one click per theme.
 :::
-
-Because a theme is just a stylesheet link, the demo above needs nothing but that: it swaps the `<link>` and the site you are reading re-skins (the button list comes from a `themes.json` generated at build time from `static/themes/`, so it always matches the binary).
 
 ### Your own CSS file
 

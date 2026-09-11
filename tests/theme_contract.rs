@@ -285,9 +285,39 @@ fn docs_theme_index_matches_the_bundled_set() {
     // a stale gallery.
     let json = std::fs::read_to_string(repo("docs/static/themes.json"))
         .expect("docs/static/themes.json exists (run: node scripts/gen-theme-index.mjs)");
-    let listed: Vec<String> = serde_json::from_str(&json).expect("a JSON array of names");
+    let listed: Vec<serde_json::Value> = serde_json::from_str(&json).expect("a JSON array");
+    let listed: Vec<String> = listed
+        .iter()
+        .map(|e| e["name"].as_str().expect("each entry has a name").to_string())
+        .collect();
     let bundled = rustpress::theme_assets::bundled_themes();
     assert_eq!(listed, bundled, "docs theme index drifted from static/themes/");
+
+    // the gallery card data (blurb + light-mode swatches) must match the
+    // theme files themselves, or the cards lie — regenerate with
+    // `node scripts/gen-theme-index.mjs`
+    for entry in listed {
+        let css = std::fs::read_to_string(repo(&format!("static/themes/{entry}.css"))).unwrap();
+        let root = mode_values(&css, ":root");
+        let item = serde_json::from_str::<Vec<serde_json::Value>>(&json)
+            .unwrap()
+            .into_iter()
+            .find(|e| e["name"].as_str() == Some(entry.as_str()))
+            .unwrap();
+        assert!(
+            !item["desc"].as_str().unwrap_or("").is_empty(),
+            "theme {entry}: gallery blurb missing (header comment malformed?)"
+        );
+        for (key, token) in [("bg", "bg"), ("text", "text-1"), ("brand", "brand-1")] {
+            let want = root.values.get(&format!("--vp-c-{token}")).unwrap();
+            let got = item[key].as_str().unwrap_or("");
+            assert_eq!(
+                got.to_ascii_lowercase(),
+                want.to_ascii_lowercase(),
+                "theme {entry}: {key} swatch drifted from static/themes/{entry}.css"
+            );
+        }
+    }
 }
 
 #[test]

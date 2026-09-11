@@ -30,6 +30,9 @@ pub struct Shell<'a> {
     /// The navbar title for this page (locale-aware; `None` = hidden
     /// via `siteTitle: false`).
     pub site_title: Option<String>,
+    /// Effective outline for this page (site setting ∧ front matter):
+    /// gates the aside outline and the local-nav dropdown.
+    pub outline: Option<(u8, u8)>,
 }
 
 /// The whole HTML document; `content` is the VPContent body.
@@ -96,7 +99,7 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
                     </header>
                 }
 
-                (Raw::dangerously_create(super::local_nav::local_nav(site, is_home, has_sidebar, headings)))
+                (Raw::dangerously_create(super::local_nav::local_nav(site, is_home, has_sidebar, shell.outline.is_some(), headings)))
                 (Raw::dangerously_create(super::sidebar::sidebar(site, &current_url)))
 
                 <div class=(content_class) id="VPContent">

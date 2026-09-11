@@ -1,7 +1,7 @@
-/* Built-in theme: nord — the Nord palette. Dark mode is Nord's home
- * (Polar Night surfaces, Frost accents); light mode flips to Snow
- * Storm surfaces with the accents and the semantic hues deepened where
- * the published pastels cannot hold AA contrast as foreground text. */
+/* Built-in theme: nord — Polar Night and Snow Storm: cold, bluish,
+ * calm. Dark mode is Nord's home; light mode flips to Snow Storm
+ * surfaces with accents and semantic hues deepened where the published
+ * pastels cannot hold AA contrast as foreground text. */
 :root {
   --vp-c-neutral-inverse: #ffffff;
 

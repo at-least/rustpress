@@ -226,6 +226,7 @@ impl Site {
             lang: self.locale_lang(page),
             translations: self.translations_for(page),
             site_title: self.navbar_site_title(page),
+            outline,
         };
 
         let body = if is_home {
@@ -531,6 +532,7 @@ impl Site {
                 Some(crate::config::SiteTitleSetting::Hide(_)) => None,
                 None => self.locale_title("root"),
             },
+            outline: None,
         };
         let home = self.url("/");
         let nf_title = nf.title.clone().unwrap_or_else(|| "PAGE NOT FOUND".into());

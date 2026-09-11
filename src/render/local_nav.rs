@@ -8,12 +8,17 @@ use super::icons::icon;
 use super::Site;
 use crate::markdown::Heading;
 
-pub fn local_nav<'a>(site: &'a Site, is_home: bool, has_sidebar: bool, headings: &'a [Heading]) -> String {
+pub fn local_nav<'a>(
+    site: &'a Site,
+    is_home: bool,
+    has_sidebar: bool,
+    outline_enabled: bool,
+    headings: &'a [Heading],
+) -> String {
     if is_home {
         return String::new();
     }
     let outline_label = site.config.outline.label();
-    let outline_enabled = site.config.outline.enabled();
     let root_url = site.url("/");
     let return_label = site.config.return_to_top_label.clone();
     let menu_label = site.config.sidebar_menu_label.clone();

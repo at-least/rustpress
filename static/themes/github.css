@@ -1,7 +1,8 @@
-/* Built-in theme: github — GitHub Primer, light and dark. Surfaces,
- * text and accents follow Primer's functional color primitives; accent
- * shades are chosen for their foreground role (links, badge text), so
- * they sit slightly darker than Primer's decorative uses. */
+/* Built-in theme: github — the look of github.com, light and dark.
+ * Surfaces, text and accents follow Primer's functional color
+ * primitives; accent shades are chosen for their foreground role
+ * (links, badge text), so they sit slightly darker than Primer's
+ * decorative uses. */
 :root {
   --vp-c-neutral-inverse: #ffffff;
 

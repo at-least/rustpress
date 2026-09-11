@@ -1,6 +1,30 @@
 [
-  "catppuccin",
-  "github",
-  "nord",
-  "rose-pine"
+  {
+    "name": "catppuccin",
+    "desc": "Latte and Mocha: pastel, low-noise, dark-first",
+    "bg": "#eff1f5",
+    "text": "#4c4f69",
+    "brand": "#1558d4"
+  },
+  {
+    "name": "github",
+    "desc": "the look of github.com, light and dark",
+    "bg": "#ffffff",
+    "text": "#1f2328",
+    "brand": "#0969da"
+  },
+  {
+    "name": "nord",
+    "desc": "Polar Night and Snow Storm: cold, bluish, calm",
+    "bg": "#eceff4",
+    "text": "#2e3440",
+    "brand": "#4a6285"
+  },
+  {
+    "name": "rose-pine",
+    "desc": "Dawn and main: warm, rosy, natural pine accents",
+    "bg": "#faf4ed",
+    "text": "#4f4a6e",
+    "brand": "#6f5a88"
+  }
 ]

@@ -1,7 +1,8 @@
-/* Built-in theme: rose-pine — Rosé Pine Dawn (light) and Rosé Pine
- * (dark). Rose Pine has no true green, so foam/pine carry success; the
- * `_10` tints from the published palette serve as the soft container
- * backgrounds. A few accents are deepened for AA contrast on Dawn. */
+/* Built-in theme: rose-pine — Dawn and main: warm, rosy, natural
+ * pine accents. Rose Pine has no true green, so foam/pine carry
+ * success; the `_10` tints from the published palette serve as the
+ * soft container backgrounds. A few accents are deepened for AA
+ * contrast on Dawn. */
 :root {
   --vp-c-neutral-inverse: #ffffff;
 
