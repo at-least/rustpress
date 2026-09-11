@@ -134,7 +134,7 @@ pub const VPDOC_CLASSES_2: &str = concat!(
     " [&_.custom-block.details_summary]:font-bold [&_.custom-block.details_summary]:cursor-pointer",
     " [&_.custom-block.details_summary]:select-none [&_.custom-block.details_summary+p]:my-2",
     " [&_.custom-block_a]:[transition:color_0.25s,opacity_0.25s] [&_.custom-block_a:hover]:opacity-75",
-    " [&_.custom-block_code]:text-[0.8125rem] [&_.custom-block_th]:text-[0.875rem]",
+    " [&_.custom-block_code]:text-(--vp-custom-block-code-font-size) [&_.custom-block_th]:text-[0.875rem]",
     " [&_.custom-block_th]:text-inherit [&_.custom-block_blockquote>p]:text-[0.875rem]",
     " [&_.custom-block_blockquote>p]:text-inherit [&_.custom-block_.vp-code-group]:mt-2",
     " [&_.custom-block_.vp-code-group_.tabs]:m-0 [&_.custom-block_.vp-code-group_.tabs]:rounded-t-lg",

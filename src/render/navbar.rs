@@ -258,8 +258,13 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
                             @for child in &children {
                                 <li>
                                     (Raw::dangerously_create(format!(
-                                        r#"<a class="block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap{} transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft" href="{}"{}>{}</a>"#,
+                                        r#"<a class="block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap{}{} transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft" href="{}"{}>{}</a>"#,
                                         if child.link.as_deref().is_some_and(|l| current_url.contains(l)) { " text-brand-1" } else { " text-text-1" },
+                                        // upstream's `vp-external-link-icon` (base.css):
+                                        // offsite flyout entries carry the arrow
+                                        if child.link.as_deref().is_some_and(|l| l.starts_with("http"))
+                                            || child.target.as_deref() == Some("_blank")
+                                        { " vp-external-link-icon" } else { "" },
                                         site.url(&child.link.clone().unwrap_or_default()),
                                         link_attrs(child.target.as_deref(), child.rel.as_deref()),
                                         child.text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;"),

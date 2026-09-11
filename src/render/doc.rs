@@ -115,7 +115,7 @@ pub fn doc_page<'a>(
                                         }
                                         @if let Some((datetime, display)) = last_updated.clone() {
                                             <div class="last-updated">
-                                                <p class="VPDocFooterLastUpdated">
+                                                <p class="VPDocFooterLastUpdated text-[0.875rem] leading-[2.2857143] text-text-2">
                                                     (format!("{}: ", updated_label))
                                                     <time datetime=(datetime)>(display)</time>
                                                 </p>
