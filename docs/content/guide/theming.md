@@ -20,7 +20,7 @@ The two are deliberately separate: switching the UI to a purple brand color does
 
 ### Bundled themes
 
-Set `theme` to a bare name — any of the 24 bundled designs, from `github`, `catppuccin`, `nord` and `rose-pine` to `tokyonight`, `gruvbox`, `dracula`, `solarized`, `monokai` and more (the [Theme Gallery](/themes/) shows every one live):
+Set `theme` to a bare name — any of the 200 bundled designs: 24 curated flagships plus every vendored Helix color scheme with a published palette, auto-mapped onto the same contract (the [Theme Gallery](/themes/) shows every one live):
 
 ```toml [rustpress.toml]
 theme = "catppuccin"

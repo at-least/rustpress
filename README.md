@@ -105,10 +105,10 @@ Relative `.md`/`.html` links resolve to canonical page URLs at build time (unkno
 
 ### Color customization (`theme`)
 
-Following VitePress's "extending the default theme", UI colors are customized with one CSS file of `--vp-*` custom-property overrides. A bundled theme is a complete design — one CSS file defining every design token (surfaces, text, borders, brand, semantics, shadows), light and dark, held to completeness and WCAG-contrast tests. 24 ship with the binary, curated from popular published color schemes (GitHub Primer, Catppuccin, Nord, Rosé Pine, Tokyo Night, Gruvbox, Dracula, …). `theme` selects it by name, or by a path to your own file:
+Following VitePress's "extending the default theme", UI colors are customized with one CSS file of `--vp-*` custom-property overrides. A bundled theme is a complete design — one CSS file defining every design token (surfaces, text, borders, brand, semantics, shadows), light and dark, held to completeness, ramp-monotonicity and WCAG-contrast tests. 200 ship with the binary: 24 curated flagships plus every vendored Helix palette, auto-mapped by scripts/gen-themes.py. `theme` selects it by name, or by a path to your own file:
 
 ```toml
-theme = "catppuccin"  # any bundled name — 24 ship with the binary
+theme = "catppuccin"  # any bundled name — 200 ship with the binary
 theme = "theme.css"   # your own file
 ```
 
