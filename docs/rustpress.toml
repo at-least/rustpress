@@ -38,6 +38,12 @@ hostname = "https://at-least.github.io"
 tag = "link"
 attrs = { rel = "icon", type = "image/svg+xml", href = "/logo.svg" }
 
+# Live bundled-theme demo (guide/theming): applies a session-picked
+# theme before first paint. Tiny, local, no-op without a demo choice.
+[[head]]
+tag = "script"
+attrs = { src = "/js/theme-demo.js" }
+
 [[nav]]
 text = "Guide"
 link = "/guide/what-is-rustpress/"

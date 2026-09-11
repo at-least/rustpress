@@ -39,6 +39,14 @@ Two repo tests hold every bundled theme to that bar: **completeness** (the requi
 
 Every bundled theme is a plain CSS file shipped in the binary under `themes/`; all of them land in the output's `themes/` directory, and the selected one is linked as `/themes/<name>.css`. An unknown name fails at load time with an error listing the bundled names.
 
+::: raw
+<div id="theme-gallery">
+  <noscript><p><em>Enable JavaScript to try the bundled themes live on this site.</em></p></noscript>
+</div>
+:::
+
+Because a theme is just a stylesheet link, the demo above needs nothing but that: it swaps the `<link>` and the site you are reading re-skins (the button list comes from a `themes.json` generated at build time from `static/themes/`, so it always matches the binary).
+
 ### Your own CSS file
 
 Set `theme` to a path (relative to the site directory) ending in `.css`. The file is copied verbatim into the output under `themes/<basename>` and linked there:
