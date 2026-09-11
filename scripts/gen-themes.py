@@ -200,7 +200,7 @@ SPECS = [
         text1="background_fg", text2="pale", text3="comment_fg", border="matchparen_bg",
         brand1="blue", success="green", warning="yellow", danger="red", important="magenta", sponsor="light-red"))),
  dict(name="adwaita", desc="GNOME's own: libadwaita light and dark",
-      light=dict(f="adwaita-dark", m=dict(bg="light_1", bg_alt="light_3", bg_elv="light_2",
+      light=dict(f="adwaita-dark", m=dict(bg="light_1", bg_alt="light_3", bg_elv="light_1",
         text1="dark_5", text2="dark_2", text3="dark_1", border="light_4",
         brand1="blue_5", success="green_6", warning="yellow_6", danger="red_5",
         important="purple_5", sponsor="red_5")),
@@ -582,6 +582,14 @@ def auto_slots(stem):
 
 regenerated = set()
 
+# stems are unique, but two stems can normalize to one name
+# (foo_bar + foo-bar) — that would silently clobber; refuse both
+norm = {}
+for f in sorted(os.listdir(HELI)):
+    if f.endswith(".toml"):
+        norm.setdefault(f[:-5].replace("_", "-"), []).append(f[:-5])
+colliding = {n for n, srcs in norm.items() if len(srcs) > 1}
+
 skipped, mapped = [], 0
 for f in sorted(os.listdir(HELI)):
     if not f.endswith(".toml"):
@@ -589,6 +597,9 @@ for f in sorted(os.listdir(HELI)):
     stem = f[:-5]
     name = stem.replace("_", "-")
     if name in CURATED:
+        continue
+    if name in colliding:
+        skipped.append(f"{stem} (name collision)")
         continue
     got = auto_slots(stem)
     if not got:
