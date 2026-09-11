@@ -72,7 +72,7 @@ The **feature-surface** audit — every documented upstream config option, markd
 
 ## Site shape
 
-- `rustpress.toml` — site config mirroring VitePress's `themeConfig`: `title` + `titleTemplate` (`:title`), `description`, `lang`, `base`, `srcDir`, `nav` (plain links with `activeMatch`, dropdowns), `sidebar` (absent → one auto-derived per top-level section; explicit single array; or VitePress's path-keyed `{ base, items }` map with tri-state `collapsed`), `socialLinks`, `editLink` (`:path` pattern), `footer`, `outline` (level + label), `search.provider = "local"`, `appearance` (`true`/`false`/`"dark"`/`"force"`/`"force-auto"`), `lastUpdated` (git-based) + `lastUpdatedText`, `ignoreDeadLinks` (`true` or link prefixes), `[sitemap]` (hostname → sitemap.xml), `[[head]]` extra tags, `[docFooter]` prev/next labels, `[notFound]` title/quote/linkText, `returnToTopLabel`, `darkModeSwitchLabel`, `skipToContentLabel`, `[rewrites]` (source-path mapping with `:rest*`), `[locales]` (multi-language sites), `[markdown]` (lineNumbers, codeCopyButton, math, image.lazyLoading, container labels + custom containers), `[syntax]` (the source-code color scheme — a separate setting from the UI palette). There is no swappable theme system: one design, compiled in. Colors are customizable two ways (see below).
+- `rustpress.toml` — site config mirroring VitePress's `themeConfig`: `title` + `titleTemplate` (`:title`), `description`, `lang`, `base`, `srcDir`, `nav` (plain links with `activeMatch`, dropdowns), `sidebar` (absent → one auto-derived per top-level section; explicit single array; or VitePress's path-keyed `{ base, items }` map with tri-state `collapsed`), `socialLinks`, `editLink` (`:path` pattern), `footer`, `outline` (level + label), `search.provider = "local"`, `appearance` (`true`/`false`/`"dark"`/`"force"`/`"force-auto"`), `lastUpdated` (git-based) + `lastUpdatedText`, `ignoreDeadLinks` (`true` or link prefixes), `[sitemap]` (hostname → sitemap.xml), `[[head]]` extra tags, `[docFooter]` prev/next labels, `[notFound]` title/quote/linkText, `returnToTopLabel`, `darkModeSwitchLabel`, `skipToContentLabel`, `[rewrites]` (source-path mapping with `:rest*`), `[locales]` (multi-language sites), `[markdown]` (lineNumbers, codeCopyButton, math, image.lazyLoading, container labels + custom containers), `[syntax]` (the source-code color scheme — a separate setting from the UI theme). There is no swappable theme system: one design, compiled in. Colors are customizable two ways (see below).
 - `content/**/*.md` — VitePress format. URLs are directory-style: `guide/x.md` → `/guide/x/`, `index.md` → `/`. Titles come from the first H1 (fence-aware); front matter keys honored: `description`, `title`, `titleTemplate`, `head`, `layout` (`home` + `hero`/`features`, `doc`, `page`), `outline` (`deep`, a level/level-pair, or `false`), `navbar`, `sidebar`, `aside`, `editLink`, `footer`, `lastUpdated` (bool or a date string), `pageClass`, `search: false`, and `prev`/`next` (text, `{text, link}`, or `false`).
 - `static/` — copied verbatim into the output root.
 
@@ -103,21 +103,25 @@ The **feature-surface** audit — every documented upstream config option, markd
 
 Relative `.md`/`.html` links resolve to canonical page URLs at build time (unknown targets pass through untouched, and the dead-link checker reports them unless ignored).
 
-### Color customization (`theme.toml` + `[markdown.theme]`)
+### Color customization (`theme = "file.css"`)
 
-Following VitePress's "extending the default theme", UI colors are customized by overriding root-level CSS custom properties. Create a `theme.toml` next to `rustpress.toml`:
+Following VitePress's "extending the default theme", UI colors are customized with one CSS file of `--vp-*` custom-property overrides. Point `theme` at it (path relative to the site dir):
 
 ```toml
-[light]
-c-brand-1 = "#508d3f"       # → --vp-c-brand-1 (the --vp- prefix is optional)
-c-brand-2 = "#629a4e"
-"--vp-nav-bg-color" = "#f6f6f6"   # full variable names also work
-
-[dark]
-c-brand-1 = "#83aa63"
+theme = "theme.css"
 ```
 
-The build generates `theme.css` (`:root` / `.dark` custom-property overrides) and every page links it after `main.css`. Because Tailwind utilities (`text-brand-1`, `bg-bg`, …) and the hand-written component rules both reference the `--vp-*` variables via `@theme inline`, overriding the variable reaches everything — no new classes, no CSS rebuild.
+```css
+:root {
+  --vp-c-brand-1: #508d3f;
+  --vp-c-brand-2: #629a4e;
+}
+.dark {
+  --vp-c-brand-1: #83aa63;
+}
+```
+
+The file is copied verbatim to `theme.css` in the output and every page links it after `main.css`. Because Tailwind utilities (`text-brand-1`, `bg-bg`, …) and the hand-written component rules both reference the `--vp-*` variables via `@theme inline`, overriding the variable reaches everything — no new classes, no CSS rebuild. Unset, `theme` gives the stock VitePress look.
 
 The **source-code syntax color scheme is a separate setting** — `[syntax]` in `rustpress.toml`. Each of `light`/`dark` takes either a built-in name or a path to your own Helix TOML theme file (relative to the site dir). Built-in names: `github-light` / `github-dark` (vendored defaults), plus **all 218 Helix editor themes** are bundled and selectable by file stem:
 

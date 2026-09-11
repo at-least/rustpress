@@ -231,7 +231,7 @@ provider = "local"
 }
 
 #[test]
-fn theme_one_variable_built_in_or_file() {
+fn theme_is_one_css_file() {
     let mk_site = |theme_line: &str| {
         let dir = tempdir::tempdir();
         std::fs::create_dir_all(dir.path().join("content")).unwrap();
@@ -244,17 +244,7 @@ fn theme_one_variable_built_in_or_file() {
         dir
     };
 
-    // built-in name: theme.css carries the palette override
-    let dir = mk_site("theme = \"green\"");
-    let site = Site::load(dir.path()).unwrap();
-    let out = tempdir::tempdir();
-    site.build(dir.path(), out.path()).unwrap();
-    let css = std::fs::read_to_string(out.path().join("theme.css")).unwrap();
-    assert!(css.contains("--vp-c-brand-1: var(--vp-c-green-1);"), "{css}");
-    let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
-    assert!(html.contains(r#"<link rel="stylesheet" href="/theme.css">"#), "linked");
-
-    // custom css path: copied verbatim, linked
+    // css path: copied verbatim, linked
     let dir = mk_site("theme = \"my-theme.css\"");
     std::fs::write(dir.path().join("my-theme.css"), ":root { --vp-c-brand-1: #123456; }\n").unwrap();
     let site = Site::load(dir.path()).unwrap();
@@ -274,20 +264,13 @@ fn theme_one_variable_built_in_or_file() {
     let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
     assert!(!html.contains("theme.css"), "no link when unset");
 
-    // explicit default: also nothing
-    let dir = mk_site("theme = \"vitepress\"");
-    let site = Site::load(dir.path()).unwrap();
-    let out = tempdir::tempdir();
-    site.build(dir.path(), out.path()).unwrap();
-    assert!(!out.path().join("theme.css").exists());
-
-    // unknown name: error at load, naming the built-ins
-    let dir = mk_site("theme = \"nope\"");
+    // non-css value: error at load
+    let dir = mk_site("theme = \"green\"");
     let err = match Site::load(dir.path()) {
         Err(e) => e.to_string(),
-        Ok(_) => panic!("unknown theme should fail at load"),
+        Ok(_) => panic!("non-css theme should fail at load"),
     };
-    assert!(err.contains("nope") && err.contains("green"), "{err}");
+    assert!(err.contains("green") && err.contains(".css"), "{err}");
 
     // missing file: error at load
     let dir = mk_site("theme = \"missing.css\"");
@@ -301,7 +284,7 @@ fn theme_one_variable_built_in_or_file() {
 #[test]
 fn syntax_theme_pair_is_selectable() {
     // the [syntax] section picks the syntax color scheme independently of
-    // the UI palette; unknown names fail at engine construction
+    // the UI theme; unknown names fail at engine construction
     let mk = |dark: &str| {
         let engine = MarkdownEngine::new(
             &rustpress::config::Markdown::default(),

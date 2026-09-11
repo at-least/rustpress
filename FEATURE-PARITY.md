@@ -264,8 +264,8 @@ rustpress deliberately has no replacement for. One exception:
 
 | feature | status | ours | note |
 |---|---|---|---|
-| Customizing CSS variables | implemented | `theme.toml` → `theme.css` (`src/render/mod.rs:111-136`) | diverged mechanism: TOML key/value instead of a CSS file (a raw CSS file can still be linked via `[[head]]`) |
-| Different fonts | partial | `--vp-font-family-*` overridable via `theme.toml` | no `theme-without-fonts` entry; Inter always ships |
+| Customizing CSS variables | implemented | `theme = "file.css"` → `theme.css` (`src/render/mod.rs`) | same mechanism: a CSS file copied verbatim and linked after `main.css` |
+| Different fonts | partial | `--vp-font-family-*` overridable via the `theme` CSS file | no `theme-without-fonts` entry; Inter always ships |
 | Navbar theming (CSS vars) | implemented | `styles/vitepress.css` | same `--vp-nav-*` tokens |
 | Navbar overflow `...` collapse | missing | — | long nav wraps/scrolls instead |
 | Registering global components | n/a | — | no Vue |
@@ -303,7 +303,7 @@ n/a — `loadEnv` + `paths()` data fetching is Node build-time work.
 ## guide/custom-theme.md
 
 n/a — no swappable theme system by design (README); the compiled-in
-theme is customized only via CSS variables (`theme.toml`) and
+theme is customized only via CSS variables (`theme = "file.css"`) and
 `[[head]]`.
 
 ## reference/cli.md
@@ -369,8 +369,6 @@ direction: upstream → us.
 
 - `[syntax]` Helix TOML themes (218 bundled + custom file paths,
   light/dark split) — upstream colors code via Shiki `markdown` options.
-- `theme.toml` palettes + builtins (`green`, `purple`, `orange`, `mono`,
-  `ocean`, `sakura`, `ember`) — upstream theming is CSS files.
 - `[markdown] codeCopyButton` toggle — upstream has no such option.
 - `askAiUrl` navbar link — upstream's Ask AI lives inside Algolia search.
 - `[notFound]` title/quote/linkText — upstream 404 is slot-based.

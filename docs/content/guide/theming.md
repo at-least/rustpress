@@ -1,41 +1,22 @@
 ---
 outline: deep
-description: Customize the rustpress default theme with a built-in palette, your own CSS variables, different fonts, and a separate syntax color scheme for code blocks.
+description: Customize the rustpress default theme with your own CSS variables, different fonts, and a separate syntax color scheme for code blocks.
 ---
 
 # Theming
 
 rustpress ships exactly one theme, a port of the VitePress default theme, compiled into the binary. Consult the [Default Theme Config Overview](../reference/default-theme-config) for the options that shape its behavior. What its colors and fonts look like is controlled by two independent settings:
 
-1. the **UI palette** — the `theme` key, which selects a built-in palette or a CSS file of your own;
+1. the **UI colors** — the `theme` key, a path to a CSS file of your own;
 2. the **syntax color scheme** for code blocks — the `[syntax]` section, which takes Helix editor theme files.
 
 ::: tip {no-title}
 The two are deliberately separate: switching the UI to a purple brand color does not touch code colors, and picking `catppuccin_mocha` for code does not touch the UI.
 :::
 
-## UI Palette
+## UI Colors
 
-### Built-in palettes
-
-Set `theme` to one of the built-in palette names:
-
-```toml [rustpress.toml]
-theme = "green"
-```
-
-| name | effect |
-| --- | --- |
-| `vitepress` (default) | the stock VitePress look; nothing extra is emitted |
-| `green`, `purple`, `orange`, `ember` | re-point the brand color (`--vp-c-brand-*`) at that color ramp, in both light and dark mode |
-| `ocean`, `sakura` | GitHub-blue / rose-pink brand colors, literals tuned per mode (dark enough for light mode, pastel enough for dark) |
-| `mono` | neutral grays for the brand color (dark text on light, light text on dark) |
-
-Anything else fails at load time with a message listing the available names. See the [theme showcase](/themes/) for a live gallery of every built-in palette (click through to see a page rebuilt with each one).
-
-### Customizing CSS
-
-For full control, set `theme` to a path (relative to the site directory) ending in `.css`. The file is copied verbatim to `theme.css` in the output and linked on every page **after** the theme's own stylesheet, so its rules win:
+Set `theme` to a path (relative to the site directory) ending in `.css`. The file is copied verbatim to `theme.css` in the output and linked on every page **after** the theme's own stylesheet, so its rules win:
 
 ```toml [rustpress.toml]
 theme = "theme.css"
@@ -54,7 +35,7 @@ theme = "theme.css"
 
 The design is expressed entirely through the same `--vp-*` custom properties VitePress uses (see the [default theme CSS variables](https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css) upstream; `styles/vitepress.css` in the rustpress repository is the local copy). Both the hand-written component rules and the utility classes resolve through those variables, so overriding a variable reaches everything that uses it — no rebuild required. Any CSS is allowed in the file, including ordinary selectors, `color-mix()` and gradients.
 
-`theme` takes one value: a palette name **or** a file. To start from a built-in palette and tweak it, copy its variables into your file.
+Unset, `theme` gives the stock VitePress look; nothing extra is emitted. Any other value fails at load time with an error naming the path it looked for.
 
 ### Navbar
 

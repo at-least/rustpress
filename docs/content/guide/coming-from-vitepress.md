@@ -99,7 +99,7 @@ Key-by-key differences:
 | `cleanUrls` | no option; URLs are always directory-style |
 | `rewrites` with `path-to-regexp` params or a function | static map plus a trailing `:rest*` only |
 | `markdown.theme` (Shiki) | [`[syntax]`](./theming#syntax-color-scheme) — Helix TOML themes |
-| `.vitepress/theme/custom.css` | [`theme`](./theming) — a built-in palette or a path to a CSS file |
+| `.vitepress/theme/custom.css` | [`theme`](./theming) — a path to a CSS file |
 | `themeConfig.lastUpdated.text` | flat `lastUpdatedText` |
 | `themeConfig.search.options.translations` | `[search.translations]` |
 | `markdown.image.lazyLoad` | `[markdown.image] lazyLoading` (the upstream spelling is accepted too) |
@@ -127,7 +127,6 @@ rustpress has no JavaScript at build time and no Vue at run time. These VitePres
 A few options exist only on this side:
 
 - `[syntax]` with all 218 Helix editor color schemes bundled.
-- Built-in UI palettes (`green`, `purple`, `orange`, `mono`) via `theme`.
 - `[markdown] codeCopyButton = false` to drop the copy button.
 - `[notFound]` title/quote/link text for the 404 page.
 - `askAiUrl` for a navbar link.

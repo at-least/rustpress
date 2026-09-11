@@ -11,9 +11,6 @@ base = "/"
 lastUpdated = true
 logo = "logo.svg"
 
-# /themes/ is the generated showcase (npm run build:showcase)
-ignoreDeadLinks = ["/themes"]
-
 [editLink]
 pattern = "https://github.com/at-least/rustpress/edit/main/docs/content/:path"
 text = "Edit this page on GitHub"

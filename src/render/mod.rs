@@ -108,24 +108,23 @@ impl Site {
             }
         }
 
-        // theme.css: UI palette overrides as CSS custom properties
+        // theme.css: UI color overrides as CSS custom properties
         // (VitePress "extending the default theme" style — copied
-        // verbatim and linked after main.css). Syntax colors are NOT
-        // here — they live in the [syntax] section of rustpress.toml.
-        // UI theme: one variable, one choice — a built-in palette name or
-        // a path to a CSS file (values ending in `.css`). Unset/`vitepress`
-        // = the stock look, nothing emitted.
-        // unset or the default built-in: the stock look
-        let selected = config.theme.as_deref().filter(|v| *v != crate::palettes::DEFAULT_NAME);
-        let theme_css = match selected {
+        // verbatim and linked after main.css). The one mechanism: a path
+        // to a .css file relative to the site dir. Unset = the stock
+        // look, nothing emitted. Syntax colors are NOT here — they live
+        // in the [syntax] section of rustpress.toml.
+        let theme_css = match config.theme.as_deref() {
             None => None,
-            Some(value) if value.ends_with(".css") => {
+            Some(value) => {
+                if !value.ends_with(".css") {
+                    return Err(BuildError::ThemeValue(value.to_string()));
+                }
                 let path = site_dir.join(value);
                 if !path.is_file() {
                     return Err(BuildError::ThemeFile {
                         path: path.clone(),
                         value: value.to_string(),
-                        available: crate::palettes::available(),
                     });
                 }
                 Some(std::fs::read_to_string(&path).map_err(|source| BuildError::Write {
@@ -133,14 +132,6 @@ impl Site {
                     source,
                 })?)
             }
-            Some(name) => Some(
-                crate::palettes::css(name)
-                    .ok_or_else(|| BuildError::Theme {
-                        value: name.to_string(),
-                        available: crate::palettes::available(),
-                    })?
-                    .to_string(),
-            ),
         };
         Ok(Site { config, content, sidebars, engine, theme_css })
     }
@@ -263,18 +254,6 @@ impl Site {
 
     /// Build the whole site into `out_dir`.
     pub fn build(&self, site_dir: &Path, out_dir: &Path) -> Result<BuildStats, BuildError> {
-        self.build_with_extra_assets(site_dir, out_dir, &[])
-    }
-
-    /// Like [`build`], plus extra generated files (relative path, bytes)
-    /// written after the theme assets and static copies. Used by the
-    /// theme showcase to emit one `theme.css` per built-in palette.
-    pub fn build_with_extra_assets(
-        &self,
-        site_dir: &Path,
-        out_dir: &Path,
-        extra_assets: &[(&str, &[u8])],
-    ) -> Result<BuildStats, BuildError> {
         let mut stats = BuildStats::default();
         let mut search_docs: Vec<serde_json::Value> = Vec::new();
         let search_enabled = self.config.search.is_some();
@@ -344,16 +323,6 @@ impl Site {
         if let Some(css) = &self.theme_css {
             write_file(&out_dir.join("theme.css"), css.as_bytes())?;
             stats.theme = true;
-        }
-        for (rel, bytes) in extra_assets {
-            let path = out_dir.join(rel);
-            if let Some(parent) = path.parent() {
-                std::fs::create_dir_all(parent).map_err(|source| BuildError::Write {
-                    path: parent.to_path_buf(),
-                    source,
-                })?;
-            }
-            write_file(&path, bytes)?;
         }
         if let Some(sitemap) = &self.config.sitemap {
             let xml = self.sitemap_xml(&sitemap.hostname);
@@ -646,10 +615,10 @@ pub struct BuildStats {
 
 #[derive(Debug, thiserror::Error)]
 pub enum BuildError {
-    #[error("unknown theme {value:?} — expected a built-in palette ({available}) or a path to a .css file")]
-    Theme { value: String, available: String },
-    #[error("theme file {path:?} not found (theme = {value:?}); built-in palettes: {available}")]
-    ThemeFile { path: PathBuf, value: String, available: String },
+    #[error("invalid theme {0:?} — expected a path to a .css file relative to the site dir")]
+    ThemeValue(String),
+    #[error("theme file {path:?} not found (theme = {value:?})")]
+    ThemeFile { path: PathBuf, value: String },
     #[error("{}", .report)]
     DeadLinks { report: String },
     #[error(transparent)]
