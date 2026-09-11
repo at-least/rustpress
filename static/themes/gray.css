@@ -1,0 +1,18 @@
+/* Built-in theme: gray — neutral brand color. The --vp-c-gray ramp in
+ * styles/vitepress.css is the surface/divider ramp (near-white in light
+ * mode), far too low-contrast for the foreground uses of the brand
+ * color, so this theme ships its own neutrals instead: dark on light,
+ * light on dark. */
+:root {
+  --vp-c-brand-1: #242424;
+  --vp-c-brand-2: #4a4a4a;
+  --vp-c-brand-3: #6f6f6f;
+  --vp-c-brand-soft: rgba(128, 128, 128, 0.14);
+}
+
+.dark {
+  --vp-c-brand-1: #e8e8e8;
+  --vp-c-brand-2: #c7c7c7;
+  --vp-c-brand-3: #9a9a9a;
+  --vp-c-brand-soft: rgba(160, 160, 160, 0.16);
+}

@@ -1,8 +1,0 @@
-/* Built-in theme: ember — re-point the brand aliases at the --vp-c-red ramp
- * (mode-aware, so dark mode resolves automatically). */
-:root, .dark {
-  --vp-c-brand-1: var(--vp-c-red-1);
-  --vp-c-brand-2: var(--vp-c-red-2);
-  --vp-c-brand-3: var(--vp-c-red-3);
-  --vp-c-brand-soft: var(--vp-c-red-soft);
-}

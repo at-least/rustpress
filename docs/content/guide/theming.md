@@ -23,14 +23,12 @@ The two are deliberately separate: switching the UI to a purple brand color does
 Set `theme` to a bare name:
 
 ```toml [rustpress.toml]
-theme = "ocean"
+theme = "red"
 ```
 
 | name | effect |
 | --- | --- |
-| `green`, `purple`, `orange`, `ember` | re-point the brand color (`--vp-c-brand-*`) at that color ramp, in both light and dark mode |
-| `ocean`, `sakura` | GitHub-blue / rose-pink brand colors, literals tuned per mode (dark enough for light mode, pastel enough for dark) |
-| `mono` | neutral grays for the brand color (dark text on light, light text on dark) |
+The six chromatic themes — `green`, `indigo`, `orange`, `purple`, `red`, `yellow` — re-point the brand color (`--vp-c-brand-*`) at the color ramp of the same name defined in `styles/vitepress.css`; the ramps are mode-aware, so dark mode resolves automatically. `indigo` is the stock look made explicit; the other five change the brand hue. `gray` is a neutral brand color (dark on light, light on dark) — the `--vp-c-gray-*` ramp in `vitepress.css` is the surface/divider ramp, too low-contrast for foreground use, so this theme ships its own neutrals.
 
 Every bundled theme is a plain CSS file shipped in the binary under `themes/`; all of them land in the output's `themes/` directory, and the selected one is linked as `/themes/<name>.css`. An unknown name fails at load time with an error listing the bundled names.
 

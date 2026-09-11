@@ -344,7 +344,7 @@ lastUpdated = true
 The UI colors: the stylesheet to link after the theme's own stylesheet on every page. A bare name selects a bundled theme (shipped in the binary, extracted to `themes/<name>.css`); a path relative to the site directory ending in `.css` is your own file, copied verbatim into the output under `themes/<basename>`.
 
 ```toml
-theme = "ocean"       # bundled: green, purple, orange, mono, ocean, sakura, ember
+theme = "red"         # bundled: gray, green, indigo, orange, purple, red, yellow
 theme = "theme.css"   # your own file
 ```
 

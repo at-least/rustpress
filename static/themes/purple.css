@@ -1,6 +1,7 @@
 /* Built-in theme: purple — re-point the brand aliases at the --vp-c-purple ramp
- * (mode-aware, so dark mode resolves automatically). */
-:root, .dark {
+ * defined in styles/vitepress.css. The ramp is mode-aware and resolves
+ * on :root, so dark mode follows automatically. */
+:root {
   --vp-c-brand-1: var(--vp-c-purple-1);
   --vp-c-brand-2: var(--vp-c-purple-2);
   --vp-c-brand-3: var(--vp-c-purple-3);

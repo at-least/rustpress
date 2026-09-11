@@ -257,7 +257,7 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
     assert!(css.contains("--vp-c-brand-1: var(--vp-c-green-1);"), "{css}");
     let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
     assert!(html.contains(r#"<link rel="stylesheet" href="/themes/green.css">"#), "linked");
-    assert!(out.path().join("themes/ocean.css").is_file(), "all bundled themes ship");
+    assert!(out.path().join("themes/red.css").is_file(), "all bundled themes ship");
 
     // custom css: copied to themes/<basename>, linked there
     let dir = mk_site("theme = \"my-theme.css\"");
@@ -296,7 +296,7 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
         Err(e) => e.to_string(),
         Ok(_) => panic!("unknown theme should fail at load"),
     };
-    assert!(err.contains("nope") && err.contains("green") && err.contains("sakura"), "{err}");
+    assert!(err.contains("nope") && err.contains("green") && err.contains("yellow"), "{err}");
 
     // missing file: error at load
     let dir = mk_site("theme = \"missing.css\"");

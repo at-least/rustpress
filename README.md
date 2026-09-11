@@ -108,7 +108,7 @@ Relative `.md`/`.html` links resolve to canonical page URLs at build time (unkno
 Following VitePress's "extending the default theme", UI colors are customized with one CSS file of `--vp-*` custom-property overrides. `theme` selects it either as a bundled name (a plain CSS file shipped in the binary under `themes/`) or as a path relative to the site dir:
 
 ```toml
-theme = "ocean"       # bundled: green purple orange mono ocean sakura ember
+theme = "red"         # bundled: gray green indigo orange purple red yellow
 theme = "theme.css"   # your own file
 ```
 
