@@ -447,11 +447,14 @@ pub struct Footer {
 }
 
 /// `level` is a single heading level or a `[min, max]` pair
-/// (VitePress: `outline: { level: [2, 3] }`; default h2–h3).
+/// (VitePress: `outline: { level: [2, 3] }`; default h2–h3). A
+/// one-element array (`[2]`) is accepted too and means "that level
+/// only" — the shape vitepress.dev's deployed config resolves to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(untagged)]
 pub enum OutlineLevel {
     Single(u8),
+    SingleList([u8; 1]),
     Range((u8, u8)),
 }
 

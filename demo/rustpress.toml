@@ -19,7 +19,11 @@ message = "Released under the MIT License."
 copyright = "Copyright © 2019-present Evan You"
 
 [outline]
-level = [2, 3]
+# vitepress.dev sets no outline in docs/config.ts, so the deployed site
+# runs the theme default: H2 only. Pages wanting deeper outlines opt in
+# per page with `outline: deep` front matter (markdown, routing, deploy,
+# cms, ssr-compat, extending-default-theme).
+level = [2]
 label = "On this page"
 
 [search]

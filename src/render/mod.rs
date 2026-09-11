@@ -571,6 +571,7 @@ pub fn outline_range(config: &SiteConfig, page: &Page) -> Option<(u8, u8)> {
     }
     let site = match config.outline.level() {
         Some(OutlineLevel::Single(n)) => (n, n),
+        Some(OutlineLevel::SingleList([n])) => (n, n),
         Some(OutlineLevel::Range((a, b))) => (a, b),
         None => (2, 3),
     };
