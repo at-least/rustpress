@@ -11,8 +11,18 @@ released a new version — which parts of rustpress need to change?"**
 
 | axis | what it catches | mechanism |
 |---|---|---|
-| content | new/changed/removed pages, markdown source drift | `npm run diff:upstream` — byte diff of `demo/content` against a vuejs/vitepress clone's `docs/en` |
+| content | new/changed/removed pages, markdown source drift | `npm run diff:upstream` — byte diff of `demo/content` against a vuejs/vitepress clone's `docs/en`; enforced automatically by `cargo test --test upstream_sync` whenever the clone is present |
 | theme/behavior | nav, sidebar, outline, doc footer, hero, features, footer, search, block structure | `npm run check:parity` — landmark fingerprints of our build vs the pinned snapshot `parity/upstream.json` |
+
+Both axes key off the same input: a vuejs/vitepress clone at the tag
+pinned in `parity/upstream-ref.txt` (currently the tag matching the
+deployed vitepress.dev release recorded in `parity/upstream.json`).
+`bash scripts/sync-upstream.sh` clones or updates `../vitepress` to that
+ref; the upstream-dependent tests (`upstream_sync`, `feature_parity`)
+**fail** when the clone is missing — never silently skip — with that
+command in the message. For offline local runs set
+`RUSTPRESS_ALLOW_NO_UPSTREAM=1` to turn the failure into a visible
+skip; CI always syncs the clone (`.github/workflows/ci.yml`).
 
 The pinned baseline was extracted from the deployed upstream site
 (vitepress.dev, `<meta name="generator">` records the exact version —
@@ -28,6 +38,17 @@ checker (e.g. the deployed site hydrates outline items client-side);
 each repo's own git history.
 
 ## When VitePress releases a new version
+
+Usually you don't do anything: `drift-watch`
+(`.github/workflows/drift-watch.yml`, weekly + on demand) compares the
+deployed site's generator version with the pinned baseline and, when
+upstream moved, opens a mechanical refresh PR — ref bump, corpus
+re-sync, re-pinned fingerprints, the old→new landmark diff, and the
+divergences that still remain (those are the human work). Review that PR
+like the manual flow below; note CI does not auto-run on PRs opened
+with `GITHUB_TOKEN`, so push an empty commit to the branch to get a run.
+
+The manual flow, for doing it locally or when the automation can't:
 
 ```sh
 # 0. see what changed upstream
@@ -93,9 +114,19 @@ deployed generator version and per-page etags are recorded in
 
 ## Maintenance rules
 
+- `parity/upstream-ref.txt`: the vuejs/vitepress tag every verbatim
+  corpus and the parity baseline are pinned to. `drift-watch` bumps it
+  mechanically; a manual bump means re-syncing the clone
+  (`scripts/sync-upstream.sh`), the corpora, and the fingerprints
+  together — the gates above keep the three from drifting apart.
 - `parity/pages.txt`: keep representative pages — home, the code-heavy
-  `guide/markdown`, deep-sidebar reference pages. Add a page whenever a
-  new upstream feature lands in the docs corpus.
+  guide pages, deep-sidebar reference pages. `npm run diff:upstream`
+  lists upstream pages you haven't pinned; add one whenever a new
+  upstream feature lands there, or the theme axis can't see it.
+- `tests/fixtures/en`: a verbatim subset of the upstream docs corpus.
+  Never edit fixtures by hand — `cargo test --test upstream_sync`
+  byte-compares them (and `demo/content`) against the pinned clone; the
+  only legitimate change is a re-copy from upstream.
 - `tests/parity/fixtures/`: committed HTML samples (upstream + local)
   unit-test the extractor; refresh them from the caches/next build when
   either side's markup changes (`local-*` comes from `demo/public`).

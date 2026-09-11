@@ -45,6 +45,11 @@ npm run build:docs   # build docs/ (rustpress's own documentation) → docs/publ
 npm run dev:docs     # same watch loop over docs/
 ```
 
+Before the first `npm test`, run `bash scripts/sync-upstream.sh` once to
+clone vuejs/vitepress at the tag pinned in `parity/upstream-ref.txt` —
+the upstream parity gates fail (rather than skip) without it;
+`RUSTPRESS_ALLOW_NO_UPSTREAM=1` opts out on offline machines.
+
 The user-facing documentation lives in `docs/` and is itself a rustpress
 site; `cargo test --test docs_site` builds it and validates every link and
 anchor.
@@ -53,7 +58,15 @@ anchor.
 
 ## Upstream parity
 
-When VitePress ships a new version, `npm run parity:refresh` (theme axis: re-pin landmark fingerprints from the deployed site and diff old→new) and `npm run diff:upstream` (content axis: byte-diff `demo/content` against a vuejs/vitepress clone) mechanically show what changed upstream, and `npm run check:parity` gates `npm test` until every divergence is fixed or reviewed into `parity/known-deltas.json`. See [PARITY.md](PARITY.md).
+When VitePress ships a new version, a weekly scheduled workflow
+(`drift-watch`) opens a mechanical refresh PR: re-pin landmark
+fingerprints from the deployed site, re-sync the verbatim corpora, and
+attach the old→new diff plus whatever divergences remain. Locally the
+same moves are `npm run parity:refresh` (theme axis) and
+`npm run diff:upstream` (content axis: byte-diff `demo/content` against
+the pinned vuejs/vitepress clone); `npm run check:parity` gates `npm
+test` until every divergence is fixed or reviewed into
+`parity/known-deltas.json`. See [PARITY.md](PARITY.md).
 
 The **feature-surface** audit — every documented upstream config option, markdown extension, and theme feature against what rustpress implements, with source references — lives in [FEATURE-PARITY.md](FEATURE-PARITY.md); `cargo test --test feature_parity` fails when upstream docs grow headings the audit doesn't cover.
 

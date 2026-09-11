@@ -1,0 +1,44 @@
+name: drift-watch
+# Weekly upstream drift detection: when vitepress.dev runs a newer
+# VitePress than parity/upstream.json pins, open a mechanical refresh PR
+# (re-pin fingerprints, re-sync corpora, bump parity/upstream-ref.txt).
+# See scripts/drift-watch.mjs and PARITY.md.
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # cheap version compare first: most weeks upstream hasn't moved
+      - name: Detect upstream drift
+        id: drift
+        run: |
+          if node scripts/drift-watch.mjs --check; then
+            echo "drifted=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "drifted=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.drift.outputs.drifted == 'true'
+      - uses: Swatinem/rust-cache@v2
+        if: steps.drift.outputs.drifted == 'true'
+      - run: npm ci
+        if: steps.drift.outputs.drifted == 'true'
+      - run: bash scripts/sync-upstream.sh
+        if: steps.drift.outputs.drifted == 'true'
+      - run: node scripts/drift-watch.mjs
+        if: steps.drift.outputs.drifted == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
