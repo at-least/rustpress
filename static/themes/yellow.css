@@ -1,9 +1,0 @@
-/* Built-in theme: yellow — re-point the brand aliases at the --vp-c-yellow ramp
- * defined in styles/vitepress.css. The ramp is mode-aware and resolves
- * on :root, so dark mode follows automatically. */
-:root {
-  --vp-c-brand-1: var(--vp-c-yellow-1);
-  --vp-c-brand-2: var(--vp-c-yellow-2);
-  --vp-c-brand-3: var(--vp-c-yellow-3);
-  --vp-c-brand-soft: var(--vp-c-yellow-soft);
-}

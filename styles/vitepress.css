@@ -258,16 +258,32 @@
   --vp-c-caution-soft: var(--vp-c-red-soft);
 }
 
-:root:where(:has(.vp-graded-containers)) {
-  --vp-c-warning-1: var(--vp-c-orange-1);
-  --vp-c-warning-2: var(--vp-c-orange-2);
-  --vp-c-warning-3: var(--vp-c-orange-3);
-  --vp-c-warning-soft: var(--vp-c-orange-soft);
+/* gradedContainers opts the site into GitHub-style severity colors
+   (warning orange, caution yellow). Literals with :has() specificity so
+   the opt-in wins over any theme's warning/caution — the feature owns
+   its palette, mode-aware by hand. */
+:root:has(.vp-graded-containers) {
+  --vp-c-warning-1: #9a4224;
+  --vp-c-warning-2: #b95a00;
+  --vp-c-warning-3: #c16200;
+  --vp-c-warning-soft: rgba(249, 115, 22, 0.14);
 
-  --vp-c-caution-1: var(--vp-c-yellow-1);
-  --vp-c-caution-2: var(--vp-c-yellow-2);
-  --vp-c-caution-3: var(--vp-c-yellow-3);
-  --vp-c-caution-soft: var(--vp-c-yellow-soft);
+  --vp-c-caution-1: #915930;
+  --vp-c-caution-2: #946300;
+  --vp-c-caution-3: #9f6a00;
+  --vp-c-caution-soft: rgba(234, 179, 8, 0.14);
+}
+
+:root.dark:has(.vp-graded-containers) {
+  --vp-c-warning-1: #fb8c00;
+  --vp-c-warning-2: #e46a02;
+  --vp-c-warning-3: #b45309;
+  --vp-c-warning-soft: rgba(249, 115, 22, 0.16);
+
+  --vp-c-caution-1: #f9b44e;
+  --vp-c-caution-2: #da8b17;
+  --vp-c-caution-3: #b45309;
+  --vp-c-caution-soft: rgba(234, 179, 8, 0.16);
 }
 
 /* Typography */
@@ -751,10 +767,10 @@ button:focus-visible {
     margin-inline: -0.5rem;
   }
   .vp-doc pre .line.diff.add {
-    background-color: var(--vp-c-green-soft);
+    background-color: var(--vp-code-line-diff-add-color);
   }
   .vp-doc pre .line.diff.remove {
-    background-color: var(--vp-c-red-soft);
+    background-color: var(--vp-code-line-diff-remove-color);
     user-select: none;
   }
   .vp-doc pre .line.diff.remove :is(a, span) {
@@ -762,10 +778,10 @@ button:focus-visible {
     text-decoration: line-through;
   }
   .vp-doc pre .line.warning {
-    background-color: var(--vp-c-yellow-soft);
+    background-color: var(--vp-code-line-warning-color);
   }
   .vp-doc pre .line.error {
-    background-color: var(--vp-c-red-soft);
+    background-color: var(--vp-code-line-error-color);
   }
   .vp-doc pre.line-numbers {
     counter-reset: gdln;

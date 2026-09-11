@@ -23,12 +23,19 @@ The two are deliberately separate: switching the UI to a purple brand color does
 Set `theme` to a bare name:
 
 ```toml [rustpress.toml]
-theme = "red"
+theme = "catppuccin"
 ```
 
-| name | effect |
+A bundled theme is a **complete design**: one file defining every design token the structure consumes — surfaces, text, borders, the brand ramp, the neutral ramp, the seven semantic colors (tip/note/success/important/warning/danger/caution) and the shadow scale — with light and dark values of its own. Linked after `vitepress.css`, it leaves none of the stock *color* design in effect — what survives from the base is the structural layer (layout, components, utility classes), which resolves through these tokens, plus a few opt-in knobs like fonts and the backdrop scrim a theme may also override by declaring the same custom properties.
+
+| name | character |
 | --- | --- |
-The six chromatic themes — `green`, `indigo`, `orange`, `purple`, `red`, `yellow` — re-point the brand color (`--vp-c-brand-*`) at the color ramp of the same name defined in `styles/vitepress.css`; the ramps are mode-aware, so dark mode resolves automatically. `indigo` is the stock look made explicit; the other five change the brand hue. `gray` is a neutral brand color (dark on light, light on dark) — the `--vp-c-gray-*` ramp in `vitepress.css` is the surface/divider ramp, too low-contrast for foreground use, so this theme ships its own neutrals.
+| `github` | GitHub Primer, light and dark — the look of github.com |
+| `catppuccin` | Latte / Mocha — pastel, low-noise, dark-first |
+| `nord` | Polar Night / Snow Storm — cold, bluish, calm |
+| `rose-pine` | Rosé Pine Dawn / main — warm, rosy, natural pine accents |
+
+Two repo tests hold every bundled theme to that bar: **completeness** (the required token set is derived from what the base stylesheet actually references; each theme must define all of it in both `:root` and `.dark`) and **WCAG contrast** (body text ≥ 7:1, secondary text ≥ 4.5:1 also on the sidebar and code-block surfaces, links ≥ 4.5:1, badge text vs its own soft container background ≥ 4.5:1, button backgrounds vs white text ≥ 3:1 in every state — in both modes). Where a published palette's accent cannot hold those ratios in a foreground role, the theme deepens it and says so in its header comment.
 
 Every bundled theme is a plain CSS file shipped in the binary under `themes/`; all of them land in the output's `themes/` directory, and the selected one is linked as `/themes/<name>.css`. An unknown name fails at load time with an error listing the bundled names.
 
@@ -53,7 +60,7 @@ theme = "theme.css"
 
 The design is expressed entirely through the same `--vp-*` custom properties VitePress uses (see the [default theme CSS variables](https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css) upstream; `styles/vitepress.css` in the rustpress repository is the local copy). Both the hand-written component rules and the utility classes resolve through those variables, so overriding a variable reaches everything that uses it — no rebuild required. Any CSS is allowed in the file, including ordinary selectors, `color-mix()` and gradients.
 
-To start from a bundled theme and tweak it, copy its `themes/<name>.css` out of the output and edit your copy. Note that a custom file takes its basename into `themes/`: your own `green.css` replaces the bundled `themes/green.css` in the output — link your copy explicitly (`theme = "green.css"` resolves to it, not the bundled one).
+A file of your own can be a partial override (a few brand variables, like above) — that is customization. To author a full theme, copy a bundled `themes/<name>.css` out of the output (or from `static/themes/` in the repo) as your template and change the values; the bundled files are themselves just this contract spelled out. Note that a custom file takes its basename into `themes/`: your own `catppuccin.css` replaces the bundled `themes/catppuccin.css` in the output — `theme = "catppuccin.css"` resolves to your copy, not the bundled one.
 
 Unset, `theme` gives the stock VitePress look; nothing extra is linked.
 

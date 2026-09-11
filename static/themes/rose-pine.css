@@ -1,0 +1,97 @@
+/* Built-in theme: rose-pine — Rosé Pine Dawn (light) and Rosé Pine
+ * (dark). Rose Pine has no true green, so foam/pine carry success; the
+ * `_10` tints from the published palette serve as the soft container
+ * backgrounds. A few accents are deepened for AA contrast on Dawn. */
+:root {
+  --vp-c-neutral-inverse: #ffffff;
+
+  --vp-c-bg: #faf4ed;
+  --vp-c-bg-alt: #f2e9e1;
+  --vp-c-bg-elv: #fffaf3;
+  --vp-c-bg-soft: #f2e9e1;
+
+  --vp-c-text-1: #4f4a6e;
+  --vp-c-text-2: #625e78;
+  --vp-c-text-3: #797593;
+
+  --vp-c-border: #dfdad9;
+  --vp-c-divider: #dfdad9;
+  --vp-c-gutter: #dfdad9;
+
+  --vp-c-brand-1: #6f5a88;
+  --vp-c-brand-2: #907aa9;
+  --vp-c-brand-3: #6b5685;
+  --vp-c-brand-soft: #f1e8e6;
+
+  --vp-c-default-1: #cecacd;
+  --vp-c-default-2: #dfdad9;
+  --vp-c-default-3: #e9e2df;
+  --vp-c-default-soft: #dfdad9;
+
+  --vp-c-tip-1: #6f5a88;
+  --vp-c-tip-soft: #f1e8e6;
+  --vp-c-note-1: #6f5a88;
+  --vp-c-note-soft: #f1e8e6;
+  --vp-c-success-1: #3f6f7a;
+  --vp-c-success-soft: #eaeae5;
+  --vp-c-important-1: #96586d;
+  --vp-c-important-soft: #fae8e1;
+  --vp-c-warning-1: #8d6328;
+  --vp-c-warning-soft: #fbead8;
+  --vp-c-danger-1: #9c4f66;
+  --vp-c-danger-soft: #f6e4e0;
+  --vp-c-caution-1: #9c4f66;
+  --vp-c-caution-soft: #f6e4e0;
+
+  --vp-c-sponsor: #9c4f66;
+
+  --vp-shadow-1: 0 1px 2px rgba(87, 82, 121, 0.06), 0 1px 2px rgba(87, 82, 121, 0.08);
+  --vp-shadow-2: 0 3px 12px rgba(87, 82, 121, 0.09), 0 1px 4px rgba(87, 82, 121, 0.09);
+  --vp-shadow-3: 0 12px 32px rgba(87, 82, 121, 0.12), 0 2px 6px rgba(87, 82, 121, 0.1);
+  --vp-shadow-4: 0 14px 44px rgba(87, 82, 121, 0.14), 0 3px 9px rgba(87, 82, 121, 0.14);
+  --vp-shadow-5: 0 18px 56px rgba(87, 82, 121, 0.18), 0 4px 12px rgba(87, 82, 121, 0.18);
+}
+
+.dark {
+  --vp-c-neutral-inverse: #000000;
+
+  --vp-c-bg: #191724;
+  --vp-c-bg-alt: #1f1d2e;
+  --vp-c-bg-elv: #26233a;
+  --vp-c-bg-soft: #1f1d2e;
+
+  --vp-c-text-1: #e0def4;
+  --vp-c-text-2: #908caa;
+  --vp-c-text-3: #6e6a86;
+
+  --vp-c-border: #26233a;
+  --vp-c-divider: #26233a;
+  --vp-c-gutter: #191724;
+
+  --vp-c-brand-1: #c4a7e7;
+  --vp-c-brand-2: #9b7fd4;
+  --vp-c-brand-3: #8d74c8;
+  --vp-c-brand-soft: #2b2539;
+
+  --vp-c-default-1: #524f67;
+  --vp-c-default-2: #403d52;
+  --vp-c-default-3: #26233a;
+  --vp-c-default-soft: #403d52;
+
+  --vp-c-tip-1: #c4a7e7;
+  --vp-c-tip-soft: #2b2539;
+  --vp-c-note-1: #c4a7e7;
+  --vp-c-note-soft: #2b2539;
+  --vp-c-success-1: #9ccfd8;
+  --vp-c-success-soft: #252937;
+  --vp-c-important-1: #ebbcba;
+  --vp-c-important-soft: #2f2834;
+  --vp-c-warning-1: #f6c177;
+  --vp-c-warning-soft: #30282c;
+  --vp-c-danger-1: #eb6f92;
+  --vp-c-danger-soft: #311f30;
+  --vp-c-caution-1: #eb6f92;
+  --vp-c-caution-soft: #311f30;
+
+  --vp-c-sponsor: #ebbcba;
+}

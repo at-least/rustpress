@@ -249,15 +249,15 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
 
     // bundled name: every theme extracts with the assets, the selected
     // one is linked
-    let dir = mk_site("theme = \"green\"");
+    let dir = mk_site("theme = \"catppuccin\"");
     let site = Site::load(dir.path()).unwrap();
     let out = tempdir::tempdir();
     site.build(dir.path(), out.path()).unwrap();
-    let css = std::fs::read_to_string(out.path().join("themes/green.css")).unwrap();
-    assert!(css.contains("--vp-c-brand-1: var(--vp-c-green-1);"), "{css}");
+    let css = std::fs::read_to_string(out.path().join("themes/catppuccin.css")).unwrap();
+    assert!(css.contains("--vp-c-bg: #eff1f5;"), "{css}");
     let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
-    assert!(html.contains(r#"<link rel="stylesheet" href="/themes/green.css">"#), "linked");
-    assert!(out.path().join("themes/red.css").is_file(), "all bundled themes ship");
+    assert!(html.contains(r#"<link rel="stylesheet" href="/themes/catppuccin.css">"#), "linked");
+    assert!(out.path().join("themes/nord.css").is_file(), "all bundled themes ship");
 
     // custom css: copied to themes/<basename>, linked there
     let dir = mk_site("theme = \"my-theme.css\"");
@@ -286,7 +286,7 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
     let site = Site::load(dir.path()).unwrap();
     let out = tempdir::tempdir();
     site.build(dir.path(), out.path()).unwrap();
-    assert!(out.path().join("themes/green.css").is_file());
+    assert!(out.path().join("themes/github.css").is_file());
     let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
     assert!(!html.contains("themes/"), "no theme link when unset");
 
@@ -296,7 +296,7 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
         Err(e) => e.to_string(),
         Ok(_) => panic!("unknown theme should fail at load"),
     };
-    assert!(err.contains("nope") && err.contains("green") && err.contains("yellow"), "{err}");
+    assert!(err.contains("nope") && err.contains("github") && err.contains("nord"), "{err}");
 
     // missing file: error at load
     let dir = mk_site("theme = \"missing.css\"");
