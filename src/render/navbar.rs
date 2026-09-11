@@ -55,7 +55,11 @@ pub fn navbar<'a>(
                 <div class="flex justify-between mx-auto max-w-[calc(var(--vp-layout-max-width)-4rem)] h-(--vp-nav-height) pointer-events-none">
                     <div class=(format!(
                         "title min-w-0 pointer-events-none [&_*]:pointer-events-auto{}",
-                        if has_sidebar { " lg:max-w-[calc(var(--vp-sidebar-width)-2rem)]" } else if !is_home { " lg:min-w-[calc(var(--vp-sidebar-width)-2rem)]" } else { "" }
+                        // upstream gives the title column the sidebar width
+                        // (not a max-width) on doc pages, so the search box
+                        // — first item of the content region — starts at the
+                        // sidebar's outer edge instead of hugging the logo
+                        if has_sidebar { " lg:w-[calc(var(--vp-sidebar-width)-2rem)]" } else if !is_home { " lg:min-w-[calc(var(--vp-sidebar-width)-2rem)]" } else { "" }
                     ))>
                         <div class=(format!(
                             "flex items-center{}",
