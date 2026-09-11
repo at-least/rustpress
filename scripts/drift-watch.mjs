@@ -166,18 +166,28 @@ if (dryRun) {
 const branch = `drift-watch/${tag ?? generator.replace(/[^\w.-]+/g, '-')}`
 run('git config user.name "rustpress-drift-watch[bot]"')
 run('git config user.email "drift-watch@users.noreply.github.com"')
+// the runner's checkout has no remote-tracking ref for this branch, so a
+// bare --force-with-lease would reject with "stale info": pin the lease to
+// the sha ls-remote reports (empty → branch is new → plain push)
+let remoteSha = ''
+try {
+  remoteSha = sh(`git ls-remote origin "refs/heads/${branch}"`).split(/\s+/)[0] ?? ''
+} catch { /* ls-remote failure shouldn't block a first push */ }
 run(`git checkout -B ${branch}`)
 run('git add parity/upstream.json parity/upstream-ref.txt demo/content tests/fixtures/en')
 execFileSync('git', ['commit', '-m', `Parity refresh: upstream ${generator}`], { stdio: 'inherit' })
-run(`git push --force-with-lease origin ${branch}`)
-let prExists = true
-try {
-  sh(`gh pr view ${JSON.stringify(branch)} --json state`)
-} catch {
-  prExists = false
+if (remoteSha) {
+  run(`git push --force-with-lease=refs/heads/${branch}:${remoteSha} origin ${branch}`)
+} else {
+  run(`git push origin ${branch}`)
 }
-if (prExists) {
-  console.log(`drift-watch: PR for ${branch} already exists — pushed an update to it`)
+// only an OPEN PR counts: a closed/merged one must not read as "updated"
+let openPr = false
+try {
+  openPr = sh(`gh pr list --head ${JSON.stringify(branch)} --state open --json number`) !== '[]'
+} catch { /* gh failure falls through to create; a duplicate-PR error is loud */ }
+if (openPr) {
+  console.log(`drift-watch: open PR for ${branch} already exists — pushed an update to it`)
 } else {
   // --body carries upstream diff text (quotes, backticks, $): pass it as a
   // real argv element, not through a shell string
