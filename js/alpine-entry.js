@@ -17,6 +17,38 @@ Alpine.store("ui", {
   sidebar: false, // mobile sidebar drawer
 });
 
+/* Overlays must auto-close when the viewport grows past their
+   breakpoint, or they linger invisibly with the scroll lock held
+   (upstream: composables/nav.ts whenever(isTablet, closeScreen) and
+   composables/layout.ts watch(isDesktop, closeSidebar)). Upstream also
+   closes the sidebar drawer on Escape (useCloseSidebarOnEscape). */
+const tabletMQ = window.matchMedia("(min-width: 48rem)");
+const desktopMQ = window.matchMedia("(min-width: 60rem)");
+const syncOverlaysWithViewport = () => {
+  if (tabletMQ.matches) Alpine.store("ui").screen = false;
+  if (desktopMQ.matches) Alpine.store("ui").sidebar = false;
+};
+// addEventListener on MediaQueryList needs Safari >= 14; the bundle
+// targets es2018, so fall back to the deprecated addListener
+const watchMQ = (mq, fn) =>
+  mq.addEventListener ? mq.addEventListener("change", fn) : mq.addListener(fn);
+watchMQ(tabletMQ, syncOverlaysWithViewport);
+watchMQ(desktopMQ, syncOverlaysWithViewport);
+syncOverlaysWithViewport();
+window.addEventListener("keydown", (e) => {
+  // only the drawer's own Escape: with the search modal also open, its
+  // handler owns the key and the drawer stays underneath (upstream's
+  // refcounted lock behaves the same way)
+  if (
+    e.key === "Escape" &&
+    Alpine.store("ui").sidebar &&
+    !Alpine.store("ui").search
+  ) {
+    Alpine.store("ui").sidebar = false;
+    document.getElementById("VPLocalNavMenu")?.focus();
+  }
+});
+
 /* Code-group tab switching. The tab strip (radio inputs + labels) is
    emitted server-side by the markdown preprocessor; this component only
    wires label clicks to showing the matching <pre>. */
@@ -171,10 +203,7 @@ Alpine.data("searchModal", () => ({
     });
     this.$watch("$store.ui.search", (open) => {
       if (open) {
-        document.body.style.overflow = "hidden";
         this.$nextTick(() => this.$refs.input.focus() || this.$refs.input.select());
-      } else {
-        document.body.style.overflow = "";
       }
     });
   },
@@ -345,3 +374,14 @@ Alpine.data("searchModal", () => ({
 
 window.Alpine = Alpine;
 Alpine.start();
+
+/* Single writer for the body scroll lock: one effect over the whole
+   overlay state, so no two overlays can fight over body.overflow
+   (upstream: the refcounted useBodyScrollLock composable). */
+Alpine.effect(() => {
+  const locked =
+    Alpine.store("ui").screen ||
+    Alpine.store("ui").search ||
+    Alpine.store("ui").sidebar;
+  document.body.style.overflow = locked ? "hidden" : "";
+});

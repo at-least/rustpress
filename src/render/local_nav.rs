@@ -36,7 +36,7 @@ pub fn local_nav<'a>(
                     </button>
                 }
                 @if outline_enabled {
-                    <div id="VPLocalNavOutlineDropdown" x-data="{ open: false }" @click.outside="open = false">
+                    <div id="VPLocalNavOutlineDropdown" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
                     <button type="button" class="group/drop relative block py-[0.75rem] px-6 pb-[0.6875rem] leading-[2] text-[0.75rem] font-medium text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] cursor-pointer [&.open]:text-text-1 md:px-8 lg:text-[0.875rem]" id="VPOutlineDropdownButton" @click="open = !open" :aria-expanded=("open.toString()") :class=("{ open: open }") aria-controls="VPOutlineDropdownItems">
                         <span>(outline_label.clone())</span>
                         (icon("chevron-right", "inline-block align-middle ml-[0.125rem] size-[0.875rem] transition-transform duration-[250ms] group-[.open]/drop:rotate-90 lg:size-[1rem]"))
