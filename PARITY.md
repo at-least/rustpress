@@ -33,6 +33,10 @@ missing install into a visible skip. Some goldens encode demo content
 (feature count decides grid columns, title length decides wrap): after
 legitimately editing `demo/content`, refresh with
 `node scripts/parity-viewport.mjs --update` and eyeball the golden diff.
+`--update` re-records whatever our build measures — when values change,
+re-verify them against the pinned upstream build before committing,
+otherwise a real regression would be silently blessed. Run it after
+`npm run check:demo` so it measures a fresh build.
 
 The pinned baseline was extracted from the deployed upstream site
 (vitepress.dev, `<meta name="generator">` records the exact version —

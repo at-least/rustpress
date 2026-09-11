@@ -144,6 +144,19 @@ if (!existsSync(join(DIST, 'index.html'))) {
   console.error('parity-viewport: demo/public missing — run `cargo run -- build demo` first');
   process.exit(1);
 }
+// stale-build guard: measuring an old build records or checks the
+// wrong values (index.html, not the dir: rewriting files doesn't
+// touch the directory's own mtime)
+{
+  const { statSync } = await import('node:fs');
+  const distMtime = statSync(join(DIST, 'index.html')).mtimeMs;
+  for (const src of [CSS_PATH, join(ROOT, 'styles/vitepress.css'), join(ROOT, 'src/render')]) {
+    if (existsSync(src) && statSync(src).mtimeMs > distMtime) {
+      console.error(`parity-viewport: demo/public is older than ${src} — rebuild first (npm run check:demo)`);
+      process.exit(1);
+    }
+  }
+}
 
 const server = createServer(async (req, res) => {
   try {
