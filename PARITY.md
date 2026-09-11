@@ -7,12 +7,13 @@ spans instead of Shiki). So parity is *not* DOM identity — it is two
 mechanical checks that together answer the question: **"VitePress
 released a new version — which parts of rustpress need to change?"**
 
-## The two axes
+## The three axes
 
 | axis | what it catches | mechanism |
 |---|---|---|
 | content | new/changed/removed pages, markdown source drift | `npm run diff:upstream` — byte diff of `demo/content` against a vuejs/vitepress clone's `docs/en`; enforced automatically by `cargo test --test upstream_sync` whenever the clone is present |
 | theme/behavior | nav, sidebar, outline, doc footer, hero, features, footer, search, block structure | `npm run check:parity` — landmark fingerprints of our build vs the pinned snapshot `parity/upstream.json` |
+| viewport | breakpoint behavior: responsive utilities, breakpoint media queries, geometry at every breakpoint boundary | `npm run check:viewport` — headless-Chromium geometry probes against goldens in `parity/viewport-goldens.json` (verified pixel-for-pixel against the pinned upstream), plus an exact count of the px media queries in the compiled CSS |
 
 Both axes key off the same input: a vuejs/vitepress clone at the tag
 pinned in `parity/upstream-ref.txt` (currently the tag matching the
@@ -23,6 +24,15 @@ ref; the upstream-dependent tests (`upstream_sync`, `feature_parity`)
 command in the message. For offline local runs set
 `RUSTPRESS_ALLOW_NO_UPSTREAM=1` to turn the failure into a visible
 skip; CI always syncs the clone (`.github/workflows/ci.yml`).
+
+The viewport axis needs no upstream clone — it compares against
+recorded goldens — but it does need the `playwright-chromium`
+devDependency installed (CI caches the browser). It follows the same
+fail-by-default convention: `RUSTPRESS_ALLOW_NO_PLAYWRIGHT=1` turns a
+missing install into a visible skip. Some goldens encode demo content
+(feature count decides grid columns, title length decides wrap): after
+legitimately editing `demo/content`, refresh with
+`node scripts/parity-viewport.mjs --update` and eyeball the golden diff.
 
 The pinned baseline was extracted from the deployed upstream site
 (vitepress.dev, `<meta name="generator">` records the exact version —

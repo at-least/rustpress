@@ -16,6 +16,13 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # headless Chromium for the viewport-parity gate (check:viewport);
+      # the package's install script fetches it into ~/.cache/ms-playwright
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: playwright-${{ runner.os }}-
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       # the upstream gates (verbatim corpora, feature-parity audit) need
@@ -23,4 +30,6 @@ jobs:
       - name: Sync the pinned upstream clone
         run: bash scripts/sync-upstream.sh
       - run: npm ci
+      # system libs headless Chromium needs on ubuntu runners
+      - run: npx playwright install-deps chromium
       - run: npm test
