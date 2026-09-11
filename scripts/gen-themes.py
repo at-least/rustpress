@@ -48,13 +48,17 @@ def mix(a, b, t):
 EPS = 0.03  # float-safety margin so python's fit clears rust's check
 
 def fit(c, against, target, mode):
-    """darken (light mode) / lighten (dark mode) until target contrast."""
+    """darken (light mode) / lighten (dark mode) until target contrast;
+    if the primary direction cannot reach it, try the other way."""
     target += EPS
-    t = black if mode == "light" else white
-    for _ in range(60):
-        if contrast(c, against) >= target:
-            return c
-        c = mix(c, t, 0.04)
+    for t in ((black, white) if mode == "light" else (white, black)):
+        cur = c
+        for _ in range(60):
+            if contrast(cur, against) >= target:
+                return cur
+            cur = mix(cur, t, 0.04)
+        if contrast(cur, against) > contrast(c, against):
+            c = cur
     return c
 
 def composite(hex_color, alpha, bg):
@@ -72,16 +76,23 @@ def fit_on_tint(c, bg, alpha, target, mode):
 
 black, white = "#000000", "#ffffff"
 
+def _norm_hex(v):
+    v = v.lower()
+    if len(v) == 4:  # #abc → #aabbcc
+        v = "#" + "".join(ch * 2 for ch in v[1:])
+    return v
+
 def pal(file):
     data = tomllib.load(open(f"{HELVIX}/{file}.toml", "rb"))
     p = data.get("palette")
     if p:
-        return {k: v.lower() for k, v in p.items() if isinstance(v, str) and v.startswith("#")}
+        return {k: _norm_hex(v) for k, v in p.items()
+                if isinstance(v, str) and v.startswith("#")}
     out = {}
     def walk(d, prefix=""):
         for k, v in d.items():
-            if isinstance(v, str) and v.startswith("#") and len(v) == 7:
-                out[f"{prefix}{k}"] = v.lower()
+            if isinstance(v, str) and v.startswith("#") and len(v) in (4, 7):
+                out[f"{prefix}{k}"] = _norm_hex(v)
             elif isinstance(v, dict):
                 walk(v, f"{prefix}{k}.")
     walk(data)
@@ -399,3 +410,235 @@ for spec in SPECS:
 
 for name, adj in report:
     print(f"{name:18} adjusted: {', '.join(adj) if adj else 'none'}")
+
+# --- auto-mapping pass ----------------------------------------------------
+# Every remaining vendored Helix TOML with a [palette] becomes a theme:
+# slots are inferred from key names and hue classification, the other
+# mode is derived from the palette's own hues. Curated names above win.
+
+
+import colorsys
+import os
+import re
+
+HELI = f"{ROOT}/assets/syntax-themes/helix"
+CURATED = {s["name"] for s in SPECS} | {"github", "catppuccin", "nord", "rose-pine"}
+
+BG_RE = re.compile(r"^(bg|background|base|canvas)", re.I)
+SURFACE_SKIP = re.compile(r"red|green|blue|yellow|magenta|cyan|visual|selection|menu|focus|inlay|popup|highlight|status|diff|dim|alt|current|hl|line|added|changed|removed|gutter|contrast|search|fg", re.I)
+FG_RE = re.compile(r"^(fg|foreground|text)", re.I)
+NEUTRAL_RE = re.compile(r"gray|grey|black|white|comment|linenr|border|ui|selection|cursor|whitespace|indent|none|gutter|dark|disabled|widget|faint|muted|dim", re.I)
+
+def bucket_of(h):
+    if h >= 345 or h < 12: return "red"
+    if h < 40: return "orange"
+    if h < 70: return "yellow"
+    if h < 165: return "green"
+    if h < 200: return "cyan"
+    if h < 252: return "blue"
+    if h < 292: return "purple"
+    return "magenta"
+
+def auto_slots(stem):
+    """Infer the contract slots from a palette table. Returns
+    (mode, slots) where mode is the palette's own half."""
+    data = tomllib.load(open(f"{HELI}/{stem}.toml", "rb"))
+    p = {k: _norm_hex(v) for k, v in (data.get("palette") or {}).items()
+         if isinstance(v, str) and v.startswith("#")}
+    if len(p) < 6:
+        return None
+
+    def ui_hint(entry, field):
+        """Resolve `ui.<entry> = { <field> = "palette-key or #hex" }`."""
+        node = data.get("ui", {}).get(entry)
+        if isinstance(node, dict):
+            v = node.get(field)
+            if isinstance(v, str):
+                if v.startswith("#"):
+                    return _norm_hex(v)
+                if v in p:
+                    return p[v]
+        return None
+
+    colors = list(p.values())
+    bg_named = [(k, v) for k, v in p.items() if BG_RE.match(k) and not SURFACE_SKIP.search(k)]
+    fg_named = [(k, v) for k, v in p.items()
+                if FG_RE.match(k) and not NEUTRAL_RE.search(k) and not BG_RE.match(k)]
+    ui_bg = ui_hint("background", "bg")
+    ui_fg = ui_hint("text", "fg")
+
+    def fg_of(colors, bg, light_palette):
+        if ui_fg is not None and contrast(ui_fg, bg) > 1.5:
+            return ui_fg
+        if fg_named:
+            return (min if light_palette else max)((v for _, v in fg_named), key=lum)
+        rest = [c for c in colors if c != bg]
+        return min(rest, key=lum) if light_palette else max(rest, key=lum)
+
+    # direction from the theme's declared background when there is one
+    # — accents are bright in dark themes too, so a whole-palette vote
+    # lies
+    if ui_bg is not None:
+        light_palette = lum(ui_bg) > 0.5
+    elif bg_named:
+        mid = sorted(lum(v) for _, v in bg_named)[len(bg_named) // 2]
+        light_palette = mid > 0.5
+    else:
+        light_palette = sum(1 for c in colors if lum(c) > 0.5) > len(colors) / 2
+
+    if ui_bg is not None:
+        bg = ui_bg
+        alt = elv = None
+    elif bg_named:
+        bg = (max if light_palette else min)((v for _, v in bg_named), key=lum)
+        surfaces = sorted((v for _, v in bg_named if v != bg), key=lum)
+        if surfaces:
+            toward_fg = surfaces if not light_palette else list(reversed(surfaces))
+            alt, elv = (toward_fg[0], toward_fg[min(1, len(toward_fg) - 1)])
+        else:
+            alt, elv = mix(bg, fg_of(colors, bg, light_palette), 0.10), None
+    else:
+        bg = max(colors, key=lum) if light_palette else min(colors, key=lum)
+        alt = elv = None
+
+    fg = fg_of(colors, bg, light_palette)
+    if alt is None:
+        alt = mix(bg, fg, 0.10 if not light_palette else 0.06)
+    if elv is None:
+        elv = mix(bg, fg, 0.18 if not light_palette else 0.03)
+    # elevation convention (matches the stock look): elevated surfaces
+    # are never darker than the page bg
+    if lum(elv) < lum(bg):
+        elv = bg if light_palette else mix(bg, fg, 0.16)
+
+    buckets = {}
+    for k, v in p.items():
+        if v in (bg, alt, elv, fg) or NEUTRAL_RE.search(k) or BG_RE.match(k):
+            continue
+        r, g, b = rgb(v)
+        h, l, sat = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
+        if sat < 0.15 or l < 0.06 or l > 0.96:
+            continue
+        bk = bucket_of(h * 360)
+        score = sat * (1 - abs(l - (0.40 if not light_palette else 0.55)))
+        if bk not in buckets or score > buckets[bk][1]:
+            buckets[bk] = (v, score)
+
+    def pick(*names):
+        for n in names:
+            if n in buckets:
+                return buckets[n][0]
+        return None
+
+    # muted/monochrome palettes carry no distinct hues — fall back to
+    # canonical seeds (such a scheme has no hue to preserve anyway);
+    # the contrast fitter restyles them per mode
+    seeds = {"brand1": "#2050a8", "success": "#2f7d1f", "warning": "#8f640d",
+             "danger": "#a3443f", "important": "#7048a8", "sponsor": "#a02f6f"}
+    order = {
+        "brand1": ["blue", "cyan", "purple", "magenta", "orange", "green", "red"],
+        "success": ["green", "cyan", "yellow"],
+        "warning": ["yellow", "orange"],
+        "danger": ["red", "orange", "magenta"],
+        "important": ["purple", "magenta", "blue"],
+        "sponsor": ["magenta", "red", "purple"],
+    }
+    # assign the discriminating roles first so the signature accents
+    # (brand) never steal a hue a container needs
+    roles, taken = {}, {bg, fg}
+    for role in ("danger", "warning", "success", "important", "brand1", "sponsor"):
+        c = pick(*order[role])
+        if c is None or c in taken:
+            c = seeds[role]
+        roles[role] = c
+        taken.add(c)
+
+    slots = dict(
+        bg=bg, bg_alt=alt, bg_elv=elv, text1=fg, text2=fg, text3=fg,
+        border=mix(fg, bg, 0.32),
+        brand1=roles["brand1"], success=roles["success"], warning=roles["warning"],
+        danger=roles["danger"], important=roles["important"], sponsor=roles["sponsor"],
+    )
+    # surface guard: body text must be ABLE to reach 7:1 — mid-tone
+    # "dark" backgrounds get nudged toward black (and vice versa), or
+    # the text fit exhausts at white/black and still fails
+    def toward(c, t, stop):
+        while lum(c) > stop if t == black else lum(c) < stop:
+            c = mix(c, t, 0.03)
+        return c
+    if not light_palette:
+        if lum(bg) > 0.082:
+            bg = toward(bg, black, 0.082)
+    else:
+        if lum(bg) < 0.30:
+            bg = toward(bg, white, 0.30)
+    elv = mix(bg, fg, 0.18 if not light_palette else 0.03)
+    slots["bg"] = bg
+    slots["bg_alt"] = mix(bg, fg, 0.10 if not light_palette else 0.06)
+    slots["bg_elv"] = elv if lum(elv) >= lum(bg) else bg
+    slots["border"] = mix(fg, bg, 0.32)
+
+    return ("dark" if not light_palette else "light"), slots
+
+regenerated = set()
+
+skipped, mapped = [], 0
+for f in sorted(os.listdir(HELI)):
+    if not f.endswith(".toml"):
+        continue
+    stem = f[:-5]
+    name = stem.replace("_", "-")
+    if name in CURATED:
+        continue
+    got = auto_slots(stem)
+    if not got:
+        skipped.append(stem)
+        continue
+    mode, slots = got
+    adjusted = set()
+    if mode == "dark":
+        dark_map = dict(slots)
+        dark = build_mode("dark", dark_map, adjusted)
+        light_map = dict(
+            bg=mix(slots["bg"], white, 0.94), bg_alt=mix(slots["bg"], white, 0.90),
+            bg_elv=mix(slots["bg"], white, 0.955),
+            text1=mix(slots["text1"], black, 0.75), text2=mix(slots["text1"], black, 0.55),
+            text3=mix(slots["text1"], black, 0.35), border=mix(slots["bg"], white, 0.84),
+            brand1=slots["brand1"], brand2=mix(slots["brand1"], black, 0.15),
+            brand3=mix(slots["brand1"], black, 0.28),
+            success=slots["success"], warning=slots["warning"], danger=slots["danger"],
+            important=slots["important"], sponsor=slots["sponsor"])
+        light = build_mode("light", light_map, adjusted)
+        note = f"The scheme publishes no light mode, so the light half is derived from the same hues. Accents auto-fitted for WCAG AA."
+    else:
+        light_map = dict(slots)
+        light = build_mode("light", light_map, adjusted)
+        dark_map = dict(
+            bg=mix(slots["bg"], black, 0.90), bg_alt=mix(slots["bg"], black, 0.86),
+            bg_elv=mix(slots["bg"], black, 0.82),
+            text1=mix(slots["text1"], white, 0.78), text2=mix(slots["text1"], white, 0.58),
+            text3=mix(slots["text1"], white, 0.38), border=mix(slots["bg"], black, 0.72),
+            brand1=slots["brand1"], brand2=mix(slots["brand1"], white, 0.15),
+            brand3=mix(slots["brand1"], white, 0.08),
+            success=slots["success"], warning=slots["warning"], danger=slots["danger"],
+            important=slots["important"], sponsor=slots["sponsor"])
+        dark = build_mode("dark", dark_map, adjusted)
+        note = f"The scheme publishes no dark mode, so the dark half is derived from the same hues. Accents auto-fitted for WCAG AA."
+    desc = f"auto-mapped from the vendored Helix palette <{stem}>"
+    open(f"{ROOT}/static/themes/{name}.css", "w").write(
+        emit_css(name, desc, note, light, dark))
+    regenerated.add(name)
+    mapped += 1
+
+# drop auto-generated files whose source no longer maps (stale runs)
+marker = "auto-mapped from the vendored Helix palette"
+for f in os.listdir(f"{ROOT}/static/themes"):
+    if not f.endswith(".css") or f[:-4] in regenerated:
+        continue
+    path = f"{ROOT}/static/themes/{f}"
+    head = open(path).read(200)
+    if marker in head:
+        os.remove(path)
+print(f"auto-mapped: {mapped} themes; skipped (no usable palette): {len(skipped)}")
+if skipped:
+    print("  skipped:", ", ".join(sorted(skipped)))

@@ -1,5 +1,57 @@
 [
   {
+    "name": "acid",
+    "desc": "auto-mapped from the vendored Helix palette <acid>",
+    "light": {
+      "bg": "#f1f2f2",
+      "bgAlt": "#e8e8e9",
+      "text": "#2c4020",
+      "textMuted": "#57674e",
+      "border": "#dadbdc",
+      "brand": "#3f687f",
+      "success": "#296e1c",
+      "warning": "#8a5734",
+      "danger": "#9c4545"
+    },
+    "dark": {
+      "bg": "#161e26",
+      "bgAlt": "#25342f",
+      "text": "#b0ff80",
+      "textMuted": "#8ece6c",
+      "border": "#7fb763",
+      "brand": "#80d0ff",
+      "success": "#6fa564",
+      "warning": "#ffa060",
+      "danger": "#ff7070"
+    }
+  },
+  {
+    "name": "acme",
+    "desc": "auto-mapped from the vendored Helix palette <acme>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#5c6464",
+      "success": "#065905",
+      "warning": "#606058",
+      "danger": "#a0342f"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#eaffff",
+      "success": "#528c52",
+      "warning": "#ffffea",
+      "danger": "#b76663"
+    }
+  },
+  {
     "name": "adwaita",
     "desc": "GNOME's own: libadwaita light and dark",
     "light": {
@@ -23,6 +75,474 @@
       "success": "#33d17a",
       "warning": "#f5c211",
       "danger": "#eb6d73"
+    }
+  },
+  {
+    "name": "adwaita-dark",
+    "desc": "auto-mapped from the vendored Helix palette <adwaita-dark>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#1a5fb4",
+      "success": "#386f06",
+      "warning": "#7d590a",
+      "danger": "#b81b26"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#4b81c5",
+      "success": "#4e9a06",
+      "warning": "#e5a50a",
+      "danger": "#d15b64"
+    }
+  },
+  {
+    "name": "akari-dawn",
+    "desc": "auto-mapped from the vendored Helix palette <akari-dawn>",
+    "light": {
+      "bg": "#e4ded6",
+      "bgAlt": "#d8d2ca",
+      "text": "#1a1816",
+      "textMuted": "#464440",
+      "border": "#5b5753",
+      "brand": "#2050a8",
+      "success": "#3a5830",
+      "warning": "#75502b",
+      "danger": "#7a3828"
+    },
+    "dark": {
+      "bg": "#171615",
+      "bgAlt": "#201f1e",
+      "text": "#cdcccc",
+      "textMuted": "#a5a4a4",
+      "border": "#403e3c",
+      "brand": "#718fc7",
+      "success": "#869880",
+      "warning": "#b98756",
+      "danger": "#b18a80"
+    }
+  },
+  {
+    "name": "akari-night",
+    "desc": "auto-mapped from the vendored Helix palette <akari-night>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9e9e9",
+      "text": "#3a3835",
+      "textMuted": "#62615f",
+      "border": "#dcdcdb",
+      "brand": "#546470",
+      "success": "#4b683e",
+      "warning": "#9c4a29",
+      "danger": "#a53e37"
+    },
+    "dark": {
+      "bg": "#25231f",
+      "bgAlt": "#383631",
+      "text": "#e6ded3",
+      "textMuted": "#bcb5ab",
+      "border": "#a8a299",
+      "brand": "#8e9fb0",
+      "success": "#7faf6a",
+      "warning": "#e78560",
+      "danger": "#df857f"
+    }
+  },
+  {
+    "name": "amberwood",
+    "desc": "auto-mapped from the vendored Helix palette <amberwood>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e8",
+      "text": "#323233",
+      "textMuted": "#5c5c5d",
+      "border": "#d9d9d9",
+      "brand": "#4e6484",
+      "success": "#516859",
+      "warning": "#705e34",
+      "danger": "#835555"
+    },
+    "dark": {
+      "bg": "#0f1014",
+      "bgAlt": "#222226",
+      "text": "#c9c7cd",
+      "textMuted": "#a09fa4",
+      "border": "#8d8c92",
+      "brand": "#8eb6f5",
+      "success": "#9dc6ac",
+      "warning": "#e9c46a",
+      "danger": "#fca5a5"
+    }
+  },
+  {
+    "name": "andromeda",
+    "desc": "auto-mapped from the vendored Helix palette <andromeda>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9e9ea",
+      "text": "#353436",
+      "textMuted": "#5f5e5f",
+      "border": "#dcdcde",
+      "brand": "#43648a",
+      "success": "#486c37",
+      "warning": "#6c622f",
+      "danger": "#a74234"
+    },
+    "dark": {
+      "bg": "#23262e",
+      "bgAlt": "#35373f",
+      "text": "#d5ced9",
+      "textMuted": "#aea9b3",
+      "border": "#9c98a2",
+      "brand": "#7cb7ff",
+      "success": "#96e072",
+      "warning": "#ffe66d",
+      "danger": "#fc7b68"
+    }
+  },
+  {
+    "name": "ao",
+    "desc": "auto-mapped from the vendored Helix palette <ao>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#3d3d3e",
+      "textMuted": "#646465",
+      "border": "#d6d6d6",
+      "brand": "#3e6490",
+      "success": "#466848",
+      "warning": "#7a5900",
+      "danger": "#994b45"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#181819",
+      "text": "#f3f4f6",
+      "textMuted": "#bebec0",
+      "border": "#a5a6a7",
+      "brand": "#6eb0ff",
+      "success": "#81be83",
+      "warning": "#ffba00",
+      "danger": "#fa7970"
+    }
+  },
+  {
+    "name": "ashen",
+    "desc": "auto-mapped from the vendored Helix palette <ashen>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e7",
+      "text": "#2d2d2d",
+      "textMuted": "#585858",
+      "border": "#d9d9d9",
+      "brand": "#2050a8",
+      "success": "#386868",
+      "warning": "#7d5b18",
+      "danger": "#b52c2c"
+    },
+    "dark": {
+      "bg": "#121212",
+      "bgAlt": "#222222",
+      "text": "#b4b4b4",
+      "textMuted": "#909090",
+      "border": "#808080",
+      "brand": "#6b8ac5",
+      "success": "#5f9898",
+      "warning": "#e5a72a",
+      "danger": "#d76f6f"
+    }
+  },
+  {
+    "name": "ashokai",
+    "desc": "auto-mapped from the vendored Helix palette <ashokai>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e8e8",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d9d9db",
+      "brand": "#3f6684",
+      "success": "#2c703a",
+      "warning": "#8a5126",
+      "danger": "#a33b3b"
+    },
+    "dark": {
+      "bg": "#0f141c",
+      "bgAlt": "#272b33",
+      "text": "#fefeff",
+      "textMuted": "#c9cbcd",
+      "border": "#b2b3b6",
+      "brand": "#7ac3ff",
+      "success": "#64ff85",
+      "warning": "#ff9647",
+      "danger": "#ff5d5d"
+    }
+  },
+  {
+    "name": "ashokai-brahn",
+    "desc": "auto-mapped from the vendored Helix palette <ashokai_brahn>",
+    "light": {
+      "bg": "#f2f2f1",
+      "bgAlt": "#eae9e8",
+      "text": "#3c3937",
+      "textMuted": "#646260",
+      "border": "#dddbdb",
+      "brand": "#3f6684",
+      "success": "#276e42",
+      "warning": "#905428",
+      "danger": "#aa3d3d"
+    },
+    "dark": {
+      "bg": "#2a211d",
+      "bgAlt": "#3e3430",
+      "text": "#eee3dc",
+      "textMuted": "#c3b8b2",
+      "border": "#afa59f",
+      "brand": "#7ac3ff",
+      "success": "#43bb71",
+      "warning": "#ff9647",
+      "danger": "#ff6f6f"
+    }
+  },
+  {
+    "name": "ashokai-evermoor",
+    "desc": "auto-mapped from the vendored Helix palette <ashokai_evermoor>",
+    "light": {
+      "bg": "#f1f2f2",
+      "bgAlt": "#e8eae9",
+      "text": "#3e403e",
+      "textMuted": "#656766",
+      "border": "#dbdddc",
+      "brand": "#3f6684",
+      "success": "#386c43",
+      "warning": "#905428",
+      "danger": "#aa3d3d"
+    },
+    "dark": {
+      "bg": "#1d2a26",
+      "bgAlt": "#333f3b",
+      "text": "#f8fff8",
+      "textMuted": "#c8d0ca",
+      "border": "#b2bbb5",
+      "brand": "#7ac3ff",
+      "success": "#7aea92",
+      "warning": "#ff9647",
+      "danger": "#ff7575"
+    }
+  },
+  {
+    "name": "ashokai-urple",
+    "desc": "auto-mapped from the vendored Helix palette <ashokai_urple>",
+    "light": {
+      "bg": "#f2f1f2",
+      "bgAlt": "#e9e8ea",
+      "text": "#3c3a40",
+      "textMuted": "#646267",
+      "border": "#dbdbdd",
+      "brand": "#3f6684",
+      "success": "#386c43",
+      "warning": "#905428",
+      "danger": "#aa3d3d"
+    },
+    "dark": {
+      "bg": "#211d2a",
+      "bgAlt": "#36323f",
+      "text": "#efeaff",
+      "textMuted": "#c2bdd0",
+      "border": "#ada8bb",
+      "brand": "#7ac3ff",
+      "success": "#7aea92",
+      "warning": "#ff9647",
+      "danger": "#ff6363"
+    }
+  },
+  {
+    "name": "ataraxia",
+    "desc": "auto-mapped from the vendored Helix palette <ataraxia>",
+    "light": {
+      "bg": "#f1f0f2",
+      "bgAlt": "#e8e7ea",
+      "text": "#003740",
+      "textMuted": "#356067",
+      "border": "#dbd8dd",
+      "brand": "#515baa",
+      "success": "#00703c",
+      "warning": "#7f580c",
+      "danger": "#b13047"
+    },
+    "dark": {
+      "bg": "#1c0c28",
+      "bgAlt": "#19213e",
+      "text": "#00ddff",
+      "textMuted": "#06afd0",
+      "border": "#099aba",
+      "brand": "#7a88ff",
+      "success": "#00d974",
+      "warning": "#ab8a4a",
+      "danger": "#ef5b76"
+    }
+  },
+  {
+    "name": "atlas-ragnarok",
+    "desc": "auto-mapped from the vendored Helix palette <atlas-ragnarok>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#2050a8",
+      "success": "#3e685d",
+      "warning": "#7f580c",
+      "danger": "#964b4b"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#5f80c0",
+      "success": "#99ffe4",
+      "warning": "#9f7b32",
+      "danger": "#ff8080"
+    }
+  },
+  {
+    "name": "aura-dark",
+    "desc": "auto-mapped from the vendored Helix palette <aura-dark>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#3b3b3c",
+      "textMuted": "#636364",
+      "border": "#dad9db",
+      "brand": "#645b93",
+      "success": "#296c55",
+      "warning": "#755d3c",
+      "danger": "#a34242"
+    },
+    "dark": {
+      "bg": "#15141b",
+      "bgAlt": "#2b2a30",
+      "text": "#edecee",
+      "textMuted": "#bdbcc0",
+      "border": "#a8a7aa",
+      "brand": "#a394f0",
+      "success": "#61ffca",
+      "warning": "#ffca85",
+      "danger": "#ff6767"
+    }
+  },
+  {
+    "name": "aura-dark-soft",
+    "desc": "auto-mapped from the vendored Helix palette <aura-dark-soft>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#333334",
+      "textMuted": "#5d5d5e",
+      "border": "#dad9db",
+      "brand": "#645b93",
+      "success": "#2e6b56",
+      "warning": "#755f42",
+      "danger": "#9a4545"
+    },
+    "dark": {
+      "bg": "#15141b",
+      "bgAlt": "#27262d",
+      "text": "#cdccce",
+      "textMuted": "#a5a4a7",
+      "border": "#929195",
+      "brand": "#a394f0",
+      "success": "#54c59f",
+      "warning": "#c7a06f",
+      "danger": "#cf7777"
+    }
+  },
+  {
+    "name": "aurara",
+    "desc": "auto-mapped from the vendored Helix palette <aurara>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#403600",
+      "textMuted": "#675f35",
+      "border": "#dad9db",
+      "brand": "#2c698e",
+      "success": "#216c4e",
+      "warning": "#68604d",
+      "danger": "#9a4545"
+    },
+    "dark": {
+      "bg": "#15141b",
+      "bgAlt": "#2c2818",
+      "text": "#ffd800",
+      "textMuted": "#ccad06",
+      "border": "#b49909",
+      "brand": "#47ace8",
+      "success": "#48e9a7",
+      "warning": "#c7b693",
+      "danger": "#cf7777"
+    }
+  },
+  {
+    "name": "autumn",
+    "desc": "auto-mapped from the vendored Helix palette <autumn>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9e9e9",
+      "text": "#404028",
+      "textMuted": "#676754",
+      "border": "#dbdbdb",
+      "brand": "#496864",
+      "success": "#53683c",
+      "warning": "#736230",
+      "danger": "#a64132"
+    },
+    "dark": {
+      "bg": "#212121",
+      "bgAlt": "#37372e",
+      "text": "#ffff9f",
+      "textMuted": "#cece83",
+      "border": "#b8b877",
+      "brand": "#86c1b9",
+      "success": "#99be70",
+      "warning": "#fad566",
+      "danger": "#f37663"
+    }
+  },
+  {
+    "name": "autumn-night",
+    "desc": "auto-mapped from the vendored Helix palette <autumn_night>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404028",
+      "textMuted": "#676754",
+      "border": "#d8d8d8",
+      "brand": "#496864",
+      "success": "#53683c",
+      "warning": "#6e5e2e",
+      "danger": "#a64132"
+    },
+    "dark": {
+      "bg": "#090909",
+      "bgAlt": "#222218",
+      "text": "#ffff9f",
+      "textMuted": "#c9c97e",
+      "border": "#b0b06f",
+      "brand": "#86c1b9",
+      "success": "#99be70",
+      "warning": "#fad566",
+      "danger": "#f05e48"
     }
   },
   {
@@ -52,6 +572,318 @@
     }
   },
   {
+    "name": "ayu-dark",
+    "desc": "auto-mapped from the vendored Helix palette <ayu_dark>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e8e8",
+      "text": "#302f2e",
+      "textMuted": "#5a5a59",
+      "border": "#d9d9da",
+      "brand": "#31698a",
+      "success": "#516824",
+      "warning": "#785e2a",
+      "danger": "#99484d"
+    },
+    "dark": {
+      "bg": "#0f1419",
+      "bgAlt": "#212529",
+      "text": "#bfbdb6",
+      "textMuted": "#989893",
+      "border": "#878784",
+      "brand": "#59c2ff",
+      "success": "#aad94c",
+      "warning": "#e6b450",
+      "danger": "#f07178"
+    }
+  },
+  {
+    "name": "ayu-evolve",
+    "desc": "auto-mapped from the vendored Helix palette <ayu_evolve>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#383838",
+      "textMuted": "#606060",
+      "border": "#d7d7d7",
+      "brand": "#96501e",
+      "success": "#296e1c",
+      "warning": "#68650c",
+      "danger": "#ad321f"
+    },
+    "dark": {
+      "bg": "#020202",
+      "bgAlt": "#181818",
+      "text": "#dedede",
+      "textMuted": "#aeaeae",
+      "border": "#989898",
+      "brand": "#ff8732",
+      "success": "#4e9141",
+      "warning": "#cfca0d",
+      "danger": "#df4d36"
+    }
+  },
+  {
+    "name": "ayu-light",
+    "desc": "auto-mapped from the vendored Helix palette <ayu_light>",
+    "light": {
+      "bg": "#fafafa",
+      "bgAlt": "#f1f1f1",
+      "text": "#51555a",
+      "textMuted": "#686b6e",
+      "border": "#8f9295",
+      "brand": "#276d9f",
+      "success": "#526d00",
+      "warning": "#8a5c1d",
+      "danger": "#9f4b4b"
+    },
+    "dark": {
+      "bg": "#191919",
+      "bgAlt": "#232323",
+      "text": "#dbdcdd",
+      "textMuted": "#b0b1b2",
+      "border": "#464646",
+      "brand": "#399ee6",
+      "success": "#86b300",
+      "warning": "#ffaa33",
+      "danger": "#f07171"
+    }
+  },
+  {
+    "name": "ayu-mirage",
+    "desc": "auto-mapped from the vendored Helix palette <ayu_mirage>",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#e9e9ea",
+      "text": "#333230",
+      "textMuted": "#5d5c5b",
+      "border": "#dbdcde",
+      "brand": "#3a687f",
+      "success": "#566834",
+      "warning": "#845a36",
+      "danger": "#8e5048"
+    },
+    "dark": {
+      "bg": "#1f2430",
+      "bgAlt": "#30353f",
+      "text": "#cccac2",
+      "textMuted": "#a6a5a2",
+      "border": "#959593",
+      "brand": "#73d0ff",
+      "success": "#d5ff80",
+      "warning": "#ffad66",
+      "danger": "#f28779"
+    }
+  },
+  {
+    "name": "base16-default-dark",
+    "desc": "auto-mapped from the vendored Helix palette <base16_default_dark>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#3e3e3e",
+      "textMuted": "#656565",
+      "border": "#dadada",
+      "brand": "#2050a8",
+      "success": "#296e1c",
+      "warning": "#7f580c",
+      "danger": "#a3443f"
+    },
+    "dark": {
+      "bg": "#181818",
+      "bgAlt": "#2e2e2e",
+      "text": "#f8f8f8",
+      "textMuted": "#c7c7c7",
+      "border": "#b0b0b0",
+      "brand": "#7793c9",
+      "success": "#69a15e",
+      "warning": "#ae8f51",
+      "danger": "#c38280"
+    }
+  },
+  {
+    "name": "base16-default-light",
+    "desc": "auto-mapped from the vendored Helix palette <base16_default_light>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#3e3e3e",
+      "textMuted": "#656565",
+      "border": "#dadada",
+      "brand": "#2050a8",
+      "success": "#296e1c",
+      "warning": "#7f580c",
+      "danger": "#a3443f"
+    },
+    "dark": {
+      "bg": "#181818",
+      "bgAlt": "#2e2e2e",
+      "text": "#f8f8f8",
+      "textMuted": "#c7c7c7",
+      "border": "#b0b0b0",
+      "brand": "#7793c9",
+      "success": "#69a15e",
+      "warning": "#ae8f51",
+      "danger": "#c38280"
+    }
+  },
+  {
+    "name": "beans",
+    "desc": "auto-mapped from the vendored Helix palette <beans>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e7",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d9d9d9",
+      "brand": "#55647f",
+      "success": "#536800",
+      "warning": "#7d5c07",
+      "danger": "#b03434"
+    },
+    "dark": {
+      "bg": "#111111",
+      "bgAlt": "#292929",
+      "text": "#ffffff",
+      "textMuted": "#cbcbcb",
+      "border": "#b3b3b3",
+      "brand": "#8197bf",
+      "success": "#ccff00",
+      "warning": "#dea407",
+      "danger": "#f44e4e"
+    }
+  },
+  {
+    "name": "bogster",
+    "desc": "auto-mapped from the vendored Helix palette <bogster>",
+    "light": {
+      "bg": "#f1f1f2",
+      "bgAlt": "#e7e8e8",
+      "text": "#393836",
+      "textMuted": "#61615f",
+      "border": "#d9dadb",
+      "brand": "#415367",
+      "success": "#2b6a58",
+      "warning": "#73602f",
+      "danger": "#934f3b"
+    },
+    "dark": {
+      "bg": "#13181e",
+      "bgAlt": "#282c30",
+      "text": "#e5ded6",
+      "textMuted": "#b7b2ae",
+      "border": "#a29f9b",
+      "brand": "#85929e",
+      "success": "#59dcb7",
+      "warning": "#dcb659",
+      "danger": "#dc7759"
+    }
+  },
+  {
+    "name": "bogster-light",
+    "desc": "auto-mapped from the vendored Helix palette <bogster_light>",
+    "light": {
+      "bg": "#f1f1f2",
+      "bgAlt": "#e8e8e9",
+      "text": "#3e3f36",
+      "textMuted": "#65665f",
+      "border": "#dadbdc",
+      "brand": "#415367",
+      "success": "#196d54",
+      "warning": "#775c1b",
+      "danger": "#934f3b"
+    },
+    "dark": {
+      "bg": "#161c23",
+      "bgAlt": "#2c3235",
+      "text": "#f6fbd6",
+      "textMuted": "#c5caaf",
+      "border": "#aeb49d",
+      "brand": "#8a96a2",
+      "success": "#2ca985",
+      "warning": "#b29344",
+      "danger": "#dd7c60"
+    }
+  },
+  {
+    "name": "boo-berry",
+    "desc": "auto-mapped from the vendored Helix palette <boo_berry>",
+    "light": {
+      "bg": "#f2f1f3",
+      "bgAlt": "#eae8ec",
+      "text": "#39302a",
+      "textMuted": "#625a56",
+      "border": "#dddbe0",
+      "brand": "#2050a8",
+      "success": "#426858",
+      "warning": "#7f580c",
+      "danger": "#884d74"
+    },
+    "dark": {
+      "bg": "#2b1c3d",
+      "bgAlt": "#3d2c48",
+      "text": "#e3c0a8",
+      "textMuted": "#bb9c90",
+      "border": "#a88c86",
+      "brand": "#869fcf",
+      "success": "#7fc9ab",
+      "warning": "#b79b65",
+      "danger": "#da82bb"
+    }
+  },
+  {
+    "name": "carbon",
+    "desc": "auto-mapped from the vendored Helix palette <carbon>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#383f3a",
+      "textMuted": "#616662",
+      "border": "#dadada",
+      "brand": "#0043ce",
+      "success": "#386e46",
+      "warning": "#735d0c",
+      "danger": "#904b4e"
+    },
+    "dark": {
+      "bg": "#161616",
+      "bgAlt": "#2a2d2b",
+      "text": "#defbe6",
+      "textMuted": "#b2c9b8",
+      "border": "#9eb2a3",
+      "brand": "#638ce0",
+      "success": "#6fdc8c",
+      "warning": "#f1c21b",
+      "danger": "#ff8389"
+    }
+  },
+  {
+    "name": "carbonfox",
+    "desc": "auto-mapped from the vendored Helix palette <carbonfox>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e7e7e7",
+      "text": "#3e3f40",
+      "textMuted": "#656667",
+      "border": "#d8d8d8",
+      "brand": "#1f6896",
+      "success": "#18703e",
+      "warning": "#7f580c",
+      "danger": "#904868"
+    },
+    "dark": {
+      "bg": "#0c0c0c",
+      "bgAlt": "#242424",
+      "text": "#f9fbff",
+      "textMuted": "#c5c6ca",
+      "border": "#adafb1",
+      "brand": "#33b1ff",
+      "success": "#25be6a",
+      "warning": "#a3803a",
+      "danger": "#ff7eb6"
+    }
+  },
+  {
     "name": "catppuccin",
     "desc": "Latte and Mocha: pastel, low-noise, dark-first",
     "light": {
@@ -75,6 +907,136 @@
       "success": "#a6e3a1",
       "warning": "#f9e2af",
       "danger": "#f38ba8"
+    }
+  },
+  {
+    "name": "catppuccin-frappe",
+    "desc": "auto-mapped from the vendored Helix palette <catppuccin_frappe>",
+    "light": {
+      "bg": "#f3f3f4",
+      "bgAlt": "#eaebec",
+      "text": "#32343d",
+      "textMuted": "#5c5e65",
+      "border": "#dedfe1",
+      "brand": "#52648c",
+      "success": "#536845",
+      "warning": "#875a42",
+      "danger": "#8d5051"
+    },
+    "dark": {
+      "bg": "#303446",
+      "bgAlt": "#3f4458",
+      "text": "#c6d0f5",
+      "textMuted": "#a9b1d0",
+      "border": "#969ebd",
+      "brand": "#9db6f2",
+      "success": "#a6d189",
+      "warning": "#f1a780",
+      "danger": "#eea1a3"
+    }
+  },
+  {
+    "name": "catppuccin-latte",
+    "desc": "auto-mapped from the vendored Helix palette <catppuccin_latte>",
+    "light": {
+      "bg": "#eff1f5",
+      "bgAlt": "#e5e7ed",
+      "text": "#4c4f69",
+      "textMuted": "#646679",
+      "border": "#808396",
+      "brand": "#1b5ad9",
+      "success": "#2d6f1f",
+      "warning": "#a23f0b",
+      "danger": "#ba0c33"
+    },
+    "dark": {
+      "bg": "#181818",
+      "bgAlt": "#212222",
+      "text": "#d8d8de",
+      "textMuted": "#aeaeb2",
+      "border": "#434345",
+      "brand": "#568cf5",
+      "success": "#48a433",
+      "warning": "#fe640b",
+      "danger": "#e26c85"
+    }
+  },
+  {
+    "name": "catppuccin-macchiato",
+    "desc": "auto-mapped from the vendored Helix palette <catppuccin_macchiato>",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#e9e9eb",
+      "text": "#32353d",
+      "textMuted": "#5c5f65",
+      "border": "#dcdcdf",
+      "brand": "#4e628a",
+      "success": "#506848",
+      "warning": "#6d624a",
+      "danger": "#8c5058"
+    },
+    "dark": {
+      "bg": "#24273a",
+      "bgAlt": "#35384d",
+      "text": "#cad3f5",
+      "textMuted": "#a5adcc",
+      "border": "#959cb9",
+      "brand": "#8aadf4",
+      "success": "#a6da95",
+      "warning": "#eed49f",
+      "danger": "#ed8796"
+    }
+  },
+  {
+    "name": "catppuccin-mocha",
+    "desc": "auto-mapped from the vendored Helix palette <catppuccin_mocha>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e8e8ea",
+      "text": "#33363d",
+      "textMuted": "#5d5f65",
+      "border": "#dbdbde",
+      "brand": "#4e668d",
+      "success": "#4d684b",
+      "warning": "#6a604b",
+      "danger": "#7f575d"
+    },
+    "dark": {
+      "bg": "#1e1e2e",
+      "bgAlt": "#303042",
+      "text": "#cdd6f4",
+      "textMuted": "#a6aec8",
+      "border": "#959bb5",
+      "brand": "#89b4fa",
+      "success": "#a6e3a1",
+      "warning": "#f9e2af",
+      "danger": "#eba0ac"
+    }
+  },
+  {
+    "name": "curzon",
+    "desc": "auto-mapped from the vendored Helix palette <curzon>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#303740",
+      "textMuted": "#5a6067",
+      "border": "#d6d6d6",
+      "brand": "#5153c4",
+      "success": "#346a54",
+      "warning": "#755f0c",
+      "danger": "#b02e44"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#131619",
+      "text": "#bfdbfe",
+      "textMuted": "#95abc6",
+      "border": "#8295ad",
+      "brand": "#6f72f3",
+      "success": "#6ee7b7",
+      "warning": "#ffcd1c",
+      "danger": "#f43f5e"
     }
   },
   {
@@ -104,6 +1066,136 @@
     }
   },
   {
+    "name": "dark-high-contrast",
+    "desc": "auto-mapped from the vendored Helix palette <dark_high_contrast>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#3e649c",
+      "success": "#3a6c27",
+      "warning": "#60663c",
+      "danger": "#be0004"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#66a4ff",
+      "success": "#5f8e4c",
+      "warning": "#cedc84",
+      "danger": "#fd0004"
+    }
+  },
+  {
+    "name": "dark-plus",
+    "desc": "auto-mapped from the vendored Helix palette <dark_plus>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e8e8e8",
+      "text": "#353535",
+      "textMuted": "#5f5f5f",
+      "border": "#dbdbdb",
+      "brand": "#0068ad",
+      "success": "#576451",
+      "warning": "#735f00",
+      "danger": "#c00c0c"
+    },
+    "dark": {
+      "bg": "#1e1e1e",
+      "bgAlt": "#303030",
+      "text": "#d4d4d4",
+      "textMuted": "#acacac",
+      "border": "#9a9a9a",
+      "brand": "#479fdb",
+      "success": "#b5cea8",
+      "warning": "#cca700",
+      "danger": "#ff6161"
+    }
+  },
+  {
+    "name": "dark-synthwave",
+    "desc": "auto-mapped from the vendored Helix palette <dark-synthwave>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#2050a8",
+      "success": "#0c6f2d",
+      "warning": "#706229",
+      "danger": "#b12347"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#5f80c0",
+      "success": "#1afc65",
+      "warning": "#fede5d",
+      "danger": "#ff3366"
+    }
+  },
+  {
+    "name": "doom-acario-dark",
+    "desc": "auto-mapped from the vendored Helix palette <doom_acario_dark>",
+    "light": {
+      "bg": "#f0f1f1",
+      "bgAlt": "#e7e7e8",
+      "text": "#313739",
+      "textMuted": "#5b6061",
+      "border": "#d8d8da",
+      "brand": "#2c63b0",
+      "success": "#3c6c1c",
+      "warning": "#706022",
+      "danger": "#b02a36"
+    },
+    "dark": {
+      "bg": "#0d0e16",
+      "bgAlt": "#1f222b",
+      "text": "#c3dbe5",
+      "textMuted": "#9baeb7",
+      "border": "#8999a3",
+      "brand": "#4d88dc",
+      "success": "#79d836",
+      "warning": "#d8b941",
+      "danger": "#df606a"
+    }
+  },
+  {
+    "name": "doom-one",
+    "desc": "auto-mapped from the vendored Helix palette <doom-one>",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#eaeaeb",
+      "text": "#2f3034",
+      "textMuted": "#5a5b5e",
+      "border": "#dddddf",
+      "brand": "#30688d",
+      "success": "#526837",
+      "warning": "#8b542e",
+      "danger": "#a34545"
+    },
+    "dark": {
+      "bg": "#282c34",
+      "bgAlt": "#373b44",
+      "text": "#bbc2cf",
+      "textMuted": "#9fa5b0",
+      "border": "#8c929d",
+      "brand": "#51afef",
+      "success": "#98be65",
+      "warning": "#df9b69",
+      "danger": "#ff8786"
+    }
+  },
+  {
     "name": "dracula",
     "desc": "the famous dark purple, light derived from its palette",
     "light": {
@@ -127,6 +1219,162 @@
       "success": "#50fa7b",
       "warning": "#f1fa8c",
       "danger": "#ff8080"
+    }
+  },
+  {
+    "name": "dracula-at-night",
+    "desc": "auto-mapped from the vendored Helix palette <dracula_at_night>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e8e8",
+      "text": "#3e3e3c",
+      "textMuted": "#656564",
+      "border": "#d8d9da",
+      "brand": "#3c6870",
+      "success": "#236e36",
+      "warning": "#626639",
+      "danger": "#aa3939"
+    },
+    "dark": {
+      "bg": "#0e1419",
+      "bgAlt": "#252b2f",
+      "text": "#f8f8f2",
+      "textMuted": "#c5c6c2",
+      "border": "#adafad",
+      "brand": "#8be9fd",
+      "success": "#50fa7b",
+      "warning": "#f1fa8c",
+      "danger": "#ff5555"
+    }
+  },
+  {
+    "name": "earl-grey",
+    "desc": "auto-mapped from the vendored Helix palette <earl_grey>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#53667a",
+      "success": "#51685a",
+      "warning": "#6e6045",
+      "danger": "#8d5051"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#99bbe0",
+      "success": "#90b99f",
+      "warning": "#e5c890",
+      "danger": "#e78284"
+    }
+  },
+  {
+    "name": "eiffel",
+    "desc": "auto-mapped from the vendored Helix palette <eiffel>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#0100b6",
+      "success": "#006e0c",
+      "warning": "#7f580c",
+      "danger": "#bd0000"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#7575d8",
+      "success": "#00b418",
+      "warning": "#9f7b32",
+      "danger": "#dd4e4e"
+    }
+  },
+  {
+    "name": "eldritch",
+    "desc": "auto-mapped from the vendored Helix palette <eldritch>",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#e9e9eb",
+      "text": "#3b3e3e",
+      "textMuted": "#636666",
+      "border": "#dbdcdf",
+      "brand": "#3b4261",
+      "success": "#1b7047",
+      "warning": "#7f5c36",
+      "danger": "#9f484e"
+    },
+    "dark": {
+      "bg": "#212337",
+      "bgAlt": "#35384a",
+      "text": "#ebfafa",
+      "textMuted": "#bfcbcf",
+      "border": "#aab5bc",
+      "brand": "#9da0b0",
+      "success": "#37f499",
+      "warning": "#ffb86c",
+      "danger": "#f37880"
+    }
+  },
+  {
+    "name": "emacs",
+    "desc": "auto-mapped from the vendored Helix palette <emacs>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#0000cd",
+      "success": "#386f00",
+      "warning": "#6f5e00",
+      "danger": "#bd0000"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#7575e3",
+      "success": "#66cd00",
+      "warning": "#cdad00",
+      "danger": "#dd4e4e"
+    }
+  },
+  {
+    "name": "everblush",
+    "desc": "auto-mapped from the vendored Helix palette <everblush>",
+    "light": {
+      "bg": "#f1f1f2",
+      "bgAlt": "#e8e8e8",
+      "text": "#363636",
+      "textMuted": "#5f5f5f",
+      "border": "#d9dbdb",
+      "brand": "#3f6988",
+      "success": "#486842",
+      "warning": "#6c5f36",
+      "danger": "#934e4e"
+    },
+    "dark": {
+      "bg": "#141b1e",
+      "bgAlt": "#282e31",
+      "text": "#dadada",
+      "textMuted": "#aeb0b1",
+      "border": "#9b9d9e",
+      "brand": "#71baf2",
+      "success": "#96d988",
+      "warning": "#f4d67a",
+      "danger": "#ef7e7e"
     }
   },
   {
@@ -156,6 +1404,162 @@
     }
   },
   {
+    "name": "everforest-dark",
+    "desc": "auto-mapped from the vendored Helix palette <everforest_dark>",
+    "light": {
+      "bg": "#f2f3f3",
+      "bgAlt": "#eaebeb",
+      "text": "#35322a",
+      "textMuted": "#5f5c56",
+      "border": "#dddfe0",
+      "brand": "#486a65",
+      "success": "#5b6845",
+      "warning": "#875945",
+      "danger": "#935151"
+    },
+    "dark": {
+      "bg": "#2d353b",
+      "bgAlt": "#3e4446",
+      "text": "#d3c6aa",
+      "textMuted": "#b7b09e",
+      "border": "#9e9886",
+      "brand": "#84beb6",
+      "success": "#a7c080",
+      "warning": "#eaa88a",
+      "danger": "#eea2a3"
+    }
+  },
+  {
+    "name": "everforest-light",
+    "desc": "auto-mapped from the vendored Helix palette <everforest_light>",
+    "light": {
+      "bg": "#fdf6e3",
+      "bgAlt": "#f3eedc",
+      "text": "#485359",
+      "textMuted": "#646969",
+      "border": "#909796",
+      "brand": "#2a6b8e",
+      "success": "#236f52",
+      "warning": "#835f00",
+      "danger": "#ac3b39"
+    },
+    "dark": {
+      "bg": "#191917",
+      "bgAlt": "#232220",
+      "text": "#dbdee0",
+      "textMuted": "#b0b3b4",
+      "border": "#474540",
+      "brand": "#4a9cc9",
+      "success": "#35a77c",
+      "warning": "#dfa000",
+      "danger": "#f85c59"
+    }
+  },
+  {
+    "name": "faded-prism",
+    "desc": "auto-mapped from the vendored Helix palette <faded-prism>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#403f1e",
+      "textMuted": "#67664c",
+      "border": "#dadada",
+      "brand": "#4461b1",
+      "success": "#32702f",
+      "warning": "#706017",
+      "danger": "#b12c2c"
+    },
+    "dark": {
+      "bg": "#181818",
+      "bgAlt": "#2f2f22",
+      "text": "#fffd78",
+      "textMuted": "#cccb63",
+      "border": "#b5b459",
+      "brand": "#628cff",
+      "success": "#6eff69",
+      "warning": "#ffd932",
+      "danger": "#ff4d4d"
+    }
+  },
+  {
+    "name": "ferra",
+    "desc": "auto-mapped from the vendored Helix palette <ferra>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#eaeaea",
+      "text": "#3d361c",
+      "textMuted": "#655f4b",
+      "border": "#dddddd",
+      "brand": "#64646c",
+      "success": "#296e1c",
+      "warning": "#606451",
+      "danger": "#9b4b51"
+    },
+    "dark": {
+      "bg": "#2b292d",
+      "bgAlt": "#3f3a34",
+      "text": "#f5d76e",
+      "textMuted": "#c9b160",
+      "border": "#b49f59",
+      "brand": "#d1d1e0",
+      "success": "#8ab580",
+      "warning": "#b1b695",
+      "danger": "#e79097"
+    }
+  },
+  {
+    "name": "flatwhite",
+    "desc": "auto-mapped from the vendored Helix palette <flatwhite>",
+    "light": {
+      "bg": "#f7f3ee",
+      "bgAlt": "#eee9e4",
+      "text": "#5b5143",
+      "textMuted": "#6e685d",
+      "border": "#8d857a",
+      "brand": "#6246eb",
+      "success": "#1e732e",
+      "warning": "#835a0c",
+      "danger": "#c00d0d"
+    },
+    "dark": {
+      "bg": "#191818",
+      "bgAlt": "#232221",
+      "text": "#dbd9d6",
+      "textMuted": "#b0afac",
+      "border": "#454443",
+      "brand": "#937eff",
+      "success": "#2db448",
+      "warning": "#f2a60d",
+      "danger": "#ff4e4e"
+    }
+  },
+  {
+    "name": "fleet-dark",
+    "desc": "auto-mapped from the vendored Helix palette <fleet_dark>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#025ec0",
+      "success": "#026e51",
+      "warning": "#81580c",
+      "danger": "#a9364b"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#167eed",
+      "success": "#169170",
+      "warning": "#f8ab17",
+      "danger": "#ea4b67"
+    }
+  },
+  {
     "name": "flexoki",
     "desc": "ink on paper: Step's warm absolute palette",
     "light": {
@@ -179,6 +1583,136 @@
       "success": "#879a39",
       "warning": "#d0a215",
       "danger": "#d9685e"
+    }
+  },
+  {
+    "name": "flexoki-dark",
+    "desc": "auto-mapped from the vendored Helix palette <flexoki_dark>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e7",
+      "text": "#343331",
+      "textMuted": "#5e5d5b",
+      "border": "#d9d9d9",
+      "brand": "#356895",
+      "success": "#5a6725",
+      "warning": "#7a600c",
+      "danger": "#a43c34"
+    },
+    "dark": {
+      "bg": "#100f0f",
+      "bgAlt": "#232221",
+      "text": "#cecdc3",
+      "textMuted": "#a4a39b",
+      "border": "#919089",
+      "brand": "#528fc3",
+      "success": "#879a39",
+      "warning": "#d0a215",
+      "danger": "#d9685e"
+    }
+  },
+  {
+    "name": "flexoki-light",
+    "desc": "auto-mapped from the vendored Helix palette <flexoki_light>",
+    "light": {
+      "bg": "#fffcf0",
+      "bgAlt": "#f1eee2",
+      "text": "#100f0f",
+      "textMuted": "#454340",
+      "border": "#5c5b57",
+      "brand": "#205ea6",
+      "success": "#5a710b",
+      "warning": "#826301",
+      "danger": "#af3029"
+    },
+    "dark": {
+      "bg": "#1a1918",
+      "bgAlt": "#242322",
+      "text": "#cacaca",
+      "textMuted": "#a3a3a3",
+      "border": "#474743",
+      "brand": "#6b93c4",
+      "success": "#879b40",
+      "warning": "#b38d15",
+      "danger": "#cd807c"
+    }
+  },
+  {
+    "name": "flynt-dark",
+    "desc": "auto-mapped from the vendored Helix palette <flynt_dark>",
+    "light": {
+      "bg": "#f1f1f0",
+      "bgAlt": "#e7e7e7",
+      "text": "#3d3b36",
+      "textMuted": "#65635f",
+      "border": "#d9d8d8",
+      "brand": "#386894",
+      "success": "#566726",
+      "warning": "#755e1a",
+      "danger": "#af3124"
+    },
+    "dark": {
+      "bg": "#100e0c",
+      "bgAlt": "#272420",
+      "text": "#f5edd8",
+      "textMuted": "#c3bcab",
+      "border": "#aca697",
+      "brand": "#588ab7",
+      "success": "#93ae42",
+      "warning": "#c69f2a",
+      "danger": "#d46960"
+    }
+  },
+  {
+    "name": "flynt-light",
+    "desc": "auto-mapped from the vendored Helix palette <flynt_light>",
+    "light": {
+      "bg": "#fffcef",
+      "bgAlt": "#f1eee2",
+      "text": "#1a1512",
+      "textMuted": "#4c4843",
+      "border": "#635f59",
+      "brand": "#3a6c9a",
+      "success": "#5e6f2a",
+      "warning": "#7f661c",
+      "danger": "#be3528"
+    },
+    "dark": {
+      "bg": "#1a1918",
+      "bgAlt": "#242321",
+      "text": "#cdcccb",
+      "textMuted": "#a6a5a4",
+      "border": "#474743",
+      "brand": "#6b97c0",
+      "success": "#93ae42",
+      "warning": "#c69f2a",
+      "danger": "#d8756c"
+    }
+  },
+  {
+    "name": "focus-nova",
+    "desc": "auto-mapped from the vendored Helix palette <focus_nova>",
+    "light": {
+      "bg": "#f1f1f2",
+      "bgAlt": "#e8e8ea",
+      "text": "#3d3d3d",
+      "textMuted": "#656565",
+      "border": "#dbdbdd",
+      "brand": "#3e687f",
+      "success": "#4e6742",
+      "warning": "#6a604b",
+      "danger": "#9c444e"
+    },
+    "dark": {
+      "bg": "#1c1c2a",
+      "bgAlt": "#32323e",
+      "text": "#f4f4f5",
+      "textMuted": "#c4c4c8",
+      "border": "#afafb4",
+      "brand": "#7dcfff",
+      "success": "#c0fca0",
+      "warning": "#f9e2af",
+      "danger": "#ff6e7f"
     }
   },
   {
@@ -208,6 +1742,266 @@
     }
   },
   {
+    "name": "github-dark",
+    "desc": "auto-mapped from the vendored Helix palette <github_dark>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d7d8",
+      "brand": "#1158c7",
+      "success": "#033a16",
+      "warning": "#825809",
+      "danger": "#640d04"
+    },
+    "dark": {
+      "bg": "#010409",
+      "bgAlt": "#1a1d22",
+      "text": "#ffffff",
+      "textMuted": "#c7c8c9",
+      "border": "#aeafb0",
+      "brand": "#4c81d5",
+      "success": "#6b8b76",
+      "warning": "#bb8009",
+      "danger": "#a77772"
+    }
+  },
+  {
+    "name": "github-dark-colorblind",
+    "desc": "auto-mapped from the vendored Helix palette <github_dark_colorblind>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d7d8",
+      "brand": "#1158c7",
+      "success": "#296e1c",
+      "warning": "#825809",
+      "danger": "#640d04"
+    },
+    "dark": {
+      "bg": "#010409",
+      "bgAlt": "#1a1d22",
+      "text": "#ffffff",
+      "textMuted": "#c7c8c9",
+      "border": "#aeafb0",
+      "brand": "#4c81d5",
+      "success": "#4e9141",
+      "warning": "#bb8009",
+      "danger": "#a77772"
+    }
+  },
+  {
+    "name": "github-dark-dimmed",
+    "desc": "auto-mapped from the vendored Helix palette <github_dark_dimmed>",
+    "light": {
+      "bg": "#f1f2f2",
+      "bgAlt": "#e8e9ea",
+      "text": "#333639",
+      "textMuted": "#5d5f62",
+      "border": "#dbdbdd",
+      "brand": "#3c6890",
+      "success": "#506a50",
+      "warning": "#845a00",
+      "danger": "#5d1008"
+    },
+    "dark": {
+      "bg": "#1c2128",
+      "bgAlt": "#2e333b",
+      "text": "#cdd9e5",
+      "textMuted": "#a6b1bb",
+      "border": "#949ea9",
+      "brand": "#6cb6ff",
+      "success": "#b4f1b4",
+      "warning": "#b99955",
+      "danger": "#b79592"
+    }
+  },
+  {
+    "name": "github-dark-high-contrast",
+    "desc": "auto-mapped from the vendored Helix palette <github_dark_high_contrast>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#3c3d3e",
+      "textMuted": "#646465",
+      "border": "#d6d7d8",
+      "brand": "#2965a3",
+      "success": "#027022",
+      "warning": "#785c19",
+      "danger": "#a91500"
+    },
+    "dark": {
+      "bg": "#010409",
+      "bgAlt": "#191c21",
+      "text": "#f0f3f6",
+      "textMuted": "#bbbec2",
+      "border": "#a4a7aa",
+      "brand": "#409eff",
+      "success": "#02a232",
+      "warning": "#f0b72f",
+      "danger": "#c56355"
+    }
+  },
+  {
+    "name": "github-dark-tritanopia",
+    "desc": "auto-mapped from the vendored Helix palette <github_dark_tritanopia>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d7d8",
+      "brand": "#1158c7",
+      "success": "#296e1c",
+      "warning": "#825809",
+      "danger": "#640d04"
+    },
+    "dark": {
+      "bg": "#010409",
+      "bgAlt": "#1a1d22",
+      "text": "#ffffff",
+      "textMuted": "#c7c8c9",
+      "border": "#aeafb0",
+      "brand": "#4c81d5",
+      "success": "#4e9141",
+      "warning": "#bb8009",
+      "danger": "#a77772"
+    }
+  },
+  {
+    "name": "github-light",
+    "desc": "auto-mapped from the vendored Helix palette <github_light>",
+    "light": {
+      "bg": "#ffffff",
+      "bgAlt": "#f2f2f3",
+      "text": "#24292f",
+      "textMuted": "#54585d",
+      "border": "#6a6d72",
+      "brand": "#1b6cc8",
+      "success": "#003d16",
+      "warning": "#8a6200",
+      "danger": "#bc3437"
+    },
+    "dark": {
+      "bg": "#1a1a1a",
+      "bgAlt": "#242424",
+      "text": "#cfd0d1",
+      "textMuted": "#a7a8a9",
+      "border": "#474747",
+      "brand": "#3394ff",
+      "success": "#809e8a",
+      "warning": "#c28c0a",
+      "danger": "#fa5a5e"
+    }
+  },
+  {
+    "name": "github-light-colorblind",
+    "desc": "auto-mapped from the vendored Helix palette <github_light_colorblind>",
+    "light": {
+      "bg": "#ffffff",
+      "bgAlt": "#f2f2f3",
+      "text": "#24292f",
+      "textMuted": "#54585d",
+      "border": "#6a6d72",
+      "brand": "#1b6cc8",
+      "success": "#626c70",
+      "warning": "#8a6200",
+      "danger": "#9b5547"
+    },
+    "dark": {
+      "bg": "#1a1a1a",
+      "bgAlt": "#242424",
+      "text": "#cfd0d1",
+      "textMuted": "#a7a8a9",
+      "border": "#474747",
+      "brand": "#3394ff",
+      "success": "#ddf4ff",
+      "warning": "#c28c0a",
+      "danger": "#fd8c73"
+    }
+  },
+  {
+    "name": "github-light-high-contrast",
+    "desc": "auto-mapped from the vendored Helix palette <github_light_high_contrast>",
+    "light": {
+      "bg": "#ffffff",
+      "bgAlt": "#f1f1f1",
+      "text": "#0e1116",
+      "textMuted": "#434549",
+      "border": "#5b5d61",
+      "brand": "#2869bb",
+      "success": "#5d7061",
+      "warning": "#78682a",
+      "danger": "#9c584e"
+    },
+    "dark": {
+      "bg": "#1a1a1a",
+      "bgAlt": "#242424",
+      "text": "#cacbcc",
+      "textMuted": "#a3a4a5",
+      "border": "#474747",
+      "brand": "#4695f9",
+      "success": "#d2fedb",
+      "warning": "#f0ce53",
+      "danger": "#ff8f7e"
+    }
+  },
+  {
+    "name": "github-light-tritanopia",
+    "desc": "auto-mapped from the vendored Helix palette <github_light_tritanopia>",
+    "light": {
+      "bg": "#ffffff",
+      "bgAlt": "#f2f2f3",
+      "text": "#24292f",
+      "textMuted": "#54585d",
+      "border": "#6a6d72",
+      "brand": "#1b6cc8",
+      "success": "#626c70",
+      "warning": "#8a6200",
+      "danger": "#bc3437"
+    },
+    "dark": {
+      "bg": "#1a1a1a",
+      "bgAlt": "#242424",
+      "text": "#cfd0d1",
+      "textMuted": "#a7a8a9",
+      "border": "#474747",
+      "brand": "#3394ff",
+      "success": "#ddf4ff",
+      "warning": "#c28c0a",
+      "danger": "#fa5a5e"
+    }
+  },
+  {
+    "name": "gruber-darker",
+    "desc": "auto-mapped from the vendored Helix palette <gruber-darker>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#3d3d3d",
+      "textMuted": "#656565",
+      "border": "#dadada",
+      "brand": "#2050a8",
+      "success": "#3e6c1e",
+      "warning": "#706218",
+      "danger": "#ad3323"
+    },
+    "dark": {
+      "bg": "#181818",
+      "bgAlt": "#2e2e2e",
+      "text": "#f5f5f5",
+      "textMuted": "#c4c4c4",
+      "border": "#aeaeae",
+      "brand": "#7793c9",
+      "success": "#73c936",
+      "warning": "#ffdd33",
+      "danger": "#fb5744"
+    }
+  },
+  {
     "name": "gruvbox",
     "desc": "retro groove, warm cream and charcoal",
     "light": {
@@ -231,6 +2025,32 @@
       "success": "#b8bb26",
       "warning": "#fabd2f",
       "danger": "#fb8072"
+    }
+  },
+  {
+    "name": "gruvbox-light",
+    "desc": "auto-mapped from the vendored Helix palette <gruvbox_light>",
+    "light": {
+      "bg": "#fbf1c7",
+      "bgAlt": "#eee5bd",
+      "text": "#282828",
+      "textMuted": "#56544b",
+      "border": "#6c685b",
+      "brand": "#076678",
+      "success": "#3a6c4e",
+      "warning": "#67630c",
+      "danger": "#9d0006"
+    },
+    "dark": {
+      "bg": "#191814",
+      "bgAlt": "#23221c",
+      "text": "#d0d0d0",
+      "textMuted": "#a8a8a7",
+      "border": "#464338",
+      "brand": "#5a99a5",
+      "success": "#719b81",
+      "warning": "#9a974b",
+      "danger": "#cb7b7d"
     }
   },
   {
@@ -260,6 +2080,240 @@
     }
   },
   {
+    "name": "gruvbox-material-dark-medium",
+    "desc": "auto-mapped from the vendored Helix palette <gruvbox_material_dark_medium>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#eaeaea",
+      "text": "#373228",
+      "textMuted": "#605c54",
+      "border": "#dddddd",
+      "brand": "#4d6b64",
+      "success": "#516a4d",
+      "warning": "#5c6437",
+      "danger": "#9c4641"
+    },
+    "dark": {
+      "bg": "#282828",
+      "bgAlt": "#3a3834",
+      "text": "#ddc7a1",
+      "textMuted": "#b5a486",
+      "border": "#a3947a",
+      "brand": "#7daea3",
+      "success": "#89b482",
+      "warning": "#a9b665",
+      "danger": "#f08a84"
+    }
+  },
+  {
+    "name": "gruvbox-material-light-medium",
+    "desc": "auto-mapped from the vendored Helix palette <gruvbox_material_light_medium>",
+    "light": {
+      "bg": "#fbf1c7",
+      "bgAlt": "#f1e6be",
+      "text": "#4f3829",
+      "textMuted": "#75614c",
+      "border": "#86735c",
+      "brand": "#3f6870",
+      "success": "#40684f",
+      "warning": "#5c6626",
+      "danger": "#a43e3e"
+    },
+    "dark": {
+      "bg": "#191814",
+      "bgAlt": "#23221c",
+      "text": "#d8d3d0",
+      "textMuted": "#aeaaa7",
+      "border": "#464338",
+      "brand": "#79979f",
+      "success": "#799b85",
+      "warning": "#919962",
+      "danger": "#cf7777"
+    }
+  },
+  {
+    "name": "hazyland",
+    "desc": "auto-mapped from the vendored Helix palette <hazyland>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e7e8",
+      "text": "#3c3940",
+      "textMuted": "#646167",
+      "border": "#dad9da",
+      "brand": "#4b667f",
+      "success": "#3b6a45",
+      "warning": "#6a633b",
+      "danger": "#87544c"
+    },
+    "dark": {
+      "bg": "#171219",
+      "bgAlt": "#2c2730",
+      "text": "#eee4ff",
+      "textMuted": "#bfb6cc",
+      "border": "#a9a1b5",
+      "brand": "#96ccff",
+      "success": "#8cfba2",
+      "warning": "#fbe88c",
+      "danger": "#fb9b8c"
+    }
+  },
+  {
+    "name": "heisenberg",
+    "desc": "auto-mapped from the vendored Helix palette <heisenberg>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#333333",
+      "textMuted": "#5d5d5d",
+      "border": "#d6d6d6",
+      "brand": "#1c6c87",
+      "success": "#007038",
+      "warning": "#7c5c0c",
+      "danger": "#bb2001"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#141414",
+      "text": "#cccccc",
+      "textMuted": "#9f9f9f",
+      "border": "#8b8b8b",
+      "brand": "#32c9fa",
+      "success": "#00ff80",
+      "warning": "#f7b90c",
+      "danger": "#d15940"
+    }
+  },
+  {
+    "name": "hex-lavender",
+    "desc": "auto-mapped from the vendored Helix palette <hex_lavender>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#164022",
+      "textMuted": "#46674f",
+      "border": "#d6d6d6",
+      "brand": "#0066a0",
+      "success": "#0a704b",
+      "warning": "#606600",
+      "danger": "#b80900"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#091a0e",
+      "text": "#57ff89",
+      "textMuted": "#44c76b",
+      "border": "#3bad5d",
+      "brand": "#1d87c5",
+      "success": "#0affa9",
+      "warning": "#c9d400",
+      "danger": "#ff0900"
+    }
+  },
+  {
+    "name": "hex-poison",
+    "desc": "auto-mapped from the vendored Helix palette <hex_poison>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#364014",
+      "textMuted": "#5f6744",
+      "border": "#d6d6d6",
+      "brand": "#2050a8",
+      "success": "#0a704b",
+      "warning": "#606600",
+      "danger": "#b82145"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#161a08",
+      "text": "#d7ff52",
+      "textMuted": "#a8c740",
+      "border": "#92ad38",
+      "brand": "#5f80c0",
+      "success": "#0affa9",
+      "warning": "#c9d400",
+      "danger": "#ff2e5f"
+    }
+  },
+  {
+    "name": "hex-steel",
+    "desc": "auto-mapped from the vendored Helix palette <hex_steel>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#363635",
+      "textMuted": "#5f5f5e",
+      "border": "#d6d6d6",
+      "brand": "#0066a0",
+      "success": "#516462",
+      "warning": "#606600",
+      "danger": "#9c4245"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#161615",
+      "text": "#dad7d5",
+      "textMuted": "#aaa8a6",
+      "border": "#949291",
+      "brand": "#1d87c5",
+      "success": "#9bc1bb",
+      "warning": "#c9d400",
+      "danger": "#d85c60"
+    }
+  },
+  {
+    "name": "hex-toxic",
+    "desc": "auto-mapped from the vendored Helix palette <hex_toxic>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#3e3b23",
+      "textMuted": "#656350",
+      "border": "#d6d6d6",
+      "brand": "#0066a0",
+      "success": "#0a704b",
+      "warning": "#606600",
+      "danger": "#b80900"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#19180e",
+      "text": "#f8ed8b",
+      "textMuted": "#c1b96c",
+      "border": "#a9a15f",
+      "brand": "#1d87c5",
+      "success": "#0affa9",
+      "warning": "#c9d400",
+      "danger": "#ff0900"
+    }
+  },
+  {
+    "name": "horizon-dark",
+    "desc": "auto-mapped from the vendored Helix palette <horizon-dark>",
+    "light": {
+      "bg": "#f1f2f2",
+      "bgAlt": "#e8e8e9",
+      "text": "#353636",
+      "textMuted": "#5e5f5f",
+      "border": "#dbdbdc",
+      "brand": "#196c73",
+      "success": "#16704e",
+      "warning": "#7d5e0c",
+      "danger": "#a13c53"
+    },
+    "dark": {
+      "bg": "#1c1e26",
+      "bgAlt": "#2e3138",
+      "text": "#d5d8da",
+      "textMuted": "#acafb2",
+      "border": "#9a9ca0",
+      "brand": "#25b2bc",
+      "success": "#27d796",
+      "warning": "#efb41b",
+      "danger": "#ed6f8c"
+    }
+  },
+  {
     "name": "iceberg",
     "desc": "cool navy-blue calm, light and dark",
     "light": {
@@ -283,6 +2337,162 @@
       "success": "#b5bf82",
       "warning": "#e2a478",
       "danger": "#e27878"
+    }
+  },
+  {
+    "name": "iceberg-dark",
+    "desc": "auto-mapped from the vendored Helix palette <iceberg-dark>",
+    "light": {
+      "bg": "#f1f1f2",
+      "bgAlt": "#e8e8e9",
+      "text": "#3c3c3d",
+      "textMuted": "#646465",
+      "border": "#dadadc",
+      "brand": "#54657b",
+      "success": "#4e666c",
+      "warning": "#606548",
+      "danger": "#904d4d"
+    },
+    "dark": {
+      "bg": "#161822",
+      "bgAlt": "#2c2e37",
+      "text": "#f0f1f5",
+      "textMuted": "#c0c1c7",
+      "border": "#aaacb1",
+      "brand": "#91acd1",
+      "success": "#95c4ce",
+      "warning": "#c0ca8e",
+      "danger": "#e27878"
+    }
+  },
+  {
+    "name": "iceberg-light",
+    "desc": "auto-mapped from the vendored Helix palette <iceberg-light>",
+    "light": {
+      "bg": "#e9e9ed",
+      "bgAlt": "#dddee3",
+      "text": "#262a3f",
+      "textMuted": "#515465",
+      "border": "#646777",
+      "brand": "#22478e",
+      "success": "#466424",
+      "warning": "#7a540c",
+      "danger": "#894d22"
+    },
+    "dark": {
+      "bg": "#171718",
+      "bgAlt": "#212121",
+      "text": "#cfd0d5",
+      "textMuted": "#a7a7ab",
+      "border": "#414142",
+      "brand": "#7d93bd",
+      "success": "#7d9b5d",
+      "warning": "#ae8f51",
+      "danger": "#c48253"
+    }
+  },
+  {
+    "name": "iroaseta",
+    "desc": "auto-mapped from the vendored Helix palette <iroaseta>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#3c3c3b",
+      "textMuted": "#646463",
+      "border": "#d6d6d6",
+      "brand": "#3e6490",
+      "success": "#466848",
+      "warning": "#7a5900",
+      "danger": "#994b45"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#181818",
+      "text": "#f2f0eb",
+      "textMuted": "#bdbbb7",
+      "border": "#a5a3a0",
+      "brand": "#6eb0ff",
+      "success": "#81be83",
+      "warning": "#ffba00",
+      "danger": "#fa7970"
+    }
+  },
+  {
+    "name": "jellybeans",
+    "desc": "auto-mapped from the vendored Helix palette <jellybeans>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#dadada",
+      "brand": "#1764a1",
+      "success": "#3c6a55",
+      "warning": "#7d5c07",
+      "danger": "#b03434"
+    },
+    "dark": {
+      "bg": "#151515",
+      "bgAlt": "#2c2c2c",
+      "text": "#ffffff",
+      "textMuted": "#cccccc",
+      "border": "#b4b4b4",
+      "brand": "#2197f3",
+      "success": "#5a9f81",
+      "warning": "#dea407",
+      "danger": "#f45555"
+    }
+  },
+  {
+    "name": "jetbrains-cyan-light",
+    "desc": "auto-mapped from the vendored Helix palette <jetbrains_cyan_light>",
+    "light": {
+      "bg": "#f2f3f7",
+      "bgAlt": "#e6e7ec",
+      "text": "#25293c",
+      "textMuted": "#525565",
+      "border": "#676a78",
+      "brand": "#0062c4",
+      "success": "#00733b",
+      "warning": "#646400",
+      "danger": "#c00013"
+    },
+    "dark": {
+      "bg": "#181819",
+      "bgAlt": "#222223",
+      "text": "#cfd0d4",
+      "textMuted": "#a7a8ab",
+      "border": "#444445",
+      "brand": "#3792ec",
+      "success": "#55a27d",
+      "warning": "#97972f",
+      "danger": "#e76976"
+    }
+  },
+  {
+    "name": "jetbrains-dark",
+    "desc": "auto-mapped from the vendored Helix palette <jetbrains_dark>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e8e9e9",
+      "text": "#343436",
+      "textMuted": "#5e5e5f",
+      "border": "#dbdbdc",
+      "brand": "#366898",
+      "success": "#336c3a",
+      "warning": "#77612e",
+      "danger": "#a73c48"
+    },
+    "dark": {
+      "bg": "#1e1f22",
+      "bgAlt": "#303134",
+      "text": "#ced0d6",
+      "textMuted": "#a7a9ae",
+      "border": "#96979c",
+      "brand": "#57aaf7",
+      "success": "#64ab6e",
+      "warning": "#c29e4a",
+      "danger": "#e07f89"
     }
   },
   {
@@ -312,6 +2522,214 @@
     }
   },
   {
+    "name": "kanagawa-dragon",
+    "desc": "auto-mapped from the vendored Helix palette <kanagawa-dragon>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e7e7e7",
+      "text": "#313231",
+      "textMuted": "#5b5c5b",
+      "border": "#d8d8d8",
+      "brand": "#2050a8",
+      "success": "#536853",
+      "warning": "#6a604b",
+      "danger": "#87514d"
+    },
+    "dark": {
+      "bg": "#0d0c0c",
+      "bgAlt": "#1f1f1e",
+      "text": "#c5c9c5",
+      "textMuted": "#9d9f9c",
+      "border": "#8a8d8a",
+      "brand": "#6585c3",
+      "success": "#87a987",
+      "warning": "#c4b28a",
+      "danger": "#c4746e"
+    }
+  },
+  {
+    "name": "kanagawa-lotus",
+    "desc": "auto-mapped from the vendored Helix palette <kanagawa-lotus>",
+    "light": {
+      "bg": "#f1f1f2",
+      "bgAlt": "#e8e8e9",
+      "text": "#3f3f3f",
+      "textMuted": "#666666",
+      "border": "#dadadc",
+      "brand": "#0d267d",
+      "success": "#00612d",
+      "warning": "#785e00",
+      "danger": "#a33b3e"
+    },
+    "dark": {
+      "bg": "#181825",
+      "bgAlt": "#2f2f3a",
+      "text": "#fdfcfb",
+      "textMuted": "#cbcacc",
+      "border": "#b4b3b7",
+      "brand": "#8693be",
+      "success": "#639e7e",
+      "warning": "#b39114",
+      "danger": "#ff5d62"
+    }
+  },
+  {
+    "name": "kaolin-dark",
+    "desc": "auto-mapped from the vendored Helix palette <kaolin-dark>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#3a3a3a",
+      "textMuted": "#626262",
+      "border": "#dadadb",
+      "brand": "#386a68",
+      "success": "#426b56",
+      "warning": "#775d38",
+      "danger": "#9a4548"
+    },
+    "dark": {
+      "bg": "#18181b",
+      "bgAlt": "#2d2d30",
+      "text": "#e6e6e8",
+      "textMuted": "#b9b9bb",
+      "border": "#a4a4a6",
+      "brand": "#5b9b99",
+      "success": "#6fb593",
+      "warning": "#dbac66",
+      "danger": "#d57578"
+    }
+  },
+  {
+    "name": "kaolin-light",
+    "desc": "auto-mapped from the vendored Helix palette <kaolin-light>",
+    "light": {
+      "bg": "#edeeeb",
+      "bgAlt": "#e2e3e1",
+      "text": "#383e3f",
+      "textMuted": "#606565",
+      "border": "#727676",
+      "brand": "#2d6499",
+      "success": "#0f700f",
+      "warning": "#97482a",
+      "danger": "#a7373f"
+    },
+    "dark": {
+      "bg": "#181818",
+      "bgAlt": "#212121",
+      "text": "#d3d5d5",
+      "textMuted": "#aaabab",
+      "border": "#424342",
+      "brand": "#5293d2",
+      "success": "#21a721",
+      "warning": "#e47147",
+      "danger": "#ec6771"
+    }
+  },
+  {
+    "name": "kaolin-valley-dark",
+    "desc": "auto-mapped from the vendored Helix palette <kaolin-valley-dark>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9e9e9",
+      "text": "#3c3a35",
+      "textMuted": "#64625f",
+      "border": "#dcdcdb",
+      "brand": "#26688f",
+      "success": "#3f6c2e",
+      "warning": "#69603f",
+      "danger": "#ae3942"
+    },
+    "dark": {
+      "bg": "#262221",
+      "bgAlt": "#3a3633",
+      "text": "#eee6d3",
+      "textMuted": "#c2bbac",
+      "border": "#aea79a",
+      "brand": "#41b0f3",
+      "success": "#91f368",
+      "warning": "#eed891",
+      "danger": "#ef7981"
+    }
+  },
+  {
+    "name": "kinda-nvim",
+    "desc": "auto-mapped from the vendored Helix palette <kinda_nvim>",
+    "light": {
+      "bg": "#f0f1f0",
+      "bgAlt": "#e6e7e7",
+      "text": "#2e302f",
+      "textMuted": "#595a59",
+      "border": "#d6d9d8",
+      "brand": "#456481",
+      "success": "#006e38",
+      "warning": "#6c603f",
+      "danger": "#8c525c"
+    },
+    "dark": {
+      "bg": "#00120c",
+      "bgAlt": "#12231e",
+      "text": "#b6bfbc",
+      "textMuted": "#8e9995",
+      "border": "#7c8884",
+      "brand": "#6797c2",
+      "success": "#00cc66",
+      "warning": "#b8a26c",
+      "danger": "#c27280"
+    }
+  },
+  {
+    "name": "kinda-nvim-light",
+    "desc": "auto-mapped from the vendored Helix palette <kinda_nvim_light>",
+    "light": {
+      "bg": "#fcfffe",
+      "bgAlt": "#f1f4f3",
+      "text": "#414d49",
+      "textMuted": "#666f6c",
+      "border": "#7d8683",
+      "brand": "#005bab",
+      "success": "#00774f",
+      "warning": "#886200",
+      "danger": "#bf0020"
+    },
+    "dark": {
+      "bg": "#191a19",
+      "bgAlt": "#232424",
+      "text": "#d5d8d7",
+      "textMuted": "#acaead",
+      "border": "#474747",
+      "brand": "#5c97c9",
+      "success": "#37a580",
+      "warning": "#bb8c14",
+      "danger": "#dc7586"
+    }
+  },
+  {
+    "name": "lapis-aquamarine",
+    "desc": "auto-mapped from the vendored Helix palette <lapis_aquamarine>",
+    "light": {
+      "bg": "#f1f2f2",
+      "bgAlt": "#e8e9e9",
+      "text": "#363840",
+      "textMuted": "#5f6167",
+      "border": "#dbdbdc",
+      "brand": "#4e6494",
+      "success": "#486b38",
+      "warning": "#6f5e3a",
+      "danger": "#835845"
+    },
+    "dark": {
+      "bg": "#1b1f27",
+      "bgAlt": "#2e323d",
+      "text": "#d6e2ff",
+      "textMuted": "#adb7cf",
+      "border": "#9aa4ba",
+      "brand": "#83abfc",
+      "success": "#abfc83",
+      "warning": "#fcd583",
+      "danger": "#fcab83"
+    }
+  },
+  {
     "name": "material",
     "desc": "Google's material ocean, light derived from its palette",
     "light": {
@@ -338,6 +2756,188 @@
     }
   },
   {
+    "name": "material-darker",
+    "desc": "auto-mapped from the vendored Helix palette <material_darker>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9e9e9",
+      "text": "#2c3031",
+      "textMuted": "#585b5b",
+      "border": "#dbdbdb",
+      "brand": "#2050a8",
+      "success": "#296e1c",
+      "warning": "#905500",
+      "danger": "#aa384b"
+    },
+    "dark": {
+      "bg": "#212121",
+      "bgAlt": "#2f3131",
+      "text": "#b0bec5",
+      "textMuted": "#919ba1",
+      "border": "#828c91",
+      "brand": "#819bcd",
+      "success": "#75a96a",
+      "warning": "#ff9800",
+      "danger": "#ff6780"
+    }
+  },
+  {
+    "name": "material-deep-ocean",
+    "desc": "auto-mapped from the vendored Helix palette <material_deep_ocean>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e8",
+      "text": "#2a2b33",
+      "textMuted": "#56575d",
+      "border": "#d9d9da",
+      "brand": "#4d6496",
+      "success": "#56673e",
+      "warning": "#755e32",
+      "danger": "#aa384b"
+    },
+    "dark": {
+      "bg": "#0f111a",
+      "bgAlt": "#1e202c",
+      "text": "#a6accd",
+      "textMuted": "#858aa6",
+      "border": "#767a94",
+      "brand": "#82aaff",
+      "success": "#c3e88d",
+      "warning": "#ffcb6b",
+      "danger": "#ff5370"
+    }
+  },
+  {
+    "name": "material-oceanic",
+    "desc": "auto-mapped from the vendored Helix palette <material_oceanic>",
+    "light": {
+      "bg": "#f2f3f3",
+      "bgAlt": "#e9ebeb",
+      "text": "#2c3031",
+      "textMuted": "#585b5c",
+      "border": "#dcdfe0",
+      "brand": "#2050a8",
+      "success": "#006c63",
+      "warning": "#845c0c",
+      "danger": "#a3443f"
+    },
+    "dark": {
+      "bg": "#25363b",
+      "bgAlt": "#334449",
+      "text": "#b9c5cb",
+      "textMuted": "#a4b0b4",
+      "border": "#849299",
+      "brand": "#a0b4db",
+      "success": "#6fc4bc",
+      "warning": "#c7b186",
+      "danger": "#d5a9a7"
+    }
+  },
+  {
+    "name": "material-palenight",
+    "desc": "auto-mapped from the vendored Helix palette <material_palenight>",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#eaeaec",
+      "text": "#2a2b33",
+      "textMuted": "#56575d",
+      "border": "#dddde0",
+      "brand": "#444267",
+      "success": "#296e1c",
+      "warning": "#845c0c",
+      "danger": "#a3443f"
+    },
+    "dark": {
+      "bg": "#292d3e",
+      "bgAlt": "#363a4c",
+      "text": "#b6bbd7",
+      "textMuted": "#9fa4bb",
+      "border": "#7e839f",
+      "brand": "#acabbc",
+      "success": "#8fb885",
+      "warning": "#c3ab7c",
+      "danger": "#d1a19f"
+    }
+  },
+  {
+    "name": "meliora",
+    "desc": "auto-mapped from the vendored Helix palette <meliora>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#363635",
+      "textMuted": "#5f5f5e",
+      "border": "#dadad9",
+      "brand": "#2050a8",
+      "success": "#296e1c",
+      "warning": "#73604e",
+      "danger": "#7c5858"
+    },
+    "dark": {
+      "bg": "#191514",
+      "bgAlt": "#2c2827",
+      "text": "#dad7d5",
+      "textMuted": "#b0acab",
+      "border": "#9c9997",
+      "brand": "#718fc7",
+      "success": "#639d57",
+      "warning": "#cbab8a",
+      "danger": "#d29595"
+    }
+  },
+  {
+    "name": "mellow",
+    "desc": "auto-mapped from the vendored Helix palette <mellow>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e8",
+      "text": "#323233",
+      "textMuted": "#5c5c5d",
+      "border": "#d9d9d9",
+      "brand": "#2050a8",
+      "success": "#516859",
+      "warning": "#735f51",
+      "danger": "#7f5750"
+    },
+    "dark": {
+      "bg": "#131314",
+      "bgAlt": "#252526",
+      "text": "#c9c7cd",
+      "textMuted": "#a19fa4",
+      "border": "#8f8d92",
+      "brand": "#718fc7",
+      "success": "#9dc6ac",
+      "warning": "#f0c5a9",
+      "danger": "#ffae9f"
+    }
+  },
+  {
+    "name": "merionette",
+    "desc": "auto-mapped from the vendored Helix palette <merionette>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e7e7",
+      "text": "#342e30",
+      "textMuted": "#5e595a",
+      "border": "#dad9d9",
+      "brand": "#406c68",
+      "success": "#576830",
+      "warning": "#9c4832",
+      "danger": "#a33e4a"
+    },
+    "dark": {
+      "bg": "#190f0f",
+      "bgAlt": "#2b2021",
+      "text": "#cebabf",
+      "textMuted": "#a69498",
+      "border": "#948387",
+      "brand": "#65aba3",
+      "success": "#8ea84d",
+      "warning": "#ff7550",
+      "danger": "#dd6774"
+    }
+  },
+  {
     "name": "modus",
     "desc": "Emacs' accessible flagship: maximum legibility",
     "light": {
@@ -360,6 +2960,214 @@
       "brand": "#2fafff",
       "success": "#44bc44",
       "warning": "#d0bc00",
+      "danger": "#ff5f59"
+    }
+  },
+  {
+    "name": "modus-operandi",
+    "desc": "auto-mapped from the vendored Helix palette <modus_operandi>",
+    "light": {
+      "bg": "#ffffff",
+      "bgAlt": "#f0f0f0",
+      "text": "#000000",
+      "textMuted": "#383838",
+      "border": "#525252",
+      "brand": "#0000ff",
+      "success": "#007a00",
+      "warning": "#6c6c00",
+      "danger": "#d00000"
+    },
+    "dark": {
+      "bg": "#1a1a1a",
+      "bgAlt": "#242424",
+      "text": "#c7c7c7",
+      "textMuted": "#a1a1a1",
+      "border": "#474747",
+      "brand": "#8585ff",
+      "success": "#3fa73f",
+      "warning": "#9b9b37",
+      "danger": "#e36f6f"
+    }
+  },
+  {
+    "name": "modus-operandi-deuteranopia",
+    "desc": "auto-mapped from the vendored Helix palette <modus_operandi_deuteranopia>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e7",
+      "text": "#150f00",
+      "textMuted": "#454135",
+      "border": "#d9d9d9",
+      "brand": "#023d92",
+      "success": "#296e1c",
+      "warning": "#695500",
+      "danger": "#973300"
+    },
+    "dark": {
+      "bg": "#0f0f0f",
+      "bgAlt": "#16140e",
+      "text": "#ab9e80",
+      "textMuted": "#897f67",
+      "border": "#3f2e05",
+      "brand": "#6a8dbf",
+      "success": "#5c9950",
+      "warning": "#978a4e",
+      "danger": "#bd7d5c"
+    }
+  },
+  {
+    "name": "modus-operandi-tinted",
+    "desc": "auto-mapped from the vendored Helix palette <modus_operandi_tinted>",
+    "light": {
+      "bg": "#fbf7f0",
+      "bgAlt": "#f1ede7",
+      "text": "#545454",
+      "textMuted": "#6b6a68",
+      "border": "#898886",
+      "brand": "#2050a8",
+      "success": "#2b731d",
+      "warning": "#845c0c",
+      "danger": "#a3443f"
+    },
+    "dark": {
+      "bg": "#191918",
+      "bgAlt": "#232322",
+      "text": "#d9d9d9",
+      "textMuted": "#afafaf",
+      "border": "#464543",
+      "brand": "#7793c9",
+      "success": "#69a15e",
+      "warning": "#ae8f51",
+      "danger": "#c38280"
+    }
+  },
+  {
+    "name": "modus-operandi-tritanopia",
+    "desc": "auto-mapped from the vendored Helix palette <modus_operandi_tritanopia>",
+    "light": {
+      "bg": "#afdfef",
+      "bgAlt": "#a5d3e2",
+      "text": "#0f0f0f",
+      "textMuted": "#323d40",
+      "border": "#425257",
+      "brand": "#005079",
+      "success": "#00445f",
+      "warning": "#614f00",
+      "danger": "#9d0e00"
+    },
+    "dark": {
+      "bg": "#121618",
+      "bgAlt": "#181f21",
+      "text": "#cacaca",
+      "textMuted": "#a2a2a3",
+      "border": "#313e43",
+      "brand": "#6997b0",
+      "success": "#6f95a4",
+      "warning": "#9b8f55",
+      "danger": "#d17369"
+    }
+  },
+  {
+    "name": "modus-vivendi",
+    "desc": "auto-mapped from the vendored Helix palette <modus_vivendi>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#1d6896",
+      "success": "#007042",
+      "warning": "#6c6200",
+      "danger": "#9c4235"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#2fafff",
+      "success": "#00c06f",
+      "warning": "#d0bc00",
+      "danger": "#ff6b55"
+    }
+  },
+  {
+    "name": "modus-vivendi-deuteranopia",
+    "desc": "auto-mapped from the vendored Helix palette <modus_vivendi_deuteranopia>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#1d6896",
+      "success": "#007042",
+      "warning": "#696400",
+      "danger": "#9c4235"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#2fafff",
+      "success": "#00c06f",
+      "warning": "#cabf00",
+      "danger": "#ff6b55"
+    }
+  },
+  {
+    "name": "modus-vivendi-tinted",
+    "desc": "auto-mapped from the vendored Helix palette <modus_vivendi_tinted>",
+    "light": {
+      "bg": "#f0f1f1",
+      "bgAlt": "#e7e7e8",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d8d8db",
+      "brand": "#1d6896",
+      "success": "#0c7043",
+      "warning": "#6c6200",
+      "danger": "#9c4235"
+    },
+    "dark": {
+      "bg": "#0d0e1c",
+      "bgAlt": "#252633",
+      "text": "#ffffff",
+      "textMuted": "#cacacd",
+      "border": "#b2b2b6",
+      "brand": "#2fafff",
+      "success": "#11c777",
+      "warning": "#d0bc00",
+      "danger": "#ff6b55"
+    }
+  },
+  {
+    "name": "modus-vivendi-tritanopia",
+    "desc": "auto-mapped from the vendored Helix palette <modus_vivendi_tritanopia>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#1d6896",
+      "success": "#007042",
+      "warning": "#696400",
+      "danger": "#a33c39"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#2fafff",
+      "success": "#00c06f",
+      "warning": "#cabf00",
       "danger": "#ff5f59"
     }
   },
@@ -390,6 +3198,240 @@
     }
   },
   {
+    "name": "monokai-pro",
+    "desc": "auto-mapped from the vendored Helix palette <monokai_pro>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#3f3f3e",
+      "textMuted": "#666665",
+      "border": "#dadada",
+      "brand": "#2050a8",
+      "success": "#516a38",
+      "warning": "#70602e",
+      "danger": "#a33d57"
+    },
+    "dark": {
+      "bg": "#19181a",
+      "bgAlt": "#302f30",
+      "text": "#fcfcfa",
+      "textMuted": "#cacac9",
+      "border": "#b3b3b2",
+      "brand": "#7793c9",
+      "success": "#a9dc76",
+      "warning": "#ffd866",
+      "danger": "#ff6188"
+    }
+  },
+  {
+    "name": "monokai-pro-machine",
+    "desc": "auto-mapped from the vendored Helix palette <monokai_pro_machine>",
+    "light": {
+      "bg": "#f1f1f2",
+      "bgAlt": "#e8e8e8",
+      "text": "#3c403f",
+      "textMuted": "#646766",
+      "border": "#dadbdb",
+      "brand": "#3d6a78",
+      "success": "#4b6a38",
+      "warning": "#68612f",
+      "danger": "#9c434e"
+    },
+    "dark": {
+      "bg": "#161b1e",
+      "bgAlt": "#2c3234",
+      "text": "#f2fffc",
+      "textMuted": "#c2cdcb",
+      "border": "#acb6b5",
+      "brand": "#7cd5f1",
+      "success": "#a2e57b",
+      "warning": "#ffed72",
+      "danger": "#ff6d7e"
+    }
+  },
+  {
+    "name": "monokai-pro-octagon",
+    "desc": "auto-mapped from the vendored Helix palette <monokai_pro_octagon>",
+    "light": {
+      "bg": "#f1f1f2",
+      "bgAlt": "#e8e8e9",
+      "text": "#3a3c3c",
+      "textMuted": "#626464",
+      "border": "#dadadb",
+      "brand": "#2050a8",
+      "success": "#59682f",
+      "warning": "#706031",
+      "danger": "#a3404e"
+    },
+    "dark": {
+      "bg": "#161821",
+      "bgAlt": "#2b2e36",
+      "text": "#eaf2f1",
+      "textMuted": "#bbc2c3",
+      "border": "#a6acae",
+      "brand": "#7793c9",
+      "success": "#bad761",
+      "warning": "#ffd76d",
+      "danger": "#ff657a"
+    }
+  },
+  {
+    "name": "monokai-pro-ristretto",
+    "desc": "auto-mapped from the vendored Helix palette <monokai_pro_ristretto>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#403c3d",
+      "textMuted": "#676465",
+      "border": "#dadada",
+      "brand": "#2050a8",
+      "success": "#53683a",
+      "warning": "#735e32",
+      "danger": "#a14254"
+    },
+    "dark": {
+      "bg": "#191515",
+      "bgAlt": "#302b2b",
+      "text": "#fff1f3",
+      "textMuted": "#ccc1c2",
+      "border": "#b5abac",
+      "brand": "#718fc7",
+      "success": "#adda78",
+      "warning": "#f9cc6c",
+      "danger": "#fd6883"
+    }
+  },
+  {
+    "name": "monokai-pro-spectrum",
+    "desc": "auto-mapped from the vendored Helix palette <monokai_pro_spectrum>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e7",
+      "text": "#3e3c40",
+      "textMuted": "#656467",
+      "border": "#d9d9d9",
+      "brand": "#635c97",
+      "success": "#3c6c48",
+      "warning": "#6b622c",
+      "danger": "#8f5330"
+    },
+    "dark": {
+      "bg": "#131313",
+      "bgAlt": "#2a292b",
+      "text": "#f7f1ff",
+      "textMuted": "#c5c0cb",
+      "border": "#aeaab3",
+      "brand": "#948ae3",
+      "success": "#7bd88f",
+      "warning": "#fce566",
+      "danger": "#fd9353"
+    }
+  },
+  {
+    "name": "monokai-soda",
+    "desc": "auto-mapped from the vendored Helix palette <monokai_soda>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#3a371d",
+      "textMuted": "#62604c",
+      "border": "#dadada",
+      "brand": "#346c78",
+      "success": "#506c17",
+      "warning": "#7f580c",
+      "danger": "#8f5411"
+    },
+    "dark": {
+      "bg": "#191919",
+      "bgAlt": "#2e2c22",
+      "text": "#e6db74",
+      "textMuted": "#b9b060",
+      "border": "#a49d57",
+      "brand": "#66d9ef",
+      "success": "#a6e22e",
+      "warning": "#ae8f51",
+      "danger": "#fd971f"
+    }
+  },
+  {
+    "name": "naysayer",
+    "desc": "auto-mapped from the vendored Helix palette <naysayer>",
+    "light": {
+      "bg": "#f0f2f2",
+      "bgAlt": "#e6e9ea",
+      "text": "#342e26",
+      "textMuted": "#5d5953",
+      "border": "#d7dcdd",
+      "brand": "#5c646c",
+      "success": "#1b710c",
+      "warning": "#845800",
+      "danger": "#c00000"
+    },
+    "dark": {
+      "bg": "#062329",
+      "bgAlt": "#1a3234",
+      "text": "#d1b897",
+      "textMuted": "#a4977f",
+      "border": "#908874",
+      "brand": "#c1d1e3",
+      "success": "#2ec90c",
+      "warning": "#ffaa00",
+      "danger": "#ff5c5c"
+    }
+  },
+  {
+    "name": "neonotte",
+    "desc": "auto-mapped from the vendored Helix palette <neonotte>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e7",
+      "text": "#33363d",
+      "textMuted": "#5d5f64",
+      "border": "#d7d7d8",
+      "brand": "#456490",
+      "success": "#476844",
+      "warning": "#68603f",
+      "danger": "#725c5c"
+    },
+    "dark": {
+      "bg": "#08080d",
+      "bgAlt": "#1c1d24",
+      "text": "#cdd6f4",
+      "textMuted": "#a2a9c1",
+      "border": "#8e94aa",
+      "brand": "#7bb1ff",
+      "success": "#9feb99",
+      "warning": "#ffea9b",
+      "danger": "#f7c8c8"
+    }
+  },
+  {
+    "name": "new-moon",
+    "desc": "auto-mapped from the vendored Helix palette <new_moon>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9e9e9",
+      "text": "#353535",
+      "textMuted": "#5f5f5f",
+      "border": "#dcdcdc",
+      "brand": "#3e688f",
+      "success": "#496849",
+      "warning": "#705e36",
+      "danger": "#94494b"
+    },
+    "dark": {
+      "bg": "#252525",
+      "bgAlt": "#363636",
+      "text": "#d4d4d4",
+      "textMuted": "#aeaeae",
+      "border": "#9c9c9c",
+      "brand": "#6ab0f3",
+      "success": "#92d192",
+      "warning": "#ffd479",
+      "danger": "#f37c7f"
+    }
+  },
+  {
     "name": "night-owl",
     "desc": "deep navy, bright primaries; light derived from its palette",
     "light": {
@@ -413,6 +3455,110 @@
       "success": "#addb67",
       "warning": "#ecc48d",
       "danger": "#ff5874"
+    }
+  },
+  {
+    "name": "night-rider",
+    "desc": "auto-mapped from the vendored Helix palette <night_rider>",
+    "light": {
+      "bg": "#f2f1f3",
+      "bgAlt": "#e8e8ec",
+      "text": "#323337",
+      "textMuted": "#5c5d60",
+      "border": "#dbdbe0",
+      "brand": "#171530",
+      "success": "#296e1c",
+      "warning": "#7f580c",
+      "danger": "#9c4565"
+    },
+    "dark": {
+      "bg": "#1e1c3f",
+      "bgAlt": "#2f2e4f",
+      "text": "#c9cbdb",
+      "textMuted": "#a3a4b9",
+      "border": "#9293a9",
+      "brand": "#9897a3",
+      "success": "#75a96a",
+      "warning": "#b4975f",
+      "danger": "#de7da1"
+    }
+  },
+  {
+    "name": "nightfox",
+    "desc": "auto-mapped from the vendored Helix palette <nightfox>",
+    "light": {
+      "bg": "#f1f1f2",
+      "bgAlt": "#e7e8e9",
+      "text": "#363636",
+      "textMuted": "#5f5f5f",
+      "border": "#d9dadc",
+      "brand": "#486488",
+      "success": "#4c685b",
+      "warning": "#6d603a",
+      "danger": "#a44059"
+    },
+    "dark": {
+      "bg": "#131a24",
+      "bgAlt": "#262d36",
+      "text": "#d6d6d7",
+      "textMuted": "#abadb0",
+      "border": "#989a9e",
+      "brand": "#719cd6",
+      "success": "#81b29a",
+      "warning": "#dbc074",
+      "danger": "#d5758d"
+    }
+  },
+  {
+    "name": "noctis",
+    "desc": "auto-mapped from the vendored Helix palette <noctis>",
+    "light": {
+      "bg": "#f0f2f2",
+      "bgAlt": "#e6e9ea",
+      "text": "#403c31",
+      "textMuted": "#67645b",
+      "border": "#d6dcdd",
+      "brand": "#2c698e",
+      "success": "#216c4e",
+      "warning": "#706000",
+      "danger": "#ab3a14"
+    },
+    "dark": {
+      "bg": "#00262a",
+      "bgAlt": "#1a3a3a",
+      "text": "#fff2c5",
+      "textMuted": "#c7c5a3",
+      "border": "#adb193",
+      "brand": "#47ace8",
+      "success": "#48e9a7",
+      "warning": "#ffd800",
+      "danger": "#e9754c"
+    }
+  },
+  {
+    "name": "noctis-bordo",
+    "desc": "auto-mapped from the vendored Helix palette <noctis_bordo>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#eae9ea",
+      "text": "#3e3e3e",
+      "textMuted": "#666666",
+      "border": "#dddcdd",
+      "brand": "#2050a8",
+      "success": "#296e1c",
+      "warning": "#845c0c",
+      "danger": "#a3443f"
+    },
+    "dark": {
+      "bg": "#2c2528",
+      "bgAlt": "#403a3d",
+      "text": "#f8f8f8",
+      "textMuted": "#cbcaca",
+      "border": "#b7b4b5",
+      "brand": "#8ba3d1",
+      "success": "#80af76",
+      "warning": "#ba9f6b",
+      "danger": "#cd9997"
     }
   },
   {
@@ -442,6 +3588,266 @@
     }
   },
   {
+    "name": "nord-light",
+    "desc": "auto-mapped from the vendored Helix palette <nord_light>",
+    "light": {
+      "bg": "#f2f3f4",
+      "bgAlt": "#eaebec",
+      "text": "#3b3c3d",
+      "textMuted": "#636465",
+      "border": "#dedfe0",
+      "brand": "#4a6586",
+      "success": "#58684c",
+      "warning": "#706242",
+      "danger": "#964c53"
+    },
+    "dark": {
+      "bg": "#2e3440",
+      "bgAlt": "#414752",
+      "text": "#eceff4",
+      "textMuted": "#c2c6cc",
+      "border": "#afb3ba",
+      "brand": "#a3b7cf",
+      "success": "#a3be8c",
+      "warning": "#ebcb8b",
+      "danger": "#dcaaae"
+    }
+  },
+  {
+    "name": "nvchad-solarized-dark",
+    "desc": "auto-mapped from the vendored Helix palette <nvchad_solarized_dark>",
+    "light": {
+      "bg": "#f0f2f3",
+      "bgAlt": "#e6eaeb",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6dddf",
+      "brand": "#1e689e",
+      "success": "#1d6c65",
+      "warning": "#795c00",
+      "danger": "#b42825"
+    },
+    "dark": {
+      "bg": "#002b36",
+      "bgAlt": "#1a404a",
+      "text": "#ffffff",
+      "textMuted": "#c7d0d3",
+      "border": "#adbbbf",
+      "brand": "#5ca8dd",
+      "success": "#52b2ab",
+      "warning": "#c19b26",
+      "danger": "#e88180"
+    }
+  },
+  {
+    "name": "nvim-dark",
+    "desc": "auto-mapped from the vendored Helix palette <nvim-dark>",
+    "light": {
+      "bg": "#8cf8f7",
+      "bgAlt": "#85eaea",
+      "text": "#14161b",
+      "textMuted": "#2e484b",
+      "border": "#3a5e61",
+      "brand": "#2050a8",
+      "success": "#46604b",
+      "warning": "#63583a",
+      "danger": "#705451"
+    },
+    "dark": {
+      "bg": "#0e1919",
+      "bgAlt": "#142323",
+      "text": "#cbcccd",
+      "textMuted": "#a1a5a5",
+      "border": "#274545",
+      "brand": "#718fc7",
+      "success": "#b3f6c0",
+      "warning": "#fce094",
+      "danger": "#ffc0b9"
+    }
+  },
+  {
+    "name": "nyxvamp-obsidian",
+    "desc": "auto-mapped from the vendored Helix palette <nyxvamp-obsidian>",
+    "light": {
+      "bg": "#f0f0f1",
+      "bgAlt": "#e6e6e7",
+      "text": "#303034",
+      "textMuted": "#5a5a5e",
+      "border": "#d6d8d9",
+      "brand": "#48647a",
+      "success": "#4c6942",
+      "warning": "#7a5b48",
+      "danger": "#895354"
+    },
+    "dark": {
+      "bg": "#000a0f",
+      "bgAlt": "#131c22",
+      "text": "#c0c0ce",
+      "textMuted": "#9698a4",
+      "border": "#838691",
+      "brand": "#7fafd7",
+      "success": "#86ba75",
+      "warning": "#d8a080",
+      "danger": "#d78284"
+    }
+  },
+  {
+    "name": "nyxvamp-radiance",
+    "desc": "auto-mapped from the vendored Helix palette <nyxvamp-radiance>",
+    "light": {
+      "bg": "#f7f7ff",
+      "bgAlt": "#eaeaf2",
+      "text": "#1e1e2e",
+      "textMuted": "#4e4e5c",
+      "border": "#636371",
+      "brand": "#67676a",
+      "success": "#536c4b",
+      "warning": "#84610b",
+      "danger": "#935354"
+    },
+    "dark": {
+      "bg": "#19191a",
+      "bgAlt": "#232324",
+      "text": "#ceced1",
+      "textMuted": "#a6a6a9",
+      "border": "#454547",
+      "brand": "#e8e8f0",
+      "success": "#a6da95",
+      "warning": "#bb8b15",
+      "danger": "#e78284"
+    }
+  },
+  {
+    "name": "nyxvamp-transparent",
+    "desc": "auto-mapped from the vendored Helix palette <nyxvamp-transparent>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e8e8ea",
+      "text": "#282828",
+      "textMuted": "#545454",
+      "border": "#dbdbde",
+      "brand": "#396a8a",
+      "success": "#446875",
+      "warning": "#845c0c",
+      "danger": "#9c4260"
+    },
+    "dark": {
+      "bg": "#1e1e2e",
+      "bgAlt": "#2b2b39",
+      "text": "#ababab",
+      "textMuted": "#959598",
+      "border": "#76767c",
+      "brand": "#5dade2",
+      "success": "#87ceeb",
+      "warning": "#b4975f",
+      "danger": "#ff6b9d"
+    }
+  },
+  {
+    "name": "nyxvamp-veil",
+    "desc": "auto-mapped from the vendored Helix palette <nyxvamp-veil>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e8e8ea",
+      "text": "#36383c",
+      "textMuted": "#5f6164",
+      "border": "#dbdbde",
+      "brand": "#4b677d",
+      "success": "#4b684f",
+      "warning": "#775b48",
+      "danger": "#8d5051"
+    },
+    "dark": {
+      "bg": "#1e1e2e",
+      "bgAlt": "#313141",
+      "text": "#d9e0ee",
+      "textMuted": "#b0b5c4",
+      "border": "#9da2b1",
+      "brand": "#96cdfb",
+      "success": "#abe9b3",
+      "warning": "#f8bd96",
+      "danger": "#e78284"
+    }
+  },
+  {
+    "name": "ocean-space",
+    "desc": "auto-mapped from the vendored Helix palette <ocean-space>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e8",
+      "text": "#3c3c1e",
+      "textMuted": "#64644c",
+      "border": "#d9d9da",
+      "brand": "#3264a6",
+      "success": "#0c6d4d",
+      "warning": "#7f580c",
+      "danger": "#89580c"
+    },
+    "dark": {
+      "bg": "#0f111a",
+      "bgAlt": "#262824",
+      "text": "#f2f27a",
+      "textMuted": "#c0c065",
+      "border": "#a9aa5b",
+      "brand": "#5f8fce",
+      "success": "#14b37d",
+      "warning": "#a78542",
+      "danger": "#f39c12"
+    }
+  },
+  {
+    "name": "omicron-dark",
+    "desc": "auto-mapped from the vendored Helix palette <omicron_dark>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#3c370d",
+      "textMuted": "#64603f",
+      "border": "#d6d6d6",
+      "brand": "#005dc8",
+      "success": "#006e3b",
+      "warning": "#64641f",
+      "danger": "#b81a00"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#181605",
+      "text": "#eedd33",
+      "textMuted": "#baac28",
+      "border": "#a29623",
+      "brand": "#0077ff",
+      "success": "#00dd77",
+      "warning": "#aaaa33",
+      "danger": "#ff2200"
+    }
+  },
+  {
+    "name": "omicron-light",
+    "desc": "auto-mapped from the vendored Helix palette <omicron_light>",
+    "light": {
+      "bg": "#eeeeee",
+      "bgAlt": "#e3e0e0",
+      "text": "#330000",
+      "textMuted": "#5c3434",
+      "border": "#6f4c4c",
+      "brand": "#0062a3",
+      "success": "#006e24",
+      "warning": "#6a6000",
+      "danger": "#b80000"
+    },
+    "dark": {
+      "bg": "#181818",
+      "bgAlt": "#212121",
+      "text": "#d2c7c7",
+      "textMuted": "#a9a0a0",
+      "border": "#434343",
+      "brand": "#5599c6",
+      "success": "#1da54b",
+      "warning": "#bbaa00",
+      "danger": "#ff4e4e"
+    }
+  },
+  {
     "name": "onedark",
     "desc": "Atom's One: grey-blue surfaces, saturated accents",
     "light": {
@@ -465,6 +3871,110 @@
       "success": "#98c379",
       "warning": "#e5c07b",
       "danger": "#e79197"
+    }
+  },
+  {
+    "name": "onedark-vibrant",
+    "desc": "auto-mapped from the vendored Helix palette <onedark_vibrant>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9e9ea",
+      "text": "#3a3c40",
+      "textMuted": "#626467",
+      "border": "#dbdcdd",
+      "brand": "#236890",
+      "success": "#366e36",
+      "warning": "#70601d",
+      "danger": "#8a5623"
+    },
+    "dark": {
+      "bg": "#21252b",
+      "bgAlt": "#353940",
+      "text": "#e6efff",
+      "textMuted": "#bbc3d0",
+      "border": "#a7aebb",
+      "brand": "#3fb8ff",
+      "success": "#6ee76e",
+      "warning": "#ffd93d",
+      "danger": "#ff9f40"
+    }
+  },
+  {
+    "name": "onedarker",
+    "desc": "auto-mapped from the vendored Helix palette <onedarker>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e7",
+      "text": "#352c1b",
+      "textMuted": "#5e574a",
+      "border": "#d9d9d8",
+      "brand": "#34668e",
+      "success": "#4d6840",
+      "warning": "#7b5b3c",
+      "danger": "#9c454c"
+    },
+    "dark": {
+      "bg": "#12100e",
+      "bgAlt": "#262017",
+      "text": "#d5b06b",
+      "textMuted": "#aa8d57",
+      "border": "#977d4d",
+      "brand": "#519fdf",
+      "success": "#7da869",
+      "warning": "#d19a66",
+      "danger": "#d46971"
+    }
+  },
+  {
+    "name": "onedarker-vibrant",
+    "desc": "auto-mapped from the vendored Helix palette <onedarker_vibrant>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e7",
+      "text": "#35363a",
+      "textMuted": "#5e5f62",
+      "border": "#d9d9d8",
+      "brand": "#1f6999",
+      "success": "#317031",
+      "warning": "#6b6026",
+      "danger": "#90511f"
+    },
+    "dark": {
+      "bg": "#12100e",
+      "bgAlt": "#262424",
+      "text": "#d5dae6",
+      "textMuted": "#aaaeb6",
+      "border": "#9799a1",
+      "brand": "#2fa5f0",
+      "success": "#5dd75d",
+      "warning": "#e8d154",
+      "danger": "#ff8f35"
+    }
+  },
+  {
+    "name": "onelight",
+    "desc": "auto-mapped from the vendored Helix palette <onelight>",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#eaeaeb",
+      "text": "#3e3e3e",
+      "textMuted": "#666666",
+      "border": "#dddddf",
+      "brand": "#0068a9",
+      "success": "#1b712f",
+      "warning": "#a64200",
+      "danger": "#bc0000"
+    },
+    "dark": {
+      "bg": "#282c34",
+      "bgAlt": "#3d4148",
+      "text": "#fafafa",
+      "textMuted": "#cccdce",
+      "border": "#b7b8bb",
+      "brand": "#47aff2",
+      "success": "#61bd78",
+      "warning": "#e39763",
+      "danger": "#ec8f8f"
     }
   },
   {
@@ -494,6 +4004,214 @@
     }
   },
   {
+    "name": "papercolor-dark",
+    "desc": "auto-mapped from the vendored Helix palette <papercolor-dark>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#343434",
+      "textMuted": "#5e5e5e",
+      "border": "#dbdbdb",
+      "brand": "#007070",
+      "success": "#546800",
+      "warning": "#7f5800",
+      "danger": "#5f0000"
+    },
+    "dark": {
+      "bg": "#1c1c1c",
+      "bgAlt": "#2e2e2e",
+      "text": "#d0d0d0",
+      "textMuted": "#a8a8a8",
+      "border": "#969696",
+      "brand": "#00afaf",
+      "success": "#afd700",
+      "warning": "#ffaf00",
+      "danger": "#b78f8f"
+    }
+  },
+  {
+    "name": "papercolor-light",
+    "desc": "auto-mapped from the vendored Helix palette <papercolor-light>",
+    "light": {
+      "bg": "#eeeeee",
+      "bgAlt": "#e4e4e4",
+      "text": "#444444",
+      "textMuted": "#656565",
+      "border": "#7a7a7a",
+      "brand": "#005faf",
+      "success": "#006c3a",
+      "warning": "#646400",
+      "danger": "#be0000"
+    },
+    "dark": {
+      "bg": "#181818",
+      "bgAlt": "#212121",
+      "text": "#d6d6d6",
+      "textMuted": "#acacac",
+      "border": "#434343",
+      "brand": "#5594c9",
+      "success": "#00af5f",
+      "warning": "#ffff00",
+      "danger": "#e66969"
+    }
+  },
+  {
+    "name": "penumbra+",
+    "desc": "auto-mapped from the vendored Helix palette <penumbra+>",
+    "light": {
+      "bg": "#f1f1f2",
+      "bgAlt": "#e8e8e9",
+      "text": "#403f3f",
+      "textMuted": "#676666",
+      "border": "#dadbdb",
+      "brand": "#3b648d",
+      "success": "#306b4e",
+      "warning": "#60672c",
+      "danger": "#8e514d"
+    },
+    "dark": {
+      "bg": "#181b1f",
+      "bgAlt": "#2f3235",
+      "text": "#fffdfb",
+      "textMuted": "#cccbcb",
+      "border": "#b5b5b5",
+      "brand": "#61a3e6",
+      "success": "#50b584",
+      "warning": "#9ca748",
+      "danger": "#df7f78"
+    }
+  },
+  {
+    "name": "poimandres",
+    "desc": "auto-mapped from the vendored Helix palette <poimandres>",
+    "light": {
+      "bg": "#f1f2f2",
+      "bgAlt": "#e8e8ea",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#dbdbdd",
+      "brand": "#53687a",
+      "success": "#42675a",
+      "warning": "#64624c",
+      "danger": "#8d506f"
+    },
+    "dark": {
+      "bg": "#1b1e28",
+      "bgAlt": "#32343e",
+      "text": "#ffffff",
+      "textMuted": "#cdced0",
+      "border": "#b6b7ba",
+      "brand": "#add7ff",
+      "success": "#869e96",
+      "warning": "#fffac2",
+      "danger": "#f087bd"
+    }
+  },
+  {
+    "name": "poimandres-storm",
+    "desc": "auto-mapped from the vendored Helix palette <poimandres_storm>",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#e9eaeb",
+      "text": "#262831",
+      "textMuted": "#53545c",
+      "border": "#dcdddf",
+      "brand": "#2050a8",
+      "success": "#296e1c",
+      "warning": "#845c0c",
+      "danger": "#a3443f"
+    },
+    "dark": {
+      "bg": "#252b37",
+      "bgAlt": "#303745",
+      "text": "#aeb6d0",
+      "textMuted": "#9ca3b7",
+      "border": "#737c97",
+      "brand": "#90a7d3",
+      "success": "#8ab580",
+      "warning": "#c0a777",
+      "danger": "#cf9d9b"
+    }
+  },
+  {
+    "name": "pop-dark",
+    "desc": "auto-mapped from the vendored Helix palette <pop-dark>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#37697d",
+      "success": "#3c6a3f",
+      "warning": "#755e00",
+      "danger": "#b81a00"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#6dd2fa",
+      "success": "#6fc475",
+      "warning": "#ffcc00",
+      "danger": "#ff2200"
+    }
+  },
+  {
+    "name": "quiet-light",
+    "desc": "auto-mapped from the vendored Helix palette <quiet_light>",
+    "light": {
+      "bg": "#f5f5f5",
+      "bgAlt": "#e9e9e9",
+      "text": "#333333",
+      "textMuted": "#5e5e5e",
+      "border": "#717171",
+      "brand": "#4561b6",
+      "success": "#387221",
+      "warning": "#7e6000",
+      "danger": "#b0371d"
+    },
+    "dark": {
+      "bg": "#181818",
+      "bgAlt": "#222222",
+      "text": "#d2d2d2",
+      "textMuted": "#a9a9a9",
+      "border": "#454545",
+      "brand": "#788fd4",
+      "success": "#66a14f",
+      "warning": "#b88e0a",
+      "danger": "#d97965"
+    }
+  },
+  {
+    "name": "rasmus",
+    "desc": "auto-mapped from the vendored Helix palette <rasmus>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#343434",
+      "textMuted": "#5e5e5e",
+      "border": "#dadada",
+      "brand": "#536777",
+      "success": "#4e685c",
+      "warning": "#755b42",
+      "danger": "#8a514c"
+    },
+    "dark": {
+      "bg": "#1a1a19",
+      "bgAlt": "#2c2c2b",
+      "text": "#d1d1d1",
+      "textMuted": "#a9a9a9",
+      "border": "#969696",
+      "brand": "#a6cded",
+      "success": "#94c9b2",
+      "warning": "#ffc591",
+      "danger": "#ff968c"
+    }
+  },
+  {
     "name": "rose-pine",
     "desc": "Dawn and main: warm, rosy, natural pine accents",
     "light": {
@@ -517,6 +4235,58 @@
       "success": "#9ccfd8",
       "warning": "#f6c177",
       "danger": "#eb6f92"
+    }
+  },
+  {
+    "name": "rose-pine-dawn",
+    "desc": "auto-mapped from the vendored Helix palette <rose_pine_dawn>",
+    "light": {
+      "bg": "#faf4ed",
+      "bgAlt": "#f0eae6",
+      "text": "#514c6f",
+      "textMuted": "#68647b",
+      "border": "#8b869e",
+      "brand": "#2050a8",
+      "success": "#286983",
+      "warning": "#84581e",
+      "danger": "#895351"
+    },
+    "dark": {
+      "bg": "#191818",
+      "bgAlt": "#232221",
+      "text": "#dad9e2",
+      "textMuted": "#b0afb6",
+      "border": "#464442",
+      "brand": "#7793c9",
+      "success": "#709bad",
+      "warning": "#ea9d34",
+      "danger": "#d7827e"
+    }
+  },
+  {
+    "name": "rose-pine-moon",
+    "desc": "auto-mapped from the vendored Helix palette <rose_pine_moon>",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#e9e9eb",
+      "text": "#38383d",
+      "textMuted": "#616165",
+      "border": "#dcdbdf",
+      "brand": "#252c44",
+      "success": "#2e687f",
+      "warning": "#765c39",
+      "danger": "#845754"
+    },
+    "dark": {
+      "bg": "#232136",
+      "bgAlt": "#363449",
+      "text": "#e0def4",
+      "textMuted": "#b6b4ca",
+      "border": "#a4a2b7",
+      "brand": "#9b9da9",
+      "success": "#68a7c2",
+      "warning": "#f6c177",
+      "danger": "#ea9a97"
     }
   },
   {
@@ -546,6 +4316,136 @@
     }
   },
   {
+    "name": "seoul256-dark",
+    "desc": "auto-mapped from the vendored Helix palette <seoul256-dark>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#3c3c3c",
+      "textMuted": "#646464",
+      "border": "#d6d6d6",
+      "brand": "#4d6575",
+      "success": "#4b6a00",
+      "warning": "#825b00",
+      "danger": "#be0000"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#181818",
+      "text": "#eeeeee",
+      "textMuted": "#bababa",
+      "border": "#a2a2a2",
+      "brand": "#a6dbff",
+      "success": "#658c0a",
+      "warning": "#9d7c2f",
+      "danger": "#e14747"
+    }
+  },
+  {
+    "name": "serika-dark",
+    "desc": "auto-mapped from the vendored Helix palette <serika-dark>",
+    "light": {
+      "bg": "#f3f3f3",
+      "bgAlt": "#eaebeb",
+      "text": "#343431",
+      "textMuted": "#5e5e5c",
+      "border": "#dedfdf",
+      "brand": "#5a6872",
+      "success": "#5a6651",
+      "warning": "#75600c",
+      "danger": "#9b4b51"
+    },
+    "dark": {
+      "bg": "#323437",
+      "bgAlt": "#424445",
+      "text": "#d1d0c5",
+      "textMuted": "#b1b1aa",
+      "border": "#9e9e98",
+      "brand": "#adc9db",
+      "success": "#bcd5a8",
+      "warning": "#e2b714",
+      "danger": "#eba1a7"
+    }
+  },
+  {
+    "name": "serika-light",
+    "desc": "auto-mapped from the vendored Helix palette <serika-light>",
+    "light": {
+      "bg": "#f4f4f4",
+      "bgAlt": "#ededee",
+      "text": "#0c0d0e",
+      "textMuted": "#3f4041",
+      "border": "#e2e2e3",
+      "brand": "#3f5673",
+      "success": "#3d5128",
+      "warning": "#79620c",
+      "danger": "#b92b2b"
+    },
+    "dark": {
+      "bg": "#494c50",
+      "bgAlt": "#474a4e",
+      "text": "#e8e8e9",
+      "textMuted": "#c5c6c7",
+      "border": "#393c3f",
+      "brand": "#d7dce0",
+      "success": "#dcdfd9",
+      "warning": "#e4dec3",
+      "danger": "#f3d7d7"
+    }
+  },
+  {
+    "name": "sidra",
+    "desc": "auto-mapped from the vendored Helix palette <sidra>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9e9e9",
+      "text": "#3c372a",
+      "textMuted": "#646056",
+      "border": "#dcdcdc",
+      "brand": "#3064a2",
+      "success": "#486c42",
+      "warning": "#736323",
+      "danger": "#b80000"
+    },
+    "dark": {
+      "bg": "#232323",
+      "bgAlt": "#383630",
+      "text": "#f1dca7",
+      "textMuted": "#c4b38a",
+      "border": "#afa17d",
+      "brand": "#759fd2",
+      "success": "#83c679",
+      "warning": "#e7c547",
+      "danger": "#dd8585"
+    }
+  },
+  {
+    "name": "snazzy",
+    "desc": "auto-mapped from the vendored Helix palette <snazzy>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9e9ea",
+      "text": "#3c3c3b",
+      "textMuted": "#646463",
+      "border": "#dbdcdd",
+      "brand": "#64637d",
+      "success": "#286d3f",
+      "warning": "#64663f",
+      "danger": "#aa3c3a"
+    },
+    "dark": {
+      "bg": "#21222c",
+      "bgAlt": "#36373f",
+      "text": "#eff0eb",
+      "textMuted": "#c2c3c1",
+      "border": "#adaeae",
+      "brand": "#c9c5fb",
+      "success": "#5af78e",
+      "warning": "#f3f99d",
+      "danger": "#ff6f6a"
+    }
+  },
+  {
     "name": "solarized",
     "desc": "the classic: selective contrast, warm and marine",
     "light": {
@@ -567,6 +4467,58 @@
       "border": "#586e75",
       "brand": "#5ca8dd",
       "success": "#9bac2f",
+      "warning": "#c19b26",
+      "danger": "#e88180"
+    }
+  },
+  {
+    "name": "solarized-dark",
+    "desc": "auto-mapped from the vendored Helix palette <solarized_dark>",
+    "light": {
+      "bg": "#f0f2f3",
+      "bgAlt": "#e6eaeb",
+      "text": "#3f3e39",
+      "textMuted": "#666662",
+      "border": "#d6dddf",
+      "brand": "#1e689e",
+      "success": "#1d6c65",
+      "warning": "#795c00",
+      "danger": "#b42825"
+    },
+    "dark": {
+      "bg": "#002b36",
+      "bgAlt": "#193f47",
+      "text": "#fdf6e3",
+      "textMuted": "#c5c9bd",
+      "border": "#acb5ac",
+      "brand": "#5ca8dd",
+      "success": "#52b2ab",
+      "warning": "#c19b26",
+      "danger": "#e88180"
+    }
+  },
+  {
+    "name": "solarized-light",
+    "desc": "auto-mapped from the vendored Helix palette <solarized_light>",
+    "light": {
+      "bg": "#f0f2f3",
+      "bgAlt": "#e6eaeb",
+      "text": "#3f3e39",
+      "textMuted": "#666662",
+      "border": "#d6dddf",
+      "brand": "#1e689e",
+      "success": "#1d6c65",
+      "warning": "#795c00",
+      "danger": "#b42825"
+    },
+    "dark": {
+      "bg": "#002b36",
+      "bgAlt": "#193f47",
+      "text": "#fdf6e3",
+      "textMuted": "#c5c9bd",
+      "border": "#acb5ac",
+      "brand": "#5ca8dd",
+      "success": "#52b2ab",
       "warning": "#c19b26",
       "danger": "#e88180"
     }
@@ -598,6 +4550,84 @@
     }
   },
   {
+    "name": "spacebones-light",
+    "desc": "auto-mapped from the vendored Helix palette <spacebones_light>",
+    "light": {
+      "bg": "#fbf8ef",
+      "bgAlt": "#f2edec",
+      "text": "#5b39bc",
+      "textMuted": "#745bb7",
+      "border": "#9177d2",
+      "brand": "#30699f",
+      "success": "#427012",
+      "warning": "#756413",
+      "danger": "#c10e0b"
+    },
+    "dark": {
+      "bg": "#191918",
+      "bgAlt": "#232321",
+      "text": "#dcd4f2",
+      "textMuted": "#b1abc2",
+      "border": "#464543",
+      "brand": "#5f98cd",
+      "success": "#67b11d",
+      "warning": "#b1951d",
+      "danger": "#db726f"
+    }
+  },
+  {
+    "name": "starlight",
+    "desc": "auto-mapped from the vendored Helix palette <starlight>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e8e8e8",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#dbdbdb",
+      "brand": "#336b86",
+      "success": "#1d6e2a",
+      "warning": "#646318",
+      "danger": "#b13638"
+    },
+    "dark": {
+      "bg": "#1e1e1e",
+      "bgAlt": "#343434",
+      "text": "#ffffff",
+      "textMuted": "#cecece",
+      "border": "#b7b7b7",
+      "brand": "#5dc5f8",
+      "success": "#35d450",
+      "warning": "#e9e836",
+      "danger": "#ff6265"
+    }
+  },
+  {
+    "name": "sunset",
+    "desc": "auto-mapped from the vendored Helix palette <sunset>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e7",
+      "text": "#3c3c3c",
+      "textMuted": "#646464",
+      "border": "#d9d9d9",
+      "brand": "#496868",
+      "success": "#386e1d",
+      "warning": "#65650c",
+      "danger": "#ba0c0c"
+    },
+    "dark": {
+      "bg": "#111111",
+      "bgAlt": "#272727",
+      "text": "#eeeeee",
+      "textMuted": "#bdbdbd",
+      "border": "#a7a7a7",
+      "brand": "#77aaaa",
+      "success": "#66cc33",
+      "warning": "#eeee11",
+      "danger": "#f34c4c"
+    }
+  },
+  {
     "name": "tokyonight",
     "desc": "calm blue-violet, day and storm",
     "light": {
@@ -621,6 +4651,552 @@
       "success": "#73daca",
       "warning": "#e0af68",
       "danger": "#f78097"
+    }
+  },
+  {
+    "name": "tokyonight-day",
+    "desc": "auto-mapped from the vendored Helix palette <tokyonight_day>",
+    "light": {
+      "bg": "#e1e2e7",
+      "bgAlt": "#d7dae5",
+      "text": "#27458a",
+      "textMuted": "#475c8c",
+      "border": "#6d8acc",
+      "brand": "#215aa8",
+      "success": "#48602f",
+      "warning": "#8a4800",
+      "danger": "#9b3535"
+    },
+    "dark": {
+      "bg": "#161717",
+      "bgAlt": "#202020",
+      "text": "#d3dcf1",
+      "textMuted": "#a9b1c1",
+      "border": "#3f3f41",
+      "brand": "#4d91ed",
+      "success": "#81976a",
+      "warning": "#c5853f",
+      "danger": "#d67878"
+    }
+  },
+  {
+    "name": "tokyonight-moon",
+    "desc": "auto-mapped from the vendored Helix palette <tokyonight_moon>",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#e9e9eb",
+      "text": "#32353d",
+      "textMuted": "#5c5f65",
+      "border": "#dcdcdf",
+      "brand": "#37668a",
+      "success": "#56673e",
+      "warning": "#90543c",
+      "danger": "#9c484e"
+    },
+    "dark": {
+      "bg": "#222436",
+      "bgAlt": "#333649",
+      "text": "#c8d3f5",
+      "textMuted": "#a3accb",
+      "border": "#939bb8",
+      "brand": "#65bcff",
+      "success": "#c3e88d",
+      "warning": "#ff966c",
+      "danger": "#ff757f"
+    }
+  },
+  {
+    "name": "tokyonight-storm",
+    "desc": "auto-mapped from the vendored Helix palette <tokyonight_storm>",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#e9eaeb",
+      "text": "#0a292f",
+      "textMuted": "#3d555a",
+      "border": "#dcdde0",
+      "brand": "#2050a8",
+      "success": "#296e1c",
+      "warning": "#845c0c",
+      "danger": "#a3443f"
+    },
+    "dark": {
+      "bg": "#24283b",
+      "bgAlt": "#243448",
+      "text": "#71c3d3",
+      "textMuted": "#66a5b5",
+      "border": "#277c93",
+      "brand": "#90a7d3",
+      "success": "#85b27b",
+      "warning": "#bda371",
+      "danger": "#cd9997"
+    }
+  },
+  {
+    "name": "varua",
+    "desc": "auto-mapped from the vendored Helix palette <varua>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#eaeaea",
+      "text": "#383024",
+      "textMuted": "#615b51",
+      "border": "#dddddd",
+      "brand": "#486a65",
+      "success": "#5b6845",
+      "warning": "#825542",
+      "danger": "#8d4e4e"
+    },
+    "dark": {
+      "bg": "#282828",
+      "bgAlt": "#3a3732",
+      "text": "#dfbf8e",
+      "textMuted": "#b79e78",
+      "border": "#a48f6d",
+      "brand": "#7fbbb3",
+      "success": "#a7c080",
+      "warning": "#e69875",
+      "danger": "#e8888a"
+    }
+  },
+  {
+    "name": "vesper",
+    "desc": "auto-mapped from the vendored Helix palette <vesper>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e7",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d9d9d9",
+      "brand": "#2050a8",
+      "success": "#3e685d",
+      "warning": "#755c47",
+      "danger": "#964b4b"
+    },
+    "dark": {
+      "bg": "#101010",
+      "bgAlt": "#282828",
+      "text": "#ffffff",
+      "textMuted": "#cacaca",
+      "border": "#b3b3b3",
+      "brand": "#6b8ac5",
+      "success": "#99ffe4",
+      "warning": "#ffc799",
+      "danger": "#ff8080"
+    }
+  },
+  {
+    "name": "vesper-transparent",
+    "desc": "auto-mapped from the vendored Helix palette <vesper-transparent>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e7",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d9d9d9",
+      "brand": "#2050a8",
+      "success": "#3e685d",
+      "warning": "#755c47",
+      "danger": "#964b4b"
+    },
+    "dark": {
+      "bg": "#101010",
+      "bgAlt": "#282828",
+      "text": "#ffffff",
+      "textMuted": "#cacaca",
+      "border": "#b3b3b3",
+      "brand": "#6b8ac5",
+      "success": "#99ffe4",
+      "warning": "#ffc799",
+      "danger": "#ff8080"
+    }
+  },
+  {
+    "name": "vim-dark-high-contrast",
+    "desc": "auto-mapped from the vendored Helix palette <vim_dark_high_contrast>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#455f9f",
+      "success": "#146e4c",
+      "warning": "#90510d",
+      "danger": "#9e3f4e"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#688ef1",
+      "success": "#1ea672",
+      "warning": "#d97917",
+      "danger": "#ed5f74"
+    }
+  },
+  {
+    "name": "vintage",
+    "desc": "auto-mapped from the vendored Helix palette <vintage>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9e9e9",
+      "text": "#3c372a",
+      "textMuted": "#646056",
+      "border": "#dbdbdb",
+      "brand": "#2050a8",
+      "success": "#516935",
+      "warning": "#755e31",
+      "danger": "#b80000"
+    },
+    "dark": {
+      "bg": "#1f1f21",
+      "bgAlt": "#34322e",
+      "text": "#f1dca7",
+      "textMuted": "#c3b28a",
+      "border": "#aea07c",
+      "brand": "#819bcd",
+      "success": "#80a552",
+      "warning": "#ffcb69",
+      "danger": "#dc8080"
+    }
+  },
+  {
+    "name": "voxed",
+    "desc": "auto-mapped from the vendored Helix palette <voxed>",
+    "light": {
+      "bg": "#f5f4f4",
+      "bgAlt": "#eeeded",
+      "text": "#403a13",
+      "textMuted": "#686344",
+      "border": "#e3e3e3",
+      "brand": "#326b8f",
+      "success": "#3f6e34",
+      "warning": "#756028",
+      "danger": "#aa3b42"
+    },
+    "dark": {
+      "bg": "#524f4d",
+      "bgAlt": "#635e4d",
+      "text": "#fff188",
+      "textMuted": "#e1db9b",
+      "border": "#c8b64c",
+      "brand": "#d9e3ec",
+      "success": "#d1ebcb",
+      "warning": "#ffe29b",
+      "danger": "#ffdcde"
+    }
+  },
+  {
+    "name": "wolf-alabaster-dark",
+    "desc": "auto-mapped from the vendored Helix palette <wolf-alabaster-dark>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e8e8",
+      "text": "#343434",
+      "textMuted": "#5e5e5e",
+      "border": "#d8d9da",
+      "brand": "#426687",
+      "success": "#4e6a44",
+      "warning": "#63633f",
+      "danger": "#8a5200"
+    },
+    "dark": {
+      "bg": "#0e1415",
+      "bgAlt": "#212728",
+      "text": "#cecece",
+      "textMuted": "#a4a5a5",
+      "border": "#919293",
+      "brand": "#71ade7",
+      "success": "#95cb82",
+      "warning": "#dfdf8e",
+      "danger": "#ff9800"
+    }
+  },
+  {
+    "name": "wolf-alabaster-dark-bg",
+    "desc": "auto-mapped from the vendored Helix palette <wolf-alabaster-dark-bg>",
+    "light": {
+      "bg": "#f3f2f2",
+      "bgAlt": "#ece9e9",
+      "text": "#162432",
+      "textMuted": "#47515c",
+      "border": "#e0dbdb",
+      "brand": "#2050a8",
+      "success": "#1f3a1f",
+      "warning": "#845c0c",
+      "danger": "#a3443f"
+    },
+    "dark": {
+      "bg": "#3f1f1f",
+      "bgAlt": "#422a30",
+      "text": "#96b7dc",
+      "textMuted": "#889ab5",
+      "border": "#516b91",
+      "brand": "#8ba3d1",
+      "success": "#9ba89b",
+      "warning": "#bda371",
+      "danger": "#cd9997"
+    }
+  },
+  {
+    "name": "wolf-alabaster-light",
+    "desc": "auto-mapped from the vendored Helix palette <wolf-alabaster-light>",
+    "light": {
+      "bg": "#f7f7f7",
+      "bgAlt": "#e8e8e8",
+      "text": "#000000",
+      "textMuted": "#363636",
+      "border": "#4f4f4f",
+      "brand": "#0068ad",
+      "success": "#387221",
+      "warning": "#b83200",
+      "danger": "#aa3731"
+    },
+    "dark": {
+      "bg": "#191919",
+      "bgAlt": "#232323",
+      "text": "#c7c7c7",
+      "textMuted": "#a1a1a1",
+      "border": "#454545",
+      "brand": "#3797d8",
+      "success": "#66a14f",
+      "warning": "#ff5314",
+      "danger": "#c8807b"
+    }
+  },
+  {
+    "name": "wolf-alabaster-light-bg",
+    "desc": "auto-mapped from the vendored Helix palette <wolf-alabaster-light-bg>",
+    "light": {
+      "bg": "#fffabc",
+      "bgAlt": "#faf8c0",
+      "text": "#475464",
+      "textMuted": "#676f6d",
+      "border": "#cce3e8",
+      "brand": "#2050a8",
+      "success": "#62665b",
+      "warning": "#845c0c",
+      "danger": "#706464"
+    },
+    "dark": {
+      "bg": "#1a1913",
+      "bgAlt": "#24231a",
+      "text": "#eef6ff",
+      "textMuted": "#bfc5cb",
+      "border": "#474635",
+      "brand": "#7793c9",
+      "success": "#f1fadf",
+      "warning": "#ae8f51",
+      "danger": "#ffe0e0"
+    }
+  },
+  {
+    "name": "wolf-alabaster-light-mono",
+    "desc": "auto-mapped from the vendored Helix palette <wolf-alabaster-light-mono>",
+    "light": {
+      "bg": "#f9f2f2",
+      "bgAlt": "#f4eaea",
+      "text": "#3c3c3c",
+      "textMuted": "#666464",
+      "border": "#eedddd",
+      "brand": "#2050a8",
+      "success": "#4e6e00",
+      "warning": "#845c0c",
+      "danger": "#895600"
+    },
+    "dark": {
+      "bg": "#962828",
+      "bgAlt": "#9f3c3c",
+      "text": "#f1f1f1",
+      "textMuted": "#e4d3d3",
+      "border": "#d2afaf",
+      "brand": "#cfdbec",
+      "success": "#d9e1c3",
+      "warning": "#e5ddc9",
+      "danger": "#f3dcb4"
+    }
+  },
+  {
+    "name": "yellowed",
+    "desc": "auto-mapped from the vendored Helix palette <yellowed>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9e9e9",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#dbdbdb",
+      "brand": "#0066b8",
+      "success": "#227000",
+      "warning": "#706000",
+      "danger": "#c00000"
+    },
+    "dark": {
+      "bg": "#202020",
+      "bgAlt": "#363636",
+      "text": "#ffffff",
+      "textMuted": "#cecece",
+      "border": "#b8b8b8",
+      "brand": "#269eff",
+      "success": "#4dff00",
+      "warning": "#ffd900",
+      "danger": "#ff6363"
+    }
+  },
+  {
+    "name": "yo",
+    "desc": "auto-mapped from the vendored Helix palette <yo>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e7",
+      "text": "#3c3c3c",
+      "textMuted": "#646464",
+      "border": "#d9d9d9",
+      "brand": "#2565a3",
+      "success": "#21704b",
+      "warning": "#964b12",
+      "danger": "#a44041"
+    },
+    "dark": {
+      "bg": "#111111",
+      "bgAlt": "#272727",
+      "text": "#eeeeee",
+      "textMuted": "#bdbdbd",
+      "border": "#a7a7a7",
+      "brand": "#3b9eff",
+      "success": "#33b074",
+      "warning": "#ff801f",
+      "danger": "#ec5d5e"
+    }
+  },
+  {
+    "name": "yo-berry",
+    "desc": "auto-mapped from the vendored Helix palette <yo_berry>",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e7e7e7",
+      "text": "#404016",
+      "textMuted": "#676746",
+      "border": "#d9d9d9",
+      "brand": "#2565a3",
+      "success": "#0c6d61",
+      "warning": "#7f580c",
+      "danger": "#a53860"
+    },
+    "dark": {
+      "bg": "#121113",
+      "bgAlt": "#2a291a",
+      "text": "#ffff57",
+      "textMuted": "#cbcb48",
+      "border": "#b3b341",
+      "brand": "#3b9eff",
+      "success": "#0eb39e",
+      "warning": "#a78542",
+      "danger": "#ee518a"
+    }
+  },
+  {
+    "name": "yo-light",
+    "desc": "auto-mapped from the vendored Helix palette <yo_light>",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9e9e9",
+      "text": "#3f3f3f",
+      "textMuted": "#666666",
+      "border": "#dbdbdb",
+      "brand": "#0563ad",
+      "success": "#206f4a",
+      "warning": "#a64200",
+      "danger": "#ad3234"
+    },
+    "dark": {
+      "bg": "#202020",
+      "bgAlt": "#363636",
+      "text": "#fcfcfc",
+      "textMuted": "#cccccc",
+      "border": "#b6b6b6",
+      "brand": "#339ef3",
+      "success": "#52ad82",
+      "warning": "#f37726",
+      "danger": "#e67f81"
+    }
+  },
+  {
+    "name": "zed-onedark",
+    "desc": "auto-mapped from the vendored Helix palette <zed_onedark>",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#eaeaeb",
+      "text": "#323335",
+      "textMuted": "#5c5d5f",
+      "border": "#ddddde",
+      "brand": "#446689",
+      "success": "#586846",
+      "warning": "#6f6042",
+      "danger": "#904f52"
+    },
+    "dark": {
+      "bg": "#282c33",
+      "bgAlt": "#383c43",
+      "text": "#c8ccd4",
+      "textMuted": "#a5a9b1",
+      "border": "#9599a0",
+      "brand": "#73ade9",
+      "success": "#a1c181",
+      "warning": "#dfc184",
+      "danger": "#dd999c"
+    }
+  },
+  {
+    "name": "zed-onelight",
+    "desc": "auto-mapped from the vendored Helix palette <zed_onelight>",
+    "light": {
+      "bg": "#f2f3f3",
+      "bgAlt": "#eaeaeb",
+      "text": "#3e3e3e",
+      "textMuted": "#666666",
+      "border": "#dededf",
+      "brand": "#485fb2",
+      "success": "#456e3c",
+      "warning": "#87561f",
+      "danger": "#9f483b"
+    },
+    "dark": {
+      "bg": "#2e323a",
+      "bgAlt": "#42464d",
+      "text": "#fafafa",
+      "textMuted": "#cdced0",
+      "border": "#b9babd",
+      "brand": "#9fb0f0",
+      "success": "#97c08f",
+      "warning": "#d0ae84",
+      "danger": "#e5a59b"
+    }
+  },
+  {
+    "name": "zenburn",
+    "desc": "auto-mapped from the vendored Helix palette <zenburn>",
+    "light": {
+      "bg": "#f0f0f0",
+      "bgAlt": "#e6e6e6",
+      "text": "#404040",
+      "textMuted": "#676767",
+      "border": "#d6d6d6",
+      "brand": "#2050a8",
+      "success": "#3f6a54",
+      "warning": "#61613a",
+      "danger": "#974b4b"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1a1a1a",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#adadad",
+      "brand": "#5f80c0",
+      "success": "#80d4aa",
+      "warning": "#f8f893",
+      "danger": "#e37170"
     }
   }
 ]

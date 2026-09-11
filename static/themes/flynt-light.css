@@ -1,0 +1,80 @@
+/* Built-in theme: flynt-light — auto-mapped from the vendored Helix palette <flynt_light>. The scheme publishes no dark mode, so the dark half is derived from the same hues. Accents auto-fitted for WCAG AA. */
+:root {
+  --vp-c-neutral-inverse: #ffffff;
+  --vp-c-bg: #fffcef;
+  --vp-c-bg-alt: #f1eee2;
+  --vp-c-bg-elv: #fffcef;
+  --vp-c-bg-soft: #f1eee2;
+  --vp-c-text-1: #1a1512;
+  --vp-c-text-2: #4c4843;
+  --vp-c-text-3: #918d84;
+  --vp-c-border: #635f59;
+  --vp-c-divider: #635f59;
+  --vp-c-gutter: #635f59;
+  --vp-c-brand-1: #3a6c9a;
+  --vp-c-brand-2: #315c83;
+  --vp-c-brand-3: #2d5478;
+  --vp-c-brand-soft: rgba(58, 108, 154, 0.1);
+  --vp-c-default-1: #b2aea5;
+  --vp-c-default-2: #c6c3b9;
+  --vp-c-default-3: #dbd8cc;
+  --vp-c-default-soft: rgba(152, 148, 140, 0.22);
+  --vp-c-tip-1: #3a6c9a;
+  --vp-c-tip-soft: rgba(58, 108, 154, 0.1);
+  --vp-c-note-1: #3a6c9a;
+  --vp-c-note-soft: rgba(58, 108, 154, 0.1);
+  --vp-c-success-1: #5e6f2a;
+  --vp-c-success-soft: rgba(94, 111, 42, 0.12);
+  --vp-c-important-1: #603cb4;
+  --vp-c-important-soft: rgba(96, 60, 180, 0.12);
+  --vp-c-warning-1: #7f661c;
+  --vp-c-warning-soft: rgba(127, 102, 28, 0.12);
+  --vp-c-danger-1: #be3528;
+  --vp-c-danger-soft: rgba(190, 53, 40, 0.12);
+  --vp-c-caution-1: #be3528;
+  --vp-c-caution-soft: rgba(190, 53, 40, 0.12);
+  --vp-c-sponsor: #b43c7c;
+
+  --vp-shadow-1: 0 1px 2px rgba(26, 21, 18, 0.05), 0 1px 2px rgba(26, 21, 18, 0.07);
+  --vp-shadow-2: 0 3px 12px rgba(26, 21, 18, 0.09), 0 1px 4px rgba(26, 21, 18, 0.09);
+  --vp-shadow-3: 0 12px 32px rgba(26, 21, 18, 0.12), 0 2px 6px rgba(26, 21, 18, 0.1);
+  --vp-shadow-4: 0 14px 44px rgba(26, 21, 18, 0.14), 0 3px 9px rgba(26, 21, 18, 0.14);
+  --vp-shadow-5: 0 18px 56px rgba(26, 21, 18, 0.18), 0 4px 12px rgba(26, 21, 18, 0.18);
+}
+
+.dark {
+  --vp-c-neutral-inverse: #000000;
+  --vp-c-bg: #1a1918;
+  --vp-c-bg-alt: #242321;
+  --vp-c-bg-elv: #2e2d2b;
+  --vp-c-bg-soft: #242321;
+  --vp-c-text-1: #cdcccb;
+  --vp-c-text-2: #a6a5a4;
+  --vp-c-text-3: #676665;
+  --vp-c-border: #474743;
+  --vp-c-divider: #474743;
+  --vp-c-gutter: #474743;
+  --vp-c-brand-1: #6b97c0;
+  --vp-c-brand-2: #5e8fba;
+  --vp-c-brand-3: #5186b4;
+  --vp-c-brand-soft: rgba(107, 151, 192, 0.14);
+  --vp-c-default-1: #676665;
+  --vp-c-default-2: #545352;
+  --vp-c-default-3: #444342;
+  --vp-c-default-soft: rgba(107, 106, 105, 0.18);
+  --vp-c-tip-1: #6b97c0;
+  --vp-c-tip-soft: rgba(107, 151, 192, 0.14);
+  --vp-c-note-1: #6b97c0;
+  --vp-c-note-soft: rgba(107, 151, 192, 0.14);
+  --vp-c-success-1: #93ae42;
+  --vp-c-success-soft: rgba(147, 174, 66, 0.15);
+  --vp-c-important-1: #9d87d1;
+  --vp-c-important-soft: rgba(157, 135, 209, 0.15);
+  --vp-c-warning-1: #c69f2a;
+  --vp-c-warning-soft: rgba(198, 159, 42, 0.15);
+  --vp-c-danger-1: #d8756c;
+  --vp-c-danger-soft: rgba(216, 117, 108, 0.15);
+  --vp-c-caution-1: #d8756c;
+  --vp-c-caution-soft: rgba(216, 117, 108, 0.15);
+  --vp-c-sponsor: #b43c7c;
+}

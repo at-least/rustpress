@@ -400,6 +400,28 @@ fn themes_meet_contrast_minimums() {
                 "{label}: border {:?} vanishes on bg {bg:?}", mode.hex("border")
             );
 
+            // elevated surfaces (dropdowns, popovers) are never darker
+            // than the page bg — the stock look's convention
+            assert!(
+                luminance(mode.hex("bg-elv")) >= luminance(bg) - 1e-9,
+                "{label}: bg-elv {:?} is darker than bg {bg:?}", mode.hex("bg-elv")
+            );
+
+            // container semantics must stay distinguishable: distinct
+            // hues per role, and the brand is not the body text color
+            let sems: Vec<(u8, u8, u8)> = ["success-1", "warning-1", "danger-1"]
+                .iter().map(|t| mode.hex(t)).collect();
+            for i in 0..sems.len() {
+                for j in i + 1..sems.len() {
+                    assert_ne!(sems[i], sems[j], "{label}: semantic colors collapsed");
+                }
+            }
+            assert_ne!(
+                mode.hex("brand-1"),
+                mode.hex("text-1"),
+                "{label}: brand-1 equals text-1 — links would be invisible as emphasis"
+            );
+
             // links and inline code
             assert_contrast(&mode, "brand-1", bg, 4.5, &label);
             // hero button: white text on the brand background in every
