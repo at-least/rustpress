@@ -383,6 +383,23 @@ fn themes_meet_contrast_minimums() {
             // muted text
             assert_contrast(&mode, "text-3", bg, 3.0, &label);
 
+            // text ramp must be monotonic: primary ≥ secondary ≥ muted
+            // (contrast against the page bg). Fitting tokens independently
+            // can converge or invert the ramp — headings would lose
+            // hierarchy against body text.
+            let c1 = contrast(mode.hex("text-1"), bg);
+            let c2 = contrast(mode.hex("text-2"), bg);
+            let c3 = contrast(mode.hex("text-3"), bg);
+            assert!(c1 >= c2, "{label}: text-1 ({c1:.2}) does not outrank text-2 ({c2:.2})");
+            assert!(c2 >= c3, "{label}: text-2 ({c2:.2}) does not outrank text-3 ({c3:.2})");
+
+            // borders and dividers must separate from the page bg, or
+            // rules and surfaces vanish
+            assert!(
+                contrast(mode.hex("border"), bg) >= 1.1,
+                "{label}: border {:?} vanishes on bg {bg:?}", mode.hex("border")
+            );
+
             // links and inline code
             assert_contrast(&mode, "brand-1", bg, 4.5, &label);
             // hero button: white text on the brand background in every

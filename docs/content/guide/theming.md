@@ -20,7 +20,7 @@ The two are deliberately separate: switching the UI to a purple brand color does
 
 ### Bundled themes
 
-Set `theme` to a bare name (`github`, `catppuccin`, `nord`, `rose-pine` — see the [Theme Gallery](/themes/)):
+Set `theme` to a bare name — any of the 24 bundled designs, from `github`, `catppuccin`, `nord` and `rose-pine` to `tokyonight`, `gruvbox`, `dracula`, `solarized`, `monokai` and more (the [Theme Gallery](/themes/) shows every one live):
 
 ```toml [rustpress.toml]
 theme = "catppuccin"
@@ -29,6 +29,8 @@ theme = "catppuccin"
 A bundled theme is a **complete design**: one file defining every design token the structure consumes — surfaces, text, borders, the brand ramp, the neutral ramp, the seven semantic colors (tip/note/success/important/warning/danger/caution) and the shadow scale — with light and dark values of its own. Linked after `vitepress.css`, it leaves none of the stock *color* design in effect — what survives from the base is the structural layer (layout, components, utility classes), which resolves through these tokens, plus a few opt-in knobs like fonts and the backdrop scrim a theme may also override by declaring the same custom properties.
 
 Two repo tests hold every bundled theme to that bar: **completeness** (the required token set is derived from what the base stylesheet actually references; each theme must define all of it in both `:root` and `.dark`) and **WCAG contrast** (body text ≥ 7:1, secondary text ≥ 4.5:1 also on the sidebar and code-block surfaces, links ≥ 4.5:1, badge text vs its own soft container background ≥ 4.5:1, button backgrounds vs white text ≥ 3:1 in every state — in both modes). Where a published palette's accent cannot hold those ratios in a foreground role, the theme deepens it and says so in its header comment.
+
+The set is curated from published, popular color schemes — GitHub Primer, Catppuccin, Nord, Rosé Pine, Tokyo Night, Gruvbox (classic and material), One Dark, Everforest, Ayu, Solarized, Kanagawa, PaperColor, Seoul256, Modus, Flexoki, Iceberg, Adwaita, Dracula, Monokai, Material, Night Owl, Sonokai, Darcula — each mapped per scheme onto the contract with both a light and a dark half and values fitted to the contrast ratios (`scripts/gen-themes.py` regenerates them from the vendored palettes); where a scheme publishes no light mode, one is derived from its palette and the file says so.
 
 Every bundled theme is a plain CSS file shipped in the binary under `themes/`; all of them land in the output's `themes/` directory, and the selected one is linked as `/themes/<name>.css`. An unknown name fails at load time with an error listing the bundled names.
 

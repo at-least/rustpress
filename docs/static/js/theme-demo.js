@@ -205,7 +205,6 @@
 
     host.setAttribute("role", "group");
     host.setAttribute("aria-label", "Live bundled-theme demo");
-    host.appendChild(card({ name: "", desc: "the default VitePress look" }));
 
     var wrap = document.createElement("div");
     Object.assign(wrap.style, {
@@ -214,6 +213,11 @@
       gap: "12px",
       margin: "12px 0",
     });
+    host.appendChild(wrap);
+
+    var stockCell = document.createElement("div");
+    stockCell.appendChild(card({ name: "", desc: "the default VitePress look" }));
+    wrap.appendChild(stockCell);
 
     fetch(base + "themes.json")
       .then(function (r) { return r.json(); })
@@ -223,7 +227,6 @@
           cell.appendChild(card(entry));
           wrap.appendChild(cell);
         });
-        host.appendChild(wrap);
       })
       .catch(function () {
         var note = document.createElement("p");

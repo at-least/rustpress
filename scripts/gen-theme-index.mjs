@@ -12,7 +12,6 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 const dir = new URL("../static/themes/", import.meta.url);
 const themes = readdirSync(dir)
   .filter((f) => f.endsWith(".css"))
-  .sort()
   .map((file) => {
     const css = readFileSync(new URL(file, dir)).toString();
     // first block comment, line-wraps joined, then its first sentence
@@ -46,6 +45,8 @@ const themes = readdirSync(dir)
       dark: tokens(block("\\.dark")),
     };
   });
+
+themes.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 
 const out = new URL("../docs/static/themes.json", import.meta.url);
 writeFileSync(out, JSON.stringify(themes, null, 2) + "\n");

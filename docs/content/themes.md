@@ -7,7 +7,7 @@ outline: false
 
 # Theme Gallery
 
-rustpress ships a handful of complete designs alongside the stock VitePress look. A theme is one CSS file defining every design token — surfaces, text, borders, brand, the semantic colors, shadows — for light and dark alike.
+rustpress ships 24 complete designs alongside the stock VitePress look — GitHub Primer, Catppuccin, Nord, Rosé Pine, Tokyo Night, Gruvbox, Dracula, Solarized, Monokai and more. A theme is one CSS file defining every design token — surfaces, text, borders, brand, the semantic colors, shadows — for light and dark alike.
 
 Pick a card below and **the site you are reading re-skins instantly** — every page, links, containers, code blocks, dark mode, everything. The choice lasts for this browser session; the stock card restores the default.
 

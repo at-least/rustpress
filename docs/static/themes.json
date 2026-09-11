@@ -1,5 +1,57 @@
 [
   {
+    "name": "adwaita",
+    "desc": "GNOME's own: libadwaita light and dark",
+    "light": {
+      "bg": "#ffffff",
+      "bgAlt": "#f6f5f4",
+      "text": "#241f31",
+      "textMuted": "#54505e",
+      "border": "#deddda",
+      "brand": "#1a5fb4",
+      "success": "#1d7550",
+      "warning": "#936009",
+      "danger": "#a51d2d"
+    },
+    "dark": {
+      "bg": "#1c1c1f",
+      "bgAlt": "#28282c",
+      "text": "#fcfcfc",
+      "textMuted": "#cbcbcb",
+      "border": "#4f4f4f",
+      "brand": "#62a0ea",
+      "success": "#33d17a",
+      "warning": "#f5c211",
+      "danger": "#eb6d73"
+    }
+  },
+  {
+    "name": "ayu",
+    "desc": "subtle, elegant, one bright accent set",
+    "light": {
+      "bg": "#fafafa",
+      "bgAlt": "#e7eaed",
+      "text": "#51555a",
+      "textMuted": "#64676a",
+      "border": "#d8d8d7",
+      "brand": "#276d9f",
+      "success": "#526d00",
+      "warning": "#995626",
+      "danger": "#9f4b4b"
+    },
+    "dark": {
+      "bg": "#0f1419",
+      "bgAlt": "#0b0f14",
+      "text": "#bfbdb6",
+      "textMuted": "#989893",
+      "border": "#2d3640",
+      "brand": "#59c2ff",
+      "success": "#aad94c",
+      "warning": "#e6b450",
+      "danger": "#f07178"
+    }
+  },
+  {
     "name": "catppuccin",
     "desc": "Latte and Mocha: pastel, low-noise, dark-first",
     "light": {
@@ -23,6 +75,110 @@
       "success": "#a6e3a1",
       "warning": "#f9e2af",
       "danger": "#f38ba8"
+    }
+  },
+  {
+    "name": "darcula",
+    "desc": "JetBrains' default: warm greys, muted accents",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#363636",
+      "textMuted": "#5f5f5f",
+      "border": "#dadada",
+      "brand": "#486882",
+      "success": "#4a6a42",
+      "warning": "#69623a",
+      "danger": "#82594b"
+    },
+    "dark": {
+      "bg": "#181818",
+      "bgAlt": "#282828",
+      "text": "#d8d8d8",
+      "textMuted": "#aeaeae",
+      "border": "#383838",
+      "brand": "#6897bb",
+      "success": "#6e9f63",
+      "warning": "#eedd82",
+      "danger": "#c3866f"
+    }
+  },
+  {
+    "name": "dracula",
+    "desc": "the famous dark purple, light derived from its palette",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#eaeaeb",
+      "text": "#3e3e3c",
+      "textMuted": "#666664",
+      "border": "#dddddf",
+      "brand": "#6f5693",
+      "success": "#236e36",
+      "warning": "#626639",
+      "danger": "#964b4b"
+    },
+    "dark": {
+      "bg": "#282a36",
+      "bgAlt": "#191a21",
+      "text": "#f8f8f2",
+      "textMuted": "#cacbc9",
+      "border": "#56596a",
+      "brand": "#bd93f9",
+      "success": "#50fa7b",
+      "warning": "#f1fa8c",
+      "danger": "#ff8080"
+    }
+  },
+  {
+    "name": "everforest",
+    "desc": "green, calm and low-noise by design",
+    "light": {
+      "bg": "#fdf6e3",
+      "bgAlt": "#f4f0d9",
+      "text": "#485359",
+      "textMuted": "#686d6d",
+      "border": "#e6e2cc",
+      "brand": "#2a6b8e",
+      "success": "#5e6c01",
+      "warning": "#835f00",
+      "danger": "#ac3b39"
+    },
+    "dark": {
+      "bg": "#2d353b",
+      "bgAlt": "#343f44",
+      "text": "#d3c6aa",
+      "textMuted": "#b1aa96",
+      "border": "#475258",
+      "brand": "#84beb6",
+      "success": "#a7c080",
+      "warning": "#dbbc7f",
+      "danger": "#eea2a3"
+    }
+  },
+  {
+    "name": "flexoki",
+    "desc": "ink on paper: Step's warm absolute palette",
+    "light": {
+      "bg": "#fffcf0",
+      "bgAlt": "#f2f0e5",
+      "text": "#100f0f",
+      "textMuted": "#454340",
+      "border": "#cecdc3",
+      "brand": "#205ea6",
+      "success": "#5a710b",
+      "warning": "#826301",
+      "danger": "#af3029"
+    },
+    "dark": {
+      "bg": "#100f0f",
+      "bgAlt": "#1c1b1a",
+      "text": "#cecdc3",
+      "textMuted": "#a4a39b",
+      "border": "#403e3c",
+      "brand": "#528fc3",
+      "success": "#879a39",
+      "warning": "#d0a215",
+      "danger": "#d9685e"
     }
   },
   {
@@ -52,6 +208,214 @@
     }
   },
   {
+    "name": "gruvbox",
+    "desc": "retro groove, warm cream and charcoal",
+    "light": {
+      "bg": "#fbf1c7",
+      "bgAlt": "#ebdbb2",
+      "text": "#282828",
+      "textMuted": "#56544b",
+      "border": "#bdae93",
+      "brand": "#076678",
+      "success": "#67630c",
+      "warning": "#88580d",
+      "danger": "#9d0006"
+    },
+    "dark": {
+      "bg": "#282828",
+      "bgAlt": "#32302f",
+      "text": "#ebdbb2",
+      "textMuted": "#c0b494",
+      "border": "#504945",
+      "brand": "#8daca0",
+      "success": "#b8bb26",
+      "warning": "#fabd2f",
+      "danger": "#fb8072"
+    }
+  },
+  {
+    "name": "gruvbox-material",
+    "desc": "the material take on gruvbox, softer and calmer",
+    "light": {
+      "bg": "#fbf1c7",
+      "bgAlt": "#f4e8be",
+      "text": "#4f3829",
+      "textMuted": "#75614c",
+      "border": "#ddccab",
+      "brand": "#3f6870",
+      "success": "#5c6626",
+      "warning": "#875409",
+      "danger": "#a43e3e"
+    },
+    "dark": {
+      "bg": "#282828",
+      "bgAlt": "#32302f",
+      "text": "#ddc7a1",
+      "textMuted": "#b5a486",
+      "border": "#5a524c",
+      "brand": "#7daea3",
+      "success": "#a9b665",
+      "warning": "#d8a657",
+      "danger": "#f08a84"
+    }
+  },
+  {
+    "name": "iceberg",
+    "desc": "cool navy-blue calm, light and dark",
+    "light": {
+      "bg": "#e9e9ed",
+      "bgAlt": "#cacdd8",
+      "text": "#33374d",
+      "textMuted": "#545668",
+      "border": "#bec0ca",
+      "brand": "#2e539e",
+      "success": "#47642b",
+      "warning": "#885027",
+      "danger": "#9a3c5c"
+    },
+    "dark": {
+      "bg": "#161822",
+      "bgAlt": "#1f2233",
+      "text": "#c7c9d1",
+      "textMuted": "#a0a2aa",
+      "border": "#3f455f",
+      "brand": "#85a0c7",
+      "success": "#b5bf82",
+      "warning": "#e2a478",
+      "danger": "#e27878"
+    }
+  },
+  {
+    "name": "kanagawa",
+    "desc": "wave and lotus: ink, sumi and ukiyo-e color",
+    "light": {
+      "bg": "#fdfcfb",
+      "bgAlt": "#f7ece1",
+      "text": "#181825",
+      "textMuted": "#4a4a54",
+      "border": "#b7c5d8",
+      "brand": "#086187",
+      "success": "#00612d",
+      "warning": "#826600",
+      "danger": "#b43b3d"
+    },
+    "dark": {
+      "bg": "#1f1f28",
+      "bgAlt": "#2a2a37",
+      "text": "#dcd7ba",
+      "textMuted": "#b2af9a",
+      "border": "#54546d",
+      "brand": "#7e9cd8",
+      "success": "#98bb6c",
+      "warning": "#e6c384",
+      "danger": "#e77a85"
+    }
+  },
+  {
+    "name": "material",
+    "desc": "Google's material ocean, light derived from its palette",
+    "light": {
+      "bg": "#f2f3f3",
+      "bgAlt": "#e9ebeb",
+      "text": "#2e3133",
+      "textMuted": "#595c5d",
+      "border": "#dcdfe0",
+      "brand": "#3b6d68",
+      "success": "#56673e",
+      "warning": "#755e32",
+      "danger": "#845458"
+    },
+    "dark": {
+      "bg": "#25363b",
+      "bgAlt": "#314549",
+      "text": "#b9c5cb",
+      "textMuted": "#a4b0b4",
+      "border": "#415967",
+      "brand": "#69c2b9",
+      "success": "#c3e88d",
+      "warning": "#ffcb6b",
+      "danger": "#f39ca1"
+    }
+  },
+  {
+    "name": "modus",
+    "desc": "Emacs' accessible flagship: maximum legibility",
+    "light": {
+      "bg": "#ffffff",
+      "bgAlt": "#f2f2f2",
+      "text": "#000000",
+      "textMuted": "#383838",
+      "border": "#c4c4c4",
+      "brand": "#0031a9",
+      "success": "#006800",
+      "warning": "#6f5500",
+      "danger": "#a60000"
+    },
+    "dark": {
+      "bg": "#000000",
+      "bgAlt": "#1e1e1e",
+      "text": "#ffffff",
+      "textMuted": "#c7c7c7",
+      "border": "#303030",
+      "brand": "#2fafff",
+      "success": "#44bc44",
+      "warning": "#d0bc00",
+      "danger": "#ff5f59"
+    }
+  },
+  {
+    "name": "monokai",
+    "desc": "the classic that colored a decade of editors",
+    "light": {
+      "bg": "#f2f2f2",
+      "bgAlt": "#e9eae9",
+      "text": "#3e3e3c",
+      "textMuted": "#666664",
+      "border": "#dcdddc",
+      "brand": "#346c78",
+      "success": "#506c17",
+      "warning": "#6a6536",
+      "danger": "#934864"
+    },
+    "dark": {
+      "bg": "#272822",
+      "bgAlt": "#1e1f1c",
+      "text": "#f8f8f2",
+      "textMuted": "#cacac4",
+      "border": "#3b3c35",
+      "brand": "#66d9ef",
+      "success": "#a6e22e",
+      "warning": "#e6db74",
+      "danger": "#f97ba9"
+    }
+  },
+  {
+    "name": "night-owl",
+    "desc": "deep navy, bright primaries; light derived from its palette",
+    "light": {
+      "bg": "#f0f1f2",
+      "bgAlt": "#e6e8e9",
+      "text": "#36383b",
+      "textMuted": "#5f6163",
+      "border": "#d6dadc",
+      "brand": "#4d6496",
+      "success": "#536932",
+      "warning": "#715e44",
+      "danger": "#aa3a4e"
+    },
+    "dark": {
+      "bg": "#011627",
+      "bgAlt": "#112630",
+      "text": "#d6deeb",
+      "textMuted": "#a7b2c0",
+      "border": "#444444",
+      "brand": "#82aaff",
+      "success": "#addb67",
+      "warning": "#ecc48d",
+      "danger": "#ff5874"
+    }
+  },
+  {
     "name": "nord",
     "desc": "Polar Night and Snow Storm: cold, bluish, calm",
     "light": {
@@ -78,6 +442,58 @@
     }
   },
   {
+    "name": "onedark",
+    "desc": "Atom's One: grey-blue surfaces, saturated accents",
+    "light": {
+      "bg": "#fafafa",
+      "bgAlt": "#f2f2f2",
+      "text": "#282c34",
+      "textMuted": "#565960",
+      "border": "#e0e0e0",
+      "brand": "#0059eb",
+      "success": "#1c7631",
+      "warning": "#ad4500",
+      "danger": "#c40000"
+    },
+    "dark": {
+      "bg": "#282c34",
+      "bgAlt": "#2c323c",
+      "text": "#b4bbc6",
+      "textMuted": "#959ca6",
+      "border": "#3e4452",
+      "brand": "#61afef",
+      "success": "#98c379",
+      "warning": "#e5c07b",
+      "danger": "#e79197"
+    }
+  },
+  {
+    "name": "papercolor",
+    "desc": "plain paper, high legibility, 16-color spirit",
+    "light": {
+      "bg": "#eeeeee",
+      "bgAlt": "#e0e0e0",
+      "text": "#444444",
+      "textMuted": "#616161",
+      "border": "#c6c6c6",
+      "brand": "#006a89",
+      "success": "#006e00",
+      "warning": "#8f4e00",
+      "danger": "#af0000"
+    },
+    "dark": {
+      "bg": "#1c1c1c",
+      "bgAlt": "#2a2a2a",
+      "text": "#d0d0d0",
+      "textMuted": "#a8a8a8",
+      "border": "#4e4e4e",
+      "brand": "#5fafd7",
+      "success": "#5faf00",
+      "warning": "#ffaf00",
+      "danger": "#d57bab"
+    }
+  },
+  {
     "name": "rose-pine",
     "desc": "Dawn and main: warm, rosy, natural pine accents",
     "light": {
@@ -101,6 +517,110 @@
       "success": "#9ccfd8",
       "warning": "#f6c177",
       "danger": "#eb6f92"
+    }
+  },
+  {
+    "name": "seoul256",
+    "desc": "low-contrast seoul nights, paper days derived",
+    "light": {
+      "bg": "#f1f1f1",
+      "bgAlt": "#e8e8e8",
+      "text": "#343434",
+      "textMuted": "#5e5e5e",
+      "border": "#d9dadb",
+      "brand": "#4b6498",
+      "success": "#506850",
+      "warning": "#6b613c",
+      "danger": "#845353"
+    },
+    "dark": {
+      "bg": "#14161b",
+      "bgAlt": "#1c1c1c",
+      "text": "#d0d0d0",
+      "textMuted": "#a7a7a8",
+      "border": "#3a3a3a",
+      "brand": "#6b91db",
+      "success": "#87af87",
+      "warning": "#a0925c",
+      "danger": "#d78787"
+    }
+  },
+  {
+    "name": "solarized",
+    "desc": "the classic: selective contrast, warm and marine",
+    "light": {
+      "bg": "#fdf6e3",
+      "bgAlt": "#eee8d5",
+      "text": "#4d5454",
+      "textMuted": "#636662",
+      "border": "#c5c8bd",
+      "brand": "#1f6ca5",
+      "success": "#5c6a00",
+      "warning": "#7e6000",
+      "danger": "#bb2a27"
+    },
+    "dark": {
+      "bg": "#002b36",
+      "bgAlt": "#03303b",
+      "text": "#eee8d5",
+      "textMuted": "#babeb2",
+      "border": "#586e75",
+      "brand": "#5ca8dd",
+      "success": "#9bac2f",
+      "warning": "#c19b26",
+      "danger": "#e88180"
+    }
+  },
+  {
+    "name": "sonokai",
+    "desc": "high-contrast, saturated, EdenEast's flavor",
+    "light": {
+      "bg": "#f2f2f3",
+      "bgAlt": "#eaeaeb",
+      "text": "#383839",
+      "textMuted": "#616162",
+      "border": "#dddedf",
+      "brand": "#3c6a75",
+      "success": "#4f6839",
+      "warning": "#6e6030",
+      "danger": "#8e4e5b"
+    },
+    "dark": {
+      "bg": "#2c2e34",
+      "bgAlt": "#33353f",
+      "text": "#e2e2e3",
+      "textMuted": "#bababc",
+      "border": "#3b3e48",
+      "brand": "#76cce0",
+      "success": "#9ed072",
+      "warning": "#e7c664",
+      "danger": "#fc8aa0"
+    }
+  },
+  {
+    "name": "tokyonight",
+    "desc": "calm blue-violet, day and storm",
+    "light": {
+      "bg": "#e1e2e7",
+      "bgAlt": "#c4c8da",
+      "text": "#27458a",
+      "textMuted": "#3e517c",
+      "border": "#b8bfd3",
+      "brand": "#215aa8",
+      "success": "#306058",
+      "warning": "#6d5432",
+      "danger": "#a31d43"
+    },
+    "dark": {
+      "bg": "#24283b",
+      "bgAlt": "#1f2335",
+      "text": "#c0caf5",
+      "textMuted": "#9ea6cc",
+      "border": "#565c77",
+      "brand": "#7fa6f7",
+      "success": "#73daca",
+      "warning": "#e0af68",
+      "danger": "#f78097"
     }
   }
 ]
