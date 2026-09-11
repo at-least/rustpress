@@ -21,14 +21,20 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      # cheap version compare first: most weeks upstream hasn't moved
+      # cheap version compare first: most weeks upstream hasn't moved.
+      # Exit codes: 0 = pinned, 3 = drifted; anything else is a real
+      # error and must fail the job, not masquerade as drift.
       - name: Detect upstream drift
         id: drift
         run: |
-          if node scripts/drift-watch.mjs --check; then
+          rc=0
+          node scripts/drift-watch.mjs --check || rc=$?
+          if [ "$rc" -eq 0 ]; then
             echo "drifted=false" >> "$GITHUB_OUTPUT"
-          else
+          elif [ "$rc" -eq 3 ]; then
             echo "drifted=true" >> "$GITHUB_OUTPUT"
+          else
+            exit "$rc"
           fi
       - uses: dtolnay/rust-toolchain@stable
         if: steps.drift.outputs.drifted == 'true'

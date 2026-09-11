@@ -41,7 +41,11 @@ async function walk(dir) {
 }
 
 // 0. what does the deployed site run, and what are we pinned to?
-const html = await (await fetch(SITE)).text()
+const res = await fetch(SITE)
+if (!res.ok) {
+  throw new Error(`${SITE}: HTTP ${res.status} — cannot read the deployed generator version`)
+}
+const html = await res.text()
 const generator = html.match(/<meta name="generator" content="([^"]*)"/)?.[1]
 if (!generator) {
   throw new Error('no <meta name="generator"> on the upstream site — inspect its HTML shape')
@@ -63,9 +67,13 @@ if (checkOnly) {
 // strictly validate it before use.
 const tag = /^VitePress (v[0-9A-Za-z._-]+)$/.exec(generator)?.[1] ?? null
 let refNote
-if (tag && sh(`git ls-remote --tags https://github.com/vuejs/vitepress "refs/tags/${tag}"`)) {  const refFile = 'parity/upstream-ref.txt'
+if (tag && sh(`git ls-remote --tags https://github.com/vuejs/vitepress "refs/tags/${tag}"`)) {
+  const refFile = 'parity/upstream-ref.txt'
   const refLines = (await readFile(refFile, 'utf8')).split('\n')
-  refLines[refLines.findLastIndex((l) => l.trim() && !l.trim().startsWith('#'))] = tag
+  // sync-upstream.sh reads the FIRST non-comment line; replace exactly that
+  const refIdx = refLines.findIndex((l) => l.trim() && !l.trim().startsWith('#'))
+  if (refIdx < 0) throw new Error(`no ref line found in ${refFile}`)
+  refLines[refIdx] = tag
   await writeFile(refFile, refLines.join('\n'))
   run('bash scripts/sync-upstream.sh')
   refNote = `Pinned the clone to ${tag} and re-synced demo/content + tests/fixtures/en from it.`
@@ -74,22 +82,41 @@ if (tag && sh(`git ls-remote --tags https://github.com/vuejs/vitepress "refs/tag
   console.log(`drift-watch: ${refNote}`)
 }
 
-// 2. re-sync the verbatim corpora from the (possibly new) clone
+// 2. re-sync the verbatim corpora from the (possibly new) clone; count
+// what changed so the PR body shows corpus churn (deletions especially)
 run(`rsync -a --delete ${UPSTREAM_DOCS}/ demo/content/`)
+let fixturesUpdated = 0
+let fixturesDeleted = 0
 for (const file of await walk(FIXTURES)) {
   const upstream = path.join(UPSTREAM_DOCS, path.relative(FIXTURES, file))
-  if (existsSync(upstream)) await copyFile(upstream, file)
-  else await rm(file)
+  if (existsSync(upstream)) {
+    const before = await readFile(file)
+    await copyFile(upstream, file)
+    if (!before.equals(await readFile(file))) fixturesUpdated++
+  } else {
+    await rm(file)
+    fixturesDeleted++
+  }
 }
+const corpusNote = fixturesUpdated || fixturesDeleted
+  ? `tests/fixtures/en: ${fixturesUpdated} file(s) updated, ${fixturesDeleted} removed (the kept subset re-copied from upstream; upstream pages vanishing shrink it).`
+  : 'tests/fixtures/en: no byte changes in the kept subset.'
 
 // 3. re-pin the landmark fingerprints; parity:refresh prints the old→new diff
 let landmarkDiff = ''
 try {
   landmarkDiff = sh('npm run parity:refresh')
 } catch (e) {
-  landmarkDiff = `${e.stdout ?? ''}${e.stderr ?? ''}`
+  // parity:refresh now preserves the real exit code (the trailing rm used
+  // to swallow it) — a failed re-pin must not reach the commit step
+  throw new Error(`parity:refresh failed:\n${`${e.stdout ?? ''}${e.stderr ?? ''}`.slice(-2000)}`)
 }
 console.log(landmarkDiff)
+// belt and braces: the baseline really moved before anything is committed
+const repinned = JSON.parse(await readFile('parity/upstream.json', 'utf8')).meta?.generator
+if (repinned !== generator) {
+  throw new Error(`re-pin did not land: baseline still reports ${repinned}, expected ${generator}`)
+}
 
 // 4. rebuild and collect what still diverges after the mechanical part
 run('npm run build:js')
@@ -107,6 +134,8 @@ const report = [
   `Upstream moved: ${pinned} → ${generator}.`,
   '',
   refNote,
+  '',
+  corpusNote,
   '',
   '## Landmark diff (old → new fingerprints)',
   '',
@@ -131,15 +160,27 @@ if (dryRun) {
   process.exit(0)
 }
 
-// 5. branch, commit the mechanical refresh, open the PR
+// 5. branch, commit the mechanical refresh, open (or update) the PR.
+// Re-dispatch with the branch already on origin (unmerged PR from a
+// previous week, manual rerun) must update that PR, not fail.
 const branch = `drift-watch/${tag ?? generator.replace(/[^\w.-]+/g, '-')}`
 run('git config user.name "rustpress-drift-watch[bot]"')
 run('git config user.email "drift-watch@users.noreply.github.com"')
-run(`git checkout -b ${branch}`)
+run(`git checkout -B ${branch}`)
 run('git add parity/upstream.json parity/upstream-ref.txt demo/content tests/fixtures/en')
 execFileSync('git', ['commit', '-m', `Parity refresh: upstream ${generator}`], { stdio: 'inherit' })
-run(`git push origin ${branch}`)
-// --body carries upstream diff text (quotes, backticks, $): pass it as a
-// real argv element, not through a shell string
-execFileSync('gh', ['pr', 'create', '--title', `Parity refresh: upstream ${generator}`, '--body', report], { stdio: 'inherit' })
-console.log(`drift-watch: refresh PR opened on ${branch}`)
+run(`git push --force-with-lease origin ${branch}`)
+let prExists = true
+try {
+  sh(`gh pr view ${JSON.stringify(branch)} --json state`)
+} catch {
+  prExists = false
+}
+if (prExists) {
+  console.log(`drift-watch: PR for ${branch} already exists — pushed an update to it`)
+} else {
+  // --body carries upstream diff text (quotes, backticks, $): pass it as a
+  // real argv element, not through a shell string
+  execFileSync('gh', ['pr', 'create', '--title', `Parity refresh: upstream ${generator}`, '--body', report], { stdio: 'inherit' })
+  console.log(`drift-watch: refresh PR opened on ${branch}`)
+}
