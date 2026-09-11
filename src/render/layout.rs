@@ -90,7 +90,11 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
             <body class=(format!("font-sans bg-bg text-text-1 antialiased [text-rendering:optimizeLegibility] [-moz-osx-font-smoothing:grayscale] [text-autospace:normal] [text-spacing-trim:normal]{}", if site.config.graded_containers { " vp-graded-containers" } else { "" }))>
                 <a class="sr-only" href="#main">(skip_label)</a>
 
-                <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" x-cloak x-show="$store.ui.screen || $store.ui.sidebar" @click="$store.ui.screen = false; $store.ui.sidebar = false"></div>
+                // body-level elements with Alpine directives each need their
+                // own x-data scope — Alpine 3 never initializes directives on
+                // elements outside any x-data (VPBackdrop here; VPSidebar and
+                // VPNavScreen likewise in their own modules).
+                <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" x-data="{}" x-cloak x-show="$store.ui.screen || $store.ui.sidebar" @click="$store.ui.screen = false; $store.ui.sidebar = false"></div>
 
                 @if shell.has_navbar {
                     <header class="relative top-[var(--vp-layout-top-height,0px)] left-0 z-(--vp-z-index-nav) w-full pointer-events-none lg:fixed">

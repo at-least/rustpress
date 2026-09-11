@@ -803,3 +803,10 @@ button:focus-visible {
     user-select: none;
   }
 }
+
+/* Alpine pre-init cloak: app.js is deferred, so x-cloak elements (nav
+   screen, backdrop, dropdowns, search modal) would flash on first paint
+   without this. Outside every @layer so utilities can't outrank it. */
+[x-cloak] {
+  display: none !important;
+}

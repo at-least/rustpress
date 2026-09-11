@@ -319,7 +319,7 @@ pub fn nav_screen<'a>(
     let dark_switch_title = site.config.dark_mode_switch_title.clone();
     let light_switch_title = site.config.light_mode_switch_title.clone();
     rsx! {
-        <div class="fixed inset-0 pt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+1px)] pr-8 pl-8 bg-(--vp-nav-screen-bg-color) w-full overflow-y-auto overscroll-contain transition-colors duration-[250ms] pointer-events-auto opacity-100 md:hidden" id="VPNavScreen" x-cloak x-show="$store.ui.screen" @keydown.escape.window="$store.ui.screen = false" x-effect="document.body.style.overflow = $store.ui.screen ? 'hidden' : ''">
+        <div class="fixed inset-0 pt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+1px)] pr-8 pl-8 bg-(--vp-nav-screen-bg-color) w-full overflow-y-auto overscroll-contain transition-colors duration-[250ms] pointer-events-auto opacity-100 md:hidden" id="VPNavScreen" x-data="{}" x-cloak x-show="$store.ui.screen" @keydown.escape.window="$store.ui.screen = false" x-effect="document.body.style.overflow = ($store.ui.screen || $store.ui.sidebar) ? 'hidden' : ''">
             <div class="mx-auto pt-6 pb-24 max-w-[18rem]">
                 <nav class="menu" aria-label=(nav_menu_label.clone())>
                     <ul>

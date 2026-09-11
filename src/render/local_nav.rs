@@ -27,7 +27,7 @@ pub fn local_nav<'a>(
         if has_sidebar { " lg:pl-(--vp-sidebar-width)" } else { "" }
     );
     rsx! {
-        <div class=(nav_cls) id="VPLocalNav">
+        <div class=(nav_cls) id="VPLocalNav" x-data="{}">
             <div class="flex justify-between items-center">
                 @if has_sidebar {
                     <button type="button" class="flex items-center py-[0.75rem] px-6 pb-[0.6875rem] leading-[2] text-[0.75rem] font-medium text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] cursor-pointer lg:hidden md:px-8" id="VPLocalNavMenu" @click="$store.ui.sidebar = true" :aria-expanded=("$store.ui.sidebar.toString()") aria-controls="VPSidebarNav">
