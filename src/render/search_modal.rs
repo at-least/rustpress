@@ -31,7 +31,7 @@ pub fn search_modal<'a>(index_url: &'a str, search: &'a crate::config::Search) -
     );
     rsx! {
         <div class="fixed inset-0 z-[100] flex" id="VPLocalSearchBox" x-cloak x-show="$store.ui.search" x-data="searchModal" data-index-url=(index_url) data-no-results=(no_results.clone()) role="dialog" aria-modal="true">
-            <div class="absolute inset-0 bg-(--vp-backdrop-bg-color) transition-opacity duration-500" id="VPSearchBackdrop" @click="close()"></div>
+            <div class="absolute inset-0 bg-(--vp-backdrop-bg-color) [backdrop-filter:blur(2px)] transition-opacity duration-500" id="VPSearchBackdrop" @click="close()"></div>
             <div class="relative p-3 my-16 mx-auto flex flex-col gap-4 bg-(--vp-local-search-bg) w-[min(100vw-3.75rem,56.25rem)] h-min max-h-[min(100vh-8rem,56.25rem)] rounded-md max-md:my-0 max-md:w-screen max-md:h-screen max-md:max-h-none max-md:rounded-none">
                 <form class="border border-divider rounded-[0.25rem] flex items-center px-3 cursor-text focus-within:border-brand-1 max-md:px-2" id="VPSearchBar" onsubmit="return false">
                     <label id="localsearch-label" for="localsearch-input" title=(button_aria.clone())>
