@@ -11,7 +11,7 @@ use super::Site;
 use crate::sidebar::SidebarNode;
 
 const GROUP_CLS: &str =
-    "[.group+&]:border-t [.group+&]:border-divider [.group+&]:pt-2.5 lg:pt-2.5 lg:w-[calc(var(--vp-sidebar-width)-4rem)]";
+    "[.group+&]:border-t [.group+&]:border-divider [.group+&]:pt-2.5 lg:w-[calc(var(--vp-sidebar-width)-4rem)]";
 const ITEM_CLS: &str = "group/item item relative flex w-full";
 const INDICATOR_CLS: &str =
     "indicator absolute top-[0.375rem] bottom-[0.375rem] left-[calc(-1rem-1px)] w-[2px] rounded-[2px] transition-colors duration-[250ms]";
@@ -45,8 +45,11 @@ pub fn sidebar(site: &Site, current_url: &str) -> String {
                 @for item in &items {
                     // one `.group` wrapper per root item: the `.group + .group`
                     // divider rule needs adjacent wrapper siblings, which the
-                    // old single-wrapper layout could never produce
-                    <div class=(format!("group {GROUP_CLS}"))>
+                    // old single-wrapper layout could never produce. Root
+                    // wrappers carry the lg top gap upstream gives every root
+                    // group; the nested wrapper inside `ul.items` must not, or
+                    // each group's first link sits 10px low
+                    <div class=(format!("group lg:pt-2.5 {GROUP_CLS}"))>
                         @if item.children.is_empty() && item.url.is_some() {
                             // Root-level bare links render one level deep,
                             // wrapped in a headless item — like VitePress's
