@@ -45,6 +45,12 @@ pub struct Preprocess<'a> {
 
 const MAX_INCLUDE_DEPTH: u8 = 8;
 
+/// Info-string token marking a fence as a `::: code-group` member. A
+/// token (not a substring) so a bare "```" opener — whose trimmed info
+/// is exactly this marker — is still detected, and no natural info
+/// string collides with it.
+const GD_GROUP_TOKEN: &str = "gd-ingroup";
+
 impl<'a> Preprocess<'a> {
     pub fn run(&self, body: &str, page_rel: &str) -> Result<String, PreprocessError> {
         let md = self.resolve_includes(body, page_rel, 0)?;
@@ -716,7 +722,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
             // the fence renderer their label is a tab name, not a
             // standalone block title
             if stack.iter().any(|(_, o)| matches!(o, Open::CodeGroup)) {
-                out_lines.push(format!("{bare} ingroup"));
+                out_lines.push(format!("{bare} {GD_GROUP_TOKEN}"));
             } else {
                 out_lines.push(bare.to_string());
             }
@@ -958,11 +964,17 @@ fn rewrite_info(info: &str) -> String {
             label = Some(rest[i + 1..i + j].to_string());
             rest.replace_range(i..i + j + 1, " ");
         }
-    // "ingroup" — the containers pass tags fences inside ::: code-group
+    // GD_GROUP_TOKEN — the containers pass tags fences inside :::
+    // code-group. Token equality, not substring: a bare "```" opener in
+    // a group trims to exactly the token, with no leading space.
     let mut group = false;
-    if let Some(i) = rest.find(" ingroup") {
+    if rest.split_whitespace().any(|t| t == GD_GROUP_TOKEN) {
         group = true;
-        rest.replace_range(i..i + " ingroup".len(), " ");
+        rest = rest
+            .split_whitespace()
+            .filter(|t| *t != GD_GROUP_TOKEN)
+            .collect::<Vec<_>>()
+            .join(" ");
     }
     // {spec} — first brace group that looks like a line spec
     if let Some(i) = rest.find('{')
@@ -996,7 +1008,14 @@ fn rewrite_info(info: &str) -> String {
     }
     lang = lang.trim_matches(':').to_string();
 
-    let mut out = format!("{FENCE_LANG} lang={lang}");
+    // an empty lang (a bare "```" fence, possibly with a group marker)
+    // stays absent: parse_meta defaults to "" and the renderer emits
+    // upstream's `language-` class
+    let mut out = if lang.is_empty() {
+        FENCE_LANG.to_string()
+    } else {
+        format!("{FENCE_LANG} lang={lang}")
+    };
     if group {
         out.push_str(" group=1");
     }
@@ -1006,7 +1025,8 @@ fn rewrite_info(info: &str) -> String {
     if let Some(v) = ln {
         out.push_str(&format!(" ln={v}"));
     }
-    if let Some(label) = label {
+    // an empty label is no label (upstream's group tabs filter it too)
+    if let Some(label) = label.filter(|l| !l.is_empty()) {
         out.push_str(&format!(" label={label}"));
     }
     out
@@ -1409,5 +1429,25 @@ mod include_and_container_tests {
         let out2 = expand_containers("::: mystery\nx\n:::\n", &ContainerOptions::default());
         assert!(!out2.contains("custom-block"), "{out2}");
         assert!(out2.contains("::: mystery"), "{out2}");
+    }
+}
+
+#[cfg(test)]
+mod group_marker_tests {
+    use super::*;
+
+    #[test]
+    fn group_marker_is_a_token_not_a_substring() {
+        // a bare "```" opener in a code group trims to exactly the marker:
+        // token equality must still flag it, and the token must not leak
+        // into the language
+        let meta = rewrite_info(GD_GROUP_TOKEN);
+        assert!(meta.contains(" group=1"), "{meta}");
+        assert!(!meta.contains(GD_GROUP_TOKEN), "{meta}");
+        assert_eq!(meta, "gdcode group=1");
+        // a real label alongside the marker survives
+        let meta = rewrite_info(&format!("js [x] {GD_GROUP_TOKEN}"));
+        assert!(meta.contains("label=x"), "{meta}");
+        assert!(meta.contains("group=1"), "{meta}");
     }
 }

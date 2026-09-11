@@ -152,6 +152,10 @@ impl FenceSpec {
                 });
             }
         }
+        // an empty label is no label
+        if spec.label.as_deref().is_some_and(|l| l.is_empty()) {
+            spec.label = None;
+        }
         spec
     }
 }
@@ -733,9 +737,16 @@ impl SgrState {
     }
 
     fn apply_sgr(&mut self, params: &str) {
+        // unparsable junk maps to an out-of-range sentinel (ignored by the
+        // match) rather than 0, which would reset the whole style
         let nums: Vec<u16> = params
             .split(';')
-            .map(|p| p.parse::<u16>().unwrap_or(0))
+            .map(|p| match p.parse::<u16>() {
+                Ok(n) => n,
+                // an empty parameter means 0 per ECMA-48
+                _ if p.is_empty() => 0,
+                Err(_) => u16::MAX,
+            })
             .collect();
         let mut i = 0;
         while i < nums.len() {
@@ -762,13 +773,15 @@ impl SgrState {
                 30..=37 => self.fg = Some(FG_CLASSES[(nums[i] - 30) as usize]),
                 38 | 48 | 58 => {
                     // extended color: `5;N` (256-color) or `2;R;G;B` —
-                    // consume the arguments so following codes survive;
-                    // the docs corpus only ever uses the basics, so the
-                    // color itself stays untouched
+                    // consume the arguments (2 + 1 or 2 + 4 parameters
+                    // total) so following codes survive; the docs corpus
+                    // only ever uses the basics, so the color itself
+                    // stays untouched. A malformed form consumes only
+                    // the intro parameter.
                     let step = match nums.get(i + 1) {
                         Some(5) => 2,
-                        Some(2) => 5,
-                        _ => 1,
+                        Some(2) => 4,
+                        _ => 0,
                     };
                     i += step;
                 }
@@ -813,8 +826,9 @@ impl SgrState {
                     i = j + 1;
                     continue;
                 }
-                // unterminated CSI: drop it, there is no sane rendering
-                i = params_start;
+                // unterminated CSI: drop the whole partial sequence —
+                // emitting the raw parameter bytes would show them as text
+                i = j;
                 continue;
             }
             let ch_len = text[i..].chars().next().map(char::len_utf8).unwrap_or(1);
@@ -933,3 +947,44 @@ const ANSI_CSS: &str = r#"  .ansi-bold { font-weight: 700; }
   html.dark .ansi-fg-bright-cyan { color: #56d4dd; }
   html.dark .ansi-fg-bright-white { color: #fafbfc; }
 "#;
+
+#[cfg(test)]
+mod sgr_tests {
+    use super::*;
+
+    #[test]
+    fn sgr_segments_carry_state_and_reset() {
+        let mut s = SgrState::default();
+        let segs = s.segments("\x1b[1m\x1b[36mhi\x1b[0m there");
+        assert_eq!(
+            segs,
+            vec![
+                ("ansi-bold ansi-fg-cyan".into(), "hi".into()),
+                ("".into(), " there".into()),
+            ]
+        );
+    }
+
+    #[test]
+    fn truecolor_consumes_exactly_five_params() {
+        // 38;2;R;G;B is five parameters: the trailing code after it must
+        // survive (a bold here was being swallowed)
+        let mut s = SgrState::default();
+        let segs = s.segments("\x1b[38;2;255;0;0;1mB");
+        assert_eq!(segs, vec![("ansi-bold".into(), "B".into())]);
+    }
+
+    #[test]
+    fn junk_params_do_not_reset() {
+        let mut s = SgrState::default();
+        let segs = s.segments("\x1b[1m\x1b[38:5:2mB");
+        assert_eq!(segs, vec![("ansi-bold".into(), "B".into())]);
+    }
+
+    #[test]
+    fn unterminated_csi_is_dropped_not_emitted() {
+        let mut s = SgrState::default();
+        let segs = s.segments("ok\x1b[38;2;2");
+        assert_eq!(segs, vec![("".into(), "ok".into())]);
+    }
+}
