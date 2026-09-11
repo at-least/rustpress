@@ -138,9 +138,10 @@ pub struct SiteConfig {
     #[serde(default)]
     pub markdown: Markdown,
 
-    /// UI theme: a path to a CSS file relative to the site dir
-    /// (copied verbatim into the output and linked after main.css).
-    /// Unset = the stock look.
+    /// UI theme: a bundled theme name (a CSS file shipped in the
+    /// binary under themes/) or a path to a CSS file relative to the
+    /// site dir (copied verbatim into the output under themes/ and
+    /// linked after vitepress.css). Unset = the stock look.
     #[serde(default)]
     pub theme: Option<String>,
 

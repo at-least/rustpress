@@ -20,11 +20,11 @@ rustpress is not on crates.io yet. When it is, the crate will be named `rustpres
 $ git clone https://github.com/at-least/rustpress
 $ cd rustpress
 $ npm install                      # tailwindcss CLI + esbuild + alpinejs
-$ npm run build:js && npm run build:css   # → static/js/app.js, static/main.css
+$ npm run build:js && npm run build:css   # → static/js/app.js, static/vitepress.css
 $ cargo build --release            # → target/release/rustpress
 ```
 
-`cargo install --path .` puts the binary on your `PATH`. The binary is self-contained: the theme's `main.css`, `js/app.js` and the Inter font files are compiled into it (see [Theme assets](#theme-assets)), so the checkout is not needed afterwards.
+`cargo install --path .` puts the binary on your `PATH`. The binary is self-contained: the theme's `vitepress.css`, `js/app.js` and the Inter font files are compiled into it (see [Theme assets](#theme-assets)), so the checkout is not needed afterwards.
 
 ## File Structure
 
@@ -75,9 +75,9 @@ Markdown files under `content/` are **source files**. rustpress uses **file-base
 
 ### Theme assets
 
-Every generated page links `/main.css`, `/js/app.js` and the fonts under `/fonts/`. These files are embedded in the `rustpress` binary and written into `public/` on every build, so a site needs nothing beyond `rustpress.toml` and `content/` to come out fully styled.
+Every generated page links `/vitepress.css`, `/js/app.js` and the fonts under `/fonts/`. These files are embedded in the `rustpress` binary and written into `public/` on every build, so a site needs nothing beyond `rustpress.toml` and `content/` to come out fully styled.
 
-Files in the site's own `static/` are copied over the embedded ones, so a `static/main.css` of your own replaces the theme stylesheet (see [Theming](./theming) for the supported ways to change colors and fonts before going that far). When the site sits directly under a rustpress checkout, as this documentation does at `docs/`, the checkout's freshly built `static/` is layered on top as well, which is what lets `npm run dev:docs` pick up CSS and JS changes without rebuilding the binary. See [Asset Handling](./asset-handling) for what else belongs in `static/`.
+Files in the site's own `static/` are copied over the embedded ones, so a `static/vitepress.css` of your own replaces the theme stylesheet (see [Theming](./theming) for the supported ways to change colors and fonts before going that far). When the site sits directly under a rustpress checkout, as this documentation does at `docs/`, the checkout's freshly built `static/` is layered on top as well, which is what lets `npm run dev:docs` pick up CSS and JS changes without rebuilding the binary. See [Asset Handling](./asset-handling) for what else belongs in `static/`.
 
 ## Up and Running
 

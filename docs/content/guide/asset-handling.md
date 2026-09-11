@@ -36,7 +36,7 @@ This directory plays the role of VitePress's `public/` directory. The name diffe
 
 ### The built theme assets
 
-The theme's stylesheet (`main.css`), script bundle (`js/app.js`) and the Inter font files under `fonts/` are embedded in the binary and written into `public/` first on every build. Two further layers are copied over them, in this order:
+The theme's stylesheet (`vitepress.css`), script bundle (`js/app.js`) and the Inter font files under `fonts/` are embedded in the binary and written into `public/` first on every build. Two further layers are copied over them, in this order:
 
 1. the site's own `static/` — a file with the same name replaces the embedded one;
 2. a `static/` directory in the site's **parent** directory, if there is one. This is a development convenience for the rustpress repository itself, where `demo/` and `docs/` sit next to the repo's `static/`: the freshly built assets win over the ones compiled into the binary.

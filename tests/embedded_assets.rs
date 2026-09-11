@@ -1,4 +1,4 @@
-//! The theme's built assets (main.css, js/app.js, fonts) are embedded in
+//! The theme's built assets (vitepress.css, js/app.js, fonts) are embedded in
 //! the binary, so a site that lives anywhere — not next to the repo's
 //! static/ — still builds into a complete, styled site.
 
@@ -24,7 +24,7 @@ fn site_outside_the_repo_gets_the_embedded_theme_assets() {
     let out = site.join("public");
     Site::load(&site).unwrap().build(&site, &out).unwrap();
 
-    for rel in ["main.css", "js/app.js"] {
+    for rel in ["vitepress.css", "js/app.js"] {
         let file = out.join(rel);
         assert!(
             file.is_file(),
@@ -54,12 +54,12 @@ fn site_static_overrides_the_embedded_theme_assets() {
     std::fs::write(site.join("rustpress.toml"), "title = \"probe\"\n").unwrap();
     std::fs::write(site.join("content/index.md"), "# Hello\n").unwrap();
     std::fs::create_dir_all(site.join("static")).unwrap();
-    std::fs::write(site.join("static/main.css"), "/* site override */\n").unwrap();
+    std::fs::write(site.join("static/vitepress.css"), "/* site override */\n").unwrap();
 
     let out = site.join("public");
     Site::load(&site).unwrap().build(&site, &out).unwrap();
 
-    let css = std::fs::read_to_string(out.join("main.css")).unwrap();
+    let css = std::fs::read_to_string(out.join("vitepress.css")).unwrap();
     assert_eq!(css, "/* site override */\n");
     assert!(
         out.join("js/app.js").is_file(),

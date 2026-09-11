@@ -28,7 +28,7 @@ demo/                 parity site: rustpress.toml + content/ (VitePress
                       format, mirrored verbatim from vitepress.dev) + static/
 assets/themes/        vendored github-light/dark .tmTheme files
 static/               theme assets embedded into the binary: fonts +
-                      the npm-built main.css and js/app.js (gitignored)
+                      the npm-built vitepress.css and js/app.js (gitignored)
 styles/               Tailwind entry (vitepress.css) + Inter @font-face
 js/alpine-entry.js    the Alpine bundle source
 tests/fixtures/en/    verbatim subset of vitepress/docs/en used by tests
@@ -38,7 +38,7 @@ tests/fixtures/en/    verbatim subset of vitepress/docs/en used by tests
 
 ```sh
 npm install          # tailwindcss CLI + esbuild + alpinejs (assets only)
-npm run build        # bundle app.js, build main.css, cargo build + demo build
+npm run build        # bundle app.js, build vitepress.css, cargo build + demo build
 npm test             # cargo test + full demo build + upstream parity gate
 npm run dev          # tailwind/esbuild watch + rustpress serve demo
 npm run build:docs   # build docs/ (rustpress's own documentation) → docs/public
@@ -54,7 +54,7 @@ The user-facing documentation lives in `docs/` and is itself a rustpress
 site; `cargo test --test docs_site` builds it and validates every link and
 anchor.
 
-`static/main.css` and `static/js/app.js` are embedded into the binary at compile time (`build.rs` refuses to build without them), so run `npm install && npm run build:js && npm run build:css` once before the first `cargo build`. `main.css` is built by the Tailwind CLI from `styles/vitepress.css` + class strings living in `src/**/*.rs` (`@source "../src"`); after that, `cargo build` alone suffices for Rust-side changes that don't touch classes. A binary installed from the crate is self-contained.
+`static/vitepress.css` and `static/js/app.js` are embedded into the binary at compile time (`build.rs` refuses to build without them), so run `npm install && npm run build:js && npm run build:css` once before the first `cargo build`. `vitepress.css` is built by the Tailwind CLI from `styles/vitepress.css` + class strings living in `src/**/*.rs` (`@source "../src"`); after that, `cargo build` alone suffices for Rust-side changes that don't touch classes. A binary installed from the crate is self-contained.
 
 ## Upstream parity
 
@@ -103,12 +103,13 @@ The **feature-surface** audit — every documented upstream config option, markd
 
 Relative `.md`/`.html` links resolve to canonical page URLs at build time (unknown targets pass through untouched, and the dead-link checker reports them unless ignored).
 
-### Color customization (`theme = "file.css"`)
+### Color customization (`theme`)
 
-Following VitePress's "extending the default theme", UI colors are customized with one CSS file of `--vp-*` custom-property overrides. Point `theme` at it (path relative to the site dir):
+Following VitePress's "extending the default theme", UI colors are customized with one CSS file of `--vp-*` custom-property overrides. `theme` selects it either as a bundled name (a plain CSS file shipped in the binary under `themes/`) or as a path relative to the site dir:
 
 ```toml
-theme = "theme.css"
+theme = "ocean"       # bundled: green purple orange mono ocean sakura ember
+theme = "theme.css"   # your own file
 ```
 
 ```css
@@ -121,7 +122,7 @@ theme = "theme.css"
 }
 ```
 
-The file is copied verbatim to `theme.css` in the output and every page links it after `main.css`. Because Tailwind utilities (`text-brand-1`, `bg-bg`, …) and the hand-written component rules both reference the `--vp-*` variables via `@theme inline`, overriding the variable reaches everything — no new classes, no CSS rebuild. Unset, `theme` gives the stock VitePress look.
+The selected file is linked on every page after the theme stylesheet (`/vitepress.css`), by its own name under `/themes/` — a custom file is copied there verbatim, bundled ones ship with the binary. Because Tailwind utilities (`text-brand-1`, `bg-bg`, …) and the hand-written component rules both reference the `--vp-*` variables via `@theme inline`, overriding the variable reaches everything — no new classes, no CSS rebuild. Unset, `theme` gives the stock VitePress look.
 
 The **source-code syntax color scheme is a separate setting** — `[syntax]` in `rustpress.toml`. Each of `light`/`dark` takes either a built-in name or a path to your own Helix TOML theme file (relative to the site dir). Built-in names: `github-light` / `github-dark` (vendored defaults), plus **all 218 Helix editor themes** are bundled and selectable by file stem:
 

@@ -30,9 +30,14 @@ pub struct Site {
     pub content: Content,
     pub sidebars: Sidebars,
     pub engine: MarkdownEngine,
-    /// Resolved UI theme CSS (built-in palette or the user's file), to
-    /// be written as `theme.css`. `None` = the stock look, nothing linked.
-    pub theme_css: Option<String>,
+    /// The theme stylesheet to link after `vitepress.css`, as a
+    /// site-root-relative path (`themes/<name>.css`). `None` = the
+    /// stock look, nothing linked.
+    pub theme_link: Option<String>,
+    /// For a custom theme (`theme = "my.css"`): the source file to copy
+    /// into the output under `themes/`. Bundled names need no copy —
+    /// they extract with the embedded assets.
+    pub theme_source: Option<PathBuf>,
 }
 
 impl Site {
@@ -108,18 +113,16 @@ impl Site {
             }
         }
 
-        // theme.css: UI color overrides as CSS custom properties
-        // (VitePress "extending the default theme" style — copied
-        // verbatim and linked after main.css). The one mechanism: a path
-        // to a .css file relative to the site dir. Unset = the stock
-        // look, nothing emitted. Syntax colors are NOT here — they live
-        // in the [syntax] section of rustpress.toml.
-        let theme_css = match config.theme.as_deref() {
-            None => None,
-            Some(value) => {
-                if !value.ends_with(".css") {
-                    return Err(BuildError::ThemeValue(value.to_string()));
-                }
+        // UI theme: `theme` in rustpress.toml picks the stylesheet to
+        // link after vitepress.css. A bare name selects a bundled theme
+        // (shipped in the binary under themes/); a value ending in
+        // `.css` is the site's own file, copied into the output under
+        // `themes/<basename>`. Either way the page links one file by its
+        // own name. Unset = the stock look. Syntax colors are NOT here —
+        // they live in the [syntax] section of rustpress.toml.
+        let (theme_link, theme_source) = match config.theme.as_deref() {
+            None => (None, None),
+            Some(value) if value.ends_with(".css") => {
                 let path = site_dir.join(value);
                 if !path.is_file() {
                     return Err(BuildError::ThemeFile {
@@ -127,13 +130,17 @@ impl Site {
                         value: value.to_string(),
                     });
                 }
-                Some(std::fs::read_to_string(&path).map_err(|source| BuildError::Write {
-                    path: path.clone(),
-                    source,
-                })?)
+                let name = path.file_name().expect("value ends in .css").to_string_lossy();
+                (Some(format!("themes/{name}")), Some(path))
+            }
+            Some(name) => {
+                if !crate::theme_assets::bundled_themes().iter().any(|t| t == name) {
+                    return Err(BuildError::ThemeValue(name.to_string()));
+                }
+                (Some(format!("themes/{name}.css")), None)
             }
         };
-        Ok(Site { config, content, sidebars, engine, theme_css })
+        Ok(Site { config, content, sidebars, engine, theme_link, theme_source })
     }
 
     /// Prefix a canonical path with the configured base. Relative asset
@@ -320,8 +327,20 @@ impl Site {
             let json = serde_json::to_string(&search_docs).expect("serializable docs");
             write_file(&out_dir.join("search-docs.json"), json.as_bytes())?;
         }
-        if let Some(css) = &self.theme_css {
-            write_file(&out_dir.join("theme.css"), css.as_bytes())?;
+        // A custom theme is copied in under themes/ (after the embedded
+        // assets and static copies, so the selection wins); a bundled
+        // one already extracted with the embedded assets.
+        if let Some(src) = &self.theme_source {
+            let name = src.file_name().expect("checked at load");
+            write_file(
+                &out_dir.join("themes").join(name),
+                &std::fs::read(src).map_err(|source| BuildError::Write {
+                    path: src.clone(),
+                    source,
+                })?,
+            )?;
+        }
+        if self.theme_link.is_some() {
             stats.theme = true;
         }
         if let Some(sitemap) = &self.config.sitemap {
@@ -615,7 +634,7 @@ pub struct BuildStats {
 
 #[derive(Debug, thiserror::Error)]
 pub enum BuildError {
-    #[error("invalid theme {0:?} — expected a path to a .css file relative to the site dir")]
+    #[error("unknown theme {0:?} — expected a bundled theme ({list}) or a path to a .css file", list = crate::theme_assets::bundled_themes().join(", "))]
     ThemeValue(String),
     #[error("theme file {path:?} not found (theme = {value:?})")]
     ThemeFile { path: PathBuf, value: String },

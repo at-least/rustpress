@@ -38,7 +38,7 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
     let title = shell.title.clone();
     let description = shell.description.clone();
     let syntax_css = site.url("syntax.css");
-    let main_css = site.url("main.css");
+    let main_css = site.url("vitepress.css");
     let app_js = site.url("js/app.js");
     let search_index_url = site.url("search-docs.json");
     let is_home = shell.is_home;
@@ -49,7 +49,7 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
     let head_tags = serialize_head_tags(&site.config.head);
     let head_extra = Raw::dangerously_create(shell.head_extra.clone());
     let skip_label = site.config.skip_to_content_label.clone();
-    let theme_link = site.theme_css.as_ref().map(|_| site.url("theme.css"));
+    let theme_link = site.theme_link.as_ref().map(|rel| site.url(rel));
     let footer_message = footer.as_ref().and_then(|f| f.message.clone());
     let footer_copyright = footer.as_ref().and_then(|f| f.copyright.clone());
 

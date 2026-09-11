@@ -12,7 +12,7 @@ categories = ["command-line-utilities", "web-programming", "text-processing"]
 # another project; the library and the installed binary are still `rustpress`.
 # Only the sources plus the compile-time embedded assets/ (syntax themes) and
 # static/ (built theme CSS/JS, fonts) go to crates.io; `include` also brings in
-# the gitignored static/main.css and static/js/app.js.
+# the gitignored static/vitepress.css and static/js/app.js.
 default-run = "rustpress"
 include = [
     "/src",

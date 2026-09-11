@@ -264,7 +264,7 @@ rustpress deliberately has no replacement for. One exception:
 
 | feature | status | ours | note |
 |---|---|---|---|
-| Customizing CSS variables | implemented | `theme = "file.css"` → `theme.css` (`src/render/mod.rs`) | same mechanism: a CSS file copied verbatim and linked after `main.css` |
+| Customizing CSS variables | implemented | `theme` → `/themes/<name>.css` (`src/render/mod.rs`) | same mechanism: a CSS file linked after the theme stylesheet; bundled names or the site's own `.css` |
 | Different fonts | partial | `--vp-font-family-*` overridable via the `theme` CSS file | no `theme-without-fonts` entry; Inter always ships |
 | Navbar theming (CSS vars) | implemented | `styles/vitepress.css` | same `--vp-nav-*` tokens |
 | Navbar overflow `...` collapse | missing | — | long nav wraps/scrolls instead |
@@ -303,7 +303,7 @@ n/a — `loadEnv` + `paths()` data fetching is Node build-time work.
 ## guide/custom-theme.md
 
 n/a — no swappable theme system by design (README); the compiled-in
-theme is customized only via CSS variables (`theme = "file.css"`) and
+theme is customized only via CSS variables (`theme` → a bundled name or `.css` file) and
 `[[head]]`.
 
 ## reference/cli.md

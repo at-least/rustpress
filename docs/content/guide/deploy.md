@@ -42,7 +42,7 @@ The base is applied to the theme chrome, to generated assets and to links and im
 
 ## HTTP Cache Headers
 
-rustpress does not hash file names, so there is nothing that can be cached "immutably" by URL. `main.css`, `js/app.js` and `syntax.css` change their content in place; serve them with a validating cache policy (`Cache-Control: no-cache` plus ETag or Last-Modified, which every static host does by default) rather than a long `max-age`. The font files under `/fonts/` never change and can be cached for a year.
+rustpress does not hash file names, so there is nothing that can be cached "immutably" by URL. `vitepress.css`, `js/app.js` and `syntax.css` change their content in place; serve them with a validating cache policy (`Cache-Control: no-cache` plus ETag or Last-Modified, which every static host does by default) rather than a long `max-age`. The font files under `/fonts/` never change and can be cached for a year.
 
 ## Platform Guides
 
@@ -117,7 +117,7 @@ Building the binary on every deploy takes a few minutes. The alternative is to b
            uses: actions/deploy-pages@v4
    ```
 
-   This assumes the site lives inside the rustpress repository (as this documentation does). For a site in its own repository, build rustpress as a separate step: check out the rustpress repository, run its npm build, then `cargo install --path .` (or, once the crate is published, `cargo install rustpress-cli`). The binary carries the theme assets, so nothing has to be copied into the site. Note that `cargo install --git` cannot work: the npm-built `main.css` and `js/app.js` are not committed, and the build refuses to run without them.
+   This assumes the site lives inside the rustpress repository (as this documentation does). For a site in its own repository, build rustpress as a separate step: check out the rustpress repository, run its npm build, then `cargo install --path .` (or, once the crate is published, `cargo install rustpress-cli`). The binary carries the theme assets, so nothing has to be copied into the site. Note that `cargo install --git` cannot work: the npm-built `vitepress.css` and `js/app.js` are not committed, and the build refuses to run without them.
 
    ::: warning
    Make sure the `base` option is properly configured when deploying to a `<user>.github.io/<repository>/` project page — see [Setting a Public Base Path](#setting-a-public-base-path).

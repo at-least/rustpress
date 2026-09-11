@@ -1,4 +1,4 @@
-//! The theme's static assets — the built `main.css`, `js/app.js` and the
+//! The theme's static assets — the built `vitepress.css`, `js/app.js` and the
 //! Inter font files — embedded at compile time so an installed binary
 //! produces a complete site without a checkout of this repository.
 //!
@@ -35,6 +35,19 @@ pub fn files() -> Vec<String> {
     out
 }
 
+/// Names (file stems) of the bundled UI themes under `static/themes/`,
+/// sorted. Valid values for a bare `theme = "…"` in rustpress.toml.
+pub fn bundled_themes() -> Vec<String> {
+    let mut names: Vec<String> = files()
+        .into_iter()
+        .filter_map(|rel| rel.strip_prefix("themes/").map(str::to_string))
+        .filter(|rel| rel.ends_with(".css"))
+        .map(|rel| rel.strip_suffix(".css").unwrap_or(&rel).to_string())
+        .collect();
+    names.sort();
+    names
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -42,7 +55,7 @@ mod tests {
     #[test]
     fn the_built_theme_files_are_embedded() {
         let files = files();
-        for required in ["main.css", "js/app.js"] {
+        for required in ["vitepress.css", "js/app.js"] {
             assert!(
                 files.iter().any(|f| f == required),
                 "missing {required} in {files:?}"

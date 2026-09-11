@@ -62,7 +62,7 @@ fn rebuild(site_dir: &Path) -> anyhow::Result<()> {
     site.build(site_dir, &out)?;
     // dev convenience: when serving a site nested under a repo whose
     // root has a static/ dir (the dogfood layout), layer it on top so
-    // the committed built assets (app.js, main.css) resolve
+    // the committed built assets (app.js, vitepress.css) resolve
     if let Some(root) = site_dir.parent() {
         let root_static = root.join("static");
         if root_static.is_dir() {

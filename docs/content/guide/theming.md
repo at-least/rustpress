@@ -7,7 +7,7 @@ description: Customize the rustpress default theme with your own CSS variables, 
 
 rustpress ships exactly one theme, a port of the VitePress default theme, compiled into the binary. Consult the [Default Theme Config Overview](../reference/default-theme-config) for the options that shape its behavior. What its colors and fonts look like is controlled by two independent settings:
 
-1. the **UI colors** — the `theme` key, a path to a CSS file of your own;
+1. the **UI colors** — the `theme` key, which selects a stylesheet by name (bundled) or by path (your own file);
 2. the **syntax color scheme** for code blocks — the `[syntax]` section, which takes Helix editor theme files.
 
 ::: tip {no-title}
@@ -16,7 +16,27 @@ The two are deliberately separate: switching the UI to a purple brand color does
 
 ## UI Colors
 
-Set `theme` to a path (relative to the site directory) ending in `.css`. The file is copied verbatim to `theme.css` in the output and linked on every page **after** the theme's own stylesheet, so its rules win:
+`theme` picks the stylesheet to link on every page **after** the theme's own stylesheet (`vitepress.css`), so its rules win. Two ways to point at it:
+
+### Bundled themes
+
+Set `theme` to a bare name:
+
+```toml [rustpress.toml]
+theme = "ocean"
+```
+
+| name | effect |
+| --- | --- |
+| `green`, `purple`, `orange`, `ember` | re-point the brand color (`--vp-c-brand-*`) at that color ramp, in both light and dark mode |
+| `ocean`, `sakura` | GitHub-blue / rose-pink brand colors, literals tuned per mode (dark enough for light mode, pastel enough for dark) |
+| `mono` | neutral grays for the brand color (dark text on light, light text on dark) |
+
+Every bundled theme is a plain CSS file shipped in the binary under `themes/`; all of them land in the output's `themes/` directory, and the selected one is linked as `/themes/<name>.css`. An unknown name fails at load time with an error listing the bundled names.
+
+### Your own CSS file
+
+Set `theme` to a path (relative to the site directory) ending in `.css`. The file is copied verbatim into the output under `themes/<basename>` and linked there:
 
 ```toml [rustpress.toml]
 theme = "theme.css"
@@ -35,7 +55,9 @@ theme = "theme.css"
 
 The design is expressed entirely through the same `--vp-*` custom properties VitePress uses (see the [default theme CSS variables](https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css) upstream; `styles/vitepress.css` in the rustpress repository is the local copy). Both the hand-written component rules and the utility classes resolve through those variables, so overriding a variable reaches everything that uses it — no rebuild required. Any CSS is allowed in the file, including ordinary selectors, `color-mix()` and gradients.
 
-Unset, `theme` gives the stock VitePress look; nothing extra is emitted. Any other value fails at load time with an error naming the path it looked for.
+To start from a bundled theme and tweak it, copy its `themes/<name>.css` out of the output and edit your copy. Note that a custom file takes its basename into `themes/`: your own `green.css` replaces the bundled `themes/green.css` in the output — link your copy explicitly (`theme = "green.css"` resolves to it, not the bundled one).
+
+Unset, `theme` gives the stock VitePress look; nothing extra is linked.
 
 ### Navbar
 

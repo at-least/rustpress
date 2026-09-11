@@ -21,7 +21,8 @@ fn build_fixture() -> (tempdir::Guard, rustpress::render::BuildStats) {
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
         engine: MarkdownEngine::new(&config.markdown, &config.syntax, Path::new("."), "/").unwrap(),
-        theme_css: None,
+        theme_link: None,
+        theme_source: None,
         config,
         content,
     };
@@ -137,7 +138,8 @@ fn dead_links_fail_the_build_and_ignore_works() {
         Site {
             sidebars: Sidebars::build(&config, &content),
             engine: MarkdownEngine::new(&config.markdown, &config.syntax, Path::new("."), "/").unwrap(),
-        theme_css: None,
+        theme_link: None,
+        theme_source: None,
             config,
             content,
         }
@@ -161,7 +163,8 @@ fn dead_links_fail_the_build_and_ignore_works() {
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
         engine: MarkdownEngine::new(&config.markdown, &config.syntax, Path::new("."), "/").unwrap(),
-        theme_css: None,
+        theme_link: None,
+        theme_source: None,
         config,
         content,
     };
@@ -231,7 +234,7 @@ provider = "local"
 }
 
 #[test]
-fn theme_is_one_css_file() {
+fn theme_picks_a_stylesheet_by_name_or_file() {
     let mk_site = |theme_line: &str| {
         let dir = tempdir::tempdir();
         std::fs::create_dir_all(dir.path().join("content")).unwrap();
@@ -244,33 +247,56 @@ fn theme_is_one_css_file() {
         dir
     };
 
-    // css path: copied verbatim, linked
+    // bundled name: every theme extracts with the assets, the selected
+    // one is linked
+    let dir = mk_site("theme = \"green\"");
+    let site = Site::load(dir.path()).unwrap();
+    let out = tempdir::tempdir();
+    site.build(dir.path(), out.path()).unwrap();
+    let css = std::fs::read_to_string(out.path().join("themes/green.css")).unwrap();
+    assert!(css.contains("--vp-c-brand-1: var(--vp-c-green-1);"), "{css}");
+    let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
+    assert!(html.contains(r#"<link rel="stylesheet" href="/themes/green.css">"#), "linked");
+    assert!(out.path().join("themes/ocean.css").is_file(), "all bundled themes ship");
+
+    // custom css: copied to themes/<basename>, linked there
     let dir = mk_site("theme = \"my-theme.css\"");
     std::fs::write(dir.path().join("my-theme.css"), ":root { --vp-c-brand-1: #123456; }\n").unwrap();
     let site = Site::load(dir.path()).unwrap();
     let out = tempdir::tempdir();
     site.build(dir.path(), out.path()).unwrap();
-    let css = std::fs::read_to_string(out.path().join("theme.css")).unwrap();
+    let css = std::fs::read_to_string(out.path().join("themes/my-theme.css")).unwrap();
     assert!(css.contains("--vp-c-brand-1: #123456;"), "verbatim copy: {css}");
     let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
-    assert!(html.contains(r#"<link rel="stylesheet" href="/theme.css">"#), "linked");
+    assert!(html.contains(r#"<link rel="stylesheet" href="/themes/my-theme.css">"#), "linked");
 
-    // unset: stock look, nothing emitted
+    // custom css from a subdirectory: linked by its basename
+    let dir = mk_site("theme = \"css/my.css\"");
+    std::fs::create_dir_all(dir.path().join("css")).unwrap();
+    std::fs::write(dir.path().join("css/my.css"), ":root { --vp-c-brand-1: #654321; }\n").unwrap();
+    let site = Site::load(dir.path()).unwrap();
+    let out = tempdir::tempdir();
+    site.build(dir.path(), out.path()).unwrap();
+    assert!(out.path().join("themes/my.css").is_file(), "flattened into themes/");
+    let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
+    assert!(html.contains(r#"href="/themes/my.css""#), "linked by basename");
+
+    // unset: stock look, nothing linked (bundled files still ship)
     let dir = mk_site("");
     let site = Site::load(dir.path()).unwrap();
     let out = tempdir::tempdir();
     site.build(dir.path(), out.path()).unwrap();
-    assert!(!out.path().join("theme.css").exists());
+    assert!(out.path().join("themes/green.css").is_file());
     let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
-    assert!(!html.contains("theme.css"), "no link when unset");
+    assert!(!html.contains("themes/"), "no theme link when unset");
 
-    // non-css value: error at load
-    let dir = mk_site("theme = \"green\"");
+    // unknown name: error at load, listing the bundled themes
+    let dir = mk_site("theme = \"nope\"");
     let err = match Site::load(dir.path()) {
         Err(e) => e.to_string(),
-        Ok(_) => panic!("non-css theme should fail at load"),
+        Ok(_) => panic!("unknown theme should fail at load"),
     };
-    assert!(err.contains("green") && err.contains(".css"), "{err}");
+    assert!(err.contains("nope") && err.contains("green") && err.contains("sakura"), "{err}");
 
     // missing file: error at load
     let dir = mk_site("theme = \"missing.css\"");

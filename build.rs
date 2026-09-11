@@ -7,7 +7,7 @@ fn main() {
     println!("cargo:rerun-if-changed=static");
     println!("cargo:rerun-if-changed=build.rs");
     let manifest = std::path::PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
-    let missing: Vec<&str> = ["static/main.css", "static/js/app.js"]
+    let missing: Vec<&str> = ["static/vitepress.css", "static/js/app.js"]
         .into_iter()
         .filter(|rel| !manifest.join(rel).is_file())
         .collect();

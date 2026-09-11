@@ -341,13 +341,14 @@ lastUpdated = true
 - Type: `string`
 - Default: unset (the stock VitePress look)
 
-The UI colors: a path relative to the site directory, ending in `.css`, to your own CSS file of `--vp-*` custom-property overrides. The file is copied verbatim to `theme.css` in the output and linked after the main stylesheet on every page.
+The UI colors: the stylesheet to link after the theme's own stylesheet on every page. A bare name selects a bundled theme (shipped in the binary, extracted to `themes/<name>.css`); a path relative to the site directory ending in `.css` is your own file, copied verbatim into the output under `themes/<basename>`.
 
 ```toml
-theme = "theme.css"
+theme = "ocean"       # bundled: green, purple, orange, mono, ocean, sakura, ember
+theme = "theme.css"   # your own file
 ```
 
-Any other value fails the build. Source-code colors are a separate setting — see [`[syntax]`](#syntax). The [Theming](../guide/theming) guide covers both.
+An unknown name or a missing file fails the build. Source-code colors are a separate setting — see [`[syntax]`](#syntax). The [Theming](../guide/theming) guide covers both.
 
 ### syntax
 
