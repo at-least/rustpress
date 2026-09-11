@@ -293,12 +293,11 @@ fn docs_theme_index_matches_the_bundled_set() {
     let bundled = rustpress::theme_assets::bundled_themes();
     assert_eq!(listed, bundled, "docs theme index drifted from static/themes/");
 
-    // the gallery card data (blurb + light-mode swatches) must match the
-    // theme files themselves, or the cards lie — regenerate with
+    // the gallery card data (blurb + both-mode mock tokens) must match
+    // the theme files themselves, or the cards lie — regenerate with
     // `node scripts/gen-theme-index.mjs`
     for entry in listed {
         let css = std::fs::read_to_string(repo(&format!("static/themes/{entry}.css"))).unwrap();
-        let root = mode_values(&css, ":root");
         let item = serde_json::from_str::<Vec<serde_json::Value>>(&json)
             .unwrap()
             .into_iter()
@@ -308,14 +307,33 @@ fn docs_theme_index_matches_the_bundled_set() {
             !item["desc"].as_str().unwrap_or("").is_empty(),
             "theme {entry}: gallery blurb missing (header comment malformed?)"
         );
-        for (key, token) in [("bg", "bg"), ("text", "text-1"), ("brand", "brand-1")] {
-            let want = root.values.get(&format!("--vp-c-{token}")).unwrap();
-            let got = item[key].as_str().unwrap_or("");
-            assert_eq!(
-                got.to_ascii_lowercase(),
-                want.to_ascii_lowercase(),
-                "theme {entry}: {key} swatch drifted from static/themes/{entry}.css"
-            );
+        for (mode, selector) in [("light", ":root"), ("dark", ".dark")] {
+            let values = mode_values(&css, selector);
+            let mock = item[mode].as_object().unwrap_or_else(|| {
+                panic!("theme {entry}: gallery {mode} mock tokens missing")
+            });
+            for (key, token) in [
+                ("bg", "bg"),
+                ("bgAlt", "bg-alt"),
+                ("text", "text-1"),
+                ("textMuted", "text-2"),
+                ("border", "border"),
+                ("brand", "brand-1"),
+                ("success", "success-1"),
+                ("warning", "warning-1"),
+                ("danger", "danger-1"),
+            ] {
+                let want = values
+                    .values
+                    .get(&format!("--vp-c-{token}"))
+                    .unwrap_or_else(|| panic!("theme {entry}: --vp-c-{token} missing in {selector}"))
+                    .to_ascii_lowercase();
+                let got = mock[key].as_str().unwrap_or("").to_ascii_lowercase();
+                assert_eq!(
+                    got, want,
+                    "theme {entry}: {mode}.{key} drifted from static/themes/{entry}.css"
+                );
+            }
         }
     }
 }

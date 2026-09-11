@@ -4,8 +4,14 @@
  * trying one is a stylesheet link away: picking a card swaps that link
  * and the whole site re-skins instantly. The choice lasts for the
  * browser session only (sessionStorage) — stock (no link) is the
- * default. Cards are rendered from <base>themes.json, generated at
- * build time from static/themes/. Storage may be blocked (sandboxed
+ * default.
+ *
+ * Cards are rendered from <base>themes.json, generated at build time
+ * from static/themes/: each carries the theme's own tokens, and the
+ * card paints a miniature page mock with them (light and dark side by
+ * side — surfaces, text, link, semantics), so the card is the design,
+ * not just a palette chip. The stock card paints with the page's live
+ * var(--vp-*) tokens instead. Storage may be blocked (sandboxed
  * iframes, private mode); a failure there just means the choice is
  * not remembered — the demo still works.
  */
@@ -69,20 +75,88 @@
       });
     }
 
-    function swatch(color, bordered) {
-      var dot = document.createElement("span");
-      dot.title = color;
-      Object.assign(dot.style, {
-        display: "inline-block",
-        width: "14px",
-        height: "14px",
-        borderRadius: "9999px",
-        margin: "-2px 6px 0 0",
-        verticalAlign: "middle",
-        backgroundColor: color,
-        border: bordered ? "1px solid var(--vp-c-border)" : "1px solid transparent",
+    /* The miniature page: a navbar strip on the elevated surface, a
+     * heading, a body line, a link, and the three semantic dots —
+     * every color straight from the theme's tokens. */
+    function mockHalf(t, label) {
+      var half = document.createElement("div");
+      half.title = label;
+      Object.assign(half.style, {
+        padding: "8px",
+        backgroundColor: t.bg,
+        minWidth: "0",
       });
-      return dot;
+      var bar = function (color, width, height, mt) {
+        var el = document.createElement("div");
+        Object.assign(el.style, {
+          height: height + "px",
+          width: width + "%",
+          marginTop: mt + "px",
+          borderRadius: "2px",
+          backgroundColor: color,
+        });
+        return el;
+      };
+      var nav = document.createElement("div");
+      Object.assign(nav.style, {
+        height: "8px",
+        borderRadius: "3px",
+        backgroundColor: t.bgAlt,
+        border: "1px solid " + t.border,
+        display: "flex",
+        alignItems: "center",
+        padding: "0 3px",
+        gap: "3px",
+      });
+      var logo = document.createElement("span");
+      Object.assign(logo.style, {
+        width: "5px",
+        height: "5px",
+        borderRadius: "1px",
+        backgroundColor: t.brand,
+      });
+      nav.appendChild(logo);
+      half.appendChild(nav);
+      half.appendChild(bar(t.text, 68, 5, 8));
+      half.appendChild(bar(t.textMuted, 86, 4, 4));
+      half.appendChild(bar(t.brand, 48, 4, 4));
+      var dots = document.createElement("div");
+      Object.assign(dots.style, { display: "flex", gap: "3px", marginTop: "6px" });
+      [t.success, t.warning, t.danger].forEach(function (color) {
+        var dot = document.createElement("span");
+        Object.assign(dot.style, {
+          width: "5px",
+          height: "5px",
+          borderRadius: "9999px",
+          backgroundColor: color,
+        });
+        dots.appendChild(dot);
+      });
+      half.appendChild(dots);
+      return half;
+    }
+
+    function mock(entry) {
+      if (!entry.light) {
+        // stock: paint with the page's live tokens so the card always
+        // shows this site as it is right now, both halves per mode
+        var vars = {
+          bg: "var(--vp-c-bg)", bgAlt: "var(--vp-c-bg-alt)",
+          text: "var(--vp-c-text-1)", textMuted: "var(--vp-c-text-2)",
+          border: "var(--vp-c-border)", brand: "var(--vp-c-brand-1)",
+          success: "var(--vp-c-success-1)", warning: "var(--vp-c-warning-1)",
+          danger: "var(--vp-c-danger-1)",
+        };
+        return mockHalf(vars, "this site now");
+      }
+      var wrap = document.createElement("div");
+      Object.assign(wrap.style, { display: "grid", gridTemplateColumns: "1fr 1fr", minWidth: "0" });
+      var light = mockHalf(entry.light, "light");
+      var dark = mockHalf(entry.dark, "dark");
+      dark.style.borderLeft = "1px solid " + entry.light.border;
+      wrap.appendChild(light);
+      wrap.appendChild(dark);
+      return wrap;
     }
 
     function card(entry) {
@@ -94,7 +168,7 @@
       Object.assign(el.style, {
         display: "block",
         width: "100%",
-        padding: "14px 16px",
+        padding: "0",
         textAlign: "left",
         borderRadius: "10px",
         border: "1px solid var(--vp-c-border)",
@@ -102,28 +176,29 @@
         color: "var(--vp-c-text-1)",
         font: "inherit",
         cursor: "pointer",
+        overflow: "hidden",
       });
+      var preview = mock(entry);
+      preview.style.borderRadius = "10px 10px 0 0";
+      el.appendChild(preview);
+      var body = document.createElement("div");
+      Object.assign(body.style, { padding: "10px 14px 12px" });
       var name = document.createElement("strong");
       name.textContent = entry.name || "stock";
       Object.assign(name.style, { display: "block", fontSize: "0.95rem" });
-      el.appendChild(name);
+      body.appendChild(name);
       if (entry.desc) {
         var desc = document.createElement("span");
         desc.textContent = entry.desc;
         Object.assign(desc.style, {
           display: "block",
-          margin: "4px 0 8px",
+          margin: "3px 0 0",
           fontSize: "0.875rem",
           color: "var(--vp-c-text-2)",
         });
-        el.appendChild(desc);
+        body.appendChild(desc);
       }
-      var row = document.createElement("span");
-      row.style.display = "block";
-      ["bg", "text", "brand"].forEach(function (k) {
-        if (entry[k]) row.appendChild(swatch(entry[k], k === "bg"));
-      });
-      el.appendChild(row);
+      el.appendChild(body);
       cards.push(el);
       return el;
     }
@@ -135,7 +210,7 @@
     var wrap = document.createElement("div");
     Object.assign(wrap.style, {
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+      gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
       gap: "12px",
       margin: "12px 0",
     });

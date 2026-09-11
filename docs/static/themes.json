@@ -2,29 +2,105 @@
   {
     "name": "catppuccin",
     "desc": "Latte and Mocha: pastel, low-noise, dark-first",
-    "bg": "#eff1f5",
-    "text": "#4c4f69",
-    "brand": "#1558d4"
+    "light": {
+      "bg": "#eff1f5",
+      "bgAlt": "#e6e9ef",
+      "text": "#4c4f69",
+      "textMuted": "#5c5f77",
+      "border": "#bcc0cc",
+      "brand": "#1558d4",
+      "success": "#236a15",
+      "warning": "#7d5709",
+      "danger": "#bc0d33"
+    },
+    "dark": {
+      "bg": "#1e1e2e",
+      "bgAlt": "#181825",
+      "text": "#cdd6f4",
+      "textMuted": "#bac2de",
+      "border": "#45475a",
+      "brand": "#89b4fa",
+      "success": "#a6e3a1",
+      "warning": "#f9e2af",
+      "danger": "#f38ba8"
+    }
   },
   {
     "name": "github",
     "desc": "the look of github.com, light and dark",
-    "bg": "#ffffff",
-    "text": "#1f2328",
-    "brand": "#0969da"
+    "light": {
+      "bg": "#ffffff",
+      "bgAlt": "#f6f8fa",
+      "text": "#1f2328",
+      "textMuted": "#59636e",
+      "border": "#d1d9e0",
+      "brand": "#0969da",
+      "success": "#166e30",
+      "warning": "#865900",
+      "danger": "#c11f2b"
+    },
+    "dark": {
+      "bg": "#0d1117",
+      "bgAlt": "#151b23",
+      "text": "#e6edf3",
+      "textMuted": "#9198a1",
+      "border": "#3d444d",
+      "brand": "#4493f8",
+      "success": "#3fb950",
+      "warning": "#d29922",
+      "danger": "#f85149"
+    }
   },
   {
     "name": "nord",
     "desc": "Polar Night and Snow Storm: cold, bluish, calm",
-    "bg": "#eceff4",
-    "text": "#2e3440",
-    "brand": "#4a6285"
+    "light": {
+      "bg": "#eceff4",
+      "bgAlt": "#e5e9f0",
+      "text": "#2e3440",
+      "textMuted": "#3b4252",
+      "border": "#d8dee9",
+      "brand": "#4a6285",
+      "success": "#486636",
+      "warning": "#6d561f",
+      "danger": "#94404a"
+    },
+    "dark": {
+      "bg": "#2e3440",
+      "bgAlt": "#3b4252",
+      "text": "#eceff4",
+      "textMuted": "#d8dee9",
+      "border": "#434c5e",
+      "brand": "#88c0d0",
+      "success": "#a3be8c",
+      "warning": "#ebcb8b",
+      "danger": "#e3a2a9"
+    }
   },
   {
     "name": "rose-pine",
     "desc": "Dawn and main: warm, rosy, natural pine accents",
-    "bg": "#faf4ed",
-    "text": "#4f4a6e",
-    "brand": "#6f5a88"
+    "light": {
+      "bg": "#faf4ed",
+      "bgAlt": "#f2e9e1",
+      "text": "#4f4a6e",
+      "textMuted": "#625e78",
+      "border": "#dfdad9",
+      "brand": "#6f5a88",
+      "success": "#3f6f7a",
+      "warning": "#8d6328",
+      "danger": "#9c4f66"
+    },
+    "dark": {
+      "bg": "#191724",
+      "bgAlt": "#1f1d2e",
+      "text": "#e0def4",
+      "textMuted": "#908caa",
+      "border": "#26233a",
+      "brand": "#c4a7e7",
+      "success": "#9ccfd8",
+      "warning": "#f6c177",
+      "danger": "#eb6f92"
+    }
   }
 ]

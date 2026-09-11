@@ -1,9 +1,10 @@
 // Generate docs/static/themes.json — the index the docs site's Theme
 // Gallery (/themes/) renders its cards from. For every bundled
 // theme in static/themes/ it extracts, from the theme file itself:
-//   name  — file stem
-//   desc  — the header comment's one-line description
-//   bg / text / brand — light-mode identity swatches
+//   name          — file stem
+//   desc          — the header comment's one-line description
+//   light / dark  — the tokens the card's miniature page mock paints
+//                   with (surfaces, text, border, brand, semantics)
 // Run automatically by `npm run build:docs` so the gallery can never
 // drift from static/themes/.
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -20,15 +21,29 @@ const themes = readdirSync(dir)
       .split("\n").map((l) => l.replace(/^\s*\*\s?/, "").trim()).join(" ")
       .replace(/\s+/g, " ");
     const desc = header.match(/— (.+?)(?:\.\s|$)/)?.[1] ?? "";
-    const root = css.match(/:root\s*\{([\s\S]*?)\}/)?.[1] ?? "";
-    const token = (name) =>
-      root.match(new RegExp(`--vp-c-${name}:\\s*(#[0-9a-fA-F]{6})`))?.[1] ?? "";
+    const block = (selector) =>
+      css.match(new RegExp(`${selector}\\s*\\{([\\s\\S]*?)\\}`))?.[1] ?? "";
+    const token = (scope, name) =>
+      scope.match(new RegExp(`--vp-c-${name}:\\s*(#[0-9a-fA-F]{6})`))?.[1]?.toLowerCase() ?? "";
+    const tokens = (scope) => {
+      const get = (n) => token(scope, n);
+      return {
+        bg: get("bg"),
+        bgAlt: get("bg-alt"),
+        text: get("text-1"),
+        textMuted: get("text-2"),
+        border: get("border"),
+        brand: get("brand-1"),
+        success: get("success-1"),
+        warning: get("warning-1"),
+        danger: get("danger-1"),
+      };
+    };
     return {
       name: file.replace(/\.css$/, ""),
       desc,
-      bg: token("bg"),
-      text: token("text-1"),
-      brand: token("brand-1"),
+      light: tokens(block(":root")),
+      dark: tokens(block("\\.dark")),
     };
   });
 
