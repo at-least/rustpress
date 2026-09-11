@@ -493,10 +493,14 @@ impl Site {
     }
 
     fn render_404(&self) -> Result<String, BuildError> {
+        // VPNotFound (theme NotFound.vue): centered code + title + short
+        // divider + quote + outlined link, over the plain content column —
+        // no sidebar/aside, footer visible. Metrics measured off the
+        // deployed vitepress.dev/404.html.
         let nf = self.config.not_found.clone().unwrap_or_default();
         let title = format!(
             "{} | {}",
-            nf.title.clone().unwrap_or_else(|| "Page not found".into()),
+            nf.title.clone().unwrap_or_else(|| "PAGE NOT FOUND".into()),
             self.config.title.clone().unwrap_or_default()
         );
         let shell = layout::Shell {
@@ -505,7 +509,7 @@ impl Site {
             is_home: true,
             has_navbar: true,
             has_sidebar: false,
-            show_footer: false,
+            show_footer: true,
             page_class: None,
             head_extra: String::new(),
             current_url: "/404.html",
@@ -519,24 +523,22 @@ impl Site {
             },
         };
         let home = self.url("/");
-        let nf_title = nf.title.clone().unwrap_or_else(|| "Page not found".into());
-        let nf_quote = nf.quote.clone().unwrap_or_else(|| "The page you are looking for does not exist.".into());
-        let nf_link = nf.link_text.clone().unwrap_or_else(|| "Return home".into());
+        let nf_title = nf.title.clone().unwrap_or_else(|| "PAGE NOT FOUND".into());
+        let nf_quote = nf.quote.clone().unwrap_or_else(|| "But if you don't change your direction, and if you keep looking, you may end up where you are heading.".into());
+        let nf_link = nf.link_text.clone().unwrap_or_else(|| "Take me home".into());
         let content = hypertext::rsx! {
-            <div class="w-full pt-8 px-6 pb-24 md:pt-12 md:pb-32 md:px-8 lg:pt-12 lg:pb-0 lg:px-8">
-                <div class="mx-auto w-full lg:flex lg:justify-center lg:max-w-[62rem] 2xl:max-w-[69rem]">
-                    <div class="relative mx-auto w-full lg:px-8 lg:pb-32 xl:order-1 xl:m-0 xl:min-w-[40rem] lg:max-w-[47rem] 2xl:max-w-[49rem]">
-                        <div class="mx-auto max-w-[43rem]">
-                            <main>
-                                <div id="main" class=(vpdoc::vpdoc_class())>
-                                    <h1>(nf_title)</h1>
-                                    <p>(nf_quote)</p>
-                                    <p><a href=(home)>(nf_link)</a></p>
-                                </div>
-                            </main>
+            <div class="w-full px-6 md:px-8">
+                <main>
+                    <div id="main" class="NotFound pt-24 pb-42 text-center">
+                        <p class="code text-[4rem] leading-[4rem] font-semibold text-text-1">"404"</p>
+                        <h1 class="title pt-3 text-[1.25rem] leading-5 font-bold tracking-[2px] text-text-1">(nf_title)</h1>
+                        <div class="divider mt-6 mb-[1.125rem] mx-auto w-16 h-px bg-(--vp-c-divider)"></div>
+                        <blockquote class="quote mx-auto max-w-64 text-[0.875rem] leading-[1.5] font-medium text-text-2">(nf_quote)</blockquote>
+                        <div class="action pt-5">
+                            <a class="link inline-block border border-brand-1 rounded-[2rem] px-4 py-[3px] text-[0.875rem] leading-[1.5] font-medium text-brand-1 transition-colors duration-[250ms] hover:text-brand-2 hover:border-brand-2" href=(home)>(nf_link)</a>
                         </div>
                     </div>
-                </div>
+                </main>
             </div>
         };
         let content_html = content.render().into_inner();
