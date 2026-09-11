@@ -118,6 +118,9 @@ pub enum LineNumbers {
 pub struct FenceSpec {
     pub lang: String,
     pub label: Option<String>,
+    /// The fence sits inside a `::: code-group`: its label names a tab,
+    /// so it must not become a standalone block title.
+    pub group: bool,
     /// 1-based highlighted line numbers.
     pub hl: Vec<usize>,
     pub ln: Option<LineNumbers>,
@@ -137,6 +140,8 @@ impl FenceSpec {
         for token in rest.split_whitespace() {
             if let Some(v) = token.strip_prefix("lang=") {
                 spec.lang = v.to_string();
+            } else if token == "group=1" {
+                spec.group = true;
             } else if let Some(v) = token.strip_prefix("hl=") {
                 spec.hl = parse_line_spec(v);
             } else if let Some(v) = token.strip_prefix("ln=") {
@@ -508,6 +513,20 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
         if show_ln {
             pre_class.push_str(" line-numbers");
         }
+        // A labeled fence outside a code group renders upstream's
+        // `.vp-code-block-title` card: the label becomes the title bar
+        // text (snippet includes use the filename) and the corner lang
+        // label stays empty, exactly like the deployed site.
+        let titled = spec.label.is_some() && !spec.group;
+        if titled {
+            let title = spec.label.as_deref().unwrap_or_default();
+            write!(
+                output,
+                "<div class=\"vp-code-block-title\"><div class=\"vp-code-block-title-bar\"><span class=\"vp-code-block-title-text\" data-title=\"{}\">{}</span></div>",
+                escape_attr(title),
+                escape_text(title)
+            )?;
+        }
         write!(output, "<pre class=\"{pre_class}\"")?;
         if show_ln && ln_start.is_some_and(|n| n > 1) {
             write!(output, " style=\"counter-reset: gdln {};\"", ln_start.unwrap() - 1)?;
@@ -519,7 +538,11 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
         // VitePress always renders the corner label: the fence's `[title]`
         // when present, otherwise the language name (empty for plain
         // fences, which renders invisible)
-        let label = spec.label.as_deref().unwrap_or(spec.lang.as_str());
+        let label = if titled {
+            ""
+        } else {
+            spec.label.as_deref().unwrap_or(spec.lang.as_str())
+        };
         write!(output, "<span class=\"lang\">{}</span>", escape_text(label))?;
         write!(
             output,
@@ -537,6 +560,9 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
             // grammar upstream; tree-sitter has no grammar to offer here
             render_ansi(output, &lines, &hl, &notation_classes)?;
             output.write_str("</code></pre>")?;
+            if titled {
+                output.write_str("</div>")?;
+            }
             return Ok(());
         }
 
@@ -636,7 +662,11 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                 }
             }
         }
-        output.write_str("</code></pre>")
+        output.write_str("</code></pre>")?;
+        if titled {
+            output.write_str("</div>")?;
+        }
+        Ok(())
     }
 }
 

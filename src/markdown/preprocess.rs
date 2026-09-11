@@ -211,6 +211,13 @@ impl<'a> Preprocess<'a> {
         if ln {
             block.push_str(":line-numbers");
         }
+        // "filename is used as title by default" (upstream snippet
+        // includes): an unlabeled include takes the file's name as its
+        // code-group tab / standalone title bar
+        let label = label.or_else(|| {
+            file.file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+        });
         if let Some(label) = label {
             block.push_str(&format!(" [{label}]"));
         }
@@ -705,7 +712,14 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
             continue;
         }
         if let Some((ch, n)) = opening_fence(bare) {
-            out_lines.push(bare.to_string());
+            // fences inside ::: code-group get a group marker: it tells
+            // the fence renderer their label is a tab name, not a
+            // standalone block title
+            if stack.iter().any(|(_, o)| matches!(o, Open::CodeGroup)) {
+                out_lines.push(format!("{bare} ingroup"));
+            } else {
+                out_lines.push(bare.to_string());
+            }
             fence = Some((ch, n));
             continue;
         }
@@ -944,6 +958,12 @@ fn rewrite_info(info: &str) -> String {
             label = Some(rest[i + 1..i + j].to_string());
             rest.replace_range(i..i + j + 1, " ");
         }
+    // "ingroup" — the containers pass tags fences inside ::: code-group
+    let mut group = false;
+    if let Some(i) = rest.find(" ingroup") {
+        group = true;
+        rest.replace_range(i..i + " ingroup".len(), " ");
+    }
     // {spec} — first brace group that looks like a line spec
     if let Some(i) = rest.find('{')
         && let Some(j) = rest[i..].find('}') {
@@ -977,6 +997,9 @@ fn rewrite_info(info: &str) -> String {
     lang = lang.trim_matches(':').to_string();
 
     let mut out = format!("{FENCE_LANG} lang={lang}");
+    if group {
+        out.push_str(" group=1");
+    }
     if let Some(hl) = hl {
         out.push_str(&format!(" hl={hl}"));
     }
@@ -1333,8 +1356,9 @@ mod include_and_container_tests {
         let out = pre()
             .run("<<< @/snippets/snippet.js{2}\n", "guide/x.md")
             .unwrap();
-        // only line 2 of snippet.js, fenced as js
-        assert!(out.starts_with("```gdcode lang=js\n"), "{out}");
+        // only line 2 of snippet.js, fenced as js; the unlabeled include
+        // takes the filename as its title/tab label
+        assert!(out.starts_with("```gdcode lang=js label=snippet.js\n"), "{out}");
         // open fence skipped by skip(1); the closer remains
         let body: Vec<&str> = out.trim().lines().skip(1).collect();
         assert_eq!(body.len(), 2, "{out}");
