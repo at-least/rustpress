@@ -17,7 +17,7 @@ fn engine() -> MarkdownEngine {
 fn engine_with(md: &rustpress::config::Markdown) -> MarkdownEngine {
     MarkdownEngine::new(
         md,
-        &rustpress::config::SyntaxThemes::default(),
+        &rustpress::config::SyntaxHighlight::default(),
         std::path::Path::new("tests/fixtures"),
         "/",
     )

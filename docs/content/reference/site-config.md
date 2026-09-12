@@ -348,22 +348,22 @@ theme = "catppuccin"  # any bundled name — see the Theme Gallery (/themes/)
 theme = "theme.css"   # your own file
 ```
 
-An unknown name or a missing file fails the build. Source-code colors are a separate setting — see [`[syntax]`](#syntax). Both settings are previewed live in the [Theme Gallery](/themes/) and the [Syntax Theme Gallery](/themes/syntax/).
+An unknown name or a missing file fails the build. Source-code colors are a separate setting — see [`[syntaxHighlight]`](#syntaxhighlight). Both settings are previewed live in the [Theme Gallery](/themes/) and the [Syntax Highlight Gallery](/themes/syntax-highlight/).
 
-### syntax
+### syntaxHighlight
 
 - Type: table with `light` and `dark` strings
 - Default: `light = "github_light"`, `dark = "github_dark"`
 
-The syntax theme: colors for code blocks, one per color mode. Each value is either a bundled theme name or a path (relative to the site directory) to a Helix-format TOML theme file. Every theme shipped with the [Helix editor](https://github.com/helix-editor/helix/tree/master/runtime/themes) is bundled and selectable by its file stem.
+The syntax highlight: colors for code blocks, one per color mode. Each value is either a bundled theme name or a path (relative to the site directory) to a Helix-format TOML theme file. Every theme shipped with the [Helix editor](https://github.com/helix-editor/helix/tree/master/runtime/themes) is bundled and selectable by its file stem.
 
 ```toml
-[syntax]
+[syntaxHighlight]
 light = "github_light"
 dark = "catppuccin_mocha"
 ```
 
-See the [Syntax Theme Gallery](/themes/syntax/) for live previews of every scheme.
+See the [Syntax Highlight Gallery](/themes/syntax-highlight/) for live previews of every theme.
 
 ## Customization
 
@@ -401,7 +401,7 @@ label = "SUCCESS"         # default title (default: NAME uppercased)
 - **`container.*Label`** — the default title text for each container kind, also used for the matching GitHub-flavored alert.
 - **`container.custom`** — additional `::: name` container keywords; each reuses one builtin kind's styling.
 
-There is no `anchor`, `toc`, `headers`, `snippet`, `include`, `theme` or `config()` option: heading ids are always GitHub-style slugs (`{#custom}` overrides one), `[[toc]]` always lists h2–h3, and highlighting is configured by [`[syntax]`](#syntax). See [Markdown Extensions](../guide/markdown) for what the renderer does with each construct.
+There is no `anchor`, `toc`, `headers`, `snippet`, `include`, `theme` or `config()` option: heading ids are always GitHub-style slugs (`{#custom}` overrides one), `[[toc]]` always lists h2–h3, and highlighting is configured by [`[syntaxHighlight]`](#syntaxhighlight). See [Markdown Extensions](../guide/markdown) for what the renderer does with each construct.
 
 ### vite / vue
 

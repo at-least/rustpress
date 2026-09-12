@@ -1,6 +1,6 @@
-/* rustpress docs: Syntax Theme Gallery (/themes/syntax/).
+/* rustpress docs: Syntax Highlight Gallery (/themes/syntax-highlight/).
  *
- * Card mocks are painted inline from syntax-themes.json (generated at
+ * Card mocks are painted inline from syntax-highlight.json (generated at
  * build time by `rustpress syntax-index` from the same Rust resolution
  * the highlighting itself uses): each theme carries its own block
  * background (`ui.background`) and every capture it styles, so the
@@ -174,7 +174,7 @@
     var filter = document.createElement("input");
     filter.type = "search";
     filter.placeholder = "Filter themes…";
-    filter.setAttribute("aria-label", "Filter syntax themes by name");
+    filter.setAttribute("aria-label", "Filter syntax highlight themes by name");
     Object.assign(filter.style, {
       display: "block",
       width: "16rem",
@@ -215,7 +215,7 @@
     grid.appendChild(stockCell);
     cards.push(stockCard);
 
-    fetch(base + "syntax-themes.json")
+    fetch(base + "syntax-highlight.json")
       .then(function (r) { return r.json(); })
       .then(function (list) {
         entries = list;
@@ -233,7 +233,7 @@
       })
       .catch(function () {
         var note = document.createElement("p");
-        note.textContent = "(syntax theme index unavailable — run npm run build:docs)";
+        note.textContent = "(syntax highlight index unavailable — run npm run build:docs)";
         host.appendChild(note);
       });
   });

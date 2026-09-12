@@ -145,11 +145,10 @@ pub struct SiteConfig {
     #[serde(default)]
     pub theme: Option<String>,
 
-    /// Source-code syntax color scheme ([syntax] section) — separate
-    /// from the UI theme. Vendored: all Helix editor color schemes,
-    /// selected by file stem; any Helix theme .toml path also works.
+    /// Source-code syntax highlight colors ([syntaxHighlight] section)
+    /// — separate from the UI theme.
     #[serde(default)]
-    pub syntax: SyntaxThemes,
+    pub syntax_highlight: SyntaxHighlight,
 
     /// Dark-mode behavior: `true` (default, toggleable, follows system),
     /// `false` (light only, no toggle), `"dark"` (dark default,
@@ -507,9 +506,9 @@ impl OutlineConfig {
     }
 }
 
-// The syntax color scheme ([syntax] below) selects from the vendored
-// Helix themes by file stem; the defaults live in default_light_theme /
-// default_dark_theme.
+// The syntax highlight colors ([syntaxHighlight] below) select from
+// the vendored Helix themes by file stem; the defaults live in
+// default_light_theme / default_dark_theme.
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
@@ -601,17 +600,17 @@ fn default_dark_theme() -> String {
     "github_dark".into()
 }
 
-/// The syntax-highlighting theme pair.
+/// The syntax highlight theme pair.
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
-pub struct SyntaxThemes {
+pub struct SyntaxHighlight {
     #[serde(default = "default_light_theme")]
     pub light: String,
     #[serde(default = "default_dark_theme")]
     pub dark: String,
 }
 
-impl Default for SyntaxThemes {
+impl Default for SyntaxHighlight {
     fn default() -> Self {
         toml::from_str("").unwrap()
     }
@@ -905,14 +904,16 @@ mod tests {
 
     #[test]
     fn syntax_section_configurable() {
-        // syntax color scheme: separate top-level section, defaults to
+        // syntax highlight: separate top-level section, defaults to
         // Helix's github_light/github_dark, overridable by name
         let c = parse("");
-        assert_eq!(c.syntax.light, "github_light");
-        assert_eq!(c.syntax.dark, "github_dark");
-        let c = parse("[syntax]\nlight = \"base16-ocean.light\"\ndark = \"base16-ocean.dark\"\n");
-        assert_eq!(c.syntax.light, "base16-ocean.light");
-        assert_eq!(c.syntax.dark, "base16-ocean.dark");
+        assert_eq!(c.syntax_highlight.light, "github_light");
+        assert_eq!(c.syntax_highlight.dark, "github_dark");
+        let c = parse(
+            "[syntaxHighlight]\nlight = \"base16-ocean.light\"\ndark = \"base16-ocean.dark\"\n",
+        );
+        assert_eq!(c.syntax_highlight.light, "base16-ocean.light");
+        assert_eq!(c.syntax_highlight.dark, "base16-ocean.dark");
         // theme key no longer exists under [markdown]
         let err = toml::from_str::<SiteConfig>("[markdown.theme]\nlight = \"x\"\n").unwrap_err();
         assert!(err.to_string().contains("theme"), "{err}");

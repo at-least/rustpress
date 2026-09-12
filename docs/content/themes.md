@@ -21,4 +21,4 @@ Pick a card and **the site you are reading re-colors instantly** — every page,
 theme = "catppuccin"   # any name from the cards above
 ```
 
-That is the whole integration: the theme's CSS ships in the binary, lands in your output under `themes/`, and every page links it after the base stylesheet. Unset, `theme` gives the stock look. Code blocks have their own colors — the [Syntax Theme Gallery](/themes/syntax/).
+That is the whole integration: the theme's CSS ships in the binary, lands in your output under `themes/`, and every page links it after the base stylesheet. Unset, `theme` gives the stock look. Code blocks have their own colors — the [Syntax Highlight Gallery](/themes/syntax-highlight/).

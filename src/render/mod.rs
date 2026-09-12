@@ -46,7 +46,7 @@ impl Site {
         let content_dir = site_dir.join(&config.src_dir);
         let mut content = Content::load(&content_dir, &config.src_exclude)?;
         let sidebars = Sidebars::build(&config, &content);
-        let engine = MarkdownEngine::new(&config.markdown, &config.syntax, site_dir, &config.base)?;
+        let engine = MarkdownEngine::new(&config.markdown, &config.syntax_highlight, site_dir, &config.base)?;
         // git timestamps beat mtimes: a fresh clone's mtimes are checkout
         // time, which would make "last updated" meaningless. `page.src` is
         // relative to the process cwd (`demo/content/…` for `rustpress
@@ -119,7 +119,7 @@ impl Site {
         // `.css` is the site's own file, copied into the output under
         // `themes/<basename>`. Either way the page links one file by its
         // own name. Unset = the stock look. Syntax colors are NOT here —
-        // they live in the [syntax] section of rustpress.toml.
+        // they live in the [syntaxHighlight] section of rustpress.toml.
         let (theme_link, theme_source) = match config.theme.as_deref() {
             None => (None, None),
             Some(value) if value.ends_with(".css") => {
