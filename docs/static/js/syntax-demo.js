@@ -1,4 +1,4 @@
-/* rustpress docs: Syntax Highlight Gallery (/syntax-highlight/).
+/* rustpress docs: Syntax Highlight (/syntax-highlight/).
  *
  * Card mocks are painted inline from syntax-highlight.json (generated at
  * build time by `rustpress syntax-index` from the same Rust resolution
@@ -169,7 +169,7 @@
     }
 
     host.setAttribute("role", "group");
-    host.setAttribute("aria-label", "Live bundled syntax-theme demo");
+    host.setAttribute("aria-label", "Live bundled syntax highlight demo");
 
     var filter = document.createElement("input");
     filter.type = "search";

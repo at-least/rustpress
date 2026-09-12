@@ -116,7 +116,7 @@ rustpress ships one design, and the supported customization is **colors only** �
 theme = "catppuccin"   # UI colors — every bundled theme in the Theme Gallery
 
 [syntaxHighlight]
-light = "github_light" # code colors — one per mode, all in the Syntax Highlight Gallery
+light = "github_light" # code colors — one per mode, all in the Syntax Highlight gallery
 dark = "catppuccin_mocha"
 ```
 

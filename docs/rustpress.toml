@@ -129,7 +129,7 @@ base = "/guide/"
     link = "themes"
 
     [[sidebar."/guide/".items.items]]
-    text = "Syntax Highlight Gallery"
+    text = "Syntax Highlight"
     base = "/"
     link = "syntax-highlight"
 
