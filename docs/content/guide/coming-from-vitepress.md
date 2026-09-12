@@ -99,7 +99,7 @@ Key-by-key differences:
 | `cleanUrls` | no option; URLs are always directory-style |
 | `rewrites` with `path-to-regexp` params or a function | static map plus a trailing `:rest*` only |
 | `markdown.theme` (Shiki) | [`[syntax]`](../reference/site-config#syntax) — Helix TOML themes |
-| `.vitepress/theme/custom.css` | [`theme`](./theming) — a path to a CSS file |
+| `.vitepress/theme/custom.css` | [`theme`](#theming) — a path to a CSS file |
 | `themeConfig.lastUpdated.text` | flat `lastUpdatedText` |
 | `themeConfig.search.options.translations` | `[search.translations]` |
 | `markdown.image.lazyLoad` | `[markdown.image] lazyLoading` (the upstream spelling is accepted too) |
@@ -108,12 +108,26 @@ Key-by-key differences:
 
 Unknown keys fail the build, so the first `rustpress build` after a migration is an inventory of what did not map. The complete list of options is in [Site Config](../reference/site-config) and [Default Theme Config](../reference/default-theme-config).
 
+## Theming
+
+rustpress ships one design, and the supported customization is **colors only** — two settings in `rustpress.toml`:
+
+```toml
+theme = "catppuccin"   # UI colors — every bundled theme in the Theme Gallery
+
+[syntax]
+light = "github_light" # code colors — one per mode, all in the Syntax Theme Gallery
+dark = "catppuccin_mocha"
+```
+
+That is the whole surface. Overriding `--vp-*` variables in a CSS file of your own is possible but undocumented and not recommended; if you want to restyle components, swap fonts, or extend the theme itself, [VitePress](https://vitepress.dev) is the tool built for it.
+
 ## What has no counterpart
 
 rustpress has no JavaScript at build time and no Vue at run time. These VitePress features are therefore absent by design, not on a roadmap:
 
 - **Vue in markdown** — `<script setup>`, `{{ }}` interpolation, components, `<ClientOnly>`, `v-pre`.
-- **Custom themes and theme extension** — `.vitepress/theme/index.ts`, `enhanceApp`, layout slots, overriding internal components. Customization stops at colors ([Theming](./theming)); past that, VitePress is the tool.
+- **Custom themes and theme extension** — `.vitepress/theme/index.ts`, `enhanceApp`, layout slots, overriding internal components. Customization stops at colors ([Theming](#theming)); past that, VitePress is the tool.
 - **Build-time data loading** — `*.data.js` loaders, `createContentLoader`.
 - **Dynamic routes** — `[param].md` with a `.paths.js` loader.
 - **Build hooks and Vite/Vue config** — `transformHead`, `transformHtml`, `transformPageData`, `buildEnd`, `vite`, `vue`, `markdown.config()`.

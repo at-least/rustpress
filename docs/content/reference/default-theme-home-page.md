@@ -61,7 +61,7 @@ Each action has:
 
 ### Customizing the name color
 
-rustpress uses the brand color (`--vp-c-brand-1`) for the `name`. However, you may customize this color by overriding `--vp-home-hero-name-color` variable in your [theme CSS](../guide/theming).
+rustpress uses the brand color (`--vp-c-brand-1`) for the `name`. However, you may customize this color by overriding `--vp-home-hero-name-color` variable in your [theme CSS](../guide/coming-from-vitepress#theming).
 
 ```css
 :root {

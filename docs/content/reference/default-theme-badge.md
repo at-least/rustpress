@@ -36,7 +36,7 @@ Code above renders like:
 
 ## Customize Type Color
 
-You can customize the style of badges by overriding css variables in your [theme CSS](../guide/theming). The following are the default values:
+You can customize the style of badges by overriding css variables in your [theme CSS](../guide/coming-from-vitepress#theming). The following are the default values:
 
 ```css
 :root {

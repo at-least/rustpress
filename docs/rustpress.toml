@@ -134,10 +134,6 @@ base = "/guide/"
     link = "themes/syntax"
 
     [[sidebar."/guide/".items.items]]
-    text = "Theming"
-    link = "theming"
-
-    [[sidebar."/guide/".items.items]]
     text = "Sitemap Generation"
     link = "sitemap-generation"
 
