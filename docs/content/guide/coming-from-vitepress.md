@@ -98,7 +98,7 @@ Key-by-key differences:
 | `outDir` | always `<site>/public`, not configurable |
 | `cleanUrls` | no option; URLs are always directory-style |
 | `rewrites` with `path-to-regexp` params or a function | static map plus a trailing `:rest*` only |
-| `markdown.theme` (Shiki) | [`[code]`](../reference/site-config#code) — Helix TOML themes |
+| `markdown.theme` (Shiki) | [`[code]`](../reference/site-config#code) — TOML themes, vendored from Helix |
 | `.vitepress/theme/custom.css` | [`theme`](#theming) — a path to a CSS file |
 | `themeConfig.lastUpdated.text` | flat `lastUpdatedText` |
 | `themeConfig.search.options.translations` | `[search.translations]` |
@@ -140,7 +140,7 @@ rustpress has no JavaScript at build time and no Vue at run time. These VitePres
 
 A few options exist only on this side:
 
-- `[code]` with all 218 Helix editor themes bundled.
+- `[code]` with all 218 themes vendored from the Helix editor.
 - `[markdown] codeCopyButton = false` to drop the copy button.
 - `[notFound]` title/quote/link text for the 404 page.
 - `askAiUrl` for a navbar link.
