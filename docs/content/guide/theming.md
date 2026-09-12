@@ -136,7 +136,7 @@ attrs = { rel = "preload", href = "/fonts/my-font.woff2", as = "font", type = "f
 Code blocks are highlighted by tree-sitter and colored by a pair of themes — one for light mode, one for dark — set in the `[syntax]` section. Each value is one of:
 
 - `github-light` / `github-dark`, the defaults;
-- the file stem of any of the **218 themes bundled with the [Helix](https://helix-editor.com/) editor**, for example `catppuccin_latte`, `catppuccin_mocha`, `gruvbox`, `nord`, `onedark`, `solarized_light`, `tokyonight`;
+- the file stem of any of the **218 themes bundled with the [Helix](https://helix-editor.com/) editor**, for example `catppuccin_latte`, `catppuccin_mocha`, `gruvbox`, `nord`, `onedark`, `solarized_light`, `tokyonight` — previewed live in the [Syntax Theme Gallery](/themes/syntax/);
 - a path, relative to the site directory, to a Helix-format TOML theme file of your own (the value must end in `.toml`).
 
 ```toml [rustpress.toml]

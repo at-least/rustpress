@@ -295,6 +295,89 @@ fn collect_chain(
     out.push(raw);
 }
 
+/// One resolved capture style, JSON-shaped for the gallery index; absent
+/// slots are omitted so the file stays small.
+#[derive(Debug, serde::Serialize, PartialEq)]
+pub struct StyleJson {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fg: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bg: Option<String>,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub bold: bool,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub italic: bool,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub underline: bool,
+}
+
+/// One theme in the gallery index: the palette the demo page needs to
+/// paint a mock code block and to inject live rules — the block's own
+/// background/foreground (`ui.background`, falling back to `ui.window`
+/// / `ui.text`, and simply absent for themes that define neither, like
+/// the github pair) plus every standard capture it styles.
+#[derive(Debug, serde::Serialize, PartialEq)]
+pub struct GalleryEntry {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bg: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fg: Option<String>,
+    pub styles: BTreeMap<String, StyleJson>,
+}
+
+/// Every built-in syntax theme (the vendored github pair plus all Helix
+/// color schemes), resolved and sorted by name — the source of
+/// `syntax-themes.json`, the index behind the docs site's syntax demo
+/// page (written by `rustpress syntax-index`).
+pub fn gallery_entries() -> Vec<GalleryEntry> {
+    let mut names: Vec<String> = HELIX_THEMES
+        .files()
+        .filter_map(|f| f.path().file_stem()?.to_str().map(str::to_string))
+        .collect();
+    names.push("github-light".into());
+    names.push("github-dark".into());
+    names.sort();
+
+    let capture_styles = |theme: &SyntaxTheme| -> BTreeMap<String, StyleJson> {
+        let mut styles = BTreeMap::new();
+        for name in super::highlight::CAPTURE_NAMES {
+            let Some(style) = theme.resolve(name) else {
+                continue;
+            };
+            let ThemeStyle { fg, bg, bold, italic, underline } = style.clone();
+            if fg.is_none() && bg.is_none() && !bold && !italic && !underline {
+                continue;
+            }
+            styles.insert(super::highlight::tk_class(name), StyleJson { fg, bg, bold, italic, underline });
+        }
+        styles
+    };
+
+    names
+        .into_iter()
+        .filter_map(|name| {
+            let src = builtin_src(&name).or_else(|| helix_src(&name))?;
+            let theme = load_chain(src, Some(&name), Path::new("."));
+            if theme.is_empty() {
+                return None;
+            }
+            let ui_bg = theme
+                .resolve("ui.background")
+                .map(|s| s.bg.clone())
+                .unwrap_or_default()
+                .or_else(|| theme.resolve("ui.window")?.bg.clone());
+            let ui_fg = theme
+                .resolve("ui.background")
+                .map(|s| s.fg.clone())
+                .unwrap_or_default()
+                .or_else(|| theme.resolve("ui.text")?.fg.clone());
+            let styles = capture_styles(&theme);
+            (!styles.is_empty()).then(|| GalleryEntry { name, bg: ui_bg, fg: ui_fg, styles })
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -318,5 +401,26 @@ mod tests {
         theme.insert("keyword".into(), ThemeStyle { fg: Some("#d73a49".into()), ..Default::default() });
         assert_eq!(theme.resolve("keyword").unwrap().fg.as_deref(), Some("#d73a49"));
         assert!(theme.resolve("type").is_none());
+    }
+
+    #[test]
+    fn gallery_index_covers_all_builtins() {
+        let entries = gallery_entries();
+        // themes whose palette references resolve to nothing (e.g. the
+        // ttox pair) yield no stylable captures and are left out
+        assert!(entries.len() >= helix_count() - 2);
+        assert!(entries.len() <= helix_count() + 2);
+        assert!(entries.windows(2).all(|w| w[0].name < w[1].name));
+        for name in ["github-light", "github-dark", "everforest_dark"] {
+            assert!(entries.iter().any(|e| e.name == name), "{name} missing");
+        }
+
+        let github_light = entries.iter().find(|e| e.name == "github-light").unwrap();
+        assert_eq!(github_light.styles["tk-keyword"].fg.as_deref(), Some("#c62739"));
+        assert_eq!(github_light.bg, None); // no ui.* scopes in the github pair
+
+        let everforest = entries.iter().find(|e| e.name == "everforest_dark").unwrap();
+        assert!(everforest.bg.as_deref().is_some_and(|bg| bg.starts_with('#')));
+        assert!(everforest.styles["tk-comment"].italic);
     }
 }

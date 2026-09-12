@@ -44,6 +44,12 @@ attrs = { rel = "icon", type = "image/svg+xml", href = "/logo.svg" }
 tag = "script"
 attrs = { src = "/js/theme-demo.js" }
 
+# Live syntax-theme demo (/themes/syntax/): same pattern, no-op
+# without its gallery host.
+[[head]]
+tag = "script"
+attrs = { src = "/js/syntax-demo.js" }
+
 [[nav]]
 text = "Guide"
 link = "/guide/what-is-rustpress/"

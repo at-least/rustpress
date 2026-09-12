@@ -22,3 +22,5 @@ theme = "catppuccin"   # any name from the cards above
 ```
 
 That is the whole integration: the theme's CSS ships in the binary, lands in your output under `themes/`, and every page links it after the base stylesheet. Your own design is a `.css` file of your own — copy any bundled file as the starting point. The [Theming](/guide/theming/) guide covers the details.
+
+Code blocks have their own color layer, chosen from a different shelf: the [Syntax Theme Gallery](/themes/syntax/) demos all 218 bundled Helix schemes and the `github-light` / `github-dark` pair the same way.

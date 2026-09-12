@@ -35,6 +35,13 @@ enum Command {
         #[command(subcommand)]
         cmd: ParityCmd,
     },
+    /// Write the syntax-theme gallery index JSON (docs-site build helper).
+    #[command(hide = true)]
+    SyntaxIndex {
+        /// Where to write the JSON index.
+        #[arg(value_name = "FILE")]
+        out: PathBuf,
+    },
 }
 
 #[derive(Subcommand)]
@@ -98,6 +105,19 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::Serve { site, port } => rustpress::serve::run(site, port)
             .await,
+        Command::SyntaxIndex { out } => {
+            let entries = rustpress::markdown::syntax_theme::gallery_entries();
+            // compact, not pretty: the gallery fetches this on every page
+            // load and ~220 themes × ~40 captures add up
+            let json = serde_json::to_string(&entries)?;
+            if let Some(parent) = out.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(&out, json + "\n")
+                .with_context(|| format!("writing {}", out.display()))?;
+            println!("syntax index: {} themes → {}", entries.len(), out.display());
+            Ok(())
+        }
         Command::Parity { cmd } => match cmd {
             ParityCmd::Check {
                 site,

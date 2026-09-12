@@ -92,7 +92,7 @@ pub const CAPTURE_NAMES: &[&str] = &[
 /// CSS class for a capture name (dots become dashes). The markdown
 /// grammars emit the legacy `text.*` capture set; they are normalized
 /// onto the modern scopes `syntax.css` already carries.
-fn tk_class(capture: &str) -> String {
+pub fn tk_class(capture: &str) -> String {
     let capture = match capture {
         "text.title" => "markup.heading",
         "text.literal" => "markup.raw.inline",
