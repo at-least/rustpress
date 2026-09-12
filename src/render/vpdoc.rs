@@ -81,8 +81,11 @@ pub const VPDOC_CLASSES: &str = concat!(
     " [&_pre_code]:px-6 [&_pre_code]:w-fit [&_pre_code]:min-w-full",
     " [&_pre_code]:[tab-size:4] [&_pre_code]:leading-(--vp-code-line-height)",
     " [&_pre_code]:text-[0.875em] [&_pre_code]:text-(--vp-code-block-color)",
-    " [&_pre_code]:transition-colors [&_pre_code]:duration-500 [&_.line]:inline-block",
-    " [&_.line]:min-h-[1lh] [&_.line]:w-full [&_.line.hl]:bg-(--vp-code-line-highlight-color)",
+    " [&_pre_code]:transition-colors [&_pre_code]:duration-500",
+    // code blocks inside a custom block keep the rounded, unbleed look at
+    // every width and sit on an 8px margin (upstream `.custom-block
+    // div[class*=language-] { margin: .5rem 0; border-radius: .5rem }`)
+    " [&_.custom-block_pre]:mx-0 [&_.custom-block_pre]:my-2 [&_.custom-block_pre]:rounded-lg",
     " [&_pre>.lang]:absolute [&_pre>.lang]:top-[0.125rem] [&_pre>.lang]:right-2",
     " [&_pre>.lang]:z-[2] [&_pre>.lang]:text-[0.75rem] [&_pre>.lang]:font-medium",
     " [&_pre>.lang]:select-none [&_pre>.lang]:text-(--vp-code-lang-color)",

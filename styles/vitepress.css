@@ -751,33 +751,53 @@ button:focus-visible {
 }
 
 /* ── code block line notations ([!code …]) and line numbers ─────────── */
+/* Plain `.line` spans stay inline (the \n between them forms the line
+   boxes, matching upstream's 1.7 line-height exactly). Only lines that
+   carry a background go inline-block with the full-bleed trick, like
+   upstream's .highlighted/.diff rules. */
 @layer components {
+  .vp-doc pre .line.hl,
+  .vp-doc pre .line.warning,
+  .vp-doc pre .line.error,
+  .vp-doc pre .line.diff.add,
+  .vp-doc pre .line.diff.remove {
+    display: inline-block;
+    width: calc(100% + 3rem);
+    margin: 0 -1.5rem;
+    padding: 0 1.5rem;
+    transition: background-color 0.5s;
+  }
   .vp-doc pre .line.hl {
     background-color: var(--vp-code-line-highlight-color);
-    transition: background-color 0.5s;
   }
   .vp-doc pre.has-focus .line:not(.focus) {
-    opacity: 0.65;
-    transition: opacity 0.25s;
+    filter: blur(0.095rem);
+    opacity: 0.7;
+    transition: filter 0.35s, opacity 0.35s;
   }
-  .vp-doc pre .line.diff.add,
-  .vp-doc pre .line.diff.remove,
-  .vp-doc pre .line.warning,
-  .vp-doc pre .line.error {
-    transition: background-color 0.5s;
-    padding-inline: 0.5rem;
-    margin-inline: -0.5rem;
+  .vp-doc pre.has-focus:hover .line:not(.focus) {
+    filter: blur(0);
+    opacity: 1;
   }
   .vp-doc pre .line.diff.add {
     background-color: var(--vp-code-line-diff-add-color);
   }
+  .vp-doc pre .line.diff.add::before,
+  .vp-doc pre .line.diff.remove::before {
+    position: absolute;
+    left: 0.625rem;
+  }
+  .vp-doc pre .line.diff.add::before {
+    content: "+";
+    color: var(--vp-code-line-diff-add-symbol-color);
+  }
   .vp-doc pre .line.diff.remove {
     background-color: var(--vp-code-line-diff-remove-color);
-    user-select: none;
+    opacity: 0.7;
   }
-  .vp-doc pre .line.diff.remove :is(a, span) {
-    opacity: 0.75;
-    text-decoration: line-through;
+  .vp-doc pre .line.diff.remove::before {
+    content: "-";
+    color: var(--vp-code-line-diff-remove-symbol-color);
   }
   .vp-doc pre .line.warning {
     background-color: var(--vp-code-line-warning-color);
