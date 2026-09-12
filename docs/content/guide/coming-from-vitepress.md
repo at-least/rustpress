@@ -98,7 +98,7 @@ Key-by-key differences:
 | `outDir` | always `<site>/public`, not configurable |
 | `cleanUrls` | no option; URLs are always directory-style |
 | `rewrites` with `path-to-regexp` params or a function | static map plus a trailing `:rest*` only |
-| `markdown.theme` (Shiki) | [`[syntaxHighlight]`](../reference/site-config#syntaxhighlight) — Helix TOML themes |
+| `markdown.theme` (Shiki) | [`[syntax_highlight]`](../reference/site-config#syntax_highlight) — Helix TOML themes |
 | `.vitepress/theme/custom.css` | [`theme`](#theming) — a path to a CSS file |
 | `themeConfig.lastUpdated.text` | flat `lastUpdatedText` |
 | `themeConfig.search.options.translations` | `[search.translations]` |
@@ -115,7 +115,7 @@ rustpress ships one design, and the supported customization is **colors only** �
 ```toml
 theme = "catppuccin"   # UI colors — every bundled theme in the Theme Gallery
 
-[syntaxHighlight]
+[syntax_highlight]
 light = "github_light" # code colors — one per mode, all in the Syntax Highlight gallery
 dark = "catppuccin_mocha"
 ```
@@ -140,7 +140,7 @@ rustpress has no JavaScript at build time and no Vue at run time. These VitePres
 
 A few options exist only on this side:
 
-- `[syntaxHighlight]` with all 218 Helix editor themes bundled.
+- `[syntax_highlight]` with all 218 Helix editor themes bundled.
 - `[markdown] codeCopyButton = false` to drop the copy button.
 - `[notFound]` title/quote/link text for the 404 page.
 - `askAiUrl` for a navbar link.

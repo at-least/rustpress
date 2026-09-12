@@ -22,7 +22,7 @@ fn render(site: &Site) -> Result<Vec<Page>> {
 ## Using one in your site
 
 ```toml [rustpress.toml]
-[syntaxHighlight]
+[syntax_highlight]
 light = "github_light"       # the defaults — any name from the cards below
 dark = "catppuccin_mocha"
 ```

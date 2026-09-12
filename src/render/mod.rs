@@ -119,7 +119,7 @@ impl Site {
         // `.css` is the site's own file, copied into the output under
         // `themes/<basename>`. Either way the page links one file by its
         // own name. Unset = the stock look. Syntax colors are NOT here —
-        // they live in the [syntaxHighlight] section of rustpress.toml.
+        // they live in the [syntax_highlight] section of rustpress.toml.
         let (theme_link, theme_source) = match config.theme.as_deref() {
             None => (None, None),
             Some(value) if value.ends_with(".css") => {

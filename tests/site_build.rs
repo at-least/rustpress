@@ -309,7 +309,7 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
 
 #[test]
 fn syntax_highlight_pair_is_selectable() {
-    // the [syntaxHighlight] section picks the code colors independently of
+    // the [syntax_highlight] section picks the code colors independently of
     // the UI theme; unknown names fail at engine construction
     let mk = |dark: &str| {
         let engine = MarkdownEngine::new(
@@ -344,7 +344,7 @@ fn custom_helix_toml_theme_file_path() {
     std::fs::write(site_dir.path().join("content/index.md"), "# Home\n").unwrap();
     std::fs::write(
         site_dir.path().join("rustpress.toml"),
-        "[syntaxHighlight]\nlight = \"my.toml\"\ndark = \"github_dark\"\n",
+        "[syntax_highlight]\nlight = \"my.toml\"\ndark = \"github_dark\"\n",
     )
     .unwrap();
     std::fs::write(
@@ -394,7 +394,7 @@ fn helix_themes_are_built_ins() {
     std::fs::write(site_dir.path().join("content/index.md"), "# H\n").unwrap();
     std::fs::write(
         site_dir.path().join("rustpress.toml"),
-        "[syntaxHighlight]\ndark = \"catppuccin_mocha\"\n",
+        "[syntax_highlight]\ndark = \"catppuccin_mocha\"\n",
     )
     .unwrap();
     let site = Site::load(site_dir.path()).unwrap();

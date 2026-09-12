@@ -145,8 +145,11 @@ pub struct SiteConfig {
     #[serde(default)]
     pub theme: Option<String>,
 
-    /// Source-code syntax highlight colors ([syntaxHighlight] section)
+    /// Source-code syntax highlight colors ([syntax_highlight] section)
     /// — separate from the UI theme.
+    // snake_case in the file (the one section whose name has two words);
+    // rename beats the struct-level camelCase mapping
+    #[serde(rename = "syntax_highlight")]
     #[serde(default)]
     pub syntax_highlight: SyntaxHighlight,
 
@@ -506,7 +509,7 @@ impl OutlineConfig {
     }
 }
 
-// The syntax highlight colors ([syntaxHighlight] below) select from
+// The syntax highlight colors ([syntax_highlight] below) select from
 // the vendored Helix themes by file stem; the defaults live in
 // default_light_theme / default_dark_theme.
 
@@ -910,7 +913,7 @@ mod tests {
         assert_eq!(c.syntax_highlight.light, "github_light");
         assert_eq!(c.syntax_highlight.dark, "github_dark");
         let c = parse(
-            "[syntaxHighlight]\nlight = \"base16-ocean.light\"\ndark = \"base16-ocean.dark\"\n",
+            "[syntax_highlight]\nlight = \"base16-ocean.light\"\ndark = \"base16-ocean.dark\"\n",
         );
         assert_eq!(c.syntax_highlight.light, "base16-ocean.light");
         assert_eq!(c.syntax_highlight.dark, "base16-ocean.dark");
