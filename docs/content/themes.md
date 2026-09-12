@@ -1,6 +1,6 @@
 ---
 title: Theme Gallery
-description: Try every built-in rustpress theme live — pick one and the whole site re-skins instantly, light and dark.
+description: Try every built-in rustpress theme live — pick one and the whole site re-colors instantly, light and dark.
 sidebar: false
 outline: false
 ---
@@ -9,7 +9,7 @@ outline: false
 
 A theme is one CSS file defining every design token — surfaces, text, borders, brand, the semantic colors, shadows — for light and dark alike.
 
-Pick a card below and **the site you are reading re-skins instantly** — every page, links, containers, code blocks, dark mode, everything. The choice lasts for this browser session; the stock card restores the default.
+Pick a card and **the site you are reading re-colors instantly** — every page, code blocks, dark mode. The choice lasts for this browser session; the stock card restores the default.
 
 ::: raw
 <div id="theme-gallery"></div>
@@ -21,4 +21,4 @@ Pick a card below and **the site you are reading re-skins instantly** — every 
 theme = "catppuccin"   # any name from the cards above
 ```
 
-That is the whole integration: the theme's CSS ships in the binary, lands in your output under `themes/`, and every page links it after the base stylesheet. Unset, `theme` gives the stock VitePress look. Code blocks have their own color layer: the [Syntax Theme Gallery](/themes/syntax/).
+That is the whole integration: the theme's CSS ships in the binary, lands in your output under `themes/`, and every page links it after the base stylesheet. Unset, `theme` gives the stock look. Code blocks have their own colors — the [Syntax Theme Gallery](/themes/syntax/).

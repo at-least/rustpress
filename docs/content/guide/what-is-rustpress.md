@@ -26,7 +26,7 @@ rustpress is **not** a general-purpose site framework. There is no Vue, no plugi
 
 - **Content format = VitePress.** Every page is ordinary VitePress markdown. The [Markdown Extensions](./markdown) guide lists exactly what the renderer understands.
 
-- **Renderer = Rust.** [comrak](https://github.com/kivikakk/comrak) parses GFM (tables, task lists, footnotes, GitHub-style heading ids) behind a fence-aware preprocessor that expands `:::` containers, code groups, line-highlight info strings, `<<<` includes and `<Badge>` into HTML. Syntax highlighting is [tree-sitter](https://tree-sitter.github.io/) with the grammars compiled in; color schemes are Helix TOML themes, and all 218 themes bundled with the Helix editor are selectable by name.
+- **Renderer = Rust.** [comrak](https://github.com/kivikakk/comrak) parses GFM (tables, task lists, footnotes, GitHub-style heading ids) behind a fence-aware preprocessor that expands `:::` containers, code groups, line-highlight info strings, `<<<` includes and `<Badge>` into HTML. Syntax highlighting is [tree-sitter](https://tree-sitter.github.io/) with the grammars compiled in; syntax themes are Helix TOML files, and all 218 bundled with the Helix editor are selectable by name.
 
 - **Markup = compiled-in templates.** The whole default theme is rendered server-side from Rust templates. There is no runtime framework to hydrate.
 

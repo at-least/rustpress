@@ -7,7 +7,7 @@ outline: false
 
 # Syntax Theme Gallery
 
-Code blocks have their own colors — the **syntax theme**. Every theme bundled with rustpress is below. **Pick a card and every code block on this page re-colors instantly** — the choice lasts for this browser session, and the stock card restores the default.
+Code blocks have their own colors — the **syntax theme**. Every bundled theme is below. **Pick a card and every code block on this page re-colors instantly** — the choice lasts for this browser session, and the stock card restores the default.
 
 ::: raw
 <div id="syntax-gallery"></div>

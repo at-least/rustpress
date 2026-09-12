@@ -339,9 +339,9 @@ lastUpdated = true
 ### theme
 
 - Type: `string`
-- Default: unset (the stock VitePress look)
+- Default: unset (the stock look)
 
-The UI colors: the stylesheet to link after the theme's own stylesheet on every page. A bare name selects a bundled theme — a complete design (every design token, light and dark) shipped in the binary and extracted to `themes/<name>.css`; a path relative to the site directory ending in `.css` is your own file, copied verbatim into the output under `themes/<basename>` (a partial override or a full theme of your own).
+The UI theme: the stylesheet to link after the theme's own stylesheet on every page. A bare name selects a bundled theme — a complete design (every design token, light and dark) shipped in the binary and extracted to `themes/<name>.css`; a path relative to the site directory ending in `.css` is your own file, copied verbatim into the output under `themes/<basename>` (a partial override or a full theme of your own).
 
 ```toml
 theme = "catppuccin"  # any bundled name — see the Theme Gallery (/themes/)
@@ -355,7 +355,7 @@ An unknown name or a missing file fails the build. Source-code colors are a sepa
 - Type: table with `light` and `dark` strings
 - Default: `light = "github_light"`, `dark = "github_dark"`
 
-The syntax-highlighting color schemes for code blocks, one per color mode. Each value is either a bundled theme name or a path (relative to the site directory) to a Helix-format TOML theme file. Every theme shipped with the [Helix editor](https://github.com/helix-editor/helix/tree/master/runtime/themes) is bundled and selectable by its file stem.
+The syntax theme: colors for code blocks, one per color mode. Each value is either a bundled theme name or a path (relative to the site directory) to a Helix-format TOML theme file. Every theme shipped with the [Helix editor](https://github.com/helix-editor/helix/tree/master/runtime/themes) is bundled and selectable by its file stem.
 
 ```toml
 [syntax]

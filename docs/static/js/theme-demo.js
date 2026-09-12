@@ -2,7 +2,7 @@
  *
  * Every rustpress build ships all bundled themes under /themes/, so
  * trying one is a stylesheet link away: picking a card swaps that link
- * and the whole site re-skins instantly. The choice lasts for the
+ * and the whole site re-colors instantly. The choice lasts for the
  * browser session only (sessionStorage) — stock (no link) is the
  * default.
  *
@@ -216,7 +216,7 @@
     host.appendChild(wrap);
 
     var stockCell = document.createElement("div");
-    stockCell.appendChild(card({ name: "", desc: "the default VitePress look" }));
+    stockCell.appendChild(card({ name: "", desc: "the stock look" }));
     wrap.appendChild(stockCell);
 
     fetch(base + "themes.json")
