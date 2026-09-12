@@ -326,17 +326,16 @@ pub struct GalleryEntry {
     pub styles: BTreeMap<String, StyleJson>,
 }
 
-/// Every built-in syntax theme (the vendored github pair plus all Helix
-/// color schemes), resolved and sorted by name — the source of
-/// `syntax-themes.json`, the index behind the docs site's syntax demo
-/// page (written by `rustpress syntax-index`).
+/// Every vendored Helix color scheme, resolved and sorted by name — the
+/// source of `syntax-themes.json`, the index behind the docs site's
+/// syntax demo page (written by `rustpress syntax-index`). The built-in
+/// github pair is left out: Helix already ships its own `github_light`
+/// / `github_dark`, and showing both reads as a duplicate card.
 pub fn gallery_entries() -> Vec<GalleryEntry> {
     let mut names: Vec<String> = HELIX_THEMES
         .files()
         .filter_map(|f| f.path().file_stem()?.to_str().map(str::to_string))
         .collect();
-    names.push("github-light".into());
-    names.push("github-dark".into());
     names.sort();
 
     let capture_styles = |theme: &SyntaxTheme| -> BTreeMap<String, StyleJson> {
@@ -357,8 +356,7 @@ pub fn gallery_entries() -> Vec<GalleryEntry> {
     names
         .into_iter()
         .filter_map(|name| {
-            let src = builtin_src(&name).or_else(|| helix_src(&name))?;
-            let theme = load_chain(src, Some(&name), Path::new("."));
+            let theme = load_chain(helix_src(&name)?, Some(&name), Path::new("."));
             if theme.is_empty() {
                 return None;
             }
@@ -404,20 +402,19 @@ mod tests {
     }
 
     #[test]
-    fn gallery_index_covers_all_builtins() {
+    fn gallery_index_covers_all_helix_themes() {
         let entries = gallery_entries();
         // themes whose palette references resolve to nothing (e.g. the
         // ttox pair) yield no stylable captures and are left out
         assert!(entries.len() >= helix_count() - 2);
-        assert!(entries.len() <= helix_count() + 2);
+        assert!(entries.len() <= helix_count());
         assert!(entries.windows(2).all(|w| w[0].name < w[1].name));
-        for name in ["github-light", "github-dark", "everforest_dark"] {
-            assert!(entries.iter().any(|e| e.name == name), "{name} missing");
-        }
+        // the built-in github pair is not re-added on top of Helix's own
+        assert!(!entries.iter().any(|e| e.name == "github-light" || e.name == "github-dark"));
 
-        let github_light = entries.iter().find(|e| e.name == "github-light").unwrap();
-        assert_eq!(github_light.styles["tk-keyword"].fg.as_deref(), Some("#c62739"));
-        assert_eq!(github_light.bg, None); // no ui.* scopes in the github pair
+        let github_light = entries.iter().find(|e| e.name == "github_light").unwrap();
+        assert_eq!(github_light.styles["tk-keyword"].fg.as_deref(), Some("#cf222e"));
+        assert_eq!(github_light.bg.as_deref(), Some("#ffffff"));
 
         let everforest = entries.iter().find(|e| e.name == "everforest_dark").unwrap();
         assert!(everforest.bg.as_deref().is_some_and(|bg| bg.starts_with('#')));
