@@ -124,11 +124,11 @@ theme = "theme.css"   # your own file
 
 The selected file is linked on every page after the theme stylesheet (`/vitepress.css`), by its own name under `/themes/` — a custom file is copied there verbatim, bundled ones ship with the binary. Because Tailwind utilities (`text-brand-1`, `bg-bg`, …) and the hand-written component rules both reference the `--vp-*` variables via `@theme inline`, overriding the variable reaches everything — no new classes, no CSS rebuild. Unset, `theme` gives the stock VitePress look.
 
-The **source-code syntax color scheme is a separate setting** — `[syntax]` in `rustpress.toml`. Each of `light`/`dark` takes either a built-in name or a path to your own Helix TOML theme file (relative to the site dir). Built-in names: `github-light` / `github-dark` (vendored defaults), plus **all 218 Helix editor themes** are bundled and selectable by file stem:
+The **source-code syntax color scheme is a separate setting** — `[syntax]` in `rustpress.toml`. Each of `light`/`dark` takes either a bundled theme name or a path to your own Helix TOML theme file (relative to the site dir). **All 218 Helix editor themes** are bundled and selectable by file stem — `github_light` / `github_dark` are the defaults:
 
 ```toml
 [syntax]
-light = "github-light"
+light = "github_light"
 dark = "catppuccin_mocha"        # any of the 218 bundled Helix themes
 # dark = "themes/my-dark.toml"   # or your own Helix/TextMate-style TOML
 ```

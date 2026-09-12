@@ -353,13 +353,13 @@ An unknown name or a missing file fails the build. Source-code colors are a sepa
 ### syntax
 
 - Type: table with `light` and `dark` strings
-- Default: `light = "github-light"`, `dark = "github-dark"`
+- Default: `light = "github_light"`, `dark = "github_dark"`
 
-The syntax-highlighting color schemes for code blocks, one per color mode. Each value is either a bundled theme name or a path (relative to the site directory) to a Helix-format TOML theme file. Besides the two GitHub defaults, every theme shipped with the [Helix editor](https://github.com/helix-editor/helix/tree/master/runtime/themes) is bundled and selectable by its file stem.
+The syntax-highlighting color schemes for code blocks, one per color mode. Each value is either a bundled theme name or a path (relative to the site directory) to a Helix-format TOML theme file. Every theme shipped with the [Helix editor](https://github.com/helix-editor/helix/tree/master/runtime/themes) is bundled and selectable by its file stem.
 
 ```toml
 [syntax]
-light = "github-light"
+light = "github_light"
 dark = "catppuccin_mocha"
 ```
 

@@ -904,8 +904,8 @@ const FG_CLASSES: [&str; 16] = [
     "ansi-fg-bright-white",
 ];
 
-/// github-light/dark terminal palette. The light entries for green, cyan
-/// and bright-black — and every dark entry the rendered docs use — are
+/// GitHub terminal palette (light and dark). The light entries for green,
+/// cyan and bright-black — and every dark entry the rendered docs use — are
 /// measured off the deployed vitepress.dev, whose pinned shiki predates
 /// the current @shikijs/themes palette; the rest follow @shikijs/themes.
 const ANSI_CSS: &str = r#"  .ansi-bold { font-weight: 700; }

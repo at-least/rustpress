@@ -146,8 +146,8 @@ pub struct SiteConfig {
     pub theme: Option<String>,
 
     /// Source-code syntax color scheme ([syntax] section) — separate
-    /// from the UI theme. Vendored: github-light / github-dark; any
-    /// syntect bundled theme name also works.
+    /// from the UI theme. Vendored: all Helix editor color schemes,
+    /// selected by file stem; any Helix theme .toml path also works.
     #[serde(default)]
     pub syntax: SyntaxThemes,
 
@@ -507,9 +507,9 @@ impl OutlineConfig {
     }
 }
 
-// Syntax-highlighting themes are intentionally not configurable: the
-// generator ships one design — the vendored github-light/github-dark
-// pair (see src/markdown/highlight.rs).
+// The syntax color scheme ([syntax] below) selects from the vendored
+// Helix themes by file stem; the defaults live in default_light_theme /
+// default_dark_theme.
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
@@ -594,11 +594,11 @@ pub enum SearchProvider {
 }
 
 fn default_light_theme() -> String {
-    "github-light".into()
+    "github_light".into()
 }
 
 fn default_dark_theme() -> String {
-    "github-dark".into()
+    "github_dark".into()
 }
 
 /// The syntax-highlighting theme pair.
@@ -906,10 +906,10 @@ mod tests {
     #[test]
     fn syntax_section_configurable() {
         // syntax color scheme: separate top-level section, defaults to
-        // the vendored github pair, overridable by name
+        // Helix's github_light/github_dark, overridable by name
         let c = parse("");
-        assert_eq!(c.syntax.light, "github-light");
-        assert_eq!(c.syntax.dark, "github-dark");
+        assert_eq!(c.syntax.light, "github_light");
+        assert_eq!(c.syntax.dark, "github_dark");
         let c = parse("[syntax]\nlight = \"base16-ocean.light\"\ndark = \"base16-ocean.dark\"\n");
         assert_eq!(c.syntax.light, "base16-ocean.light");
         assert_eq!(c.syntax.dark, "base16-ocean.dark");

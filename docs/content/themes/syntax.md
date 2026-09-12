@@ -7,7 +7,7 @@ outline: false
 
 # Syntax Theme Gallery
 
-Code blocks are colored by a [syntax color scheme](/guide/theming/#syntax-color-scheme): a pair of [Helix editor](https://docs.helix-editor.com/themes.html) theme files, one for light mode and one for dark. rustpress bundles all 218 Helix color schemes (the `[syntax]` defaults, `github-light` / `github-dark`, are a separate vendored pair — every card below is a Helix scheme).
+Code blocks are colored by a [syntax color scheme](/guide/theming/#syntax-color-scheme): a pair of [Helix editor](https://docs.helix-editor.com/themes.html) theme files, one for light mode and one for dark. rustpress bundles all 218 Helix color schemes, and the `[syntax]` defaults are Helix's own `github_light` / `github_dark`.
 
 Every card paints the same snippet with that theme's own resolved colors, on its own background — dark schemes sit on their dark ground. **Pick a card and every code block on this page re-colors instantly.** The choice lasts for this browser session; the stock card restores the default.
 
@@ -33,7 +33,7 @@ Each Helix file is a single scheme, so pick two — one per color mode:
 
 ```toml [rustpress.toml]
 [syntax]
-light = "github-light"       # any name from the cards above
+light = "github_light"       # any name from the cards above — these are the defaults
 dark = "catppuccin_mocha"
 ```
 

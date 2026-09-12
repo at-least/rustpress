@@ -41,7 +41,7 @@ pub struct RenderedPage {
 
 #[derive(Debug, thiserror::Error)]
 pub enum MarkdownError {
-    #[error("cannot load syntax theme {value:?}: {detail} (built-in names: github-light, github-dark; a value ending in .toml is resolved as a Helix theme file relative to the site dir)")]
+    #[error("cannot load syntax theme {value:?}: {detail} (built-in names: the file stems of all {} vendored Helix themes, e.g. github_light, catppuccin_mocha; a value ending in .toml is resolved as a Helix theme file relative to the site dir)", syntax_theme::helix_count())]
     ThemeLoad { value: String, detail: String },
     #[error(transparent)]
     Preprocess(#[from] preprocess::PreprocessError),
@@ -88,8 +88,7 @@ impl MarkdownEngine {
         // trusted wrappers (containers, badges) as raw HTML too.
         options.render.r#unsafe = true;
         options.render.tasklist_classes = true;
-        // each syntax theme value is a built-in name (github-light /
-        // github-dark, or any of the vendored Helix themes by file stem)
+        // each syntax theme value is a vendored Helix theme's file stem
         // or a path to a Helix TOML theme file (relative to base_dir)
         let load = |value: &str| -> Result<syntax_theme::SyntaxTheme, MarkdownError> {
             if value.ends_with(".toml") {
@@ -98,15 +97,21 @@ impl MarkdownEngine {
                     value: value.to_string(),
                     detail: e.to_string(),
                 })
-            } else if let Some(theme) = syntax_theme::builtin(value) {
-                Ok(theme)
             } else {
-                syntax_theme::helix_builtin(value).ok_or_else(|| MarkdownError::ThemeLoad {
-                    value: value.to_string(),
-                    detail: format!(
-                        "not a built-in name (built-ins: github-light, github-dark + all {} Helix themes; a value ending in .toml is a file path)",
-                        syntax_theme::helix_count()
-                    ),
+                syntax_theme::helix_builtin(value).ok_or_else(|| {
+                    // a dashed name that exists underscored is almost
+                    // always a leftover of the removed vendored pair
+                    // (github-light → github_light)
+                    let hint = match value.replace('-', "_") {
+                        u if u != value && syntax_theme::helix_builtin(&u).is_some() => {
+                            format!(" — did you mean {u:?}?")
+                        }
+                        _ => String::new(),
+                    };
+                    MarkdownError::ThemeLoad {
+                        value: value.to_string(),
+                        detail: format!("not a built-in name{hint}"),
+                    }
                 })
             }
         };

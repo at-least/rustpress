@@ -135,13 +135,12 @@ attrs = { rel = "preload", href = "/fonts/my-font.woff2", as = "font", type = "f
 
 Code blocks are highlighted by tree-sitter and colored by a pair of themes — one for light mode, one for dark — set in the `[syntax]` section. Each value is one of:
 
-- `github-light` / `github-dark`, the defaults;
-- the file stem of any of the **218 themes bundled with the [Helix](https://helix-editor.com/) editor**, for example `catppuccin_latte`, `catppuccin_mocha`, `gruvbox`, `nord`, `onedark`, `solarized_light`, `tokyonight` — previewed live in the [Syntax Theme Gallery](/themes/syntax/);
+- the file stem of any of the **218 themes bundled with the [Helix](https://helix-editor.com/) editor**, for example `github_light` / `github_dark` (the defaults), `catppuccin_latte`, `catppuccin_mocha`, `gruvbox`, `nord`, `onedark`, `solarized_light`, `tokyonight` — previewed live in the [Syntax Theme Gallery](/themes/syntax/);
 - a path, relative to the site directory, to a Helix-format TOML theme file of your own (the value must end in `.toml`).
 
 ```toml [rustpress.toml]
 [syntax]
-light = "github-light"
+light = "github_light"
 dark = "catppuccin_mocha"
 # dark = "themes/my-dark.toml"   # or your own file
 ```
@@ -150,10 +149,10 @@ The build generates a `syntax.css` from the pair: one rule per capture name for 
 
 ### Writing a theme file
 
-A Helix theme maps dotted tree-sitter capture scopes to styles. Colors are literal hex values or names from the file's `[palette]` table; `inherits` chains onto a built-in name or another file, so a theme can be a handful of overrides:
+A Helix theme maps dotted tree-sitter capture scopes to styles. Colors are literal hex values or names from the file's `[palette]` table; `inherits` chains onto another bundled theme or another file, so a theme can be a handful of overrides:
 
 ```toml [themes/my-dark.toml]
-inherits = "github-dark"
+inherits = "github_dark"
 
 [palette]
 red0 = "#f97583"

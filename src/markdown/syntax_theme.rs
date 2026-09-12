@@ -3,7 +3,7 @@
 //! A theme file maps dotted tree-sitter capture scopes to styles:
 //!
 //! ```toml
-//! inherits = "github-dark"          # optional: built-in or another .toml path
+//! inherits = "github_dark"          # optional: another Helix theme or .toml path
 //!
 //! [palette]
 //! red0 = "#f97583"
@@ -38,7 +38,6 @@ pub fn helix_builtin(name: &str) -> Option<SyntaxTheme> {
     let src = helix_src(name)?;
     Some(load_chain(src, Some(name), Path::new(".")))
 }
-
 /// How many Helix themes are embedded.
 pub fn helix_count() -> usize {
     HELIX_THEMES.files().count()
@@ -199,24 +198,6 @@ impl RawStyle {
     }
 }
 
-const GITHUB_LIGHT: &str = include_str!("../../assets/syntax-themes/github-light.toml");
-const GITHUB_DARK: &str = include_str!("../../assets/syntax-themes/github-dark.toml");
-
-/// Built-in theme sources (the vendored github pair).
-pub fn builtin_src(name: &str) -> Option<&'static str> {
-    match name {
-        "github-light" => Some(GITHUB_LIGHT),
-        "github-dark" => Some(GITHUB_DARK),
-        _ => None,
-    }
-}
-
-/// Built-in theme by name.
-pub fn builtin(name: &str) -> Option<SyntaxTheme> {
-    let src = builtin_src(name)?;
-    Some(load_chain(src, Some(name), Path::new(".")))
-}
-
 /// Load a theme from a `.toml` file.
 pub fn load(path: &Path) -> Result<SyntaxTheme, ThemeError> {
     let src = std::fs::read_to_string(path)
@@ -230,7 +211,7 @@ fn base_dir_of(path: &Path) -> PathBuf {
     path.parent().unwrap_or(Path::new(".")).to_path_buf()
 }
 
-/// Load one theme file/builtin as a chain root→leaf: `inherits` parents
+/// Load one theme file as a chain root→leaf: `inherits` parents
 /// come first, the named theme last. Palettes merge down the chain
 /// (leaf wins on name clashes) and ALL styles resolve against the final
 /// merged palette — Helix semantics (gruvbox_dark_hard's bg0 override
@@ -281,13 +262,11 @@ fn collect_chain(
         }
     };
     if let Some(parent) = &raw.inherits {
-        // parent may be a built-in name (github pair) or a .toml file
+        // parent may be another vendored Helix theme or a .toml file
         if parent.ends_with(".toml") {
             if let Ok(src) = std::fs::read_to_string(base_dir.join(parent)) {
                 collect_chain(&src, Some(parent), base_dir, visiting, out);
             }
-        } else if let Some(src) = builtin_src(parent) {
-            collect_chain(src, Some(parent), base_dir, visiting, out);
         } else if let Some(src) = helix_src(parent) {
             collect_chain(src, Some(parent), base_dir, visiting, out);
         }
@@ -314,8 +293,8 @@ pub struct StyleJson {
 /// One theme in the gallery index: the palette the demo page needs to
 /// paint a mock code block and to inject live rules — the block's own
 /// background/foreground (`ui.background`, falling back to `ui.window`
-/// / `ui.text`, and simply absent for themes that define neither, like
-/// the github pair) plus every standard capture it styles.
+/// / `ui.text`, and simply absent for themes that define neither) plus
+/// every standard capture it styles.
 #[derive(Debug, serde::Serialize, PartialEq)]
 pub struct GalleryEntry {
     pub name: String,
@@ -328,9 +307,7 @@ pub struct GalleryEntry {
 
 /// Every vendored Helix color scheme, resolved and sorted by name — the
 /// source of `syntax-themes.json`, the index behind the docs site's
-/// syntax demo page (written by `rustpress syntax-index`). The built-in
-/// github pair is left out: Helix already ships its own `github_light`
-/// / `github_dark`, and showing both reads as a duplicate card.
+/// syntax demo page (written by `rustpress syntax-index`).
 pub fn gallery_entries() -> Vec<GalleryEntry> {
     let mut names: Vec<String> = HELIX_THEMES
         .files()
@@ -409,8 +386,6 @@ mod tests {
         assert!(entries.len() >= helix_count() - 2);
         assert!(entries.len() <= helix_count());
         assert!(entries.windows(2).all(|w| w[0].name < w[1].name));
-        // the built-in github pair is not re-added on top of Helix's own
-        assert!(!entries.iter().any(|e| e.name == "github-light" || e.name == "github-dark"));
 
         let github_light = entries.iter().find(|e| e.name == "github_light").unwrap();
         assert_eq!(github_light.styles["tk-keyword"].fg.as_deref(), Some("#cf222e"));

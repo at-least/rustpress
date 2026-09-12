@@ -315,7 +315,7 @@ fn syntax_theme_pair_is_selectable() {
         let engine = MarkdownEngine::new(
             &rustpress::config::Markdown::default(),
             &rustpress::config::SyntaxThemes {
-                light: "github-light".into(),
+                light: "github_light".into(),
                 dark: dark.into(),
             },
             Path::new("."),
@@ -323,10 +323,16 @@ fn syntax_theme_pair_is_selectable() {
         );
         engine.map(|e| e.syntax_css())
     };
-    assert!(mk("github-dark").is_ok(), "built-in dark theme");
+    assert!(mk("github_dark").is_ok(), "built-in dark theme");
     let err = mk("no-such-theme").unwrap_err();
     assert!(err.to_string().contains("no-such-theme"), "{err}");
-    let css = mk("github-dark").unwrap();
+    // the removed vendored pair gets a pointed hint at its Helix twin
+    let err = mk("github-dark").unwrap_err();
+    assert!(
+        err.to_string().contains("did you mean \"github_dark\""),
+        "{err}"
+    );
+    let css = mk("github_dark").unwrap();
     assert!(css.contains("html.dark .tk-"), "dark still scoped");
 }
 
@@ -338,7 +344,7 @@ fn custom_helix_toml_theme_file_path() {
     std::fs::write(site_dir.path().join("content/index.md"), "# Home\n").unwrap();
     std::fs::write(
         site_dir.path().join("rustpress.toml"),
-        "[syntax]\nlight = \"my.toml\"\ndark = \"github-dark\"\n",
+        "[syntax]\nlight = \"my.toml\"\ndark = \"github_dark\"\n",
     )
     .unwrap();
     std::fs::write(
