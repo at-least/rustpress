@@ -124,8 +124,11 @@ All located and quantified; none are breakpoint-CSS regressions.
   span a line box), upstream's collapses to 0. No occurrence in the
   corpus; noted for completeness. For the same pseudo-element reason, a
   diff line inside a `:line-numbers` block shows the number gutter but
-  not the `+`/`-` symbol (upstream separates the two); also absent from
-  the corpus.
+  not the `+`/`-` symbol (upstream separates the two). The demo corpus
+  can't host the combo (verbatim upstream mirror), so the viewport gate
+  builds `parity/probe-site/` with exactly that block and pins the
+  behavior plus the restored `.diff.remove` background/opacity
+  (`diff ln *` / `diff remove sym` goldens).
 
 ### Flake note
 

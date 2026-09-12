@@ -25,6 +25,10 @@
 // refresh with `node scripts/parity-viewport.mjs --update` and eyeball
 // the diff before committing.
 //
+// Cases the demo corpus can't host (it is a verbatim upstream mirror —
+// tests/upstream_sync.rs) run against the fixture site built on the fly
+// from parity/probe-site/ and served under /probe/.
+//
 // Skipping: without a usable playwright-chromium install the dynamic
 // axis FAILS by default (repo precedent, tests/common/mod.rs); set
 // RUSTPRESS_ALLOW_NO_PLAYWRIGHT=1 to turn that into a visible skip.
@@ -33,9 +37,12 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, extname, resolve, sep } from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const DIST = join(ROOT, 'demo/public');
+const PROBE_SITE = join(ROOT, 'parity/probe-site');
+const PROBE_DIST = join(PROBE_SITE, 'public');
 const GOLDENS = join(ROOT, 'parity/viewport-goldens.json');
 
 const CSS_PATH = join(ROOT, 'static/vitepress.css');
@@ -133,6 +140,16 @@ const CASES = [
   ['code hl w @768', '/guide/markdown/', 768, `(() => { const e = document.querySelector('.vp-doc pre .line.hl'); return e ? Math.round(e.getBoundingClientRect().width).toString() : 'none'; })()`],
   // <<< includes with {n} keep every line ({n} highlights, not selects)
   ['include hl lines @768', '/guide/markdown/', 768, `(() => { const b = [...document.querySelectorAll('.vp-code-block-title')].find(x => x.querySelector('[data-title="snippet.js"]') && x.querySelector('.line.hl')); return b ? b.querySelectorAll('.line').length.toString() : 'missing'; })()`],
+  // diff notation x line-numbers (fixture site under /probe/ — the demo
+  // corpus is a verbatim upstream mirror and can't host the combo): the
+  // number gutter owns ::before (an un-gated '-' rule once
+  // out-specified the counter) and the removed line keeps its
+  // background + 0.7 opacity (the rule was once lost in a refactor);
+  // unnumbered blocks keep the +/- symbol
+  ['diff ln gutter @768', '/probe/', 768, `getComputedStyle(document.querySelector('.vp-doc pre.line-numbers .line.diff.remove'), '::before').content`],
+  ['diff ln bg @768', '/probe/', 768, `getComputedStyle(document.querySelector('.vp-doc pre.line-numbers .line.diff.remove')).backgroundColor`],
+  ['diff ln opacity @768', '/probe/', 768, `getComputedStyle(document.querySelector('.vp-doc pre.line-numbers .line.diff.remove')).opacity`],
+  ['diff remove sym @768', '/probe/', 768, `getComputedStyle(document.querySelector('.vp-doc pre:not(.line-numbers) .line.diff.remove'), '::before').content`],
   // pager: stacked <640, side-by-side >=640
   ['pager @639', '/guide/markdown/', 639, `(() => { const f = document.querySelector('#VPContent footer'); const l = [...f.querySelectorAll('a')].filter(a => /Previous|Next/i.test(a.textContent)); if (l.length < 2) return 'links:' + l.length; return Math.abs(l[0].getBoundingClientRect().top - l[1].getBoundingClientRect().top) < 2 ? 'row' : 'stacked'; })()`],
   ['pager @640', '/guide/markdown/', 640, `(() => { const f = document.querySelector('#VPContent footer'); const l = [...f.querySelectorAll('a')].filter(a => /Previous|Next/i.test(a.textContent)); if (l.length < 2) return 'links:' + l.length; return Math.abs(l[0].getBoundingClientRect().top - l[1].getBoundingClientRect().top) < 2 ? 'row' : 'stacked'; })()`],
@@ -157,6 +174,12 @@ if (!existsSync(join(DIST, 'index.html'))) {
   console.error('parity-viewport: demo/public missing — run `cargo run -- build demo` first');
   process.exit(1);
 }
+// rebuild the /probe/ fixture site so its computed-style cases always
+// measure the current binary + stylesheet, never a stale public/
+{
+  const out = execFileSync('cargo', ['run', '--quiet', '--', 'build', PROBE_SITE], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] });
+  process.stdout.write(out);
+}
 // stale-build guard: measuring an old build records or checks the
 // wrong values (index.html, not the dir: rewriting files doesn't
 // touch the directory's own mtime)
@@ -174,11 +197,16 @@ if (!existsSync(join(DIST, 'index.html'))) {
 const server = createServer(async (req, res) => {
   try {
     let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+    let dist = DIST;
+    if (p === '/probe' || p.startsWith('/probe/')) {
+      dist = PROBE_DIST;
+      p = p.slice('/probe'.length) || '/';
+    }
     if (p.endsWith('/')) p += 'index.html';
-    let file = resolve(DIST, '.' + p);
-    if (!file.startsWith(resolve(DIST) + sep)) throw new Error('outside dist');
-    if (!existsSync(file)) file = join(DIST, p + '.html');
-    if (!file.startsWith(resolve(DIST) + sep)) throw new Error('outside dist');
+    let file = resolve(dist, '.' + p);
+    if (!file.startsWith(resolve(dist) + sep)) throw new Error('outside dist');
+    if (!existsSync(file)) file = join(dist, p + '.html');
+    if (!file.startsWith(resolve(dist) + sep)) throw new Error('outside dist');
     const body = await readFile(file);
     const types = {
       '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript',

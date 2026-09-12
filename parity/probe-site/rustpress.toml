@@ -1,0 +1,7 @@
+# Fixture site for the viewport gate's computed-style cases that the
+# demo corpus can't host: demo/content is a verbatim mirror of the
+# upstream docs (tests/upstream_sync.rs), so notation combinations
+# upstream doesn't document live here instead. Built by
+# scripts/parity-viewport.mjs, never published.
+
+title = "probe"

@@ -11,3 +11,4 @@ node_modules/
 /parity/cache/
 /parity/upstream.prev.json
 /parity/audit/
+/parity/probe-site/public/
