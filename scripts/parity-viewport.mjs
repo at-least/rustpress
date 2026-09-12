@@ -120,6 +120,19 @@ const CASES = [
   // footer height steps at sm (the line-height regression this guards)
   ['footer h @639', '/guide/what-is-vitepress/', 639, `document.querySelector('#VPContent footer').getBoundingClientRect().height.toFixed(0)`],
   ['footer h @640', '/guide/what-is-vitepress/', 640, `document.querySelector('#VPContent footer').getBoundingClientRect().height.toFixed(0)`],
+  // doc-footer type: last-updated 500 (VPLastUpdated), outline links 400
+  // (upstream .outline-link overrides the container's 500)
+  ['last-updated fw @768', '/guide/what-is-vitepress/', 768, `getComputedStyle(document.querySelector('#VPContent footer .last-updated p')).fontWeight`],
+  ['outline fw @1280', '/guide/what-is-vitepress/', 1280, `getComputedStyle(document.querySelector('.VPDocAsideOutline .outline-link')).fontWeight`],
+  // navbar appearance switch: hidden <768 like upstream .VPNavBarAppearance
+  ['appearance @767', '/guide/what-is-vitepress/', 767, `(() => { const e = document.getElementById('VPSwitchAppearance'); return e && !!e.offsetParent ? 'visible' : 'hidden'; })()`],
+  ['appearance @768', '/guide/what-is-vitepress/', 768, `(() => { const e = document.getElementById('VPSwitchAppearance'); return e && !!e.offsetParent ? 'visible' : 'hidden'; })()`],
+  // code lines are inline (line-height parity): tallest pre is 24 lines
+  ['code max-pre h @768', '/guide/markdown/', 768, `Math.max(...[...document.querySelectorAll('.vp-doc pre')].map(p => Math.round(p.getBoundingClientRect().height))).toString()`],
+  // highlighted lines full-bleed: as wide as their pre
+  ['code hl w @768', '/guide/markdown/', 768, `(() => { const e = document.querySelector('.vp-doc pre .line.hl'); return e ? Math.round(e.getBoundingClientRect().width).toString() : 'none'; })()`],
+  // <<< includes with {n} keep every line ({n} highlights, not selects)
+  ['include hl lines @768', '/guide/markdown/', 768, `(() => { const b = [...document.querySelectorAll('.vp-code-block-title')].find(x => x.querySelector('[data-title="snippet.js"]') && x.querySelector('.line.hl')); return b ? b.querySelectorAll('.line').length.toString() : 'missing'; })()`],
   // pager: stacked <640, side-by-side >=640
   ['pager @639', '/guide/markdown/', 639, `(() => { const f = document.querySelector('#VPContent footer'); const l = [...f.querySelectorAll('a')].filter(a => /Previous|Next/i.test(a.textContent)); if (l.length < 2) return 'links:' + l.length; return Math.abs(l[0].getBoundingClientRect().top - l[1].getBoundingClientRect().top) < 2 ? 'row' : 'stacked'; })()`],
   ['pager @640', '/guide/markdown/', 640, `(() => { const f = document.querySelector('#VPContent footer'); const l = [...f.querySelectorAll('a')].filter(a => /Previous|Next/i.test(a.textContent)); if (l.length < 2) return 'links:' + l.length; return Math.abs(l[0].getBoundingClientRect().top - l[1].getBoundingClientRect().top) < 2 ? 'row' : 'stacked'; })()`],

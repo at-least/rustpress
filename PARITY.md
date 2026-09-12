@@ -33,6 +33,14 @@ missing install into a visible skip. Some goldens encode demo content
 (feature count decides grid columns, title length decides wrap): after
 legitimately editing `demo/content`, refresh with
 `node scripts/parity-viewport.mjs --update` and eyeball the golden diff.
+
+The goldens are a distilled subset of the full-breakpoint audit — a 4
+pages × 15 widths × 4 states landmark sweep (geometry + computed styles
++ screenshots) against a local build of the pinned upstream. Method,
+findings, and the explained-difference ledger live in
+[VIEWPORT-AUDIT.md](VIEWPORT-AUDIT.md); re-run it with
+`node scripts/viewport-audit.mjs` after Tailwind refactors or upstream
+re-pins.
 `--update` re-records whatever our build measures — when values change,
 re-verify them against the pinned upstream build before committing,
 otherwise a real regression would be silently blessed. Run it after

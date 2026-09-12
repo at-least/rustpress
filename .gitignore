@@ -10,3 +10,4 @@ node_modules/
 /docs/public/
 /parity/cache/
 /parity/upstream.prev.json
+/parity/audit/
