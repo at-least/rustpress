@@ -178,6 +178,10 @@ impl<'a> Preprocess<'a> {
                 if token == ":line-numbers" {
                     ln = true;
                 } else if token.chars().all(|c| c.is_ascii_digit() || c == ',' || c == '-') {
+                    // upstream semantics: `{2}` HIGHLIGHTS line 2 (the
+                    // spec passes through to the fence info), it does not
+                    // select a line range — `<<< @/x.js{2}` renders every
+                    // line with line 2 highlighted
                     hl = Some(token.to_string());
                 } else {
                     lang_switch = Some(token.trim_end_matches(':').to_string());
@@ -199,9 +203,6 @@ impl<'a> Preprocess<'a> {
         if let Some(name) = region {
             content = extract_region(&content, &name)?;
         }
-        if let Some(spec) = &hl {
-            content = pick_lines(&content, spec)?;
-        }
         let mut ext = file
             .extension()
             .map(|e| e.to_string_lossy().into_owned())
@@ -214,6 +215,9 @@ impl<'a> Preprocess<'a> {
         let marker = fence_marker_for(&content);
         let mut block = String::new();
         block.push_str(&format!("{marker}{ext}"));
+        if let Some(spec) = &hl {
+            block.push_str(&format!("{{{spec}}}"));
+        }
         if ln {
             block.push_str(":line-numbers");
         }
@@ -1372,27 +1376,27 @@ mod include_and_container_tests {
     }
 
     #[test]
-    fn include_with_line_selection() {
+    fn include_with_line_highlight() {
         let out = pre()
             .run("<<< @/snippets/snippet.js{2}\n", "guide/x.md")
             .unwrap();
-        // only line 2 of snippet.js, fenced as js; the unlabeled include
-        // takes the filename as its title/tab label
-        assert!(out.starts_with("```gdcode lang=js label=snippet.js\n"), "{out}");
-        // open fence skipped by skip(1); the closer remains
+        // upstream semantics: {2} highlights line 2 and every line is
+        // rendered; the unlabeled include takes the filename as its
+        // title/tab label
+        assert!(out.starts_with("```gdcode lang=js hl=2 label=snippet.js\n"), "{out}");
         let body: Vec<&str> = out.trim().lines().skip(1).collect();
-        assert_eq!(body.len(), 2, "{out}");
-        assert_eq!(body[0], "  // ..");
+        assert_eq!(body.len(), 4, "{out}"); // 3 content lines + closer
+        assert_eq!(body[1], "  // ..");
     }
 
     #[test]
-    fn include_with_range_and_lang_switch() {
+    fn include_with_highlight_and_lang_switch() {
         let out = pre()
             .run("<<< @/snippets/snippet.js{1-2 ansi}\n", "guide/x.md")
             .unwrap();
-        assert!(out.contains("```gdcode lang=ansi"), "{out}");
+        assert!(out.contains("```gdcode lang=ansi hl=1-2"), "{out}");
         let body = out.lines().count() - 2; // minus open/close fences
-        assert_eq!(body, 2, "{out}");
+        assert_eq!(body, 3, "{out}"); // all lines kept, 1-2 highlighted
     }
 
     #[test]
@@ -1400,9 +1404,9 @@ mod include_and_container_tests {
         let out = pre()
             .run("<<< @/snippets/snippet-with-region.js#snippet{1 ts:line-numbers}\n", "g/x.md")
             .unwrap();
-        assert!(out.contains("```gdcode lang=ts ln=true"), "{out}");
+        assert!(out.contains("```gdcode lang=ts hl=1 ln=true"), "{out}");
         assert!(out.contains("function foo()"), "region line: {out}");
-        assert_eq!(out.lines().count() - 2, 1, "one content line: {out}");
+        assert_eq!(out.lines().count() - 2, 3, "all three region lines: {out}");
     }
 
     #[test]
