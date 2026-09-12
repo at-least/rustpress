@@ -206,6 +206,24 @@
     host.setAttribute("role", "group");
     host.setAttribute("aria-label", "Live bundled-theme demo");
 
+    var filter = document.createElement("input");
+    filter.type = "search";
+    filter.placeholder = "Filter themes…";
+    filter.setAttribute("aria-label", "Filter UI themes by name");
+    Object.assign(filter.style, {
+      display: "block",
+      width: "16rem",
+      maxWidth: "100%",
+      margin: "12px 0",
+      padding: "6px 10px",
+      borderRadius: "8px",
+      border: "1px solid var(--vp-c-border)",
+      background: "var(--vp-c-bg)",
+      color: "var(--vp-c-text-1)",
+      font: "inherit",
+    });
+    host.appendChild(filter);
+
     var wrap = document.createElement("div");
     Object.assign(wrap.style, {
       display: "grid",
@@ -215,18 +233,27 @@
     });
     host.appendChild(wrap);
 
-    var stockCell = document.createElement("div");
-    stockCell.appendChild(card({ name: "", desc: "the stock look" }));
-    wrap.appendChild(stockCell);
+    var cards = [];
+    var addCard = function (entry) {
+      var cell = document.createElement("div");
+      cell.appendChild(card(entry));
+      wrap.appendChild(cell);
+      cards.push(cell.firstChild);
+    };
+
+    filter.oninput = function () {
+      var q = filter.value.toLowerCase();
+      cards.forEach(function (c) {
+        c.parentNode.style.display = c.dataset.theme.indexOf(q) !== -1 ? "" : "none";
+      });
+    };
+
+    addCard({ name: "", desc: "the stock look" });
 
     fetch(base + "themes.json")
       .then(function (r) { return r.json(); })
       .then(function (entries) {
-        entries.forEach(function (entry) {
-          var cell = document.createElement("div");
-          cell.appendChild(card(entry));
-          wrap.appendChild(cell);
-        });
+        entries.forEach(addCard);
       })
       .catch(function () {
         var note = document.createElement("p");
