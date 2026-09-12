@@ -44,7 +44,7 @@ attrs = { rel = "icon", type = "image/svg+xml", href = "/logo.svg" }
 tag = "script"
 attrs = { src = "/js/theme-demo.js" }
 
-# Live syntax-highlight demo (/themes/syntax-highlight/): same pattern,
+# Live syntax-highlight demo (/syntax-highlight/): same pattern,
 # no-op without its gallery host.
 [[head]]
 tag = "script"
@@ -131,7 +131,7 @@ base = "/guide/"
     [[sidebar."/guide/".items.items]]
     text = "Syntax Highlight Gallery"
     base = "/"
-    link = "themes/syntax-highlight"
+    link = "syntax-highlight"
 
     [[sidebar."/guide/".items.items]]
     text = "Sitemap Generation"

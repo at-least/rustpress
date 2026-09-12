@@ -1,4 +1,4 @@
-/* rustpress docs: Syntax Highlight Gallery (/themes/syntax-highlight/).
+/* rustpress docs: Syntax Highlight Gallery (/syntax-highlight/).
  *
  * Card mocks are painted inline from syntax-highlight.json (generated at
  * build time by `rustpress syntax-index` from the same Rust resolution
