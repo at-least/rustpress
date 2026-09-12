@@ -67,7 +67,14 @@ heights to upstream, and highlighted lines are full-bleed to the pixel
 Verifying evidence for #4/#5: per-block height diff across all 84 pre
 blocks went 2 differing (−47 px each) → 0; the two truncated snippet
 includes render 3 lines again with line 2 highlighted. For #6: all 21
-custom blocks match after the fix.
+custom blocks match after the fix. A post-fix review pass caught two
+latent issues in the new line CSS, also fixed: highlighted lines inside
+`:line-numbers` blocks started their text 24 px left of the plain lines
+(the full-bleed margin ate the code padding while the number gutter's
+`padding-left` won the cascade — compensated to 2.75rem), and a brace
+spec like `{1,2 :line-numbers}` silently dropped the flag (the emitted
+fence now keeps `:line-numbers` on the lang token, where the info
+rewriter looks for it).
 
 ### Explained differences (not gaps)
 
@@ -115,7 +122,10 @@ All located and quantified; none are breakpoint-CSS regressions.
 - **Empty highlighted line inside `:line-numbers` blocks:** ours shows a
   24 px band (the line-number counter pseudo-element gives the empty
   span a line box), upstream's collapses to 0. No occurrence in the
-  corpus; noted for completeness.
+  corpus; noted for completeness. For the same pseudo-element reason, a
+  diff line inside a `:line-numbers` block shows the number gutter but
+  not the `+`/`-` symbol (upstream separates the two); also absent from
+  the corpus.
 
 ### Flake note
 

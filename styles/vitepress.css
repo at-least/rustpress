@@ -782,18 +782,20 @@ button:focus-visible {
   .vp-doc pre .line.diff.add {
     background-color: var(--vp-code-line-diff-add-color);
   }
-  .vp-doc pre .line.diff.add::before,
-  .vp-doc pre .line.diff.remove::before {
+  /* the counter pseudo-element owns ::before on numbered lines, so the
+     +/- diff symbol (also ::before) only renders on unnumbered blocks */
+  .vp-doc pre:not(.line-numbers) .line.diff.add::before,
+  .vp-doc pre:not(.line-numbers) .line.diff.remove::before {
     position: absolute;
     left: 0.625rem;
   }
-  .vp-doc pre .line.diff.add::before {
+  .vp-doc pre:not(.line-numbers) .line.diff.add::before {
     content: "+";
     color: var(--vp-code-line-diff-add-symbol-color);
   }
-  .vp-doc pre .line.diff.remove {
-    background-color: var(--vp-code-line-diff-remove-color);
-    opacity: 0.7;
+  .vp-doc pre:not(.line-numbers) .line.diff.remove::before {
+    content: "-";
+    color: var(--vp-code-line-diff-remove-symbol-color);
   }
   .vp-doc pre .line.diff.remove::before {
     content: "-";
@@ -808,6 +810,16 @@ button:focus-visible {
   .vp-doc pre.line-numbers {
     counter-reset: gdln;
     padding-left: 0;
+  }
+  /* the full-bleed margin (-1.5rem) eats the code's px-6 on notation
+     lines; compensate so their text starts where plain lines' does
+     (plain lines pad 1.25rem for the number gutter) */
+  .vp-doc pre.line-numbers .line.hl,
+  .vp-doc pre.line-numbers .line.warning,
+  .vp-doc pre.line-numbers .line.error,
+  .vp-doc pre.line-numbers .line.diff.add,
+  .vp-doc pre.line-numbers .line.diff.remove {
+    padding-left: 2.75rem;
   }
   .vp-doc pre.line-numbers .line {
     padding-left: 1.25rem;

@@ -183,7 +183,9 @@ impl<'a> Preprocess<'a> {
                     // select a line range — `<<< @/x.js{2}` renders every
                     // line with line 2 highlighted
                     hl = Some(token.to_string());
-                } else {
+                } else if lang_switch.is_none() {
+                    // first non-numeric token is the language (`{ts
+                    // twoslash}` passes a plugin flag we don't implement)
                     lang_switch = Some(token.trim_end_matches(':').to_string());
                 }
             }
@@ -215,11 +217,13 @@ impl<'a> Preprocess<'a> {
         let marker = fence_marker_for(&content);
         let mut block = String::new();
         block.push_str(&format!("{marker}{ext}"));
-        if let Some(spec) = &hl {
-            block.push_str(&format!("{{{spec}}}"));
-        }
+        // the suffix must ride on the lang token: rewrite_info strips
+        // `:line-numbers` only there
         if ln {
             block.push_str(":line-numbers");
+        }
+        if let Some(spec) = &hl {
+            block.push_str(&format!("{{{spec}}}"));
         }
         // "filename is used as title by default" (upstream snippet
         // includes): an unlabeled include takes the file's name as its
@@ -240,24 +244,6 @@ impl<'a> Preprocess<'a> {
         block.push('\n');
         Some(block)
     }
-}
-
-/// 1-based line selection ("1,3-4") for `<<<` includes.
-fn pick_lines(content: &str, spec: &str) -> Option<String> {
-    let lines: Vec<&str> = content.split_inclusive('\n').collect();
-    let mut out = String::new();
-    for part in spec.split(',') {
-        if let Some((a, b)) = part.split_once('-') {
-            let (a, b): (usize, usize) = (a.trim().parse().ok()?, b.trim().parse().ok()?);
-            for n in a..=b.min(lines.len()) {
-                out.push_str(lines.get(n - 1)?);
-            }
-        } else {
-            let n: usize = part.trim().parse().ok()?;
-            out.push_str(lines.get(n - 1)?);
-        }
-    }
-    Some(out)
 }
 
 /// `<!--@include: ./file.md-->` target: `path`, optional `#section`
@@ -1407,6 +1393,16 @@ mod include_and_container_tests {
         assert!(out.contains("```gdcode lang=ts hl=1 ln=true"), "{out}");
         assert!(out.contains("function foo()"), "region line: {out}");
         assert_eq!(out.lines().count() - 2, 3, "all three region lines: {out}");
+    }
+
+    #[test]
+    fn include_with_hl_and_ln_suffix_ordering() {
+        // the generated fence must keep :line-numbers on the lang token —
+        // rewrite_info strips the suffix only there
+        let out = pre()
+            .run("<<< @/snippets/snippet.js{1,2 :line-numbers}\n", "guide/x.md")
+            .unwrap();
+        assert!(out.contains("```gdcode lang=js hl=1,2 ln=true"), "{out}");
     }
 
     #[test]
