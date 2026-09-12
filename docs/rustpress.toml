@@ -129,6 +129,11 @@ base = "/guide/"
     link = "themes"
 
     [[sidebar."/guide/".items.items]]
+    text = "Syntax Theme Gallery"
+    base = "/"
+    link = "themes/syntax"
+
+    [[sidebar."/guide/".items.items]]
     text = "Theming"
     link = "theming"
 
