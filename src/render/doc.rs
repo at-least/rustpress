@@ -115,7 +115,7 @@ pub fn doc_page<'a>(
                                         }
                                         @if let Some((datetime, display)) = last_updated.clone() {
                                             <div class="last-updated">
-                                                <p class="VPDocFooterLastUpdated text-[0.875rem] leading-[1.7142857] sm:leading-[2.2857143] text-text-2">
+                                                <p class="VPDocFooterLastUpdated text-[0.875rem] leading-[1.7142857] sm:leading-[2.2857143] font-medium text-text-2">
                                                     (format!("{}: ", updated_label))
                                                     <time datetime=(datetime)>(display)</time>
                                                 </p>
@@ -186,7 +186,7 @@ fn outline_links<'a>(headings: &'a [&'a Heading]) -> Raw<String> {
             *stack.last_mut().unwrap() = h.level;
         }
         html.push_str(&format!(
-            "<a class=\"outline-link block leading-[2.2857143] text-[0.875rem] text-text-2 whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] [&.active]:text-text-1\" href=\"#{}\" title=\"{}\">{}</a>",
+            "<a class=\"outline-link block leading-[2.2857143] text-[0.875rem] font-normal text-text-2 whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] [&.active]:text-text-1\" href=\"#{}\" title=\"{}\">{}</a>",
             h.id,
             escape_attr(&h.text),
             escape_text(&h.text),

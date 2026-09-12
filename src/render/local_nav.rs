@@ -67,7 +67,7 @@ fn outline_list<'a>(headings: &'a [Heading], nested: bool) -> impl Renderable + 
             @for h in headings {
                 <li>
                     <a class=(format!(
-                        "outline-link block leading-[2.2857143] text-[0.875rem] text-text-2 whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] [&.active]:text-text-1 scroll-mt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+var(--vp-doc-top-height,0px)+2rem)] scroll-mb-12{}",
+                        "outline-link block leading-[2.2857143] text-[0.875rem] font-normal text-text-2 whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] [&.active]:text-text-1 scroll-mt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+var(--vp-doc-top-height,0px)+2rem)] scroll-mb-12{}",
                         if !nested { " pl-[0.8125rem]" } else { "" }
                     )) href=(format!("#{}", h.id)) title=(h.text.clone())>(h.text.clone())</a>
                 </li>

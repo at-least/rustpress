@@ -135,7 +135,7 @@ pub fn navbar<'a>(
                             }
 
                             @if toggleable {
-                                <div class="flex items-center">
+                                <div class="hidden md:flex md:items-center">
                                     (Raw::dangerously_create(appearance_switch("VPSwitchAppearance", &dark_switch_title, &light_switch_title)))
                                 </div>
                             }
