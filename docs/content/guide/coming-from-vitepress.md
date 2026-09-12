@@ -98,7 +98,7 @@ Key-by-key differences:
 | `outDir` | always `<site>/public`, not configurable |
 | `cleanUrls` | no option; URLs are always directory-style |
 | `rewrites` with `path-to-regexp` params or a function | static map plus a trailing `:rest*` only |
-| `markdown.theme` (Shiki) | [`[syntax]`](./theming#syntax-color-scheme) — Helix TOML themes |
+| `markdown.theme` (Shiki) | [`[syntax]`](../reference/site-config#syntax) — Helix TOML themes |
 | `.vitepress/theme/custom.css` | [`theme`](./theming) — a path to a CSS file |
 | `themeConfig.lastUpdated.text` | flat `lastUpdatedText` |
 | `themeConfig.search.options.translations` | `[search.translations]` |
@@ -113,7 +113,7 @@ Unknown keys fail the build, so the first `rustpress build` after a migration is
 rustpress has no JavaScript at build time and no Vue at run time. These VitePress features are therefore absent by design, not on a roadmap:
 
 - **Vue in markdown** — `<script setup>`, `{{ }}` interpolation, components, `<ClientOnly>`, `v-pre`.
-- **Custom themes and theme extension** — `.vitepress/theme/index.ts`, `enhanceApp`, layout slots, overriding internal components. Customization is limited to [CSS variables and the syntax theme](./theming).
+- **Custom themes and theme extension** — `.vitepress/theme/index.ts`, `enhanceApp`, layout slots, overriding internal components. Customization stops at colors ([Theming](./theming)); past that, VitePress is the tool.
 - **Build-time data loading** — `*.data.js` loaders, `createContentLoader`.
 - **Dynamic routes** — `[param].md` with a `.paths.js` loader.
 - **Build hooks and Vite/Vue config** — `transformHead`, `transformHtml`, `transformPageData`, `buildEnd`, `vite`, `vue`, `markdown.config()`.

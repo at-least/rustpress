@@ -21,6 +21,4 @@ Pick a card below and **the site you are reading re-skins instantly** — every 
 theme = "catppuccin"   # any name from the cards above
 ```
 
-That is the whole integration: the theme's CSS ships in the binary, lands in your output under `themes/`, and every page links it after the base stylesheet. Your own design is a `.css` file of your own — copy any bundled file as the starting point. The [Theming](/guide/theming/) guide covers the details.
-
-Code blocks have their own color layer, chosen from a different shelf: the [Syntax Theme Gallery](/themes/syntax/) demos every bundled Helix scheme the same way.
+That is the whole integration: the theme's CSS ships in the binary, lands in your output under `themes/`, and every page links it after the base stylesheet. Unset, `theme` gives the stock VitePress look. Code blocks have their own color layer: the [Syntax Theme Gallery](/themes/syntax/).

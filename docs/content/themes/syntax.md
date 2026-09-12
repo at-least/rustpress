@@ -31,4 +31,4 @@ light = "github_light"       # the defaults — any name from the cards above
 dark = "catppuccin_mocha"
 ```
 
-One line each for light and dark mode. The [Theming](/guide/theming/#syntax-color-scheme) guide covers custom theme files and the rest of the details.
+One line each for light and dark mode — any name from the cards above.

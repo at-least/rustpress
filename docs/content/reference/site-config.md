@@ -348,7 +348,7 @@ theme = "catppuccin"  # any bundled name — see the Theme Gallery (/themes/)
 theme = "theme.css"   # your own file
 ```
 
-An unknown name or a missing file fails the build. Source-code colors are a separate setting — see [`[syntax]`](#syntax). The [Theming](../guide/theming) guide covers both.
+An unknown name or a missing file fails the build. Source-code colors are a separate setting — see [`[syntax]`](#syntax). Both settings are previewed live in the [Theme Gallery](/themes/) and the [Syntax Theme Gallery](/themes/syntax/).
 
 ### syntax
 
@@ -363,7 +363,7 @@ light = "github_light"
 dark = "catppuccin_mocha"
 ```
 
-See [Theming: Syntax Highlighting Colors](../guide/theming).
+See the [Syntax Theme Gallery](/themes/syntax/) for live previews of every scheme.
 
 ## Customization
 
