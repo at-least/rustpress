@@ -19,6 +19,8 @@ dark = "catppuccin_mocha"
 
 One line each for light and dark mode — any name from the cards below.
 
+## Gallery
+
 ::: raw
 <div id="syntax-gallery"></div>
 :::
