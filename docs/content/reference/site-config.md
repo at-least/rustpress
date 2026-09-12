@@ -344,11 +344,11 @@ lastUpdated = true
 The UI theme: the stylesheet to link after the theme's own stylesheet on every page. A bare name selects a bundled theme — a complete design (every design token, light and dark) shipped in the binary and extracted to `themes/<name>.css`; a path relative to the site directory ending in `.css` is your own file, copied verbatim into the output under `themes/<basename>` (a partial override or a full theme of your own).
 
 ```toml
-theme = "catppuccin"  # any bundled name — see the Theme Gallery (/themes/)
+theme = "catppuccin"  # any bundled name — see the Theme gallery (/themes/)
 theme = "theme.css"   # your own file
 ```
 
-An unknown name or a missing file fails the build. Source-code colors are a separate setting — see [`[code]`](#code). Both settings are previewed live in the [Theme Gallery](/themes/) and the [Syntax Highlight gallery](/syntax-highlight/).
+An unknown name or a missing file fails the build. Source-code colors are a separate setting — see [`[code]`](#code). Both settings are previewed live in the [Theme gallery](/themes/) and the [Syntax Highlight gallery](/syntax-highlight/).
 
 ### code
 

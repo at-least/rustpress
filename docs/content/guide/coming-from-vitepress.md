@@ -113,7 +113,7 @@ Unknown keys fail the build, so the first `rustpress build` after a migration is
 rustpress ships one design, and the supported customization is **colors only** — two settings in `rustpress.toml`:
 
 ```toml
-theme = "catppuccin"   # UI colors — every bundled theme in the Theme Gallery
+theme = "catppuccin"   # UI colors — every bundled theme in the Theme gallery
 
 [code]
 light = "github_light" # code colors — one per mode, all in the Syntax Highlight gallery

@@ -124,7 +124,7 @@ base = "/guide/"
   collapsed = false
 
     [[sidebar."/guide/".items.items]]
-    text = "Theme Gallery"
+    text = "Theme"
     base = "/"
     link = "themes"
 

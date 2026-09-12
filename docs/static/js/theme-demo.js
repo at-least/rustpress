@@ -1,4 +1,4 @@
-/* rustpress docs: Theme Gallery.
+/* rustpress docs: Theme (/themes/).
  *
  * Every rustpress build ships all bundled themes under /themes/, so
  * trying one is a stylesheet link away: picking a card swaps that link

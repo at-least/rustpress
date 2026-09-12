@@ -296,7 +296,7 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
         Err(e) => e.to_string(),
         Ok(_) => panic!("unknown theme should fail at load"),
     };
-    assert!(err.contains("nope") && err.contains("more, all live in the Theme Gallery"), "{err}");
+    assert!(err.contains("nope") && err.contains("more, all live in the Theme gallery"), "{err}");
 
     // missing file: error at load
     let dir = mk_site("theme = \"missing.css\"");

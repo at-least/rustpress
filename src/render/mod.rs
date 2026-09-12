@@ -639,7 +639,7 @@ pub enum BuildError {
     #[error("unknown theme {0:?} — expected a bundled theme ({list}) or a path to a .css file", list = {
         let all = crate::theme_assets::bundled_themes();
         if all.len() > 12 {
-            format!("{}, … and {} more, all live in the Theme Gallery", all[..12].join(", "), all.len() - 12)
+            format!("{}, … and {} more, all live in the Theme gallery", all[..12].join(", "), all.len() - 12)
         } else {
             all.join(", ")
         }

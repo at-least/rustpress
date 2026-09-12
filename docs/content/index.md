@@ -32,7 +32,7 @@ features:
     details: Navbar, sidebar, outline, local search, dark mode, home hero and features, 404 — the same look, the same CSS variables, the same themeConfig keys in TOML.
   - icon: 🖌️
     title: Complete built-in themes
-    details: "GitHub Primer, Catppuccin, Nord, Rosé Pine — full designs, light and dark, held to completeness and WCAG-contrast tests. Try them live in the Theme Gallery."
+    details: "GitHub Primer, Catppuccin, Nord, Rosé Pine — full designs, light and dark, held to completeness and WCAG-contrast tests. Try them live in the Theme gallery."
     link: /themes/
   - icon: 🔁
     title: Drop-in for existing docs
