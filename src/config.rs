@@ -145,13 +145,10 @@ pub struct SiteConfig {
     #[serde(default)]
     pub theme: Option<String>,
 
-    /// Source-code syntax highlight colors ([syntax_highlight] section)
-    /// — separate from the UI theme.
-    // snake_case in the file (the one section whose name has two words);
-    // rename beats the struct-level camelCase mapping
-    #[serde(rename = "syntax_highlight")]
+    /// Code colors ([code] section) — the syntax highlight, separate
+    /// from the UI theme.
     #[serde(default)]
-    pub syntax_highlight: SyntaxHighlight,
+    pub code: SyntaxHighlight,
 
     /// Dark-mode behavior: `true` (default, toggleable, follows system),
     /// `false` (light only, no toggle), `"dark"` (dark default,
@@ -509,7 +506,7 @@ impl OutlineConfig {
     }
 }
 
-// The syntax highlight colors ([syntax_highlight] below) select from
+// The code colors ([code] below) select from
 // the vendored Helix themes by file stem; the defaults live in
 // default_light_theme / default_dark_theme.
 
@@ -910,13 +907,13 @@ mod tests {
         // syntax highlight: separate top-level section, defaults to
         // Helix's github_light/github_dark, overridable by name
         let c = parse("");
-        assert_eq!(c.syntax_highlight.light, "github_light");
-        assert_eq!(c.syntax_highlight.dark, "github_dark");
+        assert_eq!(c.code.light, "github_light");
+        assert_eq!(c.code.dark, "github_dark");
         let c = parse(
-            "[syntax_highlight]\nlight = \"base16-ocean.light\"\ndark = \"base16-ocean.dark\"\n",
+            "[code]\nlight = \"base16-ocean.light\"\ndark = \"base16-ocean.dark\"\n",
         );
-        assert_eq!(c.syntax_highlight.light, "base16-ocean.light");
-        assert_eq!(c.syntax_highlight.dark, "base16-ocean.dark");
+        assert_eq!(c.code.light, "base16-ocean.light");
+        assert_eq!(c.code.dark, "base16-ocean.dark");
         // theme key no longer exists under [markdown]
         let err = toml::from_str::<SiteConfig>("[markdown.theme]\nlight = \"x\"\n").unwrap_err();
         assert!(err.to_string().contains("theme"), "{err}");

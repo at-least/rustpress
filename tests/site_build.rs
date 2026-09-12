@@ -20,7 +20,7 @@ fn build_fixture() -> (tempdir::Guard, rustpress::render::BuildStats) {
     let content = Content::load(&fixtures.join("en"), &[]).unwrap();
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
-        engine: MarkdownEngine::new(&config.markdown, &config.syntax_highlight, Path::new("."), "/").unwrap(),
+        engine: MarkdownEngine::new(&config.markdown, &config.code, Path::new("."), "/").unwrap(),
         theme_link: None,
         theme_source: None,
         config,
@@ -137,7 +137,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
         let content = Content::load(&fixtures.join("en"), &[]).unwrap();
         Site {
             sidebars: Sidebars::build(&config, &content),
-            engine: MarkdownEngine::new(&config.markdown, &config.syntax_highlight, Path::new("."), "/").unwrap(),
+            engine: MarkdownEngine::new(&config.markdown, &config.code, Path::new("."), "/").unwrap(),
         theme_link: None,
         theme_source: None,
             config,
@@ -162,7 +162,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
     let content = Content::load(&fixtures.join("en"), &[]).unwrap();
     let site = Site {
         sidebars: Sidebars::build(&config, &content),
-        engine: MarkdownEngine::new(&config.markdown, &config.syntax_highlight, Path::new("."), "/").unwrap(),
+        engine: MarkdownEngine::new(&config.markdown, &config.code, Path::new("."), "/").unwrap(),
         theme_link: None,
         theme_source: None,
         config,
@@ -308,8 +308,8 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
 }
 
 #[test]
-fn syntax_highlight_pair_is_selectable() {
-    // the [syntax_highlight] section picks the code colors independently of
+fn code_pair_is_selectable() {
+    // the [code] section picks the code colors independently of
     // the UI theme; unknown names fail at engine construction
     let mk = |dark: &str| {
         let engine = MarkdownEngine::new(
@@ -344,7 +344,7 @@ fn custom_helix_toml_theme_file_path() {
     std::fs::write(site_dir.path().join("content/index.md"), "# Home\n").unwrap();
     std::fs::write(
         site_dir.path().join("rustpress.toml"),
-        "[syntax_highlight]\nlight = \"my.toml\"\ndark = \"github_dark\"\n",
+        "[code]\nlight = \"my.toml\"\ndark = \"github_dark\"\n",
     )
     .unwrap();
     std::fs::write(
@@ -394,7 +394,7 @@ fn helix_themes_are_built_ins() {
     std::fs::write(site_dir.path().join("content/index.md"), "# H\n").unwrap();
     std::fs::write(
         site_dir.path().join("rustpress.toml"),
-        "[syntax_highlight]\ndark = \"catppuccin_mocha\"\n",
+        "[code]\ndark = \"catppuccin_mocha\"\n",
     )
     .unwrap();
     let site = Site::load(site_dir.path()).unwrap();

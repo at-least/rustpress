@@ -479,7 +479,7 @@ The bundled grammars and the aliases that select them:
 
 Any other language (`vue`, `md`, `nginx`, …) is accepted, keeps its name as the block label, and renders as plain escaped text.
 
-The colors come from a pair of Helix TOML themes (light/dark), selected in the `[syntax_highlight]` section of `rustpress.toml`; all 218 themes bundled with the Helix editor are available by name. See [Theming](./coming-from-vitepress#theming).
+The colors come from a pair of Helix TOML themes (light/dark), selected in the `[code]` section of `rustpress.toml`; all 218 themes bundled with the Helix editor are available by name. See [Theming](./coming-from-vitepress#theming).
 
 ## Line Highlighting in Code Blocks
 

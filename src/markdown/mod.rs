@@ -64,7 +64,7 @@ pub struct MarkdownEngine {
 impl MarkdownEngine {
     pub fn new(
         markdown: &MarkdownConfig,
-        syntax_highlight: &crate::config::SyntaxHighlight,
+        code: &crate::config::SyntaxHighlight,
         base_dir: &std::path::Path,
         base: &str,
     ) -> Result<Self, MarkdownError> {
@@ -88,7 +88,7 @@ impl MarkdownEngine {
         // trusted wrappers (containers, badges) as raw HTML too.
         options.render.r#unsafe = true;
         options.render.tasklist_classes = true;
-        // each syntax highlight value is a vendored Helix theme's file stem
+        // each [code] value is a vendored Helix theme's file stem
         // or a path to a Helix TOML theme file (relative to base_dir)
         let load = |value: &str| -> Result<syntax_theme::SyntaxTheme, MarkdownError> {
             if value.ends_with(".toml") {
@@ -115,8 +115,8 @@ impl MarkdownEngine {
                 })
             }
         };
-        let light = load(&syntax_highlight.light)?;
-        let dark = load(&syntax_highlight.dark)?;
+        let light = load(&code.light)?;
+        let dark = load(&code.dark)?;
         Ok(Self {
             options,
             renderer: highlight::GdCodeRenderer {
