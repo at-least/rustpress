@@ -9,6 +9,16 @@ outline: false
 
 Code blocks have their own colors — the **syntax highlight**. Every bundled theme is below. **Pick a card and every code block on this page re-colors instantly** — the choice lasts for this browser session, and the stock card restores the default.
 
+```rust
+fn render(site: &Site) -> Result<Vec<Page>> {
+    let mut pages = Vec::new();
+    for path in &site.paths {
+        pages.push(render_page(path)?);
+    }
+    Ok(pages)
+}
+```
+
 ## Using one in your site
 
 ```toml [rustpress.toml]
@@ -24,13 +34,3 @@ One line each for light and dark mode — any name from the cards below.
 ::: raw
 <div id="syntax-gallery"></div>
 :::
-
-```rust
-fn render(site: &Site) -> Result<Vec<Page>> {
-    let mut pages = Vec::new();
-    for path in &site.paths {
-        pages.push(render_page(path)?);
-    }
-    Ok(pages)
-}
-```
