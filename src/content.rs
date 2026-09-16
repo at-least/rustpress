@@ -428,14 +428,12 @@ fn load_page(path: &Path, rel: &str) -> Result<Page, ContentError> {
         })?,
         None => PageFrontMatter::default(),
     };
-    let stem = rel.trim_end_matches(".md").trim_end_matches("index").trim_end_matches('/');
+    let stem = fallback_title(rel);
     let title = front
         .title
         .clone()
         .or_else(|| extract_h1(body))
-        .unwrap_or_else(|| {
-            stem.rsplit('/').next().unwrap_or("Untitled").to_string()
-        });
+        .unwrap_or(stem);
     let url = page_url(rel);
     let modified = std::fs::metadata(path).and_then(|m| m.modified()).ok();
     Ok(Page {
@@ -468,6 +466,16 @@ pub fn split_front_matter(raw: &str) -> (Option<&str>, &str) {
         offset += line.len();
     }
     (None, raw)
+}
+
+/// A page's fallback title: the file stem (final path segment), with
+/// `.md` and a `/index` suffix removed once each — `strip_suffix`, not
+/// `trim_end_matches`, so a name that merely *ends* in "index"
+/// (`labindex.md`) keeps it.
+fn fallback_title(rel: &str) -> String {
+    let no_ext = rel.strip_suffix(".md").unwrap_or(rel);
+    let stem = no_ext.strip_suffix("/index").unwrap_or(no_ext);
+    stem.rsplit('/').next().unwrap_or("Untitled").to_string()
 }
 
 /// The page's canonical URL from its source-relative path:
@@ -659,5 +667,29 @@ mod tests {
         let mut v = vec!["a10", "a2", "B1", "a1b"];
         v.sort_by(|a, b| natural_cmp(a, b));
         assert_eq!(v, vec!["a1b", "a2", "a10", "B1"]);
+    }
+
+    #[test]
+    fn fallback_title_keeps_index_in_the_stem() {
+        // `trim_end_matches("index")` used to strip the substring off any
+        // file name ending in it ("labindex.md" → "lab")
+        assert_eq!(fallback_title("labindex.md"), "labindex");
+        assert_eq!(fallback_title("guide/index.md"), "guide");
+        assert_eq!(fallback_title("guide/x.md"), "x");
+        assert_eq!(fallback_title("index.md"), "index");
+        assert_eq!(fallback_title("a/b/reindex.md"), "reindex");
+
+        let dir = std::env::temp_dir().join(format!("rp-fallback-title-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("labindex.md"), "body\n").unwrap();
+        std::fs::create_dir_all(dir.join("guide")).unwrap();
+        std::fs::write(dir.join("guide/index.md"), "body\n").unwrap();
+        let content = Content::load(&dir, &[]).unwrap();
+        let lab = content.pages.iter().find(|p| p.rel == "labindex.md").unwrap();
+        assert_eq!(lab.title, "labindex");
+        let guide = content.pages.iter().find(|p| p.rel == "guide/index.md").unwrap();
+        assert_eq!(guide.title, "guide");
+        std::fs::remove_dir_all(&dir).ok();
     }
 }
