@@ -967,7 +967,12 @@ mod sgr_tests {
             spec.hl.len()
         );
         let spec = FenceSpec::parse_meta("lang=js hl=1,5-99999999,9");
-        assert!(spec.hl.len() <= MAX_HL_RANGE, "{:?}", spec.hl.len());
+        // the cap is per range: total = capped range + the two singletons
+        assert!(
+            spec.hl.len() <= MAX_HL_RANGE + 2,
+            "{:?}",
+            spec.hl.len()
+        );
         // sane ranges are untouched
         let spec = FenceSpec::parse_meta("lang=js hl=1,3-4");
         assert_eq!(spec.hl, vec![1, 3, 4]);
