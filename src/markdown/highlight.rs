@@ -160,7 +160,11 @@ impl FenceSpec {
     }
 }
 
-/// `"1,3-4"` → `[1, 3, 4]`.
+/// `"1,3-4"` → `[1, 3, 4]`. Range expansion is capped: `hl` is
+/// author-supplied and only checked against line numbers that exist, so
+/// `hl=1-999999999` must not materialize a billion-entry vector.
+const MAX_HL_RANGE: usize = 100_000;
+
 fn parse_line_spec(spec: &str) -> Vec<usize> {
     let mut lines = Vec::new();
     for part in spec.split(',') {
@@ -170,7 +174,7 @@ fn parse_line_spec(spec: &str) -> Vec<usize> {
         }
         if let Some((a, b)) = part.split_once('-') {
             if let (Ok(a), Ok(b)) = (a.trim().parse::<usize>(), b.trim().parse::<usize>()) {
-                lines.extend(a..=b);
+                lines.extend((a..=b).take(MAX_HL_RANGE));
             }
         } else if let Ok(n) = part.parse::<usize>() {
             lines.push(n);
@@ -951,6 +955,23 @@ const ANSI_CSS: &str = r#"  .ansi-bold { font-weight: 700; }
 #[cfg(test)]
 mod sgr_tests {
     use super::*;
+
+    #[test]
+    fn hl_ranges_are_capped() {
+        // one fence line must not be able to materialize a billion-entry
+        // vector (hl=1-N expands the range; N is author-supplied)
+        let spec = FenceSpec::parse_meta("lang=js hl=1-999999999");
+        assert!(
+            spec.hl.len() <= MAX_HL_RANGE,
+            "hl expansion unbounded: {} entries",
+            spec.hl.len()
+        );
+        let spec = FenceSpec::parse_meta("lang=js hl=1,5-99999999,9");
+        assert!(spec.hl.len() <= MAX_HL_RANGE, "{:?}", spec.hl.len());
+        // sane ranges are untouched
+        let spec = FenceSpec::parse_meta("lang=js hl=1,3-4");
+        assert_eq!(spec.hl, vec![1, 3, 4]);
+    }
 
     #[test]
     fn sgr_segments_carry_state_and_reset() {
