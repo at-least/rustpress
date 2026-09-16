@@ -403,3 +403,47 @@ fn helix_themes_are_built_ins() {
     let css = std::fs::read_to_string(out.path().join("syntax.css")).unwrap();
     assert!(!css.contains("catppuccin"), "no catppuccin name leaked into css");
 }
+
+#[test]
+fn rebuild_removes_pages_deleted_since_the_last_build() {
+    // public/ is fully regenerated: a stale output for a deleted page must
+    // not survive (it would also keep satisfying the dead-link disk check)
+    let site_dir = tempdir::tempdir();
+    std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
+    std::fs::write(
+        site_dir.path().join("rustpress.toml"),
+        "title = \"T\"\nignoreDeadLinks = true\n",
+    )
+    .unwrap();
+    std::fs::write(site_dir.path().join("content/index.md"), "# H\n").unwrap();
+    std::fs::write(site_dir.path().join("content/old.md"), "# Old\n").unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    let out = site_dir.path().join("public");
+    site.build(site_dir.path(), &out).unwrap();
+    assert!(out.join("old/index.html").is_file());
+
+    // delete the page, rebuild: the old output must be gone
+    std::fs::remove_file(site_dir.path().join("content/old.md")).unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    site.build(site_dir.path(), &out).unwrap();
+    assert!(
+        !out.join("old").exists(),
+        "stale output survived a rebuild without the page"
+    );
+    assert!(out.join("index.html").is_file());
+}
+
+#[test]
+fn build_never_cleans_an_out_dir_outside_the_site() {
+    // the cleaner only wipes public/ inside the site dir, never an
+    // arbitrary out_dir a caller passes (VitePress's cleanOutDir rule)
+    let site_dir = tempdir::tempdir();
+    std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
+    std::fs::write(site_dir.path().join("rustpress.toml"), "title = \"T\"\n").unwrap();
+    std::fs::write(site_dir.path().join("content/index.md"), "# H\n").unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    let out = tempdir::tempdir();
+    std::fs::write(out.path().join("keep-me.txt"), "precious\n").unwrap();
+    site.build(site_dir.path(), out.path()).unwrap();
+    assert!(out.path().join("keep-me.txt").is_file());
+}

@@ -262,6 +262,25 @@ impl Site {
 
     /// Build the whole site into `out_dir`.
     pub fn build(&self, site_dir: &Path, out_dir: &Path) -> Result<BuildStats, BuildError> {
+        // public/ is fully regenerated: a previous build's outputs (pages
+        // deleted or renamed since) must not survive — they would serve
+        // stale content and keep satisfying the dead-link disk check. Only
+        // clean when out_dir is inside the site dir (VitePress's
+        // cleanOutDir rule); a caller passing an arbitrary directory
+        // manages its contents itself.
+        if out_dir.starts_with(site_dir) && out_dir != site_dir {
+            match std::fs::remove_dir_all(out_dir) {
+                Ok(()) => {}
+                // a first build has nothing to clean
+                Err(source) if source.kind() == std::io::ErrorKind::NotFound => {}
+                Err(source) => {
+                    return Err(BuildError::Write {
+                        path: out_dir.to_path_buf(),
+                        source,
+                    })
+                }
+            }
+        }
         let mut stats = BuildStats::default();
         let mut search_docs: Vec<serde_json::Value> = Vec::new();
         let search_enabled = self.config.search.is_some();
