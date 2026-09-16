@@ -12,3 +12,7 @@ node_modules/
 /parity/upstream.prev.json
 /parity/audit/
 /parity/probe-site/public/
+# build staging siblings and their swap-out predecessors (a build
+# interrupted mid-swap leaves them behind; the next build cleans them)
+*.rustpress-tmp
+*.rustpress-old

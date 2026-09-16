@@ -300,11 +300,31 @@ impl Site {
             let result = self.build_into(site_dir, &staging);
             match result {
                 Ok(stats) => {
-                    remove_tree(out_dir)?;
-                    std::fs::rename(&staging, out_dir).map_err(|source| BuildError::Write {
-                        path: out_dir.to_path_buf(),
-                        source,
-                    })?;
+                    // retire the old output before swapping the staging
+                    // dir in: whatever fails, one of the two is always in
+                    // place at out_dir — never neither
+                    let retired = out_dir.with_extension("rustpress-old");
+                    remove_tree(&retired)?;
+                    match std::fs::rename(out_dir, &retired) {
+                        Ok(()) => {}
+                        // a first build has nothing to retire
+                        Err(source) if source.kind() == std::io::ErrorKind::NotFound => {}
+                        Err(source) => {
+                            return Err(BuildError::Write {
+                                path: out_dir.to_path_buf(),
+                                source,
+                            });
+                        }
+                    }
+                    if let Err(source) = std::fs::rename(&staging, out_dir) {
+                        // put the old output back where serve expects it
+                        let _ = std::fs::rename(&retired, out_dir);
+                        return Err(BuildError::Write {
+                            path: out_dir.to_path_buf(),
+                            source,
+                        });
+                    }
+                    let _ = std::fs::remove_dir_all(&retired);
                     Ok(stats)
                 }
                 Err(error) => {
@@ -730,8 +750,9 @@ fn apply_pager_override(
 /// `None` (pages keep their mtime). Commit lines carry a `\x01` sentinel
 /// so a file literally named "1735732800" is not mistaken for a
 /// timestamp; first insert per path wins (the walk is newest-first).
-/// Pathspecs are passed as args — fine to hundreds of thousands of pages
-/// before ARG_MAX is a concern.
+/// Pathspecs are passed as argv — Linux caps the whole thing near 2 MB,
+/// so a pathological site beyond tens of thousands of pages fails the
+/// spawn and every page falls back to its mtime.
 fn git_commit_times(site_dir: &Path, pathspecs: &[PathBuf]) -> Option<HashMap<String, i64>> {
     if pathspecs.is_empty() {
         return Some(HashMap::new());
