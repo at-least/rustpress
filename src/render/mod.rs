@@ -507,12 +507,21 @@ impl Site {
 
     /// sitemap.xml from every page URL, lastmod from the page timestamps.
     fn sitemap_xml(&self, hostname: &str) -> String {
-        let host = hostname.trim_end_matches('/');
+        fn xml_escape(s: &str) -> String {
+            s.replace('&', "&amp;")
+                .replace('<', "&lt;")
+                .replace('>', "&gt;")
+        }
+        let host = xml_escape(hostname.trim_end_matches('/'));
         let mut xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         xml.push_str("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
         for page in &self.content.pages {
             xml.push_str("  <url>\n");
-            xml.push_str(&format!("    <loc>{}{}</loc>\n", host, self.url(&page.url)));
+            xml.push_str(&format!(
+                "    <loc>{}{}</loc>\n",
+                host,
+                xml_escape(&self.url(&page.url))
+            ));
             if let Some(t) = page.modified {
                 let (date, _) = doc::format_date(t);
                 xml.push_str(&format!("    <lastmod>{}</lastmod>\n", date));

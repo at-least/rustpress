@@ -479,3 +479,26 @@ fn root_static_overlay_is_config_gated() {
     let css = std::fs::read_to_string(out.join("fresh.css")).unwrap();
     assert_eq!(css, "body{}\n");
 }
+
+#[test]
+fn sitemap_xml_escapes_urls() {
+    // a file name like "a&b.md" produces a URL containing a bare &, which
+    // makes the emitted XML invalid
+    let site_dir = tempdir::tempdir();
+    std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
+    std::fs::write(
+        site_dir.path().join("rustpress.toml"),
+        "title = \"T\"\n[sitemap]\nhostname = \"https://example.com\"\n",
+    )
+    .unwrap();
+    std::fs::write(site_dir.path().join("content/index.md"), "# H\n").unwrap();
+    std::fs::write(site_dir.path().join("content/a&b.md"), "# AB\n").unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    let out = site_dir.path().join("public");
+    site.build(site_dir.path(), &out).unwrap();
+    let xml = std::fs::read_to_string(out.join("sitemap.xml")).unwrap();
+    assert!(
+        xml.contains("<loc>https://example.com/a&amp;b/</loc>"),
+        "unescaped URL in sitemap: {xml}"
+    );
+}
