@@ -23,10 +23,11 @@ rustpress build [site]
 The build:
 
 1. loads and validates `rustpress.toml` (unknown keys fail here),
-2. renders every markdown page to `public/<url>/index.html`, plus `404.html`,
-3. writes `syntax.css` (the [syntax highlight](./site-config#code)), `search-docs.json` when [search](./default-theme-search) is on, the selected theme under `themes/` when a [`theme`](../reference/site-config#theme) is set, and `sitemap.xml` when [`[sitemap]`](../guide/sitemap-generation) is configured,
-4. writes the embedded theme assets (`vitepress.css`, `js/app.js`, `fonts/`, `themes/`) into `public/`, then copies `<site>/static/` and the sibling `../static/` (if any) over them — see [Theme assets](../guide/getting-started#theme-assets),
-5. fails if any [dead links](../guide/routing#dead-links) were found.
+2. wipes `public/` (the output is fully regenerated — pages deleted from the content tree leave with their old output),
+3. renders every markdown page to `public/<url>/index.html`, plus `404.html`,
+4. writes `syntax.css` (the [syntax highlight](./site-config#code)), `search-docs.json` when [search](./default-theme-search) is on, the selected theme under `themes/` when a [`theme`](../reference/site-config#theme) is set, and `sitemap.xml` when [`[sitemap]`](../guide/sitemap-generation) is configured,
+5. writes the embedded theme assets (`vitepress.css`, `js/app.js`, `fonts/`, `themes/`) into `public/`, then copies `<site>/static/` and — when [`staticOverlay`](../reference/site-config#staticoverlay) is set — that directory over them — see [Theme assets](../guide/getting-started#theme-assets),
+6. fails if any [dead links](../guide/routing#dead-links) were found.
 
 On success it prints one line:
 

@@ -96,6 +96,13 @@ Show a "last updated" timestamp in every page's footer, from git timestamps. The
 
 Directory (inside the site dir) holding the markdown source.
 
+### staticOverlay
+
+- Type: `string` — a directory path relative to the site dir
+- Default: unset — nothing is layered
+
+Dev-loop helper: the directory's contents are copied over `public/` after every build, so freshly built assets land in the output without rebuilding the binary. The rustpress demo and docs sites set it to `"../static"` to pick up a rustpress checkout's freshly built theme files. A missing directory is a build error — unset the key instead of pointing it at nothing.
+
 ### srcExclude
 
 - Type: `string` array
