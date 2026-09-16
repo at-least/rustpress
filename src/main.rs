@@ -22,7 +22,7 @@ enum Command {
         #[arg(value_name = "SITE", default_value = ".")]
         site: PathBuf,
     },
-    /// Build and serve with live reload (not implemented yet).
+    /// Build and serve with live reload on http://127.0.0.1:<port>.
     Serve {
         #[arg(value_name = "SITE", default_value = ".")]
         site: PathBuf,

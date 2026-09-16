@@ -335,9 +335,9 @@ pub enum Sidebar {
     Map(BTreeMapPrefixSections),
 }
 
-/// Newtype so path-keyed sidebar maps keep insertion order in error
-/// messages; resolution always picks the longest matching prefix, so
-/// iteration order is irrelevant.
+/// Newtype alias for the path-keyed sidebar map. Keys sort
+/// lexicographically (BTreeMap); resolution always picks the longest
+/// matching prefix, so iteration order is irrelevant.
 pub type BTreeMapPrefixSections = std::collections::BTreeMap<String, SidebarSection>;
 
 /// One path-keyed sidebar: `items` links are resolved against `base`
