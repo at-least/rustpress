@@ -9,13 +9,27 @@ use super::icons::{icon, social_icon};
 use super::Site;
 use crate::config::NavItem;
 
+/// Upstream's default activeMatch: the current path starts with the
+/// link, and the match ends at a segment boundary — "/guide" activates
+/// "/guide/x/" but never "/guide-x/"; the bare "/" stays active
+/// everywhere.
+fn nav_active(current_url: &str, link: &str) -> bool {
+    if link.is_empty() || !current_url.starts_with(link) {
+        return false;
+    }
+    link == "/"
+        || link.ends_with('/')
+        || current_url[link.len()..].is_empty()
+        || current_url[link.len()..].starts_with('/')
+}
+
 fn nav_item_active(item: &NavItem, current_url: &str) -> bool {
     match &item.active_match {
         Some(am) if !am.is_empty() => current_url.starts_with(am.as_str()),
-        _ => match &item.link {
-            Some(link) => current_url.contains(link.as_str()),
-            None => false,
-        },
+        _ => item
+            .link
+            .as_deref()
+            .is_some_and(|link| nav_active(current_url, link)),
     }
 }
 
@@ -263,7 +277,7 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
                                 <li>
                                     (Raw::dangerously_create(format!(
                                         r#"<a class="block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap{}{} transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft" href="{}"{}>{}</a>"#,
-                                        if child.link.as_deref().is_some_and(|l| current_url.contains(l)) { " text-brand-1" } else { " text-text-1" },
+                                        if child.link.as_deref().is_some_and(|l| nav_active(current_url, l)) { " text-brand-1" } else { " text-text-1" },
                                         // upstream's `vp-external-link-icon` (base.css):
                                         // offsite flyout entries carry the arrow
                                         if child.link.as_deref().is_some_and(|l| l.starts_with("http"))
@@ -421,5 +435,24 @@ fn social_link_icon(icon: &crate::config::SocialIcon) -> hypertext::Raw<String> 
     match icon {
         crate::config::SocialIcon::Name(n) => social_icon(n, "size-5"),
         crate::config::SocialIcon::Svg { svg } => hypertext::Raw::dangerously_create(svg.clone()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn nav_active_matches_on_segment_boundaries() {
+        // contains() used to light up "/api/" on "/reference/api/"
+        assert!(!nav_active("/reference/api/", "/api/"));
+        assert!(nav_active("/reference/api/", "/reference/"));
+        // a link without a trailing slash still activates its own pages
+        assert!(nav_active("/guide/x/", "/guide"));
+        assert!(nav_active("/guide/", "/guide"));
+        // but must not match into a longer segment name
+        assert!(!nav_active("/guide-x/", "/guide"));
+        // the bare root link stays active everywhere (upstream "/")
+        assert!(nav_active("/anything/", "/"));
     }
 }
