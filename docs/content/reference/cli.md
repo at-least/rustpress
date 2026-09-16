@@ -23,7 +23,7 @@ rustpress build [site]
 The build:
 
 1. loads and validates `rustpress.toml` (unknown keys fail here),
-2. wipes `public/` (the output is fully regenerated — pages deleted from the content tree leave with their old output),
+2. builds into a staging sibling and swaps it in at the end — the output is fully regenerated (pages deleted from the content tree leave with their old output) and a failed build leaves the previous output untouched,
 3. renders every markdown page to `public/<url>/index.html`, plus `404.html`,
 4. writes `syntax.css` (the [syntax highlight](./site-config#code)), `search-docs.json` when [search](./default-theme-search) is on, the selected theme under `themes/` when a [`theme`](../reference/site-config#theme) is set, and `sitemap.xml` when [`[sitemap]`](../guide/sitemap-generation) is configured,
 5. writes the embedded theme assets (`vitepress.css`, `js/app.js`, `fonts/`, `themes/`) into `public/`, then copies `<site>/static/` and — when [`staticOverlay`](../reference/site-config#staticoverlay) is set — that directory over them — see [Theme assets](../guide/getting-started#theme-assets),

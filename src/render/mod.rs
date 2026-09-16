@@ -286,25 +286,40 @@ impl Site {
 
     /// Build the whole site into `out_dir`.
     pub fn build(&self, site_dir: &Path, out_dir: &Path) -> Result<BuildStats, BuildError> {
-        // public/ is fully regenerated: a previous build's outputs (pages
-        // deleted or renamed since) must not survive — they would serve
-        // stale content and keep satisfying the dead-link disk check. Only
-        // clean when out_dir is inside the site dir (VitePress's
-        // cleanOutDir rule); a caller passing an arbitrary directory
-        // manages its contents itself.
+        // The output is fully regenerated: a previous build's outputs
+        // (pages deleted or renamed since) must not survive — they would
+        // serve stale content and keep satisfying the dead-link disk
+        // check. Only managed when out_dir is inside the site dir
+        // (VitePress's cleanOutDir rule); a caller passing an arbitrary
+        // directory manages its contents itself. Managed builds go to a
+        // staging sibling and swap in at the end, so a failed build
+        // leaves the previous output intact (what `serve` keeps serving).
         if out_dir.starts_with(site_dir) && out_dir != site_dir {
-            match std::fs::remove_dir_all(out_dir) {
-                Ok(()) => {}
-                // a first build has nothing to clean
-                Err(source) if source.kind() == std::io::ErrorKind::NotFound => {}
-                Err(source) => {
-                    return Err(BuildError::Write {
+            let staging = staging_dir(out_dir);
+            remove_tree(&staging)?;
+            let result = self.build_into(site_dir, &staging);
+            match result {
+                Ok(stats) => {
+                    remove_tree(out_dir)?;
+                    std::fs::rename(&staging, out_dir).map_err(|source| BuildError::Write {
                         path: out_dir.to_path_buf(),
                         source,
-                    });
+                    })?;
+                    Ok(stats)
+                }
+                Err(error) => {
+                    let _ = std::fs::remove_dir_all(&staging);
+                    Err(error)
                 }
             }
+        } else {
+            self.build_into(site_dir, out_dir)
         }
+    }
+
+    /// The build proper, writing into `out_dir` (assumed absent or
+    /// disposable — `build` stages the swap).
+    fn build_into(&self, site_dir: &Path, out_dir: &Path) -> Result<BuildStats, BuildError> {
         let mut stats = BuildStats::default();
         let mut search_docs: Vec<serde_json::Value> = Vec::new();
         let search_enabled = self.config.search.is_some();
@@ -369,6 +384,11 @@ impl Site {
             let dir = site_dir.join(rel);
             if !dir.is_dir() {
                 return Err(BuildError::Overlay { path: dir });
+            }
+            // copying an ancestor of the output into the output recurses
+            // into itself (staticOverlay = "." with the default public/)
+            if out_dir.starts_with(&dir) {
+                return Err(BuildError::OverlayContainsOutput { path: dir });
             }
             copy_dir(&dir, out_dir)?;
         }
@@ -703,12 +723,15 @@ fn apply_pager_override(
 /// Newest commit timestamp per path, answered by one `git log` over all
 /// page pathspecs (a per-page `git log -1` spawns a process per page).
 /// Paths are literal (no glob magic), non-ASCII names stay raw
-/// (`core.quotepath=false`), merges diff against their first parent, and
-/// any git failure yields `None` (pages keep their mtime). Commit lines
-/// carry a `\x01` sentinel so a file literally named "1735732800" is not
-/// mistaken for a timestamp; first insert per path wins (the walk is
-/// newest-first). Pathspecs are passed as args — fine to hundreds of
-/// thousands of pages before ARG_MAX is a concern.
+/// (`core.quotepath=false`), `--relative` makes git print paths relative
+/// to the site dir it runs in (it would otherwise print them relative to
+/// the repo root, which never matches when the site is a subdirectory),
+/// merges diff against their first parent, and any git failure yields
+/// `None` (pages keep their mtime). Commit lines carry a `\x01` sentinel
+/// so a file literally named "1735732800" is not mistaken for a
+/// timestamp; first insert per path wins (the walk is newest-first).
+/// Pathspecs are passed as args — fine to hundreds of thousands of pages
+/// before ARG_MAX is a concern.
 fn git_commit_times(site_dir: &Path, pathspecs: &[PathBuf]) -> Option<HashMap<String, i64>> {
     if pathspecs.is_empty() {
         return Some(HashMap::new());
@@ -720,6 +743,7 @@ fn git_commit_times(site_dir: &Path, pathspecs: &[PathBuf]) -> Option<HashMap<St
             "log",
             "--format=\u{1}%ct",
             "--name-only",
+            "--relative",
             "--diff-merges=first-parent",
             "--",
         ])
@@ -769,6 +793,10 @@ pub enum BuildError {
     ThemeFile { path: PathBuf, value: String },
     #[error("staticOverlay path {path:?} is not a directory")]
     Overlay { path: PathBuf },
+    #[error(
+        "staticOverlay path {path:?} contains the output directory — copying it into the output would never finish"
+    )]
+    OverlayContainsOutput { path: PathBuf },
     #[error("{}", .report)]
     DeadLinks { report: String },
     #[error(transparent)]
@@ -914,6 +942,25 @@ fn normalize_rewrite_path(path: &str) -> String {
         p.to_string()
     } else {
         format!("{p}.md")
+    }
+}
+
+/// The staging sibling a managed build writes into before swapping
+/// (`public` → `public.rustpress-tmp`). `serve`'s watcher must ignore it
+/// or every staged rebuild would trigger another.
+pub fn staging_dir(out_dir: &Path) -> PathBuf {
+    out_dir.with_extension("rustpress-tmp")
+}
+
+/// Remove a tree that may not exist (a first build has nothing to clean).
+fn remove_tree(dir: &Path) -> Result<(), BuildError> {
+    match std::fs::remove_dir_all(dir) {
+        Ok(()) => Ok(()),
+        Err(source) if source.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(source) => Err(BuildError::Write {
+            path: dir.to_path_buf(),
+            source,
+        }),
     }
 }
 

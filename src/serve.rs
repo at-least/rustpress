@@ -87,7 +87,14 @@ fn start_watcher(site_dir: PathBuf) -> anyhow::Result<()> {
         // the watcher must outlive the loop or no events are produced
         let _keep_alive = watcher;
         let public = site_dir.join("public");
-        let is_change = |paths: &[PathBuf]| !paths.iter().any(|p| p.starts_with(&public));
+        // the build stages into this sibling and swaps it in; staging
+        // churn must not trigger rebuilds of its own
+        let staging = crate::render::staging_dir(&public);
+        let is_change = |paths: &[PathBuf]| {
+            !paths
+                .iter()
+                .any(|p| p.starts_with(&public) || p.starts_with(&staging))
+        };
         while let Ok(paths) = rx.recv() {
             // ignore the build output itself
             if !is_change(&paths) {

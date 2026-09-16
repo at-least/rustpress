@@ -622,3 +622,100 @@ fn last_updated_uses_git_commit_timestamps() {
     assert_eq!(secs("修改指南.md"), Some(1735732800), "non-ASCII path");
     assert!(secs("fresh.md").is_some(), "untracked falls back to mtime");
 }
+
+#[test]
+fn last_updated_works_when_the_site_is_not_the_repo_root() {
+    // git log prints repo-root-relative paths; the map keys are
+    // site-dir-relative, so the walk needs --relative to match when the
+    // site lives in a subdirectory of the repo (rustpress's own docs/)
+    if std::process::Command::new("git")
+        .arg("--version")
+        .output()
+        .is_err()
+    {
+        panic!("git is required for the last-updated test (CI and dev machines have it)");
+    }
+    let repo = tempdir::tempdir();
+    let site_dir = repo.path().join("some/site");
+    let git = |date: &str, args: &[&str]| {
+        let out = std::process::Command::new("git")
+            .args(args)
+            .current_dir(repo.path())
+            .env("GIT_AUTHOR_DATE", format!("{date} +0000"))
+            .env("GIT_COMMITTER_DATE", format!("{date} +0000"))
+            .output()
+            .unwrap();
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    };
+    git("2024-12-01 00:00:00", &["init"]);
+    git("2024-12-01 00:00:00", &["config", "user.name", "t"]);
+    git(
+        "2024-12-01 00:00:00",
+        &["config", "user.email", "t@example.com"],
+    );
+    std::fs::create_dir_all(site_dir.join("content")).unwrap();
+    std::fs::write(site_dir.join("content/index.md"), "# H\n").unwrap();
+    git("2025-01-01 12:00:00", &["add", "-A"]);
+    git("2025-01-01 12:00:00", &["commit", "-m", "first"]);
+    std::fs::write(site_dir.join("rustpress.toml"), "lastUpdated = true\n").unwrap();
+
+    let site = Site::load(&site_dir).unwrap();
+    let modified = site
+        .content
+        .pages
+        .iter()
+        .find(|page| page.rel == "index.md")
+        .unwrap()
+        .modified
+        .unwrap();
+    let secs = modified
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    assert_eq!(secs, 1735732800, "git timestamp must survive the subdir");
+}
+
+#[test]
+fn a_failed_build_leaves_the_previous_output_intact() {
+    // builds stage into a sibling and swap in at the end: the dev server
+    // keeps serving the last good output while a rebuild is broken
+    let site_dir = tempdir::tempdir();
+    std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
+    std::fs::write(site_dir.path().join("rustpress.toml"), "title = \"T\"\n").unwrap();
+    std::fs::write(site_dir.path().join("content/index.md"), "# H\n").unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    let out = site_dir.path().join("public");
+    site.build(site_dir.path(), &out).unwrap();
+    assert!(out.join("index.html").is_file());
+
+    // dead link fails the build; the previous output must survive
+    std::fs::write(
+        site_dir.path().join("content/index.md"),
+        "# H\n[bad](./missing/)\n",
+    )
+    .unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    assert!(
+        site.build(site_dir.path(), &out).is_err(),
+        "the dead link should fail this build"
+    );
+    assert!(
+        out.join("index.html").is_file(),
+        "old output was wiped by a failed build"
+    );
+    assert!(
+        !site_dir.path().join("public.rustpress-tmp").exists(),
+        "staging dir left behind after a failed build"
+    );
+
+    // fixing the page swaps a fresh build in
+    std::fs::write(site_dir.path().join("content/index.md"), "# Fixed\n").unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    site.build(site_dir.path(), &out).unwrap();
+    let html = std::fs::read_to_string(out.join("index.html")).unwrap();
+    assert!(html.contains("Fixed"));
+}
