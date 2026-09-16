@@ -64,24 +64,28 @@ fn rebuild(site_dir: &Path) -> anyhow::Result<()> {
 }
 
 fn start_watcher(site_dir: PathBuf) -> anyhow::Result<()> {
-    let _ = site_dir; // used via recursive watcher below
+    use notify::Watcher as _;
+    let (tx, rx) = std::sync::mpsc::channel();
+    // created on this thread so a failure returns Err from `serve` — a
+    // panicking watcher thread would leave the server running without
+    // rebuilds or live reload
+    let mut watcher = notify::recommended_watcher(move |res: Result<notify::Event, _>| {
+        // reads (the build itself opens content/, static/ and the
+        // config) must not count as changes, or every rebuild
+        // triggers the next one
+        if let Ok(ev) = res
+            && !matches!(ev.kind, notify::EventKind::Access(_))
+        {
+            let _ = tx.send(ev.paths);
+        }
+    })
+    .context("starting the file watcher")?;
+    watcher
+        .watch(&site_dir, notify::RecursiveMode::Recursive)
+        .with_context(|| format!("watching {}", site_dir.display()))?;
     std::thread::spawn(move || {
-        use notify::Watcher as _;
-        let (tx, rx) = std::sync::mpsc::channel();
-        let mut watcher = notify::recommended_watcher(move |res: Result<notify::Event, _>| {
-            // reads (the build itself opens content/, static/ and the
-            // config) must not count as changes, or every rebuild
-            // triggers the next one
-            if let Ok(ev) = res
-                && !matches!(ev.kind, notify::EventKind::Access(_))
-            {
-                let _ = tx.send(ev.paths);
-            }
-        })
-        .unwrap_or_else(|e| panic!("rustpress: cannot start file watcher: {e}"));
-        watcher
-            .watch(&site_dir, notify::RecursiveMode::Recursive)
-            .unwrap_or_else(|e| panic!("rustpress: cannot watch {}: {e}", site_dir.display()));
+        // the watcher must outlive the loop or no events are produced
+        let _keep_alive = watcher;
         let public = site_dir.join("public");
         let is_change = |paths: &[PathBuf]| !paths.iter().any(|p| p.starts_with(&public));
         while let Ok(paths) = rx.recv() {
@@ -127,9 +131,10 @@ async fn livereload() -> Sse<impl futures_core::Stream<Item = Result<Event, std:
 }
 
 /// Serves files under public/. Traversal: the path is percent-decoded
-/// once, then segment-split, and any `..` segment is rejected before any
-/// filesystem access; symlinks inside public/ are trusted (127.0.0.1 dev
-/// server serving its own build output only).
+/// once, then segment-split, and any `..` segment (or a backslash, a
+/// path separator on Windows) is rejected before any filesystem access;
+/// symlinks inside public/ are trusted (127.0.0.1 dev server serving its
+/// own build output only).
 fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
     let path = uri.path();
     let path = match path {
@@ -141,6 +146,9 @@ fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
     let Some(rel) = percent_decode(path) else {
         return plain(StatusCode::BAD_REQUEST, "bad encoding");
     };
+    if rel.contains('\\') {
+        return plain(StatusCode::NOT_FOUND, "not found");
+    }
     let mut file_path = state.root.clone();
     for seg in rel.split('/') {
         if seg.is_empty() || seg == "." {
@@ -161,7 +169,9 @@ fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
     }
     match std::fs::read(&file_path) {
         Ok(body) => {
-            if path.ends_with(".html") {
+            // livereload injection follows the decoded path: a
+            // percent-encoded dot would otherwise skip it
+            if rel.ends_with(".html") {
                 html_response(StatusCode::OK, inject_livereload(body))
             } else {
                 let mime = mime_of(&file_path);
@@ -216,7 +226,7 @@ fn percent_decode(s: &str) -> Option<String> {
     let mut i = 0;
     while i < bytes.len() {
         match bytes[i] {
-            b'%' if i + 2 < bytes.len() + 1 && i + 2 < bytes.len() + 1 => {
+            b'%' if i + 3 <= bytes.len() => {
                 let hex = bytes.get(i + 1..i + 3)?;
                 let hex_str = std::str::from_utf8(hex).ok()?;
                 let byte = u8::from_str_radix(hex_str, 16).ok()?;
@@ -250,5 +260,68 @@ fn mime_of(path: &Path) -> &'static str {
         Some("xml") => "application/xml",
         Some("webmanifest") => "application/manifest+json",
         _ => "application/octet-stream",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::Uri;
+
+    fn temp_site() -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("rp-serve-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("public/sub")).unwrap();
+        std::fs::write(dir.join("public/index.html"), "<html></html>").unwrap();
+        std::fs::write(dir.join("public/sub/page.html"), "<html></html>").unwrap();
+        std::fs::write(dir.join("public/data.txt"), "hello").unwrap();
+        dir
+    }
+
+    fn status_of(root: &Path, path: &'static str) -> StatusCode {
+        let state = ServeState { root: root.to_path_buf() };
+        serve_file(&state, &Uri::from_static(path)).status()
+    }
+
+    #[test]
+    fn serves_files_and_rejects_traversal() {
+        let dir = temp_site();
+        let public = dir.join("public");
+        assert_eq!(status_of(&public, "/"), StatusCode::OK);
+        assert_eq!(status_of(&public, "/data.txt"), StatusCode::OK);
+        assert_eq!(status_of(&public, "/sub/page.html"), StatusCode::OK);
+        assert_eq!(status_of(&public, "/missing.txt"), StatusCode::NOT_FOUND);
+        // traversal, raw and percent-encoded
+        assert_eq!(status_of(&public, "/../rustpress.toml"), StatusCode::NOT_FOUND);
+        assert_eq!(status_of(&public, "/%2e%2e/rustpress.toml"), StatusCode::NOT_FOUND);
+        // double-encoded decodes to a literal "%2e%2e" name: no second pass
+        assert_eq!(status_of(&public, "/%252e%252e/rustpress.toml"), StatusCode::NOT_FOUND);
+        // a backslash is a path separator on Windows: never let one ride
+        // through a segment ("..\..\rustpress.toml")
+        assert_eq!(status_of(&public, "/..%5C..%5Crustpress.toml"), StatusCode::NOT_FOUND);
+
+        // Content-Type follows the DECODED path: /index%2Ehtml is
+        // index.html and must be served as HTML, not octet-stream
+        let state = ServeState { root: public.clone() };
+        let resp = serve_file(&state, &Uri::from_static("/index%2Ehtml"));
+        assert_eq!(resp.status(), StatusCode::OK);
+        assert_eq!(
+            resp.headers().get(header::CONTENT_TYPE).unwrap(),
+            "text/html; charset=utf-8"
+        );
+        let resp = serve_file(&state, &Uri::from_static("/data.txt"));
+        assert_eq!(
+            resp.headers().get(header::CONTENT_TYPE).unwrap(),
+            "text/plain; charset=utf-8"
+        );
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn watcher_failures_return_err() {
+        // startup must fail loudly instead of panicking inside the
+        // watcher thread while the server keeps running without reloads
+        let err = start_watcher(std::env::temp_dir().join("rp-no-such-dir-for-watcher"));
+        assert!(err.is_err(), "watching a nonexistent dir must return Err");
     }
 }
