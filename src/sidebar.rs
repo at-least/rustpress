@@ -44,39 +44,54 @@ impl SidebarTree {
 #[derive(Debug, Clone, Default)]
 pub struct Sidebars {
     pub trees: Vec<SidebarTree>,
+    /// Flat leaf order of each tree, precomputed for the prev/next pager:
+    /// every page asks during a build, so flattening per request would be
+    /// quadratic.
+    flats: Vec<Vec<(String, String)>>,
 }
+
+/// (prev, next) pager entries: `(sidebar text, url)` pairs.
+pub type PagerNeighbors = (Option<(String, String)>, Option<(String, String)>);
 
 impl Sidebars {
     /// Build the site's sidebars from config + loaded content.
     pub fn build(config: &SiteConfig, content: &Content) -> Sidebars {
-        match &config.sidebar {
-            SidebarConfig::Auto => Sidebars {
-                trees: auto_trees(content),
-            },
+        let trees = match &config.sidebar {
+            SidebarConfig::Auto => auto_trees(content),
             SidebarConfig::Items(items) => {
                 let nodes = resolve_items(items, "", content);
-                Sidebars {
-                    trees: vec![SidebarTree { prefix: "/".into(), items: nodes }],
-                }
+                vec![SidebarTree { prefix: "/".into(), items: nodes }]
             }
-            SidebarConfig::Map(map) => Sidebars {
-                trees: map
-                    .iter()
-                    .map(|(prefix, section)| SidebarTree {
-                        prefix: ensure_slashed(prefix),
-                        items: resolve_items(&section.items, section.base.as_deref().unwrap_or(""), content),
-                    })
-                    .collect(),
-            },
-        }
+            SidebarConfig::Map(map) => map
+                .iter()
+                .map(|(prefix, section)| SidebarTree {
+                    prefix: ensure_slashed(prefix),
+                    items: resolve_items(
+                        &section.items,
+                        section.base.as_deref().unwrap_or(""),
+                        content,
+                    ),
+                })
+                .collect(),
+        };
+        let flats = trees.iter().map(Self::flatten).collect();
+        Sidebars { trees, flats }
     }
 
-    /// The sidebar for a page URL: longest covering prefix wins.
-    pub fn for_url(&self, url: &str) -> Option<&SidebarTree> {
+    /// Index of the tree owning `url` (longest covering prefix wins).
+    fn covering(&self, url: &str) -> Option<usize> {
         self.trees
             .iter()
-            .filter(|t| t.covers(url))
-            .max_by_key(|t| t.prefix.len())
+            .enumerate()
+            .filter(|(_, t)| t.covers(url))
+            .max_by_key(|(_, t)| t.prefix.len())
+            .map(|(i, _)| i)
+    }
+
+    /// The sidebar for a page URL.
+    pub fn for_url(&self, url: &str) -> Option<&SidebarTree> {
+        let idx = self.covering(url)?;
+        self.trees.get(idx)
     }
 
     /// Leaves (internal links only) of `tree` in display order — the
@@ -98,14 +113,13 @@ impl Sidebars {
         flat
     }
 
-    /// (prev, next) for a page, per its sidebar's flat order, as
-    /// `(sidebar text, url)` pairs — VitePress's pager shows the sidebar
-    /// label, not the page title.
-    pub fn neighbors(&self, url: &str) -> (Option<(String, String)>, Option<(String, String)>) {
-        let Some(tree) = self.for_url(url) else {
+    /// (prev, next) for a page, per its sidebar's flat order — VitePress's
+    /// pager shows the sidebar label, not the page title.
+    pub fn neighbors(&self, url: &str) -> PagerNeighbors {
+        let Some(idx) = self.covering(url) else {
             return (None, None);
         };
-        let flat = Self::flatten(tree);
+        let flat = &self.flats[idx];
         match flat.iter().position(|(_, u)| u == url) {
             Some(i) => (
                 i.checked_sub(1).and_then(|p| flat.get(p)).cloned(),
