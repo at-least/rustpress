@@ -644,7 +644,8 @@ pub fn expand_alerts(md: &str, opts: &ContainerOptions) -> String {
 fn alert_opener(line: &str, opts: &ContainerOptions) -> Option<(String, String, String)> {
     let t = line.trim_start();
     let indent = &line[..line.len() - t.len()];
-    let rest = t.strip_prefix('>')?.strip_prefix(' ').unwrap_or("").trim();
+    // the space after ">" is optional (GitHub accepts ">[!NOTE]")
+    let rest = t.strip_prefix('>')?.trim_start();
     if !rest.starts_with("[!") {
         return None;
     }
@@ -1186,6 +1187,19 @@ mod tests {
         assert_eq!(rewrite_info(""), "gdcode");
         // non-numeric braces are not line specs: left alone
         assert_eq!(rewrite_info("jsonc { \"n\": 2 }"), "gdcode lang=jsonc");
+    }
+
+    #[test]
+    fn alert_opener_accepts_no_space_after_the_marker() {
+        // GitHub accepts ">[!NOTE]" without a space after ">"; the alert
+        // becomes a ::: container (pass 1.5), then a custom block (pass 2)
+        let opts = ContainerOptions::default();
+        let out = expand_containers(
+            &expand_alerts(">[!NOTE]\n> body line\n", &opts),
+            &opts,
+        );
+        assert!(out.contains("<div class=\"custom-block note\">"), "{out}");
+        assert!(out.contains("body line"), "{out}");
     }
 
     #[test]
