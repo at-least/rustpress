@@ -12,6 +12,7 @@ pub mod search_modal;
 pub mod sidebar;
 pub mod vpdoc;
 
+use std::collections::HashMap;
 use std::path::Path;
 
 use std::path::PathBuf;
@@ -48,30 +49,26 @@ impl Site {
         let sidebars = Sidebars::build(&config, &content);
         let engine = MarkdownEngine::new(&config.markdown, &config.code, site_dir, &config.base)?;
         // git timestamps beat mtimes: a fresh clone's mtimes are checkout
-        // time, which would make "last updated" meaningless. `page.src` is
-        // relative to the process cwd (`demo/content/…` for `rustpress
-        // build demo`), so the pathspec must be re-based onto the site dir
-        // before git runs there — as-is it resolves one level too deep,
-        // matches nothing, and every page silently falls back to its mtime.
+        // time, which would make "last updated" meaningless. One `git log`
+        // walk answers every page — a subprocess per page does not scale.
+        // `page.src` is relative to the process cwd (`demo/content/…` for
+        // `rustpress build demo`), so the pathspec must be re-based onto
+        // the site dir before git runs there.
         if config.last_updated {
-            for page in &mut content.pages {
-                let pathspec = page
-                    .src
-                    .strip_prefix(site_dir)
-                    .unwrap_or(&page.src);
-                let secs = std::process::Command::new("git")
-                    .args(["log", "-1", "--format=%ct", "--"])
-                    .arg(&pathspec)
-                    .current_dir(site_dir)
-                    .output()
-                    .ok()
-                    .and_then(|out| String::from_utf8(out.stdout).ok())
-                    .and_then(|text| text.trim().parse::<i64>().ok());
-                if let Some(secs) = secs {
-                    page.modified = Some(
-                        std::time::SystemTime::UNIX_EPOCH
-                            + std::time::Duration::from_secs(secs.max(0) as u64),
-                    );
+            let pathspecs: Vec<PathBuf> = content
+                .pages
+                .iter()
+                .map(|page| page.src.strip_prefix(site_dir).unwrap_or(&page.src).to_path_buf())
+                .collect();
+            if let Some(times) = git_commit_times(site_dir, &pathspecs) {
+                for page in &mut content.pages {
+                    let pathspec = page.src.strip_prefix(site_dir).unwrap_or(&page.src);
+                    if let Some(secs) = times.get(&pathspec.to_string_lossy().into_owned()) {
+                        page.modified = Some(
+                            std::time::SystemTime::UNIX_EPOCH
+                                + std::time::Duration::from_secs((*secs).max(0) as u64),
+                        );
+                    }
                 }
             }
         }
@@ -654,6 +651,53 @@ fn apply_pager_override(
             href: site.url(link),
         }),
     }
+}
+
+/// Newest commit timestamp per path, answered by one `git log` over all
+/// page pathspecs (a per-page `git log -1` spawns a process per page).
+/// Paths are literal (no glob magic), non-ASCII names stay raw
+/// (`core.quotepath=false`), merges diff against their first parent, and
+/// any git failure yields `None` (pages keep their mtime). Commit lines
+/// carry a `\x01` sentinel so a file literally named "1735732800" is not
+/// mistaken for a timestamp; first insert per path wins (the walk is
+/// newest-first). Pathspecs are passed as args — fine to hundreds of
+/// thousands of pages before ARG_MAX is a concern.
+fn git_commit_times(site_dir: &Path, pathspecs: &[PathBuf]) -> Option<HashMap<String, i64>> {
+    if pathspecs.is_empty() {
+        return Some(HashMap::new());
+    }
+    let out = std::process::Command::new("git")
+        .arg("-c")
+        .arg("core.quotepath=false")
+        .args([
+            "log",
+            "--format=\u{1}%ct",
+            "--name-only",
+            "--diff-merges=first-parent",
+            "--",
+        ])
+        .args(pathspecs)
+        .current_dir(site_dir)
+        .env("GIT_LITERAL_PATHSPECS", "1")
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null())
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let mut map: HashMap<String, i64> = HashMap::new();
+    let mut current: Option<i64> = None;
+    for line in String::from_utf8_lossy(&out.stdout).split('\n') {
+        if let Some(ts) = line.strip_prefix('\u{1}') {
+            current = ts.parse().ok();
+        } else if !line.is_empty()
+            && let Some(ts) = current
+        {
+            map.entry(line.to_string()).or_insert(ts);
+        }
+    }
+    Some(map)
 }
 
 #[derive(Debug, Default)]

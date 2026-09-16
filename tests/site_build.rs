@@ -502,3 +502,58 @@ fn sitemap_xml_escapes_urls() {
         "unescaped URL in sitemap: {xml}"
     );
 }
+
+#[test]
+fn last_updated_uses_git_commit_timestamps() {
+    // pins the git-timestamp behavior through the batched-log refactor:
+    // newest commit wins per file, non-ASCII names resolve, untracked
+    // pages fall back to their mtime
+    if std::process::Command::new("git").arg("--version").output().is_err() {
+        panic!("git is required for the last-updated test (CI and dev machines have it)");
+    }
+    let repo = tempdir::tempdir();
+    let git = |date: &str, args: &[&str]| {
+        let out = std::process::Command::new("git")
+            .args(args)
+            .current_dir(repo.path())
+            .env("GIT_AUTHOR_DATE", format!("{date} +0000"))
+            .env("GIT_COMMITTER_DATE", format!("{date} +0000"))
+            .output()
+            .unwrap();
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    };
+    git("2024-12-01 00:00:00", &["init"]);
+    git("2024-12-01 00:00:00", &["config", "user.name", "t"]);
+    git("2024-12-01 00:00:00", &["config", "user.email", "t@example.com"]);
+    std::fs::create_dir_all(repo.path().join("content")).unwrap();
+    // committed twice: the newer commit's timestamp must win
+    std::fs::write(repo.path().join("content/index.md"), "# H\n").unwrap();
+    std::fs::write(repo.path().join("content/修改指南.md"), "# ZH\n").unwrap();
+    git("2025-01-01 12:00:00", &["add", "-A"]);
+    git("2025-01-01 12:00:00", &["commit", "-m", "first"]);
+    std::fs::write(repo.path().join("content/index.md"), "# H2\n").unwrap();
+    git("2025-02-01 12:00:00", &["add", "content/index.md"]);
+    git("2025-02-01 12:00:00", &["commit", "-m", "update index"]);
+    // never committed: keeps its mtime
+    std::fs::write(repo.path().join("content/fresh.md"), "# Fresh\n").unwrap();
+    std::fs::write(repo.path().join("rustpress.toml"), "lastUpdated = true\n").unwrap();
+
+    let site = Site::load(repo.path()).unwrap();
+    let secs = |p: &str| {
+        site.content
+            .pages
+            .iter()
+            .find(|page| page.rel == p)
+            .unwrap()
+            .modified
+            .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs())
+    };
+    // %ct is the committer date; page rels are content-dir relative
+    assert_eq!(secs("index.md"), Some(1738411200), "latest commit wins");
+    assert_eq!(secs("修改指南.md"), Some(1735732800), "non-ASCII path");
+    assert!(secs("fresh.md").is_some(), "untracked falls back to mtime");
+}
