@@ -370,14 +370,23 @@ fn split_heading_anchor(text: &str) -> (String, Option<String>) {
 
 /// Swap each heading's rendered slug for its `{#custom}` id and strip the
 /// literal attribute from the rendered text (VitePress heading anchors).
-/// Heading order in `html` matches `headings` (both are document order).
+/// Pairing is by id, not position: only an `<hN>` segment carrying a
+/// heading's rendered slug is its render, so raw HTML headings in the
+/// source (allowed by `render.unsafe`) never consume a mapping and one
+/// unmatched heading cannot desync the rest.
 fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
-    if !headings.iter().any(|h| h.id != h.rendered_id) {
+    // rendered ids are unique (the anchorizer dedups), so a plain list of
+    // (rendered, custom) pairs is an unambiguous lookup table
+    let map: Vec<(&str, &str)> = headings
+        .iter()
+        .filter(|h| h.id != h.rendered_id)
+        .map(|h| (h.rendered_id.as_str(), h.id.as_str()))
+        .collect();
+    if map.is_empty() {
         return html.to_string();
     }
     let mut out = String::with_capacity(html.len());
     let mut rest = html;
-    let mut iter = headings.iter();
     while let Some(open) = rest.find("<h") {
         let level = rest[open + 2..].chars().next().unwrap_or(' ');
         if !level.is_ascii_digit() || level > '6' {
@@ -392,13 +401,15 @@ fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
         };
         let segment = &rest[open..open + close + close_tag.len()];
         let mut fixed = segment.to_string();
-        if let Some(h) = iter.next()
-            && h.id != h.rendered_id {
-                fixed = fixed
-                    .replace(&format!("id=\"{}\"", h.rendered_id), &format!("id=\"{}\"", h.id))
-                    .replace(&format!("href=\"#{}\"", h.rendered_id), &format!("href=\"#{}\"", h.id));
-                fixed = fixed.replace(&format!(" {{#{}}}", h.id), "");
-            }
+        if let Some((rendered, custom)) = map
+            .iter()
+            .find(|(rendered, _)| fixed.contains(&format!("id=\"{rendered}\"")))
+        {
+            fixed = fixed
+                .replace(&format!("id=\"{rendered}\""), &format!("id=\"{custom}\""))
+                .replace(&format!("href=\"#{rendered}\""), &format!("href=\"#{custom}\""));
+            fixed = fixed.replace(&format!(" {{#{custom}}}"), "");
+        }
         out.push_str(&rest[..open]);
         out.push_str(&fixed);
         rest = &rest[open + close + close_tag.len()..];
@@ -507,6 +518,39 @@ mod tests {
         // absolute/external untouched
         assert_eq!(resolve_relative("/api/", "guide/intro.md", &content), None);
         assert_eq!(resolve_relative("https://x.y/z", "guide/intro.md", &content), None);
+    }
+
+    #[test]
+    fn custom_heading_ids_survive_raw_html_headings() {
+        // raw HTML in markdown is allowed (render.unsafe); a raw <h2> must
+        // not consume a heading slot — every {#custom} anchor on the page
+        // still applies and no literal attribute leaks into the output
+        let engine = MarkdownEngine::new(
+            &MarkdownConfig::default(),
+            &crate::config::SyntaxHighlight::default(),
+            Path::new("."),
+            "/",
+        )
+        .unwrap();
+        let page = Page {
+            rel: "x.md".into(),
+            url: "/x/".into(),
+            title: "x".into(),
+            front: Default::default(),
+            body: "<h2>Raw HTML heading</h2>\n\n# First {#custom-one}\n\n## Second {#custom-two}\n".into(),
+            modified: None,
+            src: "x.md".into(),
+            locale: "root".into(),
+        };
+        let rendered = engine
+            .render(&page, &Content::default(), Path::new("."), Path::new("."))
+            .unwrap();
+        let html = &rendered.html;
+        assert!(html.contains("id=\"custom-one\""), "{html}");
+        assert!(html.contains("id=\"custom-two\""), "{html}");
+        assert!(!html.contains("{#custom"), "literal anchor leaked: {html}");
+        assert!(!html.contains("id=\"first-custom-one\""), "{html}");
+        assert!(!html.contains("id=\"second-custom-two\""), "{html}");
     }
 }
 
