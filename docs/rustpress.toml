@@ -10,6 +10,9 @@ lang = "en"
 base = "/"
 lastUpdated = true
 logo = "logo.svg"
+# dogfood dev loop: layer the repo's freshly built static/ over the
+# output so `npm run dev:docs` picks up CSS/JS changes without a rebuild
+staticOverlay = "../static"
 
 [editLink]
 pattern = "https://github.com/at-least/rustpress/edit/main/docs/content/:path"

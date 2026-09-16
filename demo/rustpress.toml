@@ -9,6 +9,9 @@ base = "/"
 lastUpdated = true
 logo = "vitepress-logo-mini.svg"
 theme = "theme.css"
+# dogfood dev loop: layer the repo's freshly built static/ over the
+# output so `npm run dev` picks up CSS/JS changes without a Rust rebuild
+staticOverlay = "../static"
 
 [editLink]
 pattern = "https://github.com/vuejs/vitepress/edit/main/docs/en/:path"

@@ -447,3 +447,35 @@ fn build_never_cleans_an_out_dir_outside_the_site() {
     site.build(site_dir.path(), out.path()).unwrap();
     assert!(out.path().join("keep-me.txt").is_file());
 }
+
+#[test]
+fn root_static_overlay_is_config_gated() {
+    // the dev-loop overlay (repo-root static/ layered over the output)
+    // used to fire for ANY site whose parent had a static/ dir; it is now
+    // an explicit per-site setting
+    let parent = tempdir::tempdir();
+    std::fs::create_dir_all(parent.path().join("static")).unwrap();
+    std::fs::write(parent.path().join("static/fresh.css"), "body{}\n").unwrap();
+    let site_dir = parent.path().join("site");
+    std::fs::create_dir_all(site_dir.join("content")).unwrap();
+    std::fs::write(site_dir.join("rustpress.toml"), "title = \"T\"\n").unwrap();
+    std::fs::write(site_dir.join("content/index.md"), "# H\n").unwrap();
+    let site = Site::load(&site_dir).unwrap();
+    let out = site_dir.join("public");
+    site.build(&site_dir, &out).unwrap();
+    assert!(
+        !out.join("fresh.css").exists(),
+        "overlay fired without the config key"
+    );
+
+    // opting in copies the configured dir over the output
+    std::fs::write(
+        site_dir.join("rustpress.toml"),
+        "title = \"T\"\nstaticOverlay = \"../static\"\n",
+    )
+    .unwrap();
+    let site = Site::load(&site_dir).unwrap();
+    site.build(&site_dir, &out).unwrap();
+    let css = std::fs::read_to_string(out.join("fresh.css")).unwrap();
+    assert_eq!(css, "body{}\n");
+}

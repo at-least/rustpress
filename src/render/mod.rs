@@ -321,10 +321,10 @@ impl Site {
         let not_found = self.render_404()?;
         write_file(&out_dir.join("404.html"), not_found.as_bytes())?;
         // theme assets embedded in the binary go first; the site's own
-        // static/ is copied over them, and when the site lives nested
-        // under a repo root that also has a static/ dir (the dogfood
-        // layout) the root's freshly built assets are layered on top so
-        // `npm run dev` picks up CSS/JS changes without a Rust rebuild
+        // static/ is copied over them, and an explicitly configured
+        // staticOverlay (the dogfood dev loop: repo-root static/ holding
+        // freshly built CSS/JS) is layered on top so `npm run dev` picks
+        // asset changes up without a Rust rebuild
         crate::theme_assets::extract(out_dir).map_err(|source| BuildError::Write {
             path: out_dir.to_path_buf(),
             source,
@@ -333,11 +333,12 @@ impl Site {
         if static_dir.is_dir() {
             copy_dir(&static_dir, out_dir)?;
         }
-        if let Some(root) = site_dir.parent() {
-            let root_static = root.join("static");
-            if root_static.is_dir() {
-                copy_dir(&root_static, out_dir)?;
+        if let Some(rel) = &self.config.static_overlay {
+            let dir = site_dir.join(rel);
+            if !dir.is_dir() {
+                return Err(BuildError::Overlay { path: dir });
             }
+            copy_dir(&dir, out_dir)?;
         }
         // generated assets are written AFTER the static copy: a
         // same-named leftover in static/ (e.g. a stale syntax.css) must
@@ -666,6 +667,8 @@ pub enum BuildError {
     ThemeValue(String),
     #[error("theme file {path:?} not found (theme = {value:?})")]
     ThemeFile { path: PathBuf, value: String },
+    #[error("staticOverlay path {path:?} is not a directory")]
+    Overlay { path: PathBuf },
     #[error("{}", .report)]
     DeadLinks { report: String },
     #[error(transparent)]

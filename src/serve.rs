@@ -60,29 +60,6 @@ fn rebuild(site_dir: &Path) -> anyhow::Result<()> {
     let site = Site::load(site_dir).context("loading site")?;
     let out = site_dir.join("public");
     site.build(site_dir, &out)?;
-    // dev convenience: when serving a site nested under a repo whose
-    // root has a static/ dir (the dogfood layout), layer it on top so
-    // the committed built assets (app.js, vitepress.css) resolve
-    if let Some(root) = site_dir.parent() {
-        let root_static = root.join("static");
-        if root_static.is_dir() {
-            let _ = copy_over(&root_static, &out);
-        }
-    }
-    Ok(())
-}
-
-fn copy_over(from: &Path, to: &Path) -> std::io::Result<()> {
-    for entry in std::fs::read_dir(from)? {
-        let entry = entry?;
-        let target = to.join(entry.file_name());
-        if entry.path().is_dir() {
-            std::fs::create_dir_all(&target)?;
-            copy_over(&entry.path(), &target)?;
-        } else {
-            std::fs::copy(entry.path(), &target)?;
-        }
-    }
     Ok(())
 }
 

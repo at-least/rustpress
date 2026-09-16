@@ -180,6 +180,14 @@ pub struct SiteConfig {
     #[serde(default = "default_src_dir")]
     pub src_dir: String,
 
+    /// Dev-loop helper for sites nested in a repo that builds its theme
+    /// assets outside the site dir (the bundled rustpress demo/docs): a
+    /// path (relative to the site dir) whose contents are copied over the
+    /// output after every build, so freshly built CSS/JS land in public/
+    /// without rebuilding the binary. Unset = nothing is layered.
+    #[serde(default)]
+    pub static_overlay: Option<String>,
+
     /// Prev/next pager labels.
     #[serde(default)]
     pub doc_footer: Option<DocFooter>,
