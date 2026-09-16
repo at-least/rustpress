@@ -38,10 +38,11 @@ fn headings(page: &str) -> Vec<String> {
     let mut fence: Option<(char, usize)> = None;
     for line in page.lines() {
         if let Some((open_ch, open_len)) = fence {
-            if let Some((ch, len)) = fence_run(line) {
-                if ch == open_ch && len >= open_len {
-                    fence = None;
-                }
+            if let Some((ch, len)) = fence_run(line)
+                && ch == open_ch
+                && len >= open_len
+            {
+                fence = None;
             }
             continue;
         }
@@ -49,7 +50,10 @@ fn headings(page: &str) -> Vec<String> {
             fence = Some(run);
             continue;
         }
-        let Some(rest) = line.strip_prefix("## ").or_else(|| line.strip_prefix("### ")) else {
+        let Some(rest) = line
+            .strip_prefix("## ")
+            .or_else(|| line.strip_prefix("### "))
+        else {
             continue;
         };
         let title = strip_markup(rest);
@@ -102,7 +106,9 @@ fn strip_markup(s: &str) -> String {
 
 #[test]
 fn feature_parity_doc_covers_upstream_reference_headings() {
-    let Some(docs) = common::ensure_upstream() else { return };
+    let Some(docs) = common::ensure_upstream() else {
+        return;
+    };
     let doc = std::fs::read_to_string(
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("FEATURE-PARITY.md"),
     )
@@ -126,7 +132,10 @@ fn feature_parity_doc_covers_upstream_reference_headings() {
         "FEATURE-PARITY.md is missing rows for upstream headings \
          (add them, or the audit no longer covers the pinned release):\n{missing}"
     );
-    assert!(covered > 100, "suspiciously few headings covered: {covered}");
+    assert!(
+        covered > 100,
+        "suspiciously few headings covered: {covered}"
+    );
 }
 
 #[test]

@@ -23,7 +23,9 @@ fn walk(dir: &Path, out: &mut Vec<std::path::PathBuf>) -> std::io::Result<()> {
 
 #[test]
 fn fixtures_are_verbatim_upstream() {
-    let Some(docs) = common::ensure_upstream() else { return };
+    let Some(docs) = common::ensure_upstream() else {
+        return;
+    };
     let fixtures = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/en");
     let mut files = Vec::new();
     walk(&fixtures, &mut files).expect("walk tests/fixtures/en");
@@ -39,7 +41,12 @@ fn fixtures_are_verbatim_upstream() {
                 writeln!(broken, "  {}: edited from upstream", rel.display()).unwrap();
             }
             Err(e) => {
-                writeln!(broken, "  {}: not in the upstream clone ({e})", rel.display()).unwrap();
+                writeln!(
+                    broken,
+                    "  {}: not in the upstream clone ({e})",
+                    rel.display()
+                )
+                .unwrap();
             }
         }
     }
@@ -52,7 +59,9 @@ fn fixtures_are_verbatim_upstream() {
 
 #[test]
 fn demo_content_mirrors_upstream() {
-    let Some(docs) = common::ensure_upstream() else { return };
+    let Some(docs) = common::ensure_upstream() else {
+        return;
+    };
     let demo = Path::new(env!("CARGO_MANIFEST_DIR")).join("demo/content");
     let mut ours = Vec::new();
     walk(&demo, &mut ours).expect("walk demo/content");

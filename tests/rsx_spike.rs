@@ -2,8 +2,8 @@
 //! (Alpine attributes, raw SVG, conditional attrs, layout fns taking
 //! bodies). Delete once the renderer is real.
 
-use hypertext::prelude::*;
 use hypertext::Raw;
+use hypertext::prelude::*;
 
 #[test]
 fn alpine_attributes_compile_and_render() {
@@ -12,7 +12,9 @@ fn alpine_attributes_compile_and_render() {
             "hi"
         </div>
     }
-    .render().into_inner().to_string();
+    .render()
+    .into_inner()
+    .to_string();
     assert!(html.contains("x-data"), "{html}");
     assert!(html.contains("x-on:click"), "{html}");
     assert!(html.contains("x-show"), "{html}");
@@ -26,7 +28,9 @@ fn alpine_shorthand_symbols() {
             "b"
         </button>
     }
-    .render().into_inner().to_string();
+    .render()
+    .into_inner()
+    .to_string();
     println!("{html}");
 }
 
@@ -40,7 +44,9 @@ fn conditional_and_dynamic_attrs() {
             "x"
         </div>
     }
-    .render().into_inner().to_string();
+    .render()
+    .into_inner()
+    .to_string();
     assert!(html.contains("id=\"btn-menu\""), "{html}");
     assert!(html.contains("aria-expanded"), "{html}");
     assert!(!html.contains("hidden"), "{html}");
@@ -52,7 +58,9 @@ fn raw_svg_splices() {
     let html = rsx! {
         <span class="icon-wrap">(icon)</span>
     }
-    .render().into_inner().to_string();
+    .render()
+    .into_inner()
+    .to_string();
     assert!(html.contains("<svg"), "{html}");
 }
 
@@ -80,7 +88,9 @@ fn void_elements_and_class_literals() {
             <img src="x.png" alt="">
         </div>
     }
-    .render().into_inner().to_string();
+    .render()
+    .into_inner()
+    .to_string();
     assert!(html.contains("class=\"vp-doc container\""), "{html}");
 }
 
@@ -90,7 +100,9 @@ fn attribute_paren_expressions() {
     let html = rsx! {
         <div class=(cls) id=(format!("id-{}", 7))>( "text" )</div>
     }
-    .render().into_inner().to_string();
+    .render()
+    .into_inner()
+    .to_string();
     assert!(html.contains("a-42"), "{html}");
     assert!(html.contains("id-7"), "{html}");
     assert!(html.contains("text"), "{html}");

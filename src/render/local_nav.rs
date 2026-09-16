@@ -4,8 +4,8 @@
 
 use hypertext::prelude::*;
 
-use super::icons::icon;
 use super::Site;
+use super::icons::icon;
 use crate::markdown::Heading;
 
 pub fn local_nav<'a>(
@@ -24,7 +24,11 @@ pub fn local_nav<'a>(
     let menu_label = site.config.sidebar_menu_label.clone();
     let nav_cls = format!(
         "sticky top-0 left-0 z-(--vp-z-index-local-nav) w-full pt-[var(--vp-layout-top-height,0px)] border-b border-(--vp-local-nav-divider-color) [&::before]:content-[''] [&::before]:absolute [&::before]:inset-0 [&::before]:z-[-1] [&::before]:bg-(--vp-local-nav-bg-color) [&::before]:[backdrop-filter:var(--vp-nav-backdrop-filter)] [&::before]:transition-colors [&::before]:duration-[250ms] lg:top-(--vp-nav-height) lg:[&::before]:top-[calc(-1*var(--vp-nav-height))]{} xl:hidden",
-        if has_sidebar { " lg:pl-(--vp-sidebar-width)" } else { "" }
+        if has_sidebar {
+            " lg:pl-(--vp-sidebar-width)"
+        } else {
+            ""
+        }
     );
     rsx! {
         <div class=(nav_cls) id="VPLocalNav" x-data="{}">
@@ -61,7 +65,11 @@ pub fn local_nav<'a>(
 /// Flat outline link list (the dropdown shows one flat level, like the
 /// original outline_items at root nesting).
 fn outline_list<'a>(headings: &'a [Heading], nested: bool) -> impl Renderable + 'a {
-    let cls = if nested { "pr-4 pl-4" } else { "relative z-[1]" };
+    let cls = if nested {
+        "pr-4 pl-4"
+    } else {
+        "relative z-[1]"
+    };
     rsx! {
         <ul class=(cls)>
             @for h in headings {

@@ -4,8 +4,8 @@
 //! → HTML with the `gdcode` highlighter.
 
 pub mod highlight;
-pub mod syntax_theme;
 pub mod preprocess;
+pub mod syntax_theme;
 
 use std::path::Path;
 
@@ -41,7 +41,10 @@ pub struct RenderedPage {
 
 #[derive(Debug, thiserror::Error)]
 pub enum MarkdownError {
-    #[error("cannot load syntax theme {value:?}: {detail} (built-in names: the file stems of all {} vendored Helix themes, e.g. github_light, catppuccin_mocha; a value ending in .toml is resolved as a Helix theme file relative to the site dir)", syntax_theme::helix_count())]
+    #[error(
+        "cannot load syntax theme {value:?}: {detail} (built-in names: the file stems of all {} vendored Helix themes, e.g. github_light, catppuccin_mocha; a value ending in .toml is resolved as a Helix theme file relative to the site dir)",
+        syntax_theme::helix_count()
+    )]
     ThemeLoad { value: String, detail: String },
     #[error(transparent)]
     Preprocess(#[from] preprocess::PreprocessError),
@@ -181,8 +184,13 @@ impl MarkdownEngine {
         if self.math && has_math {
             static INLINE: OnceLock<regex::Regex> = OnceLock::new();
             static DISPLAY: OnceLock<regex::Regex> = OnceLock::new();
-            let inline = INLINE.get_or_init(|| regex::Regex::new(r#"(<span data-math-style="inline">)(.*?)(</span>)"#).unwrap());
-            let display = DISPLAY.get_or_init(|| regex::Regex::new(r#"(?s)(<span data-math-style="display">)(.*?)(</span>)"#).unwrap());
+            let inline = INLINE.get_or_init(|| {
+                regex::Regex::new(r#"(<span data-math-style="inline">)(.*?)(</span>)"#).unwrap()
+            });
+            let display = DISPLAY.get_or_init(|| {
+                regex::Regex::new(r#"(?s)(<span data-math-style="display">)(.*?)(</span>)"#)
+                    .unwrap()
+            });
             let html = inline.replace_all(&html, "$1\\($2\\)$3");
             let html = display.replace_all(&html, "$1\\[$2\\]$3");
             return Ok(RenderedPage {
@@ -191,7 +199,11 @@ impl MarkdownEngine {
                 has_math: true,
             });
         }
-        Ok(RenderedPage { html, headings, has_math })
+        Ok(RenderedPage {
+            html,
+            headings,
+            has_math,
+        })
     }
 }
 
@@ -304,12 +316,18 @@ pub fn resolve_relative(url: &str, page_rel: &str, content: &Content) -> Option<
     let frag = frag.map(|f| format!("#{f}")).unwrap_or_default();
     // source-space resolution: links name source files, pages carry the
     // (possibly rewritten) URL
-    for cand in [format!("{target}.md"), format!("{target}/index.md"), target.to_string()] {
+    for cand in [
+        format!("{target}.md"),
+        format!("{target}/index.md"),
+        target.to_string(),
+    ] {
         if let Some(i) = content.by_rel.get(&cand) {
             return Some(format!("{}{}", content.pages[*i].url, frag));
         }
     }
-    if target.is_empty() && let Some(i) = content.by_rel.get("index.md") {
+    if target.is_empty()
+        && let Some(i) = content.by_rel.get("index.md")
+    {
         return Some(format!("{}{frag}", content.pages[*i].url));
     }
     None
@@ -327,7 +345,12 @@ fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
             let rendered_id = anchorizer.anchorize(&raw);
             let (text, custom) = split_heading_anchor(&raw);
             let id = custom.clone().unwrap_or_else(|| rendered_id.clone());
-            out.push(Heading { level: nh.level, id, text, rendered_id });
+            out.push(Heading {
+                level: nh.level,
+                id,
+                text,
+                rendered_id,
+            });
         }
     }
     out
@@ -336,10 +359,15 @@ fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
 /// comrak's `collect_text` skips `ShortCode` nodes, which would drop the
 /// emoji from outline labels and heading aria-labels ("Emoji 🎉" became
 /// "Emoji"); mirror it but append the resolved emoji.
-fn collect_text_with_shortcodes<'a>(node: &'a comrak::arena_tree::Node<'a, std::cell::RefCell<comrak::nodes::Ast>>) -> String {
-    fn walk<'a>(node: &'a comrak::arena_tree::Node<'a, std::cell::RefCell<comrak::nodes::Ast>>, out: &mut String) {
+fn collect_text_with_shortcodes<'a>(
+    node: &'a comrak::arena_tree::Node<'a, std::cell::RefCell<comrak::nodes::Ast>>,
+) -> String {
+    fn walk<'a>(
+        node: &'a comrak::arena_tree::Node<'a, std::cell::RefCell<comrak::nodes::Ast>>,
+        out: &mut String,
+    ) {
         match &node.data.borrow().value {
-            NodeValue::Text(literal) => out.push_str(&literal),
+            NodeValue::Text(literal) => out.push_str(literal),
             NodeValue::Code(code) => out.push_str(&code.literal),
             NodeValue::LineBreak | NodeValue::SoftBreak => out.push(' '),
             NodeValue::Math(math) => out.push_str(math.literal.trim_end()),
@@ -359,12 +387,13 @@ fn collect_text_with_shortcodes<'a>(node: &'a comrak::arena_tree::Node<'a, std::
 /// `Heading {#my-id}` → ("Heading", Some("my-id")).
 fn split_heading_anchor(text: &str) -> (String, Option<String>) {
     if text.ends_with('}')
-        && let Some(i) = text.rfind("{#") {
-            return (
-                text[..i].trim_end().to_string(),
-                Some(text[i + 2..text.len() - 1].to_string()),
-            );
-        }
+        && let Some(i) = text.rfind("{#")
+    {
+        return (
+            text[..i].trim_end().to_string(),
+            Some(text[i + 2..text.len() - 1].to_string()),
+        );
+    }
     (text.to_string(), None)
 }
 
@@ -407,7 +436,10 @@ fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
         {
             fixed = fixed
                 .replace(&format!("id=\"{rendered}\""), &format!("id=\"{custom}\""))
-                .replace(&format!("href=\"#{rendered}\""), &format!("href=\"#{custom}\""));
+                .replace(
+                    &format!("href=\"#{rendered}\""),
+                    &format!("href=\"#{custom}\""),
+                );
             fixed = fixed.replace(&format!(" {{#{custom}}}"), "");
         }
         out.push_str(&rest[..open]);
@@ -448,7 +480,11 @@ fn replace_toc(html: &str, headings: &[Heading]) -> String {
             body.push_str("</li><li>");
             *stack.last_mut().unwrap() = h.level;
         }
-        body.push_str(&format!("<a href=\"#{}\">{}</a>", h.id, preprocess::escape_text(&h.text)));
+        body.push_str(&format!(
+            "<a href=\"#{}\">{}</a>",
+            h.id,
+            preprocess::escape_text(&h.text)
+        ));
     }
     while stack.len() > 1 {
         body.push_str("</li></ul>");
@@ -460,7 +496,8 @@ fn replace_toc(html: &str, headings: &[Heading]) -> String {
     body.push_str("</ul>");
     let toc = format!("<nav class=\"table-of-contents\">{body}</nav>");
     // both bare and inside the paragraph comrak wraps it in
-    html.replace(&format!("<p>{MARK}</p>"), &toc).replace(MARK, &toc)
+    html.replace(&format!("<p>{MARK}</p>"), &toc)
+        .replace(MARK, &toc)
 }
 
 #[cfg(test)]
@@ -510,14 +547,23 @@ mod tests {
             Some("/reference/api/".into())
         );
         // directory links: "../" climbs to the root page
-        assert_eq!(resolve_relative("../", "guide/intro.md", &content), Some("/".into()));
+        assert_eq!(
+            resolve_relative("../", "guide/intro.md", &content),
+            Some("/".into())
+        );
         // "./" stays in the current dir — no /guide/ page in this fixture
         assert_eq!(resolve_relative("./", "guide/what.md", &content), None);
         // unknown target untouched
-        assert_eq!(resolve_relative("./missing.md", "guide/intro.md", &content), None);
+        assert_eq!(
+            resolve_relative("./missing.md", "guide/intro.md", &content),
+            None
+        );
         // absolute/external untouched
         assert_eq!(resolve_relative("/api/", "guide/intro.md", &content), None);
-        assert_eq!(resolve_relative("https://x.y/z", "guide/intro.md", &content), None);
+        assert_eq!(
+            resolve_relative("https://x.y/z", "guide/intro.md", &content),
+            None
+        );
     }
 
     #[test]
@@ -537,7 +583,8 @@ mod tests {
             url: "/x/".into(),
             title: "x".into(),
             front: Default::default(),
-            body: "<h2>Raw HTML heading</h2>\n\n# First {#custom-one}\n\n## Second {#custom-two}\n".into(),
+            body: "<h2>Raw HTML heading</h2>\n\n# First {#custom-one}\n\n## Second {#custom-two}\n"
+                .into(),
             modified: None,
             src: "x.md".into(),
             locale: "root".into(),
@@ -553,4 +600,3 @@ mod tests {
         assert!(!html.contains("id=\"second-custom-two\""), "{html}");
     }
 }
-

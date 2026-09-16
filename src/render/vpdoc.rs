@@ -269,7 +269,10 @@ mod tests {
             assert!(!blob.starts_with(' '), "no leading space");
             assert!(!blob.ends_with(' '), "no trailing space");
             assert!(!blob.contains("  "), "no double spaces");
-            assert!(blob.matches("[&_").count() > 100, "expected a full utility set");
+            assert!(
+                blob.matches("[&_").count() > 100,
+                "expected a full utility set"
+            );
             // brackets and parens balance across the whole blob (utilities
             // may contain spaces inside :is()/:not() selectors, so they
             // cannot be split on whitespace for this check)

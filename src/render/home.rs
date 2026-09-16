@@ -2,13 +2,13 @@
 //! actions, image with the glow blob) and the features grid. Sponsors
 //! are a later stage (core-first scope).
 
-use hypertext::{prelude::*, Raw};
+use hypertext::{Raw, prelude::*};
 
-use super::icons::icon;
 use super::Site;
+use super::icons::icon;
 use crate::config::SocialIcon;
-use crate::content::{Feature, HeroAction};
 use crate::content::Page;
+use crate::content::{Feature, HeroAction};
 
 pub fn home_page<'a>(site: &'a Site, page: &'a Page) -> impl Renderable + 'a {
     let hero = page.front.hero.clone().unwrap_or_default();
@@ -99,7 +99,9 @@ pub fn home_page<'a>(site: &'a Site, page: &'a Page) -> impl Renderable + 'a {
 /// color scheme.
 fn hero_image_html(site: &Site, image: &crate::content::HeroImage) -> String {
     fn esc(s: &str) -> String {
-        s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;")
+        s.replace('&', "&amp;")
+            .replace('"', "&quot;")
+            .replace('<', "&lt;")
     }
     fn img(site: &Site, src: &str, alt: &str, extra: &str) -> String {
         format!(
@@ -115,7 +117,12 @@ fn hero_image_html(site: &Site, image: &crate::content::HeroImage) -> String {
         }
         crate::content::HeroImage::Dual { light, dark, alt } => [
             img(site, light, alt.as_deref().unwrap_or(""), " dark:hidden"),
-            img(site, dark, alt.as_deref().unwrap_or(""), " hidden dark:block"),
+            img(
+                site,
+                dark,
+                alt.as_deref().unwrap_or(""),
+                " hidden dark:block",
+            ),
         ]
         .concat(),
     }
@@ -153,7 +160,10 @@ fn feature_card(site: &Site, feature: &Feature) -> String {
     match &feature.link {
         Some(link) => {
             let href = resolve_action_link(site, link);
-            let mut open = format!(r#"<a class="{card_cls} cursor-pointer" href="{}""#, escape_attr(&href));
+            let mut open = format!(
+                r#"<a class="{card_cls} cursor-pointer" href="{}""#,
+                escape_attr(&href)
+            );
             if let Some(t) = &feature.target {
                 open.push_str(&format!(r#" target="{}""#, escape_attr(t)));
             }
@@ -167,13 +177,17 @@ fn feature_card(site: &Site, feature: &Feature) -> String {
 }
 
 fn escape_attr(s: &str) -> String {
-    s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;")
+    s.replace('&', "&amp;")
+        .replace('"', "&quot;")
+        .replace('<', "&lt;")
 }
 
 /// `features[].icon`: emoji/HTML text, an image, or a light/dark pair.
 fn feature_icon_html(site: &Site, icon: &crate::content::FeatureIcon) -> String {
     fn esc(s: &str) -> String {
-        s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;")
+        s.replace('&', "&amp;")
+            .replace('"', "&quot;")
+            .replace('<', "&lt;")
     }
     fn img(
         site: &Site,
@@ -203,12 +217,35 @@ fn feature_icon_html(site: &Site, icon: &crate::content::FeatureIcon) -> String 
         // its custom CSS paints into icons, so they must pass through
         // unescaped
         crate::content::FeatureIcon::Text(text) => text.clone(),
-        crate::content::FeatureIcon::Image { src, alt, width, height } => {
-            img(site, src, alt.as_deref().unwrap_or(""), *width, *height, "")
-        }
-        crate::content::FeatureIcon::Dual { light, dark, alt, width, height } => [
-            img(site, light, alt.as_deref().unwrap_or(""), *width, *height, " dark:hidden"),
-            img(site, dark, alt.as_deref().unwrap_or(""), *width, *height, " hidden dark:block"),
+        crate::content::FeatureIcon::Image {
+            src,
+            alt,
+            width,
+            height,
+        } => img(site, src, alt.as_deref().unwrap_or(""), *width, *height, ""),
+        crate::content::FeatureIcon::Dual {
+            light,
+            dark,
+            alt,
+            width,
+            height,
+        } => [
+            img(
+                site,
+                light,
+                alt.as_deref().unwrap_or(""),
+                *width,
+                *height,
+                " dark:hidden",
+            ),
+            img(
+                site,
+                dark,
+                alt.as_deref().unwrap_or(""),
+                *width,
+                *height,
+                " hidden dark:block",
+            ),
         ]
         .concat(),
     }
@@ -220,12 +257,20 @@ fn feature_icon_html(site: &Site, icon: &crate::content::FeatureIcon) -> String 
 /// as empty `target=""`, upstream omits them).
 fn hero_button(site: &Site, action: &HeroAction) -> String {
     let theme_cls = match action.theme.as_deref() {
-        Some("alt") => "border-(--vp-button-alt-border) text-(--vp-button-alt-text) bg-(--vp-button-alt-bg) hover:border-(--vp-button-alt-hover-border) hover:text-(--vp-button-alt-hover-text) hover:bg-(--vp-button-alt-hover-bg) active:border-(--vp-button-alt-active-border) active:text-(--vp-button-alt-active-text) active:bg-(--vp-button-alt-active-bg)",
-        Some("sponsor") => "border-(--vp-button-sponsor-border) text-(--vp-button-sponsor-text) bg-(--vp-button-sponsor-bg) hover:border-(--vp-button-sponsor-hover-border) hover:text-(--vp-button-sponsor-hover-text) hover:bg-(--vp-button-sponsor-hover-bg) active:border-(--vp-button-sponsor-active-border) active:text-(--vp-button-sponsor-active-text) active:bg-(--vp-button-sponsor-active-bg)",
-        _ => "border-(--vp-button-brand-border) text-(--vp-button-brand-text) bg-(--vp-button-brand-bg) hover:border-(--vp-button-brand-hover-border) hover:text-(--vp-button-brand-hover-text) hover:bg-(--vp-button-brand-hover-bg) active:border-(--vp-button-brand-active-border) active:text-(--vp-button-brand-active-text) active:bg-(--vp-button-brand-active-bg)",
+        Some("alt") => {
+            "border-(--vp-button-alt-border) text-(--vp-button-alt-text) bg-(--vp-button-alt-bg) hover:border-(--vp-button-alt-hover-border) hover:text-(--vp-button-alt-hover-text) hover:bg-(--vp-button-alt-hover-bg) active:border-(--vp-button-alt-active-border) active:text-(--vp-button-alt-active-text) active:bg-(--vp-button-alt-active-bg)"
+        }
+        Some("sponsor") => {
+            "border-(--vp-button-sponsor-border) text-(--vp-button-sponsor-text) bg-(--vp-button-sponsor-bg) hover:border-(--vp-button-sponsor-hover-border) hover:text-(--vp-button-sponsor-hover-text) hover:bg-(--vp-button-sponsor-hover-bg) active:border-(--vp-button-sponsor-active-border) active:text-(--vp-button-sponsor-active-text) active:bg-(--vp-button-sponsor-active-bg)"
+        }
+        _ => {
+            "border-(--vp-button-brand-border) text-(--vp-button-brand-text) bg-(--vp-button-brand-bg) hover:border-(--vp-button-brand-hover-border) hover:text-(--vp-button-brand-hover-text) hover:bg-(--vp-button-brand-hover-bg) active:border-(--vp-button-brand-active-border) active:text-(--vp-button-brand-active-text) active:bg-(--vp-button-brand-active-bg)"
+        }
     };
     let href = resolve_action_link(site, &action.link);
-    let cls = format!("inline-flex items-center justify-center {theme_cls} h-10 rounded-[1.25rem] px-5 text-[0.875rem] border text-center font-semibold whitespace-nowrap no-underline transition-colors duration-[250ms] active:duration-100");
+    let cls = format!(
+        "inline-flex items-center justify-center {theme_cls} h-10 rounded-[1.25rem] px-5 text-[0.875rem] border text-center font-semibold whitespace-nowrap no-underline transition-colors duration-[250ms] active:duration-100"
+    );
     let mut open = format!(r#"<a class="{cls}" href="{}""#, escape_attr(&href));
     if let Some(t) = &action.target {
         open.push_str(&format!(r#" target="{}""#, escape_attr(t)));
@@ -235,7 +280,11 @@ fn hero_button(site: &Site, action: &HeroAction) -> String {
     }
     format!(
         "{open}>{}</a>",
-        action.text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+        action
+            .text
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;")
     )
 }
 

@@ -33,12 +33,24 @@ fn loads_all_fixture_pages_with_expected_urls() {
 #[test]
 fn titles_come_from_h1_not_filenames() {
     let content = fixtures();
-    assert_eq!(content.get("/guide/what-is-vitepress/").unwrap().title, "What is VitePress?");
-    assert_eq!(content.get("/guide/getting-started/").unwrap().title, "Getting Started");
-    assert_eq!(content.get("/reference/runtime-api/").unwrap().title, "Runtime API");
+    assert_eq!(
+        content.get("/guide/what-is-vitepress/").unwrap().title,
+        "What is VitePress?"
+    );
+    assert_eq!(
+        content.get("/guide/getting-started/").unwrap().title,
+        "Getting Started"
+    );
+    assert_eq!(
+        content.get("/reference/runtime-api/").unwrap().title,
+        "Runtime API"
+    );
     // site-config.md documents frontmatter in fenced examples; its real H1
     // precedes any fence
-    assert_eq!(content.get("/reference/site-config/").unwrap().title, "Site Config");
+    assert_eq!(
+        content.get("/reference/site-config/").unwrap().title,
+        "Site Config"
+    );
 }
 
 #[test]
@@ -52,8 +64,17 @@ fn home_page_front_matter() {
         hero.text.as_deref(),
         Some("Vite & Vue Powered Static Site Generator")
     );
-    assert!(hero.actions.iter().any(|a| a.link == "./guide/what-is-vitepress"));
-    assert!(home.front.features.iter().any(|f| f.title == "Focus on your content"));
+    assert!(
+        hero.actions
+            .iter()
+            .any(|a| a.link == "./guide/what-is-vitepress")
+    );
+    assert!(
+        home.front
+            .features
+            .iter()
+            .any(|f| f.title == "Focus on your content")
+    );
     assert!(matches!(
         &home.front.features[0].icon,
         Some(FeatureIcon::Text(t)) if t.starts_with("<span")
@@ -94,8 +115,14 @@ fn auto_sidebar_two_trees_in_natural_order() {
         ]
     );
     let (prev, next) = sb.neighbors("/guide/getting-started/");
-    assert_eq!(prev.as_ref().map(|(t, u)| (t.as_str(), u.as_str())), Some(("Asset Handling", "/guide/asset-handling/")));
-    assert_eq!(next.as_ref().map(|(t, u)| (t.as_str(), u.as_str())), Some(("Markdown Extensions", "/guide/markdown/")));
+    assert_eq!(
+        prev.as_ref().map(|(t, u)| (t.as_str(), u.as_str())),
+        Some(("Asset Handling", "/guide/asset-handling/"))
+    );
+    assert_eq!(
+        next.as_ref().map(|(t, u)| (t.as_str(), u.as_str())),
+        Some(("Markdown Extensions", "/guide/markdown/"))
+    );
 }
 
 #[test]

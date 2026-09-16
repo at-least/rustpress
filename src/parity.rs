@@ -44,14 +44,8 @@ pub struct NavTitle {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "snake_case", tag = "kind")]
 pub enum NavItem {
-    Link {
-        text: String,
-        href: String,
-    },
-    Group {
-        text: String,
-        items: Vec<Link>,
-    },
+    Link { text: String, href: String },
+    Group { text: String, items: Vec<Link> },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -259,10 +253,7 @@ fn links_from(doc: &Html, sels: &[&Selector], page_url: &str) -> Vec<Link> {
         let links: Vec<Link> = doc
             .select(s)
             .filter_map(|a| {
-                let href = a
-                    .value()
-                    .attr("href")
-                    .map(|h| resolve_href(h, page_url))?;
+                let href = a.value().attr("href").map(|h| resolve_href(h, page_url))?;
                 let text = el_text(a);
                 (!text.is_empty()).then_some(Link { text, href })
             })
@@ -308,7 +299,7 @@ pub fn extract(html: &str, url: &str) -> PageFingerprint {
 
     let site_footer = doc
         .select(&s.footer)
-        .last()
+        .next_back()
         .map(|f| {
             f.select(&sel("p"))
                 .map(|p| el_text(p))
@@ -335,8 +326,11 @@ pub fn extract(html: &str, url: &str) -> PageFingerprint {
             .next()
             .map(el_text)
             .filter(|t| !t.is_empty());
-        let mut actions =
-            links_from(&doc, &[&s.hero_actions_upstream, &s.hero_actions_local], url);
+        let mut actions = links_from(
+            &doc,
+            &[&s.hero_actions_upstream, &s.hero_actions_local],
+            url,
+        );
         actions.dedup_by(|a, b| a.href == b.href);
         Some(Hero {
             lines,
@@ -370,7 +364,18 @@ pub fn extract(html: &str, url: &str) -> PageFingerprint {
     let has_main = main.is_some();
     let block_counts = main.map(|m| {
         let mut counts = BTreeMap::new();
-        for tag in ["h2", "h3", "h4", "h5", "h6", "pre", "table", "ul", "ol", "blockquote"] {
+        for tag in [
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "pre",
+            "table",
+            "ul",
+            "ol",
+            "blockquote",
+        ] {
             let n = m.select(&sel(tag)).count();
             counts.insert(tag.to_string(), n);
         }
@@ -412,14 +417,17 @@ fn extract_nav_items(doc: &Html, s: &Sels) -> Vec<NavItem> {
         if li.value().name() != "li" {
             continue;
         }
-        if let Some(a) = li.children().filter_map(ElementRef::wrap).find(|c| c.value().name() == "a") {
-            if let Some(href) = el_href(a) {
-                items.push(NavItem::Link {
-                    text: el_text(a),
-                    href,
-                });
-                continue;
-            }
+        if let Some(a) = li
+            .children()
+            .filter_map(ElementRef::wrap)
+            .find(|c| c.value().name() == "a")
+            && let Some(href) = el_href(a)
+        {
+            items.push(NavItem::Link {
+                text: el_text(a),
+                href,
+            });
+            continue;
         }
         // flyout group
         let label = li
@@ -523,7 +531,9 @@ fn extract_outline(doc: &Html, s: &Sels) -> (Option<String>, Option<Vec<Link>>) 
     if container.is_none() && !has_local {
         return (None, None);
     }
-    let title = first(doc, &s.outline_title).map(el_text).filter(|t| !t.is_empty());
+    let title = first(doc, &s.outline_title)
+        .map(el_text)
+        .filter(|t| !t.is_empty());
     // scope the items to the aside outline only: the local-nav dropdown
     // repeats them (upstream hydrates that copy client-side, we render
     // both server-side)
@@ -606,15 +616,15 @@ impl Deltas {
             if !path_match {
                 return false;
             }
-            if let Some(want) = &d.upstream {
-                if want != up {
-                    return false;
-                }
+            if let Some(want) = &d.upstream
+                && want != up
+            {
+                return false;
             }
-            if let Some(want) = &d.ours {
-                if want != ours {
-                    return false;
-                }
+            if let Some(want) = &d.ours
+                && want != ours
+            {
+                return false;
             }
             true
         })
@@ -641,7 +651,11 @@ pub fn site_file_for(site_dir: &Path, url: &str) -> PathBuf {
 
 /// Build a baseline from a directory of fetched upstream HTML files
 /// (named by [`slug_for`]) plus the `pages.txt` list.
-pub fn snapshot(cache_dir: &Path, pages: &[String], meta: BTreeMap<String, Value>) -> Result<Baseline> {
+pub fn snapshot(
+    cache_dir: &Path,
+    pages: &[String],
+    meta: BTreeMap<String, Value>,
+) -> Result<Baseline> {
     let mut pages_out = BTreeMap::new();
     for url in pages {
         let file = cache_dir.join(format!("{}.html", slug_for(url)));
@@ -650,7 +664,10 @@ pub fn snapshot(cache_dir: &Path, pages: &[String], meta: BTreeMap<String, Value
         let fp = extract(&html, url);
         pages_out.insert(url.clone(), fp.to_value()?);
     }
-    Ok(Baseline { meta, pages: pages_out })
+    Ok(Baseline {
+        meta,
+        pages: pages_out,
+    })
 }
 
 pub fn load_baseline(path: &Path) -> Result<Baseline> {
@@ -737,9 +754,7 @@ pub fn compare(page: &str, up: &Value, ours: &Value, mode: Mode, out: &mut Vec<M
 
 fn is_presence_only(path: &str) -> bool {
     PRESENCE_ONLY.iter().any(|f| {
-        path == *f
-            || path.ends_with(&format!(".{f}"))
-            || path.ends_with(&format!(".{f}[]"))
+        path == *f || path.ends_with(&format!(".{f}")) || path.ends_with(&format!(".{f}[]"))
     })
 }
 
@@ -747,7 +762,11 @@ fn walk(page: &str, path: String, up: &Value, ours: &Value, mode: Mode, out: &mu
     match (up, ours) {
         (Value::Object(uo), Value::Object(oo)) => {
             for (k, uv) in uo {
-                let child = if path.is_empty() { k.clone() } else { format!("{path}.{k}") };
+                let child = if path.is_empty() {
+                    k.clone()
+                } else {
+                    format!("{path}.{k}")
+                };
                 match oo.get(k) {
                     Some(ov) => walk(page, child, uv, ov, mode, out),
                     None => {
@@ -765,7 +784,11 @@ fn walk(page: &str, path: String, up: &Value, ours: &Value, mode: Mode, out: &mu
             if mode == Mode::Diff {
                 for (k, ov) in oo {
                     if !uo.contains_key(k) {
-                        let child = if path.is_empty() { k.clone() } else { format!("{path}.{k}") };
+                        let child = if path.is_empty() {
+                            k.clone()
+                        } else {
+                            format!("{path}.{k}")
+                        };
                         out.push(Mismatch {
                             page: page.into(),
                             path: format!("{child} (added by us)"),
@@ -835,7 +858,9 @@ pub fn check(site_dir: &Path, baseline: &Baseline, deltas: &Deltas) -> Vec<Misma
             });
             continue;
         };
-        let ours = extract(&html, url).to_value().expect("fingerprint serializes");
+        let ours = extract(&html, url)
+            .to_value()
+            .expect("fingerprint serializes");
         let mut out = Vec::new();
         compare(url, up, &ours, Mode::Check, &mut out);
         out.retain(|m| !deltas.covers(&m.page, &m.path, &m.upstream, &m.ours));

@@ -6,9 +6,12 @@ use std::path::PathBuf;
 use anyhow::Context;
 use clap::{Parser, Subcommand};
 
-
 #[derive(Parser)]
-#[command(name = "rustpress", version, about = "VitePress-format docs site generator")]
+#[command(
+    name = "rustpress",
+    version,
+    about = "VitePress-format docs site generator"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -103,8 +106,7 @@ async fn main() -> anyhow::Result<()> {
             );
             Ok(())
         }
-        Command::Serve { site, port } => rustpress::serve::run(site, port)
-            .await,
+        Command::Serve { site, port } => rustpress::serve::run(site, port).await,
         Command::SyntaxIndex { out } => {
             let entries = rustpress::markdown::syntax_theme::gallery_entries();
             // compact, not pretty: the gallery fetches this on every page
@@ -186,7 +188,10 @@ async fn main() -> anyhow::Result<()> {
             }
             ParityCmd::Diff { old, new } => {
                 if !old.exists() {
-                    println!("parity: no previous baseline at {} — this is the initial pin", old.display());
+                    println!(
+                        "parity: no previous baseline at {} — this is the initial pin",
+                        old.display()
+                    );
                     return Ok(());
                 }
                 let old_base = rustpress::parity::load_baseline(&old)?;

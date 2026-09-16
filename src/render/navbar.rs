@@ -2,11 +2,11 @@
 //! nav_screen.html). `.top` / `.screen-open` / `.open` states are toggled
 //! by the JS bundle (vanilla now, Alpine in stage 5).
 
-use hypertext::prelude::*;
 use hypertext::Raw;
+use hypertext::prelude::*;
 
-use super::icons::{icon, social_icon};
 use super::Site;
+use super::icons::{icon, social_icon};
 use crate::config::NavItem;
 
 /// Upstream's default activeMatch: the current path starts with the
@@ -59,9 +59,21 @@ pub fn navbar<'a>(
     let home_cls = if is_home { " home" } else { "" };
     let navbar_cls = format!(
         "relative z-[1] h-(--vp-nav-height){home_cls} pointer-events-none whitespace-nowrap [--vp-nav-col-offset:0px] [&::before]:content-[''] [&::before]:absolute [&::before]:top-0 [&::before]:right-0 [&::before]:bottom-0 [&::before]:left-(--vp-nav-col-offset) [&::before]:z-[-1] [&::before]:bg-(--vp-nav-bg-color) [&::before]:[backdrop-filter:var(--vp-nav-backdrop-filter)] [&::before]:transition-colors [&::before]:duration-[250ms]{}{}{}",
-        if is_home { " max-lg:[&.home:not(.screen-open)::before]:bg-transparent" } else { "" },
-        if has_sidebar { " lg:[--vp-nav-col-offset:var(--vp-sidebar-width)] 2xl:[--vp-nav-col-offset:calc((100%-var(--vp-layout-max-width))/2+var(--vp-sidebar-width))]" } else { "" },
-        if is_home { " lg:[&.home.top::before]:bg-(--vp-nav-home-bg-color) lg:[&.home.top::before]:[backdrop-filter:none]" } else { "" },
+        if is_home {
+            " max-lg:[&.home:not(.screen-open)::before]:bg-transparent"
+        } else {
+            ""
+        },
+        if has_sidebar {
+            " lg:[--vp-nav-col-offset:var(--vp-sidebar-width)] 2xl:[--vp-nav-col-offset:calc((100%-var(--vp-layout-max-width))/2+var(--vp-sidebar-width))]"
+        } else {
+            ""
+        },
+        if is_home {
+            " lg:[&.home.top::before]:bg-(--vp-nav-home-bg-color) lg:[&.home.top::before]:[backdrop-filter:none]"
+        } else {
+            ""
+        },
     );
     rsx! {
         <div x-data=(r#"{ "top": true }"#) @scroll.window.passive="top = window.scrollY <= 0" :class=(r#"({ 'top': top, 'screen-open': $store.ui.screen })"#) class=(navbar_cls) id="VPNavBar">
@@ -195,7 +207,9 @@ pub fn navbar<'a>(
 /// color scheme.
 fn logo_html(site: &Site, logo: &crate::config::ThemeableImage) -> String {
     fn esc(s: &str) -> String {
-        s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;")
+        s.replace('&', "&amp;")
+            .replace('"', "&quot;")
+            .replace('<', "&lt;")
     }
     fn img(site: &Site, src: &str, alt: &str, extra: &str) -> String {
         format!(
@@ -210,8 +224,18 @@ fn logo_html(site: &Site, logo: &crate::config::ThemeableImage) -> String {
             img(site, src, alt.as_deref().unwrap_or("Logo"), "")
         }
         crate::config::ThemeableImage::Dual { light, dark, alt } => [
-            img(site, light, alt.as_deref().unwrap_or("Logo"), " dark:hidden"),
-            img(site, dark, alt.as_deref().unwrap_or("Logo"), " hidden dark:block"),
+            img(
+                site,
+                light,
+                alt.as_deref().unwrap_or("Logo"),
+                " dark:hidden",
+            ),
+            img(
+                site,
+                dark,
+                alt.as_deref().unwrap_or("Logo"),
+                " hidden dark:block",
+            ),
         ]
         .concat(),
     }
@@ -222,7 +246,9 @@ fn logo_html(site: &Site, logo: &crate::config::ThemeableImage) -> String {
 fn link_attrs(target: Option<&str>, rel: Option<&str>) -> String {
     let mut out = String::new();
     fn esc(s: &str) -> String {
-        s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;")
+        s.replace('&', "&amp;")
+            .replace('"', "&quot;")
+            .replace('<', "&lt;")
     }
     if let Some(t) = target {
         out.push_str(&format!(r#" target="{}""#, esc(t)));
@@ -243,10 +269,15 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
         // not by class order, so `text-text-1 text-brand-1` stays gray
         let cls = format!(
             "flex items-center min-h-(--vp-nav-height) px-3 leading-normal text-[0.875rem] font-medium{} transition-colors duration-[250ms] hover:text-brand-1",
-            if active { " text-brand-1" } else { " text-text-1" }
+            if active {
+                " text-brand-1"
+            } else {
+                " text-text-1"
+            }
         );
         let attrs = link_attrs(item.target.as_deref(), item.rel.as_deref());
-        let text = item.text
+        let text = item
+            .text
             .replace('&', "&amp;")
             .replace('<', "&lt;")
             .replace('>', "&gt;");
@@ -258,7 +289,11 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
         );
         let label_cls = format!(
             "flex items-center leading-(--vp-nav-height) text-[0.875rem] font-medium transition-colors duration-[250ms]{}",
-            if active { " text-brand-1 group-hover/flyout:text-brand-2" } else { " text-text-1 group-hover/flyout:text-text-2" }
+            if active {
+                " text-brand-1 group-hover/flyout:text-brand-2"
+            } else {
+                " text-text-1 group-hover/flyout:text-text-2"
+            }
         );
         let text = item.text.clone();
         let children: Vec<&NavItem> = item.items.iter().collect();
@@ -386,17 +421,25 @@ fn screen_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> 
     if item.items.is_empty() {
         let cls = format!(
             "block border-b border-divider pt-3 pb-[0.6875rem] leading-[1.7142857] text-[0.875rem] font-medium{} transition-colors duration-[250ms] hover:text-brand-1",
-            if active { " text-brand-1" } else { " text-text-1" }
+            if active {
+                " text-brand-1"
+            } else {
+                " text-text-1"
+            }
         );
         let href = site.url(&item.link.clone().unwrap_or_default());
         let attrs = link_attrs(item.target.as_deref(), item.rel.as_deref());
-        let text = item.text
+        let text = item
+            .text
             .replace('&', "&amp;")
             .replace('<', "&lt;")
             .replace('>', "&gt;");
         format!(r#"<a class="{cls}" href="{href}"{attrs}>{text}</a>"#)
     } else {
-        let group_cls = format!("VPNavScreenMenuGroup group{}", if active { " active" } else { "" });
+        let group_cls = format!(
+            "VPNavScreenMenuGroup group{}",
+            if active { " active" } else { "" }
+        );
         let text = item.text.clone();
         let children: Vec<&NavItem> = item.items.iter().collect();
         rsx! {

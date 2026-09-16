@@ -20,7 +20,7 @@
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-use include_dir::{include_dir, Dir};
+use include_dir::{Dir, include_dir};
 
 /// All Helix built-in themes, vendored unmodified from
 /// helix-editor/helix (runtime/themes, MPL-2.0).
@@ -117,7 +117,8 @@ struct RawStyle {
 
 impl RawTheme {
     fn parse(src: &str) -> Result<RawTheme, ThemeError> {
-        let value: toml::Value = toml::from_str(src).map_err(|e| ThemeError::Parse(e.to_string()))?;
+        let value: toml::Value =
+            toml::from_str(src).map_err(|e| ThemeError::Parse(e.to_string()))?;
         let table = value
             .as_table()
             .ok_or_else(|| ThemeError::Parse("theme is not a TOML table".into()))?;
@@ -139,9 +140,10 @@ impl RawTheme {
                 }
                 _ => {
                     let style = match val {
-                        toml::Value::String(fg) => {
-                            RawStyle { fg: Some(fg.clone()), ..Default::default() }
-                        }
+                        toml::Value::String(fg) => RawStyle {
+                            fg: Some(fg.clone()),
+                            ..Default::default()
+                        },
                         toml::Value::Table(t) => {
                             let fg = t.get("fg").and_then(|v| v.as_str()).map(str::to_string);
                             let bg = t.get("bg").and_then(|v| v.as_str()).map(str::to_string);
@@ -249,7 +251,9 @@ fn collect_chain(
     visiting: &mut Vec<String>,
     out: &mut Vec<RawTheme>,
 ) {
-    let key = name.map(|n| n.to_string()).unwrap_or_else(|| src.chars().take(32).collect());
+    let key = name
+        .map(|n| n.to_string())
+        .unwrap_or_else(|| src.chars().take(32).collect());
     if visiting.contains(&key) {
         return; // cycle: stop here
     }
@@ -321,11 +325,26 @@ pub fn gallery_entries() -> Vec<GalleryEntry> {
             let Some(style) = theme.resolve(name) else {
                 continue;
             };
-            let ThemeStyle { fg, bg, bold, italic, underline } = style.clone();
+            let ThemeStyle {
+                fg,
+                bg,
+                bold,
+                italic,
+                underline,
+            } = style.clone();
             if fg.is_none() && bg.is_none() && !bold && !italic && !underline {
                 continue;
             }
-            styles.insert(super::highlight::tk_class(name), StyleJson { fg, bg, bold, italic, underline });
+            styles.insert(
+                super::highlight::tk_class(name),
+                StyleJson {
+                    fg,
+                    bg,
+                    bold,
+                    italic,
+                    underline,
+                },
+            );
         }
         styles
     };
@@ -348,7 +367,12 @@ pub fn gallery_entries() -> Vec<GalleryEntry> {
                 .unwrap_or_default()
                 .or_else(|| theme.resolve("ui.text")?.fg.clone());
             let styles = capture_styles(&theme);
-            (!styles.is_empty()).then(|| GalleryEntry { name, bg: ui_bg, fg: ui_fg, styles })
+            (!styles.is_empty()).then_some(GalleryEntry {
+                name,
+                bg: ui_bg,
+                fg: ui_fg,
+                styles,
+            })
         })
         .collect()
 }
@@ -373,8 +397,17 @@ mod tests {
     #[test]
     fn dotted_scope_falls_back_to_parent_scope() {
         let mut theme = SyntaxTheme::default();
-        theme.insert("keyword".into(), ThemeStyle { fg: Some("#d73a49".into()), ..Default::default() });
-        assert_eq!(theme.resolve("keyword").unwrap().fg.as_deref(), Some("#d73a49"));
+        theme.insert(
+            "keyword".into(),
+            ThemeStyle {
+                fg: Some("#d73a49".into()),
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            theme.resolve("keyword").unwrap().fg.as_deref(),
+            Some("#d73a49")
+        );
         assert!(theme.resolve("type").is_none());
     }
 
@@ -388,11 +421,22 @@ mod tests {
         assert!(entries.windows(2).all(|w| w[0].name < w[1].name));
 
         let github_light = entries.iter().find(|e| e.name == "github_light").unwrap();
-        assert_eq!(github_light.styles["tk-keyword"].fg.as_deref(), Some("#cf222e"));
+        assert_eq!(
+            github_light.styles["tk-keyword"].fg.as_deref(),
+            Some("#cf222e")
+        );
         assert_eq!(github_light.bg.as_deref(), Some("#ffffff"));
 
-        let everforest = entries.iter().find(|e| e.name == "everforest_dark").unwrap();
-        assert!(everforest.bg.as_deref().is_some_and(|bg| bg.starts_with('#')));
+        let everforest = entries
+            .iter()
+            .find(|e| e.name == "everforest_dark")
+            .unwrap();
+        assert!(
+            everforest
+                .bg
+                .as_deref()
+                .is_some_and(|bg| bg.starts_with('#'))
+        );
         assert!(everforest.styles["tk-comment"].italic);
     }
 }

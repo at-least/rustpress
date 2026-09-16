@@ -77,7 +77,10 @@ fn hero_action_target_and_rel_are_emitted() {
     assert!(
         html.contains(r#"href="https://example.com/start" target="_blank" rel="noopener""#),
         "hero action attrs: {}",
-        &html[html.find("Start").map(|i| i.saturating_sub(200)).unwrap_or(0)..]
+        &html[html
+            .find("Start")
+            .map(|i| i.saturating_sub(200))
+            .unwrap_or(0)..]
     );
 }
 
@@ -91,8 +94,14 @@ fn feature_link_wraps_card_with_target_rel() {
         )],
     );
     let html = page(&out, "/");
-    assert!(html.contains("<a class=\"block border"), "card wrapped in anchor");
-    assert!(html.contains(r#"href="/guide/" target="_self" rel="help""#), "feature attrs");
+    assert!(
+        html.contains("<a class=\"block border"),
+        "card wrapped in anchor"
+    );
+    assert!(
+        html.contains(r#"href="/guide/" target="_self" rel="help""#),
+        "feature attrs"
+    );
 }
 
 #[test]
@@ -101,23 +110,32 @@ fn return_to_top_label_is_configurable() {
         "title = \"T\"\nreturnToTopLabel = \"Nach oben\"\n",
         &[("guide/a.md", "# A\n\ntext\n")],
     );
-    assert!(page(&out, "/guide/a/").contains(">Nach oben</a>"), "local nav label");
+    assert!(
+        page(&out, "/guide/a/").contains(">Nach oben</a>"),
+        "local nav label"
+    );
 }
 
 #[test]
 fn locale_title_used_in_title_and_navbar() {
     let (_, out) = build_site(
         "title = \"Base\"\n\n[locales.root]\nlabel = \"English\"\n\n[locales.zh]\nlabel = \"中文\"\ntitle = \"基地\"",
-        &[
-            ("guide/a.md", "# A\n"),
-            ("zh/guide/a.md", "# 甲\n"),
-        ],
+        &[("guide/a.md", "# A\n"), ("zh/guide/a.md", "# 甲\n")],
     );
     let root = page(&out, "/guide/a/");
-    assert!(root.contains("<title>A | Base</title>"), "root uses site title");
+    assert!(
+        root.contains("<title>A | Base</title>"),
+        "root uses site title"
+    );
     let zh = page(&out, "/zh/guide/a/");
-    assert!(zh.contains("<title>甲 | 基地</title>"), "zh page title uses locale title");
-    assert!(zh.contains("<span>基地</span>"), "navbar shows locale title");
+    assert!(
+        zh.contains("<title>甲 | 基地</title>"),
+        "zh page title uses locale title"
+    );
+    assert!(
+        zh.contains("<span>基地</span>"),
+        "navbar shows locale title"
+    );
 }
 
 #[test]
@@ -134,7 +152,10 @@ fn site_title_setting_text_and_hide() {
         "title = \"Base\"\nsiteTitle = false\n",
         &[("guide/a.md", "# A\n")],
     );
-    assert!(!page(&out, "/guide/a/").contains("<span>Base</span>"), "title hidden");
+    assert!(
+        !page(&out, "/guide/a/").contains("<span>Base</span>"),
+        "title hidden"
+    );
 }
 
 #[test]
@@ -144,8 +165,12 @@ fn logo_variants_and_outline_false() {
         &[("guide/a.md", "# A\n\n## Sub\n\n### Deep\n")],
     );
     let html = page(&out, "/guide/a/");
-    assert!(html.contains(r#"class="shrink-0 mr-0 h-(--vp-nav-logo-height) dark:hidden" src="/light.svg""#));
-    assert!(html.contains(r#"class="shrink-0 mr-0 h-(--vp-nav-logo-height) hidden dark:block" src="/dark.svg""#));
+    assert!(html.contains(
+        r#"class="shrink-0 mr-0 h-(--vp-nav-logo-height) dark:hidden" src="/light.svg""#
+    ));
+    assert!(html.contains(
+        r#"class="shrink-0 mr-0 h-(--vp-nav-logo-height) hidden dark:block" src="/dark.svg""#
+    ));
 
     let (_, out) = build_site(
         "title = \"T\"\noutline = false\n",
@@ -153,7 +178,10 @@ fn logo_variants_and_outline_false() {
     );
     let html = page(&out, "/guide/a/");
     assert!(!html.contains("VPOutlineMarker"), "no outline marker");
-    assert!(!html.contains("VPLocalNavOutlineDropdown"), "no local-nav dropdown");
+    assert!(
+        !html.contains("VPLocalNavOutlineDropdown"),
+        "no local-nav dropdown"
+    );
 }
 
 #[test]
@@ -183,9 +211,15 @@ text = "Guide"
         &[("guide/a.md", "# A\n"), ("guide/b.md", "# B\n")],
     );
     let html = page(&out, "/guide/a/");
-    assert!(html.contains(r#"href="https://example.com" target="_blank" rel="noopener""#), "nav attrs");
+    assert!(
+        html.contains(r#"href="https://example.com" target="_blank" rel="noopener""#),
+        "nav attrs"
+    );
     let b = page(&out, "/guide/b/");
-    assert!(b.contains("A — custom pager title"), "docFooterText in pager");
+    assert!(
+        b.contains("A — custom pager title"),
+        "docFooterText in pager"
+    );
 }
 
 #[test]
@@ -196,7 +230,10 @@ fn doc_footer_false_disables_pager_side() {
     );
     let html = page(&out, "/guide/b/");
     assert!(!html.contains("Previous page"), "prev disabled");
-    assert!(html.contains("Next page") || html.contains("<title>"), "next intact");
+    assert!(
+        html.contains("Next page") || html.contains("<title>"),
+        "next intact"
+    );
 }
 
 #[test]
@@ -221,7 +258,10 @@ fn src_exclude_globs_drop_pages() {
     );
     assert!(out.path().join("guide/a/index.html").is_file());
     assert!(!out.path().join("drafts").exists(), "** excludes nested");
-    assert!(!out.path().join("secret/index.html").exists(), "exact file excluded");
+    assert!(
+        !out.path().join("secret/index.html").exists(),
+        "exact file excluded"
+    );
 }
 
 #[test]
@@ -254,17 +294,26 @@ fn frontmatter_page_toggles() {
         "title = \"T\"\nlastUpdated = false\n\n[footer]\nmessage = \"m\"\ncopyright = \"c\"\n\n[editLink]\npattern = \"https://x/:path\"\n",
         &[
             ("plain.md", "# Plain\n"),
-            ("bare.md", "---\nnavbar: false\nsidebar: false\nfooter: false\neditLink: false\npageClass: custom-page\n---\n\n# Bare\n"),
+            (
+                "bare.md",
+                "---\nnavbar: false\nsidebar: false\nfooter: false\neditLink: false\npageClass: custom-page\n---\n\n# Bare\n",
+            ),
         ],
     );
     // plain page keeps everything (auto sidebar exists since guide-less content
     // — a top-level page has no sidebar section, so use navbar/footer/edit)
     let plain = page(&out, "/plain/");
     assert!(plain.contains("VPNavBar"), "navbar on");
-    assert!(plain.contains("Released") || plain.contains("VPFooter") || plain.contains("footer"), "footer on");
+    assert!(
+        plain.contains("Released") || plain.contains("VPFooter") || plain.contains("footer"),
+        "footer on"
+    );
     let bare = page(&out, "/bare/");
     assert!(!bare.contains("VPNavBar"), "navbar hidden");
-    assert!(!bare.contains("id=\"VPFooter\"") && !bare.contains("<footer"), "footer hidden");
+    assert!(
+        !bare.contains("id=\"VPFooter\"") && !bare.contains("<footer"),
+        "footer hidden"
+    );
     assert!(!bare.contains("Edit this page"), "edit link hidden");
     assert!(bare.contains("custom-page"), "pageClass applied");
 }
@@ -281,7 +330,10 @@ fn frontmatter_last_updated_date_override() {
     let a = page(&out, "/a/");
     assert!(a.contains("2020-01-02"), "date override shown");
     let b = page(&out, "/b/");
-    assert!(!b.contains("Last updated"), "no timestamp without lastUpdated config");
+    assert!(
+        !b.contains("Last updated"),
+        "no timestamp without lastUpdated config"
+    );
 }
 
 #[test]
@@ -295,12 +347,30 @@ fn frontmatter_aside_and_outline_false() {
             ("d.md", "# D\n\n## S4\n"),
         ],
     );
-    assert!(!page(&out, "/a/").contains("VPOutlineMarker"), "aside:false hides outline column");
-    assert!(!page(&out, "/b/").contains("VPOutlineMarker"), "outline:false hides outline");
-    assert!(!page(&out, "/b/").contains("VPOutlineDropdownButton"), "outline:false hides the local-nav dropdown too");
-    assert!(page(&out, "/d/").contains("VPOutlineDropdownButton"), "default page keeps the local-nav dropdown");
-    assert!(page(&out, "/c/").contains("xl:order-1") && page(&out, "/c/").contains("xl:order-2"), "left aside orders swapped");
-    assert!(page(&out, "/d/").contains("VPOutlineMarker"), "default aside present");
+    assert!(
+        !page(&out, "/a/").contains("VPOutlineMarker"),
+        "aside:false hides outline column"
+    );
+    assert!(
+        !page(&out, "/b/").contains("VPOutlineMarker"),
+        "outline:false hides outline"
+    );
+    assert!(
+        !page(&out, "/b/").contains("VPOutlineDropdownButton"),
+        "outline:false hides the local-nav dropdown too"
+    );
+    assert!(
+        page(&out, "/d/").contains("VPOutlineDropdownButton"),
+        "default page keeps the local-nav dropdown"
+    );
+    assert!(
+        page(&out, "/c/").contains("xl:order-1") && page(&out, "/c/").contains("xl:order-2"),
+        "left aside orders swapped"
+    );
+    assert!(
+        page(&out, "/d/").contains("VPOutlineMarker"),
+        "default aside present"
+    );
 }
 
 #[test]
@@ -321,13 +391,19 @@ text = "S"
 "#,
         &[
             ("a.md", "# A\n"),
-            ("b.md", "---\nprev: Back to start\nnext:\n  text: External next\n  link: https://example.com/n\n---\n\n# B\n"),
+            (
+                "b.md",
+                "---\nprev: Back to start\nnext:\n  text: External next\n  link: https://example.com/n\n---\n\n# B\n",
+            ),
         ],
     );
     let b = page(&out, "/b/");
     assert!(b.contains("Back to start"), "prev text override");
     assert!(b.contains("External next"), "next object override");
-    assert!(b.contains(r#"href="https://example.com/n""#), "next custom link");
+    assert!(
+        b.contains(r#"href="https://example.com/n""#),
+        "next custom link"
+    );
 }
 
 #[test]
@@ -335,7 +411,10 @@ fn frontmatter_search_false_and_head_and_title_template() {
     let (_, out) = build_site(
         "title = \"Base\"\n\n[search]\nprovider = \"local\"\n",
         &[
-            ("a.md", "---\nsearch: false\ntitleTemplate: \":title!!\"\nhead:\n  - tag: meta\n    attrs:\n      name: \"x-page\"\n      content: \"yes\"\n---\n\n# A\n"),
+            (
+                "a.md",
+                "---\nsearch: false\ntitleTemplate: \":title!!\"\nhead:\n  - tag: meta\n    attrs:\n      name: \"x-page\"\n      content: \"yes\"\n---\n\n# A\n",
+            ),
             ("b.md", "# B\n"),
         ],
     );
@@ -344,7 +423,10 @@ fn frontmatter_search_false_and_head_and_title_template() {
     assert!(index.contains("\"/b/\""), "other page indexed");
     let a = page(&out, "/a/");
     assert!(a.contains("<title>A!!</title>"), "page titleTemplate wins");
-    assert!(a.contains(r#"<meta content="yes" name="x-page"/>"#), "per-page head tag");
+    assert!(
+        a.contains(r#"<meta content="yes" name="x-page"/>"#),
+        "per-page head tag"
+    );
 }
 
 #[test]
@@ -361,7 +443,10 @@ fn layout_page_strips_doc_chrome() {
     assert!(!bare.contains("Edit this page"), "no edit link");
     assert!(!bare.contains("Previous page"), "no pager");
     let plain = page(&out, "/plain/");
-    assert!(plain.contains("VPOutlineMarker"), "doc layout keeps outline");
+    assert!(
+        plain.contains("VPOutlineMarker"),
+        "doc layout keeps outline"
+    );
 }
 
 #[test]
@@ -382,8 +467,17 @@ navigateText = "zum Navigieren""#,
     );
     let html = page(&out, "/guide/a/");
     assert!(html.contains("vp-graded-containers"), "graded body class");
-    assert!(html.contains("<span class=\"hidden md:inline md:text-[0.8125rem]\">Suchen</span>"), "button text");
-    assert!(html.contains("placeholder=\"Dokumente durchsuchen\""), "placeholder");
-    assert!(html.contains("data-no-results=\"Nichts gefunden für {q}\""), "no-results string");
+    assert!(
+        html.contains("<span class=\"hidden md:inline md:text-[0.8125rem]\">Suchen</span>"),
+        "button text"
+    );
+    assert!(
+        html.contains("placeholder=\"Dokumente durchsuchen\""),
+        "placeholder"
+    );
+    assert!(
+        html.contains("data-no-results=\"Nichts gefunden für {q}\""),
+        "no-results string"
+    );
     assert!(html.contains(">zum Navigieren</span>"), "footer hint");
 }

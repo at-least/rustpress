@@ -21,8 +21,8 @@ use std::sync::OnceLock;
 use hypertext::prelude::*;
 
 use crate::config::{IgnoreDeadLinks, OutlineLevel, SiteConfig};
-use crate::content::{Content, Page};
 use crate::content::OutlineSetting as PageOutline;
+use crate::content::{Content, Page};
 use crate::markdown::MarkdownEngine;
 use crate::sidebar::Sidebars;
 
@@ -58,7 +58,12 @@ impl Site {
             let pathspecs: Vec<PathBuf> = content
                 .pages
                 .iter()
-                .map(|page| page.src.strip_prefix(site_dir).unwrap_or(&page.src).to_path_buf())
+                .map(|page| {
+                    page.src
+                        .strip_prefix(site_dir)
+                        .unwrap_or(&page.src)
+                        .to_path_buf()
+                })
                 .collect();
             if let Some(times) = git_commit_times(site_dir, &pathspecs) {
                 for page in &mut content.pages {
@@ -78,7 +83,9 @@ impl Site {
             for page in &mut content.pages {
                 for (from, to) in &config.rewrites {
                     let dest = if let Some(prefix) = from.strip_suffix(":rest*") {
-                        page.rel.strip_prefix(prefix).map(|rest| to.replace(":rest*", rest))
+                        page.rel
+                            .strip_prefix(prefix)
+                            .map(|rest| to.replace(":rest*", rest))
                     } else if *from == page.rel {
                         Some(to.clone())
                     } else {
@@ -127,24 +134,40 @@ impl Site {
                         value: value.to_string(),
                     });
                 }
-                let name = path.file_name().expect("value ends in .css").to_string_lossy();
+                let name = path
+                    .file_name()
+                    .expect("value ends in .css")
+                    .to_string_lossy();
                 (Some(format!("themes/{name}")), Some(path))
             }
             Some(name) => {
-                if !crate::theme_assets::bundled_themes().iter().any(|t| t == name) {
+                if !crate::theme_assets::bundled_themes()
+                    .iter()
+                    .any(|t| t == name)
+                {
                     return Err(BuildError::ThemeValue(name.to_string()));
                 }
                 (Some(format!("themes/{name}.css")), None)
             }
         };
-        Ok(Site { config, content, sidebars, engine, theme_link, theme_source })
+        Ok(Site {
+            config,
+            content,
+            sidebars,
+            engine,
+            theme_link,
+            theme_source,
+        })
     }
 
     /// Prefix a canonical path with the configured base. Relative asset
     /// names ("syntax.css") are rooted first so they resolve from any
     /// page depth.
     pub fn url(&self, path: &str) -> String {
-        if path.starts_with("http://") || path.starts_with("https://") || path.starts_with("mailto:") {
+        if path.starts_with("http://")
+            || path.starts_with("https://")
+            || path.starts_with("mailto:")
+        {
             return path.to_string();
         }
         let base = self.config.base.trim_end_matches('/');
@@ -161,9 +184,12 @@ impl Site {
 
     /// Render one page's full HTML document.
     pub fn render_page(&self, page: &Page) -> Result<String, BuildError> {
-        let rendered = self
-            .engine
-            .render(page, &self.content, &self.content_root(), &self.content_dir())?;
+        let rendered = self.engine.render(
+            page,
+            &self.content,
+            &self.content_root(),
+            &self.content_dir(),
+        )?;
         self.render_page_inner(page, &rendered)
     }
 
@@ -180,7 +206,8 @@ impl Site {
         let has_navbar = page.front.navbar != Some(false);
         let show_footer = self.config.footer.is_some() && page.front.footer != Some(false);
         let edit_on = page.front.edit_link != Some(false);
-        let aside_left = AsideSetting::resolve(page.front.aside.as_ref(), self.config.aside.as_ref());
+        let aside_left =
+            AsideSetting::resolve(page.front.aside.as_ref(), self.config.aside.as_ref());
         let is_home = page.is_home();
         let is_page_layout = page.front.layout.as_deref() == Some("page");
 
@@ -274,7 +301,7 @@ impl Site {
                     return Err(BuildError::Write {
                         path: out_dir.to_path_buf(),
                         source,
-                    })
+                    });
                 }
             }
         }
@@ -283,9 +310,12 @@ impl Site {
         let search_enabled = self.config.search.is_some();
         let mut dead_links: Vec<(String, Vec<String>)> = Vec::new();
         for page in &self.content.pages {
-            let rendered = self
-                .engine
-                .render(page, &self.content, &self.content_root(), &self.content_dir())?;
+            let rendered = self.engine.render(
+                page,
+                &self.content,
+                &self.content_root(),
+                &self.content_dir(),
+            )?;
             let dead = find_dead_links(&rendered.html, page, self);
             let dead: Vec<String> = match &self.config.ignore_dead_links {
                 IgnoreDeadLinks::IgnorePrefixes(prefixes) => dead
@@ -299,7 +329,10 @@ impl Site {
             }
             if search_enabled && page.front.search != Some(false) {
                 let title = if page.is_home() {
-                    self.config.title.clone().unwrap_or_else(|| page.title.clone())
+                    self.config
+                        .title
+                        .clone()
+                        .unwrap_or_else(|| page.title.clone())
                 } else {
                     page.title.clone()
                 };
@@ -310,7 +343,9 @@ impl Site {
                 }));
             }
             let html = self.render_page_with(page, rendered)?;
-            let file = out_dir.join(page.url.trim_start_matches('/')).join("index.html");
+            let file = out_dir
+                .join(page.url.trim_start_matches('/'))
+                .join("index.html");
             write_file(&file, html.as_bytes())?;
             stats.pages += 1;
         }
@@ -340,7 +375,10 @@ impl Site {
         // generated assets are written AFTER the static copy: a
         // same-named leftover in static/ (e.g. a stale syntax.css) must
         // never shadow the freshly generated one
-        write_file(&out_dir.join("syntax.css"), self.engine.syntax_css().as_bytes())?;
+        write_file(
+            &out_dir.join("syntax.css"),
+            self.engine.syntax_css().as_bytes(),
+        )?;
         if search_enabled {
             let json = serde_json::to_string(&search_docs).expect("serializable docs");
             write_file(&out_dir.join("search-docs.json"), json.as_bytes())?;
@@ -563,7 +601,10 @@ impl Site {
         let home = self.url("/");
         let nf_title = nf.title.clone().unwrap_or_else(|| "PAGE NOT FOUND".into());
         let nf_quote = nf.quote.clone().unwrap_or_else(|| "But if you don't change your direction, and if you keep looking, you may end up where you are heading.".into());
-        let nf_link = nf.link_text.clone().unwrap_or_else(|| "Take me home".into());
+        let nf_link = nf
+            .link_text
+            .clone()
+            .unwrap_or_else(|| "Take me home".into());
         let content = hypertext::rsx! {
             <div class="w-full px-6 md:px-8">
                 <main>
@@ -581,7 +622,10 @@ impl Site {
         };
         let content_html = content.render().into_inner();
         let document = layout::layout(self, &shell, &[], content_html);
-        Ok(format!("<!DOCTYPE html>\n{}", document.render().into_inner()))
+        Ok(format!(
+            "<!DOCTYPE html>\n{}",
+            document.render().into_inner()
+        ))
     }
 
     fn content_root(&self) -> std::path::PathBuf {
@@ -641,7 +685,10 @@ fn apply_pager_override(
     use crate::content::PrevNext;
     match setting {
         Some(PrevNext::Off(_)) => None,
-        None => derived.map(|(text, url)| PagerLink { text, href: site.url(&url) }),
+        None => derived.map(|(text, url)| PagerLink {
+            text,
+            href: site.url(&url),
+        }),
         Some(PrevNext::Text(text)) => derived.map(|(_, url)| PagerLink {
             text: text.clone(),
             href: site.url(&url),
@@ -731,9 +778,11 @@ pub enum BuildError {
     #[error(transparent)]
     Markdown(#[from] crate::markdown::MarkdownError),
     #[error("cannot write {path}: {source}")]
-    Write { path: std::path::PathBuf, source: std::io::Error },
+    Write {
+        path: std::path::PathBuf,
+        source: std::io::Error,
+    },
 }
-
 
 /// Candidates for dead links: internal href/src targets in one page's
 /// html that are neither known pages nor resolvable to an output path.

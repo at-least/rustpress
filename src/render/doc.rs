@@ -2,13 +2,16 @@
 //! the `.vp-doc` markdown content, doc footer (edit link, last updated,
 //! prev/next pager).
 
-use hypertext::{prelude::*, Raw};
+use hypertext::{Raw, prelude::*};
 
-use super::icons::icon;
 use super::Site;
+use super::icons::icon;
 use crate::content::Page;
 use crate::markdown::{Heading, RenderedPage};
 
+// the args mirror the upstream template's slots one to one; a params
+// struct would just move the same names behind a field access
+#[allow(clippy::too_many_arguments)]
 pub fn doc_page<'a>(
     site: &'a Site,
     page: &'a Page,
@@ -33,7 +36,10 @@ pub fn doc_page<'a>(
     let show_outline = !headings.is_empty();
     let aside_left = aside == Some(true);
     let edit_link = site.config.edit_link.as_ref().filter(|_| edit_on).map(|e| {
-        let text = e.text.clone().unwrap_or_else(|| "Edit this page on GitHub".into());
+        let text = e
+            .text
+            .clone()
+            .unwrap_or_else(|| "Edit this page on GitHub".into());
         (e.pattern.replace(":path", &page.rel), text)
     });
     let last_updated = last_updated.cloned();
@@ -58,12 +64,24 @@ pub fn doc_page<'a>(
     };
     let aside_cls = format!(
         "relative hidden grow pl-8 w-full max-w-64 xl:block{}",
-        if aside_left { " xl:order-1" } else { " order-2" }
+        if aside_left {
+            " xl:order-1"
+        } else {
+            " order-2"
+        }
     );
     let content_cls = format!(
         "relative mx-auto w-full lg:px-8 lg:pb-32 xl:m-0 xl:min-w-[40rem]{}{}",
-        if aside_left { " xl:order-2" } else { " xl:order-1" },
-        if !has_sidebar { " lg:max-w-[47rem] 2xl:max-w-[49rem]" } else { "" }
+        if aside_left {
+            " xl:order-2"
+        } else {
+            " xl:order-1"
+        },
+        if !has_sidebar {
+            " lg:max-w-[47rem] 2xl:max-w-[49rem]"
+        } else {
+            ""
+        }
     );
 
     rsx! {
@@ -204,11 +222,16 @@ fn outline_links<'a>(headings: &'a [&'a Heading]) -> Raw<String> {
 }
 
 fn escape_attr(s: &str) -> String {
-    s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;").replace('>', "&gt;")
+    s.replace('&', "&amp;")
+        .replace('"', "&quot;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
 }
 
 fn escape_text(s: &str) -> String {
-    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
 }
 
 /// (datetime, display) for a file modification time — ISO `YYYY-MM-DD`
@@ -228,11 +251,18 @@ pub fn format_date(t: std::time::SystemTime) -> (String, String) {
     const MONTHS: [&str; 12] = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ];
-    let hour12 = match hh { 0 => 12, h if h > 12 => h - 12, h => h };
+    let hour12 = match hh {
+        0 => 12,
+        h if h > 12 => h - 12,
+        h => h,
+    };
     let suffix = if hh < 12 { "AM" } else { "PM" };
     (
         format!("{y:04}-{m:02}-{d:02}"),
-        format!("{} {d}, {y:04}, {hour12}:{mi:02}:{ss:02} {suffix}", MONTHS[(m - 1) as usize]),
+        format!(
+            "{} {d}, {y:04}, {hour12}:{mi:02}:{ss:02} {suffix}",
+            MONTHS[(m - 1) as usize]
+        ),
     )
 }
 

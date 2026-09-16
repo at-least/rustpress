@@ -3,25 +3,26 @@
 //! semantics matching VitePress — `Some(true)` starts collapsed,
 //! `Some(false)` starts expanded with a caret, `None` = static group.
 
-use hypertext::prelude::*;
 use hypertext::Raw;
+use hypertext::prelude::*;
 
-use super::icons::icon;
 use super::Site;
+use super::icons::icon;
 use crate::sidebar::SidebarNode;
 
-const GROUP_CLS: &str =
-    "[.group+&]:border-t [.group+&]:border-divider [.group+&]:pt-2.5 lg:w-[calc(var(--vp-sidebar-width)-4rem)]";
+const GROUP_CLS: &str = "[.group+&]:border-t [.group+&]:border-divider [.group+&]:pt-2.5 lg:w-[calc(var(--vp-sidebar-width)-4rem)]";
 const ITEM_CLS: &str = "group/item item relative flex w-full";
-const INDICATOR_CLS: &str =
-    "indicator absolute top-[0.375rem] bottom-[0.375rem] left-[calc(-1rem-1px)] w-[2px] rounded-[2px] transition-colors duration-[250ms]";
+const INDICATOR_CLS: &str = "indicator absolute top-[0.375rem] bottom-[0.375rem] left-[calc(-1rem-1px)] w-[2px] rounded-[2px] transition-colors duration-[250ms]";
 const CARET_BTN_CLS: &str = "caret flex justify-center items-center -mr-[0.4375rem] w-8 h-8 shrink-0 text-text-3 cursor-pointer transition-colors duration-[250ms] group-hover/item:text-text-2 hover:text-text-1!";
-const CARET_ICON_CLS: &str =
-    "text-[1.125rem] rotate-90 transition-transform duration-[250ms] group-[.collapsed]/side:rotate-0";
+const CARET_ICON_CLS: &str = "text-[1.125rem] rotate-90 transition-transform duration-[250ms] group-[.collapsed]/side:rotate-0";
 
 /// Optional link attributes, omitted (not empty) when unset.
 fn opt_attrs(target: Option<&str>, rel: Option<&str>) -> String {
-    let esc = |s: &str| s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;");
+    let esc = |s: &str| {
+        s.replace('&', "&amp;")
+            .replace('"', "&quot;")
+            .replace('<', "&lt;")
+    };
     let mut out = String::new();
     if let Some(t) = target {
         out.push_str(&format!(r#" target="{}""#, esc(t)));
@@ -75,7 +76,10 @@ pub fn sidebar(site: &Site, current_url: &str) -> String {
 /// Render one sidebar node at `depth` (0 = the top group level).
 fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usize) -> String {
     let is_active = n.url.as_deref() == Some(current_url);
-    let has_active = n.url.as_deref().is_some_and(|u| current_url.starts_with(u) && u != "/");
+    let has_active = n
+        .url
+        .as_deref()
+        .is_some_and(|u| current_url.starts_with(u) && u != "/");
     let collapsible = n.collapsed.is_some();
     let starts_collapsed = n.collapsed == Some(true);
     let text_cls = if depth == 0 {
@@ -86,21 +90,36 @@ fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usi
             // the active color arrives from the leaf link below; emitting
             // `text-text-1` here too would win on stylesheet order and
             // wash the brand color out
-            if is_active { "" } else if has_active { " text-text-1" } else { " text-text-2" }
+            if is_active {
+                ""
+            } else if has_active {
+                " text-text-1"
+            } else {
+                " text-text-2"
+            }
         )
     };
     let section_cls = format!(
         "group/side VPSidebarItem level-{depth}{}{}{}{}",
-        if depth == 0 { " pb-6 [&.collapsed]:pb-2.5" } else { "" },
+        if depth == 0 {
+            " pb-6 [&.collapsed]:pb-2.5"
+        } else {
+            ""
+        },
         if collapsible { " collapsible" } else { "" },
         if is_active { " is-active" } else { "" },
-        if has_active && !is_active { " has-active" } else { "" },
+        if has_active && !is_active {
+            " has-active"
+        } else {
+            ""
+        },
     );
     // Collapsible groups carry Alpine state; `collapsed` moves from the
     // static class list to a binding so the caret can toggle it.
     let (section_x_data, section_bind) = if collapsible {
         (
-            r#"{ "open": false }"#.replace("false", if starts_collapsed { "false" } else { "true" }),
+            r#"{ "open": false }"#
+                .replace("false", if starts_collapsed { "false" } else { "true" }),
             r#"{ 'collapsed': !open }"#.to_string(),
         )
     } else {
@@ -108,7 +127,11 @@ fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usi
     };
     let indicator_cls = format!(
         "{INDICATOR_CLS}{}",
-        if depth >= 2 && is_active { " bg-brand-1" } else { "" }
+        if depth >= 2 && is_active {
+            " bg-brand-1"
+        } else {
+            ""
+        }
     );
     let row_cls = format!(
         "{ITEM_CLS}{}",

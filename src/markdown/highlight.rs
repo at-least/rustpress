@@ -194,7 +194,10 @@ pub struct RendererOptions {
 
 impl Default for RendererOptions {
     fn default() -> Self {
-        Self { copy_button: true, line_numbers: false }
+        Self {
+            copy_button: true,
+            line_numbers: false,
+        }
     }
 }
 
@@ -320,7 +323,8 @@ const LANGUAGES: &[LanguageDef] = &[
 /// whose queries fail to compile is skipped (its fences fall back to
 /// escaped plain lines).
 fn configs() -> &'static HashMap<&'static str, &'static HighlightConfiguration> {
-    static CONFIGS: OnceLock<HashMap<&'static str, &'static HighlightConfiguration>> = OnceLock::new();
+    static CONFIGS: OnceLock<HashMap<&'static str, &'static HighlightConfiguration>> =
+        OnceLock::new();
     CONFIGS.get_or_init(|| {
         let mut map = HashMap::new();
         for def in LANGUAGES {
@@ -408,7 +412,8 @@ fn config_for(token: &str) -> Option<&'static HighlightConfiguration> {
 fn line_notations(lines: &[String]) -> (Vec<String>, Vec<Vec<&'static str>>) {
     static NOTATION: OnceLock<regex::Regex> = OnceLock::new();
     let re = NOTATION.get_or_init(|| {
-        regex::Regex::new(r"\[!(!)?code\s+(highlight|hl|focus|warning|error|\+\+|--)(?::(\d+))?\]").unwrap()
+        regex::Regex::new(r"\[!(!)?code\s+(highlight|hl|focus|warning|error|\+\+|--)(?::(\d+))?\]")
+            .unwrap()
     });
     let mut clean: Vec<String> = Vec::with_capacity(lines.len());
     let mut classes: Vec<Vec<&'static str>> = vec![Vec::new(); lines.len()];
@@ -433,7 +438,9 @@ fn line_notations(lines: &[String]) -> (Vec<String>, Vec<Vec<&'static str>>) {
                 out.push_str(&format!(
                     "[!code {}{}]",
                     &cap[2],
-                    cap.get(3).map(|n| format!(":{}", n.as_str())).unwrap_or_default()
+                    cap.get(3)
+                        .map(|n| format!(":{}", n.as_str()))
+                        .unwrap_or_default()
                 ));
                 continue;
             }
@@ -455,7 +462,11 @@ fn line_notations(lines: &[String]) -> (Vec<String>, Vec<Vec<&'static str>>) {
 
 /// The class list for one rendered line: `line`, `hl` (from meta or a
 /// notation), plus notation classes (focus / diff / warning / error).
-fn line_class(number: usize, hl: &std::collections::HashSet<usize>, notation: &[&'static str]) -> String {
+fn line_class(
+    number: usize,
+    hl: &std::collections::HashSet<usize>,
+    notation: &[&'static str],
+) -> String {
     let mut class = String::from("line");
     if hl.contains(&number) || notation.contains(&"hl") {
         class.push_str(" hl");
@@ -537,7 +548,11 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
         }
         write!(output, "<pre class=\"{pre_class}\"")?;
         if show_ln && ln_start.is_some_and(|n| n > 1) {
-            write!(output, " style=\"counter-reset: gdln {};\"", ln_start.unwrap() - 1)?;
+            write!(
+                output,
+                " style=\"counter-reset: gdln {};\"",
+                ln_start.unwrap() - 1
+            )?;
         }
         write!(output, ">")?;
         if self.options.copy_button {
@@ -638,7 +653,9 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                             continue;
                         }
                         if seg_start > pos {
-                            output.write_str(&escape_text(std::str::from_utf8(&bytes[pos..seg_start]).unwrap()))?;
+                            output.write_str(&escape_text(
+                                std::str::from_utf8(&bytes[pos..seg_start]).unwrap(),
+                            ))?;
                             pos = seg_start;
                         }
                         match capture {
@@ -648,13 +665,16 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                                 tk_class(name),
                                 escape_text(std::str::from_utf8(&bytes[pos..seg_end]).unwrap())
                             )?,
-                            None => output.write_str(&escape_text(std::str::from_utf8(&bytes[pos..seg_end]).unwrap()))?,
+                            None => output.write_str(&escape_text(
+                                std::str::from_utf8(&bytes[pos..seg_end]).unwrap(),
+                            ))?,
                         }
                         pos = seg_end;
                     }
                     if pos < end {
-                        output
-                            .write_str(&escape_text(std::str::from_utf8(&bytes[pos..end]).unwrap()))?;
+                        output.write_str(&escape_text(
+                            std::str::from_utf8(&bytes[pos..end]).unwrap(),
+                        ))?;
                     }
                     output.write_str("</span>")?;
                 }
@@ -666,7 +686,11 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                     if idx > 0 {
                         output.write_str("\n")?;
                     }
-                    write!(output, "<span class=\"{class}\">{}</span>", escape_text(text))?;
+                    write!(
+                        output,
+                        "<span class=\"{class}\">{}</span>",
+                        escape_text(text)
+                    )?;
                 }
             }
         }
@@ -686,8 +710,16 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
 pub fn syntax_css(light: &SyntaxTheme, dark: &SyntaxTheme) -> String {
     let block = |theme: &SyntaxTheme, scope_prefix: &str, out: &mut String| {
         for name in CAPTURE_NAMES {
-            let Some(style) = theme.resolve(name) else { continue };
-            let ThemeStyle { fg, bg, bold, italic, underline } = style;
+            let Some(style) = theme.resolve(name) else {
+                continue;
+            };
+            let ThemeStyle {
+                fg,
+                bg,
+                bold,
+                italic,
+                underline,
+            } = style;
             if fg.is_none() && bg.is_none() && !bold && !italic && !underline {
                 continue;
             }
@@ -968,11 +1000,7 @@ mod sgr_tests {
         );
         let spec = FenceSpec::parse_meta("lang=js hl=1,5-99999999,9");
         // the cap is per range: total = capped range + the two singletons
-        assert!(
-            spec.hl.len() <= MAX_HL_RANGE + 2,
-            "{:?}",
-            spec.hl.len()
-        );
+        assert!(spec.hl.len() <= MAX_HL_RANGE + 2, "{:?}", spec.hl.len());
         // sane ranges are untouched
         let spec = FenceSpec::parse_meta("lang=js hl=1,3-4");
         assert_eq!(spec.hl, vec![1, 3, 4]);

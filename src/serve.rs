@@ -7,12 +7,12 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use anyhow::Context;
-use axum::body::Body;
-use axum::http::{header, StatusCode};
-use axum::response::sse::{Event, KeepAlive, Sse};
-use axum::response::Response;
-use axum::routing::get;
 use axum::Router;
+use axum::body::Body;
+use axum::http::{StatusCode, header};
+use axum::response::Response;
+use axum::response::sse::{Event, KeepAlive, Sse};
+use axum::routing::get;
 
 use crate::render::Site;
 
@@ -115,7 +115,8 @@ const DEBOUNCE: std::time::Duration = std::time::Duration::from_millis(100);
 
 static GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
-async fn livereload() -> Sse<impl futures_core::Stream<Item = Result<Event, std::convert::Infallible>>> {
+async fn livereload()
+-> Sse<impl futures_core::Stream<Item = Result<Event, std::convert::Infallible>>> {
     let stream = async_stream::stream! {
         let mut last = GENERATION.load(std::sync::atomic::Ordering::SeqCst);
         loop {
@@ -194,11 +195,12 @@ fn inject_livereload(body: Vec<u8>) -> Vec<u8> {
     // and take the lock over when it closes.
     const SCRIPT: &[u8] = b"<script>(function(){var ch='BroadcastChannel' in window?new BroadcastChannel('rustpress-livereload'):null;if(ch)ch.onmessage=function(){location.reload()};function connect(){new EventSource('/@rustpress/livereload').addEventListener('reload',function(){if(ch)ch.postMessage('reload');location.reload()})}if(ch&&navigator.locks)navigator.locks.request('rustpress-livereload',function(){connect();return new Promise(function(){})});else connect()})();</script>";
     if let Ok(s) = std::str::from_utf8(&body)
-        && let Some(i) = s.rfind("</body>") {
-            let mut out = body;
-            out.splice(i..i, SCRIPT.iter().copied());
-            return out;
-        }
+        && let Some(i) = s.rfind("</body>")
+    {
+        let mut out = body;
+        out.splice(i..i, SCRIPT.iter().copied());
+        return out;
+    }
     let mut out = body;
     out.extend_from_slice(SCRIPT);
     out
@@ -279,7 +281,9 @@ mod tests {
     }
 
     fn status_of(root: &Path, path: &'static str) -> StatusCode {
-        let state = ServeState { root: root.to_path_buf() };
+        let state = ServeState {
+            root: root.to_path_buf(),
+        };
         serve_file(&state, &Uri::from_static(path)).status()
     }
 
@@ -292,17 +296,31 @@ mod tests {
         assert_eq!(status_of(&public, "/sub/page.html"), StatusCode::OK);
         assert_eq!(status_of(&public, "/missing.txt"), StatusCode::NOT_FOUND);
         // traversal, raw and percent-encoded
-        assert_eq!(status_of(&public, "/../rustpress.toml"), StatusCode::NOT_FOUND);
-        assert_eq!(status_of(&public, "/%2e%2e/rustpress.toml"), StatusCode::NOT_FOUND);
+        assert_eq!(
+            status_of(&public, "/../rustpress.toml"),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            status_of(&public, "/%2e%2e/rustpress.toml"),
+            StatusCode::NOT_FOUND
+        );
         // double-encoded decodes to a literal "%2e%2e" name: no second pass
-        assert_eq!(status_of(&public, "/%252e%252e/rustpress.toml"), StatusCode::NOT_FOUND);
+        assert_eq!(
+            status_of(&public, "/%252e%252e/rustpress.toml"),
+            StatusCode::NOT_FOUND
+        );
         // a backslash is a path separator on Windows: never let one ride
         // through a segment ("..\..\rustpress.toml")
-        assert_eq!(status_of(&public, "/..%5C..%5Crustpress.toml"), StatusCode::NOT_FOUND);
+        assert_eq!(
+            status_of(&public, "/..%5C..%5Crustpress.toml"),
+            StatusCode::NOT_FOUND
+        );
 
         // Content-Type follows the DECODED path: /index%2Ehtml is
         // index.html and must be served as HTML, not octet-stream
-        let state = ServeState { root: public.clone() };
+        let state = ServeState {
+            root: public.clone(),
+        };
         let resp = serve_file(&state, &Uri::from_static("/index%2Ehtml"));
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(

@@ -288,7 +288,9 @@ impl SiteConfig {
 
     fn validate(&self) -> Result<(), ConfigError> {
         if !self.base.starts_with('/') || !self.base.ends_with('/') {
-            return Err(ConfigError::Base { value: self.base.clone() });
+            return Err(ConfigError::Base {
+                value: self.base.clone(),
+            });
         }
         Ok(())
     }
@@ -624,7 +626,6 @@ impl Default for SyntaxHighlight {
     }
 }
 
-
 /// Dark-mode behavior (see [`SiteConfig::appearance`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Appearance {
@@ -636,14 +637,19 @@ pub enum Appearance {
 
 impl Default for Appearance {
     fn default() -> Self {
-        Appearance::Toggleable { default_dark: false }
+        Appearance::Toggleable {
+            default_dark: false,
+        }
     }
 }
 
 impl Appearance {
     /// Should the navbar toggle switch render at all?
     pub fn toggleable(&self) -> bool {
-        !matches!(self, Appearance::LightOnly | Appearance::ForceDark | Appearance::ForceAuto)
+        !matches!(
+            self,
+            Appearance::LightOnly | Appearance::ForceDark | Appearance::ForceAuto
+        )
     }
 }
 
@@ -660,7 +666,9 @@ impl<'de> Deserialize<'de> for Appearance {
             Word(String),
         }
         match Raw::deserialize(deserializer)? {
-            Raw::Bool(true) => Ok(Appearance::Toggleable { default_dark: false }),
+            Raw::Bool(true) => Ok(Appearance::Toggleable {
+                default_dark: false,
+            }),
             Raw::Bool(false) => Ok(Appearance::LightOnly),
             Raw::Word(w) => match w.as_str() {
                 "dark" => Ok(Appearance::Toggleable { default_dark: true }),
@@ -750,7 +758,6 @@ pub struct Markdown {
 
     #[serde(default)]
     pub container: ContainerOptions,
-
 }
 
 impl Default for Markdown {
@@ -767,8 +774,6 @@ pub struct ImageOptions {
     #[serde(default, alias = "lazyLoad")]
     pub lazy_loading: bool,
 }
-
-
 
 /// Container title labels and custom container kinds. Keys are the
 /// VitePress `markdown.container` label names.
@@ -883,9 +888,15 @@ pub struct Locale {
 #[derive(Debug, thiserror::Error)]
 pub enum ConfigError {
     #[error("cannot read {path}: {source}")]
-    Read { path: PathBuf, source: std::io::Error },
+    Read {
+        path: PathBuf,
+        source: std::io::Error,
+    },
     #[error("invalid TOML in {path}: {source}")]
-    Parse { path: PathBuf, source: toml::de::Error },
+    Parse {
+        path: PathBuf,
+        source: toml::de::Error,
+    },
     #[error("invalid base {value:?}: must start and end with '/'")]
     Base { value: String },
 }
@@ -917,16 +928,13 @@ mod tests {
         let c = parse("");
         assert_eq!(c.code.light, "github_light");
         assert_eq!(c.code.dark, "github_dark");
-        let c = parse(
-            "[code]\nlight = \"base16-ocean.light\"\ndark = \"base16-ocean.dark\"\n",
-        );
+        let c = parse("[code]\nlight = \"base16-ocean.light\"\ndark = \"base16-ocean.dark\"\n");
         assert_eq!(c.code.light, "base16-ocean.light");
         assert_eq!(c.code.dark, "base16-ocean.dark");
         // theme key no longer exists under [markdown]
         let err = toml::from_str::<SiteConfig>("[markdown.theme]\nlight = \"x\"\n").unwrap_err();
         assert!(err.to_string().contains("theme"), "{err}");
     }
-
 
     #[test]
     fn full_config_round_trip() {
@@ -983,7 +991,10 @@ provider = "local"
             "https://github.com/me/repo/edit/main/docs/:path"
         );
         assert_eq!(c.outline.level(), Some(OutlineLevel::Range((2, 3))));
-        assert_eq!(c.search.as_ref().map(|s| s.provider), Some(SearchProvider::Local));
+        assert_eq!(
+            c.search.as_ref().map(|s| s.provider),
+            Some(SearchProvider::Local)
+        );
         assert_eq!(c.search.unwrap().translations.button_text, "Search");
     }
 
@@ -1000,7 +1011,9 @@ link = "https://example.com"
         );
         assert_eq!(
             c.social_links[0].icon,
-            SocialIcon::Svg { svg: "<svg></svg>".into() }
+            SocialIcon::Svg {
+                svg: "<svg></svg>".into()
+            }
         );
     }
 
@@ -1074,12 +1087,18 @@ base = "/reference/"
     #[test]
     fn unknown_key_is_rejected() {
         let err = toml::from_str::<SiteConfig>("titel = \"typo\"\n").unwrap_err();
-        assert!(err.to_string().contains("titel"), "error should name the bad key: {err}");
+        assert!(
+            err.to_string().contains("titel"),
+            "error should name the bad key: {err}"
+        );
     }
 
     #[test]
     fn bad_base_is_rejected_by_validate() {
-        let c = SiteConfig { base: "docs".into(), ..Default::default() };
+        let c = SiteConfig {
+            base: "docs".into(),
+            ..Default::default()
+        };
         assert!(matches!(c.validate(), Err(ConfigError::Base { .. })));
     }
 
@@ -1100,7 +1119,8 @@ base = "/reference/"
 
     #[test]
     fn container_labels_including_details() {
-        let opts: ContainerOptions = toml::from_str("detailsLabel = \"Details der Seite\"\n").unwrap();
+        let opts: ContainerOptions =
+            toml::from_str("detailsLabel = \"Details der Seite\"\n").unwrap();
         assert_eq!(opts.label_for("details"), "Details der Seite");
         assert_eq!(ContainerOptions::default().label_for("details"), "Details");
     }

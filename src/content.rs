@@ -371,19 +371,26 @@ fn walk(
             path: dir.to_path_buf(),
             source,
         })?;
-    entries.sort_by(|a, b| natural_cmp(&a.file_name().to_string_lossy(), &b.file_name().to_string_lossy()));
+    entries.sort_by(|a, b| {
+        natural_cmp(
+            &a.file_name().to_string_lossy(),
+            &b.file_name().to_string_lossy(),
+        )
+    });
     for entry in entries {
         let name = entry.file_name().to_string_lossy().into_owned();
         if name.starts_with('.') {
             continue;
         }
-        let rel = if rel_dir.is_empty() { name.clone() } else { format!("{rel_dir}/{name}") };
+        let rel = if rel_dir.is_empty() {
+            name.clone()
+        } else {
+            format!("{rel_dir}/{name}")
+        };
         let path = entry.path();
         if path.is_dir() {
             walk(&path, &rel, out, seen, excludes)?;
-        } else if name.ends_with(".md")
-            && !excludes.iter().any(|p| glob_match(p, &rel))
-        {
+        } else if name.ends_with(".md") && !excludes.iter().any(|p| glob_match(p, &rel)) {
             let page = load_page(&path, &rel)?;
             if !seen.insert(page.url.clone()) {
                 return Err(ContentError::Duplicate { url: page.url });
@@ -402,17 +409,20 @@ pub fn glob_match(pattern: &str, path: &str) -> bool {
             return s.is_empty();
         }
         match p[0] {
-            '*' if p.len() > 1 && p[1] == '*' => {
-                (0..=s.len()).any(|i| go(&p[2..], &s[i..]))
-            }
+            '*' if p.len() > 1 && p[1] == '*' => (0..=s.len()).any(|i| go(&p[2..], &s[i..])),
             '*' => {
                 // stop at the segment boundary
-                (0..=s.len()).take_while(|i| *i == 0 || s[*i - 1] != '/').any(|i| go(&p[1..], &s[i..]))
+                (0..=s.len())
+                    .take_while(|i| *i == 0 || s[*i - 1] != '/')
+                    .any(|i| go(&p[1..], &s[i..]))
             }
             c => !s.is_empty() && s[0] == c && go(&p[1..], &s[1..]),
         }
     }
-    go(&pattern.chars().collect::<Vec<_>>(), &path.chars().collect::<Vec<_>>())
+    go(
+        &pattern.chars().collect::<Vec<_>>(),
+        &path.chars().collect::<Vec<_>>(),
+    )
 }
 
 fn load_page(path: &Path, rel: &str) -> Result<Page, ContentError> {
@@ -500,7 +510,9 @@ pub fn extract_h1(body: &str) -> Option<String> {
         if t.starts_with("```") || t.starts_with("~~~") {
             break; // headings after the first fence belong to examples
         }
-        let Some(rest) = t.strip_prefix("# ") else { continue };
+        let Some(rest) = t.strip_prefix("# ") else {
+            continue;
+        };
         let rest = rest.trim();
         if rest.is_empty() {
             return None;
@@ -579,7 +591,10 @@ pub fn natural_cmp(a: &str, b: &str) -> std::cmp::Ordering {
 #[derive(Debug, thiserror::Error)]
 pub enum ContentError {
     #[error("cannot read {path}: {source}")]
-    Read { path: PathBuf, source: std::io::Error },
+    Read {
+        path: PathBuf,
+        source: std::io::Error,
+    },
     #[error("invalid front matter in {path}: {source}")]
     FrontMatter {
         path: PathBuf,
@@ -625,8 +640,14 @@ mod tests {
 
     #[test]
     fn outline_setting_forms() {
-        assert_eq!(serde_norway::from_str::<OutlineSetting>("deep").unwrap(), OutlineSetting::Deep);
-        assert_eq!(serde_norway::from_str::<OutlineSetting>("2").unwrap(), OutlineSetting::Level(2));
+        assert_eq!(
+            serde_norway::from_str::<OutlineSetting>("deep").unwrap(),
+            OutlineSetting::Deep
+        );
+        assert_eq!(
+            serde_norway::from_str::<OutlineSetting>("2").unwrap(),
+            OutlineSetting::Level(2)
+        );
         assert_eq!(
             serde_norway::from_str::<OutlineSetting>("[2, 3]").unwrap(),
             OutlineSetting::Range((2, 3))
@@ -644,7 +665,10 @@ mod tests {
         assert_eq!(page_url("index.md"), "/");
         assert_eq!(page_url("guide/index.md"), "/guide/");
         assert_eq!(page_url("guide/x.md"), "/guide/x/");
-        assert_eq!(page_url("reference/default-theme/config.md"), "/reference/default-theme/config/");
+        assert_eq!(
+            page_url("reference/default-theme/config.md"),
+            "/reference/default-theme/config/"
+        );
     }
 
     #[test]
@@ -658,7 +682,10 @@ mod tests {
             extract_h1("# MPA Mode <Badge type=\"warning\" text=\"experimental\" />\n"),
             Some("MPA Mode".into())
         );
-        assert_eq!(extract_h1("# Anchored {#custom-id}\n"), Some("Anchored".into()));
+        assert_eq!(
+            extract_h1("# Anchored {#custom-id}\n"),
+            Some("Anchored".into())
+        );
         assert_eq!(extract_h1("no heading here\n"), None);
     }
 
@@ -686,9 +713,17 @@ mod tests {
         std::fs::create_dir_all(dir.join("guide")).unwrap();
         std::fs::write(dir.join("guide/index.md"), "body\n").unwrap();
         let content = Content::load(&dir, &[]).unwrap();
-        let lab = content.pages.iter().find(|p| p.rel == "labindex.md").unwrap();
+        let lab = content
+            .pages
+            .iter()
+            .find(|p| p.rel == "labindex.md")
+            .unwrap();
         assert_eq!(lab.title, "labindex");
-        let guide = content.pages.iter().find(|p| p.rel == "guide/index.md").unwrap();
+        let guide = content
+            .pages
+            .iter()
+            .find(|p| p.rel == "guide/index.md")
+            .unwrap();
         assert_eq!(guide.title, "guide");
         std::fs::remove_dir_all(&dir).ok();
     }

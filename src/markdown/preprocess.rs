@@ -25,7 +25,10 @@ use crate::config::ContainerOptions;
 #[derive(Debug, thiserror::Error)]
 pub enum PreprocessError {
     #[error("cannot read include {path}: {source}")]
-    Read { path: PathBuf, source: std::io::Error },
+    Read {
+        path: PathBuf,
+        source: std::io::Error,
+    },
     #[error("include depth exceeded at {path}")]
     Depth { path: PathBuf },
 }
@@ -68,10 +71,17 @@ impl<'a> Preprocess<'a> {
     /// heading anchor) and an optional `{a,b}` line range; inside code
     /// fences the directive inserts the selected lines verbatim
     /// (upstream "Including Code Files").
-    fn resolve_includes(&self, md: &str, page_rel: &str, depth: u8) -> Result<String, PreprocessError> {
+    fn resolve_includes(
+        &self,
+        md: &str,
+        page_rel: &str,
+        depth: u8,
+    ) -> Result<String, PreprocessError> {
         let mut out = String::with_capacity(md.len());
         let mut fence: Option<(char, usize)> = None;
-        let page_dir = self.content_dir.join(Path::new(page_rel).parent().unwrap_or(Path::new("")));
+        let page_dir = self
+            .content_dir
+            .join(Path::new(page_rel).parent().unwrap_or(Path::new("")));
         for line in md.split_inclusive('\n') {
             let bare = line.trim_end_matches(['\n', '\r']);
             let t = bare.trim();
@@ -98,8 +108,7 @@ impl<'a> Preprocess<'a> {
                     Some(block) => {
                         // The block may itself pull includes (rare);
                         // recurse on just this chunk.
-                        let resolved =
-                            self.resolve_includes(&block, page_rel, depth + 1)?;
+                        let resolved = self.resolve_includes(&block, page_rel, depth + 1)?;
                         out.push_str(&resolved);
                         if !resolved.ends_with('\n') {
                             out.push('\n');
@@ -111,7 +120,9 @@ impl<'a> Preprocess<'a> {
             }
             if let Some(target) = md_include_target(t) {
                 if depth >= MAX_INCLUDE_DEPTH {
-                    return Err(PreprocessError::Depth { path: target.raw_path() });
+                    return Err(PreprocessError::Depth {
+                        path: target.raw_path(),
+                    });
                 }
                 let inner = self.load_include(&target, &page_dir, depth)?;
                 let inner = self.resolve_includes(&inner, page_rel, depth + 1)?;
@@ -136,17 +147,20 @@ impl<'a> Preprocess<'a> {
         depth: u8,
     ) -> Result<String, PreprocessError> {
         if depth >= MAX_INCLUDE_DEPTH {
-            return Err(PreprocessError::Depth { path: target.raw_path() });
+            return Err(PreprocessError::Depth {
+                path: target.raw_path(),
+            });
         }
         let file = if let Some(rel) = target.path.strip_prefix("@/") {
             self.site_root.join(rel)
         } else {
             page_dir.join(&target.path)
         };
-        let mut content = std::fs::read_to_string(&file).map_err(|source| PreprocessError::Read {
-            path: file.clone(),
-            source,
-        })?;
+        let mut content =
+            std::fs::read_to_string(&file).map_err(|source| PreprocessError::Read {
+                path: file.clone(),
+                source,
+            })?;
         if let Some(section) = &target.section {
             content = extract_region(&content, section)
                 .or_else(|| extract_heading_section(&content, section))
@@ -164,7 +178,9 @@ impl<'a> Preprocess<'a> {
     fn expand_code_include(&self, line: &str, page_dir: &Path) -> Option<String> {
         let rest = line.trim_start_matches("<<<").trim();
         let (mut target, label) = match rest.find(" [") {
-            Some(i) if rest.ends_with(']') => (&rest[..i], Some(rest[i + 2..rest.len() - 1].to_string())),
+            Some(i) if rest.ends_with(']') => {
+                (&rest[..i], Some(rest[i + 2..rest.len() - 1].to_string()))
+            }
             _ => (rest, None),
         };
         // the brace spec comes after any #region anchor — parse it first
@@ -177,7 +193,10 @@ impl<'a> Preprocess<'a> {
             for token in spec.split_whitespace() {
                 if token == ":line-numbers" {
                     ln = true;
-                } else if token.chars().all(|c| c.is_ascii_digit() || c == ',' || c == '-') {
+                } else if token
+                    .chars()
+                    .all(|c| c.is_ascii_digit() || c == ',' || c == '-')
+                {
                     // upstream semantics: `{2}` HIGHLIGHTS line 2 (the
                     // spec passes through to the fence info), it does not
                     // select a line range — `<<< @/x.js{2}` renders every
@@ -228,10 +247,7 @@ impl<'a> Preprocess<'a> {
         // "filename is used as title by default" (upstream snippet
         // includes): an unlabeled include takes the file's name as its
         // code-group tab / standalone title bar
-        let label = label.or_else(|| {
-            file.file_name()
-                .map(|n| n.to_string_lossy().into_owned())
-        });
+        let label = label.or_else(|| file.file_name().map(|n| n.to_string_lossy().into_owned()));
         if let Some(label) = label {
             block.push_str(&format!(" [{label}]"));
         }
@@ -399,11 +415,7 @@ fn extract_region(content: &str, name: &str) -> Option<String> {
             out.push_str(l);
         }
     }
-    if inside {
-        Some(out)
-    } else {
-        None
-    }
+    if inside { Some(out) } else { None }
 }
 
 /// A fence marker longer than any backtick run inside the content.
@@ -481,12 +493,7 @@ pub fn expand_inline_footnotes(md: &str) -> String {
     out
 }
 
-fn replace_inline(
-    text: &str,
-    re: &Regex,
-    counter: &mut usize,
-    defs: &mut Vec<String>,
-) -> String {
+fn replace_inline(text: &str, re: &Regex, counter: &mut usize, defs: &mut Vec<String>) -> String {
     re.replace_all(text, |c: &regex::Captures| {
         *counter += 1;
         let label = format!("fni-{counter}");
@@ -508,7 +515,10 @@ pub fn rewrite_link_attrs(md: &str, base: &str) -> String {
         Regex::new(r#"(?m)(!?)\[([^\]\n]*)\]\(([^)\s]+)\)\{([^{}]*="[^}"]*"[^{}]*)\}"#).unwrap()
     });
     fn esc(s: &str) -> String {
-        s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;").replace('>', "&gt;")
+        s.replace('&', "&amp;")
+            .replace('"', "&quot;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;")
     }
     let mut fence: Option<(char, usize)> = None;
     let mut out = String::with_capacity(md.len());
@@ -657,7 +667,10 @@ fn alert_opener(line: &str, opts: &ContainerOptions) -> Option<(String, String, 
     let known = matches!(
         kind.as_str(),
         "note" | "tip" | "important" | "warning" | "caution" | "danger" | "info"
-    ) || opts.custom.iter().any(|c| c.name.eq_ignore_ascii_case(&kind));
+    ) || opts
+        .custom
+        .iter()
+        .any(|c| c.name.eq_ignore_ascii_case(&kind));
     if !known {
         return None;
     }
@@ -729,11 +742,12 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
         // container opened with ≤ that many colons
         if let Some(colons) = closing_container(t) {
             if let Some(&(top_colons, _)) = stack.last()
-                && colons >= top_colons {
-                    let (_, open) = stack.pop().unwrap();
-                    close_markup(open, indent, &mut out_lines);
-                    continue;
-                }
+                && colons >= top_colons
+            {
+                let (_, open) = stack.pop().unwrap();
+                close_markup(open, indent, &mut out_lines);
+                continue;
+            }
             out_lines.push(bare.to_string());
             continue;
         }
@@ -748,10 +762,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
                     // upstream's style-isolation wrapper for embedded
                     // component demos (vp-raw class)
                     stack.push((colons, Open::Raw));
-                    out_lines.extend([
-                        format!("{indent}<div class=\"vp-raw\">"),
-                        String::new(),
-                    ]);
+                    out_lines.extend([format!("{indent}<div class=\"vp-raw\">"), String::new()]);
                 }
                 "code-group" => {
                     stack.push((colons, Open::CodeGroup));
@@ -766,8 +777,11 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
                 }
                 "details" => {
                     let (summary, open) = parse_details_rest(rest);
-                    let summary =
-                        if summary.is_empty() { opts.label_for("details") } else { summary };
+                    let summary = if summary.is_empty() {
+                        opts.label_for("details")
+                    } else {
+                        summary
+                    };
                     stack.push((colons, Open::Details));
                     let open_attr = if open { " open" } else { "" };
                     out_lines.extend([
@@ -778,21 +792,22 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
                 }
                 kind => {
                     // custom containers reuse a builtin kind's styling
-                    let (class, default_label) =
-                        if let Some(cc) = opts.custom.iter().find(|c| c.name == kind) {
-                            (
-                                cc.kind.clone().unwrap_or_else(|| "tip".into()),
-                                cc.label.clone().unwrap_or_else(|| kind.to_uppercase()),
-                            )
-                        } else if matches!(
-                            kind,
-                            "tip" | "warning" | "danger" | "note" | "info" | "important" | "caution"
-                        ) {
-                            (kind.to_string(), opts.label_for(kind))
-                        } else {
-                            out_lines.push(bare.to_string());
-                            continue;
-                        };
+                    let (class, default_label) = if let Some(cc) =
+                        opts.custom.iter().find(|c| c.name == kind)
+                    {
+                        (
+                            cc.kind.clone().unwrap_or_else(|| "tip".into()),
+                            cc.label.clone().unwrap_or_else(|| kind.to_uppercase()),
+                        )
+                    } else if matches!(
+                        kind,
+                        "tip" | "warning" | "danger" | "note" | "info" | "important" | "caution"
+                    ) {
+                        (kind.to_string(), opts.label_for(kind))
+                    } else {
+                        out_lines.push(bare.to_string());
+                        continue;
+                    };
                     stack.push((colons, Open::Tip));
                     let (no_title, title) = parse_tip_rest(rest);
                     out_lines.push(format!("{indent}<div class=\"custom-block {class}\">"));
@@ -835,9 +850,11 @@ fn code_group_tabs(lines: &[&str], idx: usize, group_no: usize) -> String {
         }
         if let Some((ch, n)) = opening_fence(bare) {
             let info = bare[fence_info_offset(bare, n)..].trim();
-            let label = info
-                .find('[')
-                .and_then(|i| info[i + 1..].find(']').map(|j| info[i + 1..i + 1 + j].to_string()));
+            let label = info.find('[').and_then(|i| {
+                info[i + 1..]
+                    .find(']')
+                    .map(|j| info[i + 1..i + 1 + j].to_string())
+            });
             let lang = info.split_whitespace().next().unwrap_or("").to_string();
             labels.push(label.filter(|l| !l.is_empty()).unwrap_or(lang));
             fence = Some((ch, n));
@@ -864,7 +881,8 @@ fn code_group_tabs(lines: &[&str], idx: usize, group_no: usize) -> String {
 }
 
 /// `::::` / `::: ` opener: (colons, kind, rest-after-kind).
-fn opening_container(t: &str) -> Option<(usize, &str, &str)> {    let colons = t.chars().take_while(|&c| c == ':').count();
+fn opening_container(t: &str) -> Option<(usize, &str, &str)> {
+    let colons = t.chars().take_while(|&c| c == ':').count();
     if colons < 3 {
         return None;
     }
@@ -897,13 +915,15 @@ fn parse_tip_rest(rest: &str) -> (bool, Option<String>) {
 /// `SUMMARY [{open}]` → (summary, open). VitePress also tolerates
 /// `{open}` with spaces inside the braces.
 fn parse_details_rest(rest: &str) -> (String, bool) {
-    if rest.ends_with('}') && rest.contains('{')
-        && let Some(i) = rest.rfind('{') {
-            let attr = rest[i + 1..rest.len() - 1].trim();
-            if attr == "open" || attr.contains("open") {
-                return (rest[..i].trim().to_string(), true);
-            }
+    if rest.ends_with('}')
+        && rest.contains('{')
+        && let Some(i) = rest.rfind('{')
+    {
+        let attr = rest[i + 1..rest.len() - 1].trim();
+        if attr == "open" || attr.contains("open") {
+            return (rest[..i].trim().to_string(), true);
         }
+    }
     if rest.is_empty() {
         (String::new(), false)
     } else {
@@ -951,10 +971,11 @@ fn rewrite_info(info: &str) -> String {
 
     // [label] — first bracket group
     if let Some(i) = rest.find('[')
-        && let Some(j) = rest[i..].find(']') {
-            label = Some(rest[i + 1..i + j].to_string());
-            rest.replace_range(i..i + j + 1, " ");
-        }
+        && let Some(j) = rest[i..].find(']')
+    {
+        label = Some(rest[i + 1..i + j].to_string());
+        rest.replace_range(i..i + j + 1, " ");
+    }
     // GD_GROUP_TOKEN — the containers pass tags fences inside :::
     // code-group. Token equality, not substring: a bare "```" opener in
     // a group trims to exactly the token, with no leading space.
@@ -969,25 +990,23 @@ fn rewrite_info(info: &str) -> String {
     }
     // {spec} — first brace group that looks like a line spec
     if let Some(i) = rest.find('{')
-        && let Some(j) = rest[i..].find('}') {
-            let inner = &rest[i + 1..i + j];
-            let compact: String = inner.chars().filter(|c| !c.is_whitespace()).collect();
-            if !compact.is_empty()
-                && compact
-                    .chars()
-                    .all(|c| c.is_ascii_digit() || c == ',' || c == '-')
-            {
-                hl = Some(compact);
-                rest.replace_range(i..i + j + 1, " ");
-            }
+        && let Some(j) = rest[i..].find('}')
+    {
+        let inner = &rest[i + 1..i + j];
+        let compact: String = inner.chars().filter(|c| !c.is_whitespace()).collect();
+        if !compact.is_empty()
+            && compact
+                .chars()
+                .all(|c| c.is_ascii_digit() || c == ',' || c == '-')
+        {
+            hl = Some(compact);
+            rest.replace_range(i..i + j + 1, " ");
         }
+    }
     // :line-numbers / :no-line-numbers / :line-numbers=N → ln= token
     let mut lang = rest.split_whitespace().next().unwrap_or("").to_string();
     let mut ln: Option<String> = None;
-    for (suffix, token) in [
-        (":no-line-numbers", "false"),
-        (":line-numbers", "true"),
-    ] {
+    for (suffix, token) in [(":no-line-numbers", "false"), (":line-numbers", "true")] {
         if let Some(stripped) = lang.strip_suffix(suffix) {
             lang = stripped.to_string();
             ln = Some(token.to_string());
@@ -1028,8 +1047,10 @@ fn rewrite_info(info: &str) -> String {
 pub fn rewrite_badges(md: &str) -> String {
     static SELF_CLOSING: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
     static PAIRED: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
-    let self_closing = SELF_CLOSING.get_or_init(|| Regex::new(r#"<Badge\s+([^<>]*?)\s*/>"#).unwrap());
-    let paired = PAIRED.get_or_init(|| Regex::new(r#"(?s)<Badge\s+([^<>]*?)>(.*?)</Badge>"#).unwrap());
+    let self_closing =
+        SELF_CLOSING.get_or_init(|| Regex::new(r#"<Badge\s+([^<>]*?)\s*/>"#).unwrap());
+    let paired =
+        PAIRED.get_or_init(|| Regex::new(r#"(?s)<Badge\s+([^<>]*?)>(.*?)</Badge>"#).unwrap());
 
     let mut out = String::with_capacity(md.len());
     let mut fence: Option<(char, usize)> = None;
@@ -1141,7 +1162,10 @@ mod tests {
         assert!(out.contains("<p class=\"custom-block-title\">TIP</p>"));
         assert!(out.contains("hi **bold**"));
         let out = containers("::: warning SERVER REQUIRED\nx\n:::\n");
-        assert!(out.contains("<p class=\"custom-block-title\">SERVER REQUIRED</p>"), "{out}");
+        assert!(
+            out.contains("<p class=\"custom-block-title\">SERVER REQUIRED</p>"),
+            "{out}"
+        );
         let out = containers("::: tip {no-title}\nx\n:::\n");
         assert!(!out.contains("custom-block-title"), "{out}");
     }
@@ -1149,10 +1173,16 @@ mod tests {
     #[test]
     fn details_and_code_group() {
         let out = containers("::: details Click me {open}\nx\n:::\n");
-        assert!(out.contains("<details class=\"custom-block details\" open>"), "{out}");
+        assert!(
+            out.contains("<details class=\"custom-block details\" open>"),
+            "{out}"
+        );
         assert!(out.contains("<summary>Click me</summary>"));
         let out = containers("::: code-group\n```js [a]\n1\n```\n:::\n");
-        assert!(out.contains("<div class=\"vp-code-group\" x-data=\"codeGroup\">"), "{out}");
+        assert!(
+            out.contains("<div class=\"vp-code-group\" x-data=\"codeGroup\">"),
+            "{out}"
+        );
         assert!(out.contains("<div class=\"blocks\">"));
         assert!(out.contains("</div>\n</div>"));
     }
@@ -1181,9 +1211,15 @@ mod tests {
         assert_eq!(rewrite_info("js{1,3-4}"), "gdcode lang=js hl=1,3-4");
         assert_eq!(rewrite_info("js {4}"), "gdcode lang=js hl=4");
         assert_eq!(rewrite_info("md:line-numbers"), "gdcode lang=md ln=true");
-        assert_eq!(rewrite_info("ts:no-line-numbers"), "gdcode lang=ts ln=false");
+        assert_eq!(
+            rewrite_info("ts:no-line-numbers"),
+            "gdcode lang=ts ln=false"
+        );
         assert_eq!(rewrite_info("md:line-numbers=4"), "gdcode lang=md ln=4");
-        assert_eq!(rewrite_info("vue [Layout.vue]"), "gdcode lang=vue label=Layout.vue");
+        assert_eq!(
+            rewrite_info("vue [Layout.vue]"),
+            "gdcode lang=vue label=Layout.vue"
+        );
         assert_eq!(rewrite_info(""), "gdcode");
         // non-numeric braces are not line specs: left alone
         assert_eq!(rewrite_info("jsonc { \"n\": 2 }"), "gdcode lang=jsonc");
@@ -1194,10 +1230,7 @@ mod tests {
         // GitHub accepts ">[!NOTE]" without a space after ">"; the alert
         // becomes a ::: container (pass 1.5), then a custom block (pass 2)
         let opts = ContainerOptions::default();
-        let out = expand_containers(
-            &expand_alerts(">[!NOTE]\n> body line\n", &opts),
-            &opts,
-        );
+        let out = expand_containers(&expand_alerts(">[!NOTE]\n> body line\n", &opts), &opts);
         assert!(out.contains("<div class=\"custom-block note\">"), "{out}");
         assert!(out.contains("body line"), "{out}");
     }
@@ -1229,11 +1262,20 @@ mod tests {
     #[test]
     fn badge_rewrites() {
         let out = rewrite_badges("## `useData` <Badge type=\"info\" text=\"composable\" />\n");
-        assert!(out.contains("<span class=\"VPBadge info\">composable</span>"), "{out}");
+        assert!(
+            out.contains("<span class=\"VPBadge info\">composable</span>"),
+            "{out}"
+        );
         let out = rewrite_badges("<Badge type=\"warning\">careful</Badge>\n");
-        assert!(out.contains("<span class=\"VPBadge warning\">careful</span>"), "{out}");
+        assert!(
+            out.contains("<span class=\"VPBadge warning\">careful</span>"),
+            "{out}"
+        );
         let out = rewrite_badges("<Badge text=\"plain\" />\n");
-        assert!(out.contains("<span class=\"VPBadge tip\">plain</span>"), "{out}");
+        assert!(
+            out.contains("<span class=\"VPBadge tip\">plain</span>"),
+            "{out}"
+        );
         // inside fences: literal
         let out = rewrite_badges("```md\n<Badge type=\"info\" text=\"x\" />\n```\n");
         assert!(out.contains("<Badge"), "{out}");
@@ -1259,7 +1301,6 @@ mod tests {
         let src = "// #region setup\nconst a = 1;\n// #endregion\nrest\n";
         assert_eq!(extract_region(src, "setup").unwrap(), "const a = 1;\n");
     }
-
 
     #[test]
     fn md_include_target_parses() {
@@ -1287,7 +1328,10 @@ mod edge_tests {
 
     #[test]
     fn container_directly_after_paragraph_no_blank() {
-        let out = expand_containers("a paragraph\n::: tip\ninner\n:::\nafter\n", &ContainerOptions::default());
+        let out = expand_containers(
+            "a paragraph\n::: tip\ninner\n:::\nafter\n",
+            &ContainerOptions::default(),
+        );
         // the HTML block must interrupt the paragraph correctly at the
         // comrak layer; here we check the wrapper survives preprocessing
         assert!(out.contains("<div class=\"custom-block tip\">"), "{out}");
@@ -1296,14 +1340,20 @@ mod edge_tests {
 
     #[test]
     fn adjacent_containers() {
-        let out = expand_containers("::: tip\na\n:::\n::: warning\nb\n:::\n", &ContainerOptions::default());
+        let out = expand_containers(
+            "::: tip\na\n:::\n::: warning\nb\n:::\n",
+            &ContainerOptions::default(),
+        );
         assert_eq!(out.matches("<div class=\"custom-block").count(), 2, "{out}");
         assert_eq!(out.matches("</div>").count(), 2, "{out}");
     }
 
     #[test]
     fn tilde_fences_protected() {
-        let out = expand_containers("~~~\n::: tip\n~~~\n::: info\nreal\n:::\n", &ContainerOptions::default());
+        let out = expand_containers(
+            "~~~\n::: tip\n~~~\n::: info\nreal\n:::\n",
+            &ContainerOptions::default(),
+        );
         // ::: inside the tilde fence is literal; the real one expands
         assert!(out.contains("::: tip"), "{out}");
         assert!(out.contains("<div class=\"custom-block info\">"), "{out}");
@@ -1313,13 +1363,20 @@ mod edge_tests {
     fn fence_with_trailing_spaces_and_info_closer() {
         // closer with trailing spaces; opener with info string
         let out = expand_containers("```js \n::: tip\n``` \n", &ContainerOptions::default());
-        assert!(out.contains("::: tip"), "container inside fence stays literal: {out}");
+        assert!(
+            out.contains("::: tip"),
+            "container inside fence stays literal: {out}"
+        );
     }
 
     #[test]
     fn unbalanced_container_closed_at_eof() {
         let out = expand_containers("::: tip\nnever closed\n", &ContainerOptions::default());
-        assert_eq!(out.matches("<div").count(), out.matches("</div>").count(), "{out}");
+        assert_eq!(
+            out.matches("<div").count(),
+            out.matches("</div>").count(),
+            "{out}"
+        );
     }
 
     #[test]
@@ -1327,10 +1384,7 @@ mod edge_tests {
         assert_eq!(rewrite_info("vue{1-2}"), "gdcode lang=vue hl=1-2");
         assert_eq!(rewrite_info("sh [npm]"), "gdcode lang=sh label=npm");
         // label containing ']' — first bracket group only
-        assert_eq!(
-            rewrite_info("js [a[b]]"),
-            "gdcode lang=js label=a[b"
-        );
+        assert_eq!(rewrite_info("js [a[b]]"), "gdcode lang=js label=a[b");
         // lang with dashes/dots survives
         assert_eq!(rewrite_info("objective-c++"), "gdcode lang=objective-c++");
         // :line-numbers=N mid-token
@@ -1348,15 +1402,30 @@ mod code_group_tests {
             "::: code-group\n```sh [npm]\n1\n```\n```sh [pnpm]\n2\n```\n:::\n",
             &ContainerOptions::default(),
         );
-        assert!(out.contains("<div class=\"vp-code-group\" x-data=\"codeGroup\">"), "{out}");
+        assert!(
+            out.contains("<div class=\"vp-code-group\" x-data=\"codeGroup\">"),
+            "{out}"
+        );
         assert!(out.contains("<div class=\"tabs\">"), "{out}");
         assert!(out.contains("name=\"group-1\""), "{out}");
-        assert!(out.contains("<label for=\"group-1-0\">npm</label>"), "{out}");
-        assert!(out.contains("<label for=\"group-1-1\">pnpm</label>"), "{out}");
+        assert!(
+            out.contains("<label for=\"group-1-0\">npm</label>"),
+            "{out}"
+        );
+        assert!(
+            out.contains("<label for=\"group-1-1\">pnpm</label>"),
+            "{out}"
+        );
         assert!(out.contains("checked=\"checked\""), "{out}");
         // labels without [label] fall back to the fence language
-        let out2 = expand_containers("::: code-group\n```js\n1\n```\n:::\n", &ContainerOptions::default());
-        assert!(out2.contains("<label for=\"group-1-0\">js</label>"), "{out2}");
+        let out2 = expand_containers(
+            "::: code-group\n```js\n1\n```\n:::\n",
+            &ContainerOptions::default(),
+        );
+        assert!(
+            out2.contains("<label for=\"group-1-0\">js</label>"),
+            "{out2}"
+        );
     }
 }
 
@@ -1383,7 +1452,10 @@ mod include_and_container_tests {
         // upstream semantics: {2} highlights line 2 and every line is
         // rendered; the unlabeled include takes the filename as its
         // title/tab label
-        assert!(out.starts_with("```gdcode lang=js hl=2 label=snippet.js\n"), "{out}");
+        assert!(
+            out.starts_with("```gdcode lang=js hl=2 label=snippet.js\n"),
+            "{out}"
+        );
         let body: Vec<&str> = out.trim().lines().skip(1).collect();
         assert_eq!(body.len(), 4, "{out}"); // 3 content lines + closer
         assert_eq!(body[1], "  // ..");
@@ -1402,7 +1474,10 @@ mod include_and_container_tests {
     #[test]
     fn include_with_region_and_ln() {
         let out = pre()
-            .run("<<< @/snippets/snippet-with-region.js#snippet{1 ts:line-numbers}\n", "g/x.md")
+            .run(
+                "<<< @/snippets/snippet-with-region.js#snippet{1 ts:line-numbers}\n",
+                "g/x.md",
+            )
             .unwrap();
         assert!(out.contains("```gdcode lang=ts hl=1 ln=true"), "{out}");
         assert!(out.contains("function foo()"), "region line: {out}");
@@ -1414,7 +1489,10 @@ mod include_and_container_tests {
         // the generated fence must keep :line-numbers on the lang token —
         // rewrite_info strips the suffix only there
         let out = pre()
-            .run("<<< @/snippets/snippet.js{1,2 :line-numbers}\n", "guide/x.md")
+            .run(
+                "<<< @/snippets/snippet.js{1,2 :line-numbers}\n",
+                "guide/x.md",
+            )
             .unwrap();
         assert!(out.contains("```gdcode lang=js hl=1,2 ln=true"), "{out}");
     }
@@ -1436,7 +1514,10 @@ mod include_and_container_tests {
 
     #[test]
     fn container_labels_overridable() {
-        let opts = ContainerOptions { tip_label: Some("提示".into()), ..Default::default() };
+        let opts = ContainerOptions {
+            tip_label: Some("提示".into()),
+            ..Default::default()
+        };
         let out = expand_containers("::: tip\nhi\n:::\n", &opts);
         assert!(out.contains("提示"), "{out}");
         // unknown kinds stay literal

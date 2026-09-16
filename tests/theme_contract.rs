@@ -11,7 +11,9 @@
 
 use std::path::PathBuf;
 
-const RAMPS: [&str; 7] = ["gray", "indigo", "purple", "green", "yellow", "orange", "red"];
+const RAMPS: [&str; 7] = [
+    "gray", "indigo", "purple", "green", "yellow", "orange", "red",
+];
 /// Absolute colors, defined once in the base and never themed.
 const ABSOLUTES: [&str; 2] = ["white", "black"];
 
@@ -32,7 +34,10 @@ fn parse_blocks(css: &str) -> Vec<Block> {
     let mut blocks = Vec::new();
     let mut rest = css.as_str();
     while let Some(open) = rest.find('{') {
-        let selector = rest[..open].split_whitespace().collect::<Vec<_>>().join(" ");
+        let selector = rest[..open]
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ");
         let mut depth = 1;
         let mut close = open + 1;
         let bytes = rest.as_bytes();
@@ -51,7 +56,10 @@ fn parse_blocks(css: &str) -> Vec<Block> {
             .map(|(prop, value)| (prop.trim().to_string(), value.trim().to_string()))
             .filter(|(prop, _)| !prop.is_empty())
             .collect();
-        blocks.push(Block { selector, declarations });
+        blocks.push(Block {
+            selector,
+            declarations,
+        });
         rest = &rest[close..];
     }
     blocks
@@ -62,7 +70,10 @@ fn strip_comments(css: &str) -> String {
     let mut rest = css;
     while let Some(start) = rest.find("/*") {
         out.push_str(&rest[..start]);
-        let end = rest[start..].find("*/").map(|i| start + i + 2).unwrap_or(rest.len());
+        let end = rest[start..]
+            .find("*/")
+            .map(|i| start + i + 2)
+            .unwrap_or(rest.len());
         rest = &rest[end..];
     }
     out.push_str(rest);
@@ -70,7 +81,9 @@ fn strip_comments(css: &str) -> String {
 }
 
 fn is_ramp(token: &str) -> bool {
-    RAMPS.iter().any(|r| token == *r || token.starts_with(&format!("{r}-")))
+    RAMPS
+        .iter()
+        .any(|r| token == *r || token.starts_with(&format!("{r}-")))
 }
 
 /// Every `--vp-c-*` token referenced anywhere in the base stylesheet,
@@ -172,9 +185,16 @@ impl ThemeMode {
         let hex = value
             .strip_prefix('#')
             .unwrap_or_else(|| panic!("--vp-c-{token} = {value:?}: expected a hex literal"));
-        assert!(hex.len() == 6, "--vp-c-{token} = {value:?}: expected 6-digit hex");
+        assert!(
+            hex.len() == 6,
+            "--vp-c-{token} = {value:?}: expected 6-digit hex"
+        );
         let n = u32::from_str_radix(hex, 16).expect("valid hex");
-        (((n >> 16) & 0xff) as u8, ((n >> 8) & 0xff) as u8, (n & 0xff) as u8)
+        (
+            ((n >> 16) & 0xff) as u8,
+            ((n >> 8) & 0xff) as u8,
+            (n & 0xff) as u8,
+        )
     }
 
     /// Resolve a token to a solid color: hex directly, `rgba(r,g,b,a)`
@@ -185,9 +205,16 @@ impl ThemeMode {
             .get(&format!("--vp-c-{token}"))
             .unwrap_or_else(|| panic!("token --vp-c-{token} not defined"));
         if let Some(hex) = value.strip_prefix('#') {
-            assert!(hex.len() == 6, "--vp-c-{token} = {value:?}: expected 6-digit hex");
+            assert!(
+                hex.len() == 6,
+                "--vp-c-{token} = {value:?}: expected 6-digit hex"
+            );
             let n = u32::from_str_radix(hex, 16).expect("valid hex");
-            return (((n >> 16) & 0xff) as u8, ((n >> 8) & 0xff) as u8, (n & 0xff) as u8);
+            return (
+                ((n >> 16) & 0xff) as u8,
+                ((n >> 8) & 0xff) as u8,
+                (n & 0xff) as u8,
+            );
         }
         let rgba: Vec<f64> = value
             .strip_prefix("rgba(")
@@ -228,9 +255,8 @@ fn assert_contrast(mode: &ThemeMode, token: &str, against: (u8, u8, u8), min: f6
     let ratio = contrast(mode.hex(token), against);
     assert!(
         ratio >= min - 1e-9,
-        "{label}: --vp-c-{token} {} has contrast {ratio:.2} < {min} against {}",
-        format!("{:?}", mode.hex(token)),
-        format!("{against:?}"),
+        "{label}: --vp-c-{token} {:?} has contrast {ratio:.2} < {min} against {against:?}",
+        mode.hex(token),
     );
 }
 
@@ -240,7 +266,11 @@ fn bundled_theme_names() -> Vec<String> {
         .unwrap()
         .filter_map(|e| e.ok())
         .filter(|e| e.path().extension().is_some_and(|x| x == "css"))
-        .filter_map(|e| e.path().file_stem().map(|s| s.to_string_lossy().into_owned()))
+        .filter_map(|e| {
+            e.path()
+                .file_stem()
+                .map(|s| s.to_string_lossy().into_owned())
+        })
         .collect();
     names.sort();
     assert!(!names.is_empty(), "no bundled themes found");
@@ -288,10 +318,18 @@ fn docs_theme_index_matches_the_bundled_set() {
     let listed: Vec<serde_json::Value> = serde_json::from_str(&json).expect("a JSON array");
     let listed: Vec<String> = listed
         .iter()
-        .map(|e| e["name"].as_str().expect("each entry has a name").to_string())
+        .map(|e| {
+            e["name"]
+                .as_str()
+                .expect("each entry has a name")
+                .to_string()
+        })
         .collect();
     let bundled = rustpress::theme_assets::bundled_themes();
-    assert_eq!(listed, bundled, "docs theme index drifted from static/themes/");
+    assert_eq!(
+        listed, bundled,
+        "docs theme index drifted from static/themes/"
+    );
 
     // the gallery card data (blurb + both-mode mock tokens) must match
     // the theme files themselves, or the cards lie — regenerate with
@@ -309,9 +347,9 @@ fn docs_theme_index_matches_the_bundled_set() {
         );
         for (mode, selector) in [("light", ":root"), ("dark", ".dark")] {
             let values = mode_values(&css, selector);
-            let mock = item[mode].as_object().unwrap_or_else(|| {
-                panic!("theme {entry}: gallery {mode} mock tokens missing")
-            });
+            let mock = item[mode]
+                .as_object()
+                .unwrap_or_else(|| panic!("theme {entry}: gallery {mode} mock tokens missing"));
             for (key, token) in [
                 ("bg", "bg"),
                 ("bgAlt", "bg-alt"),
@@ -326,7 +364,9 @@ fn docs_theme_index_matches_the_bundled_set() {
                 let want = values
                     .values
                     .get(&format!("--vp-c-{token}"))
-                    .unwrap_or_else(|| panic!("theme {entry}: --vp-c-{token} missing in {selector}"))
+                    .unwrap_or_else(|| {
+                        panic!("theme {entry}: --vp-c-{token} missing in {selector}")
+                    })
                     .to_ascii_lowercase();
                 let got = mock[key].as_str().unwrap_or("").to_ascii_lowercase();
                 assert_eq!(
@@ -390,27 +430,37 @@ fn themes_meet_contrast_minimums() {
             let c1 = contrast(mode.hex("text-1"), bg);
             let c2 = contrast(mode.hex("text-2"), bg);
             let c3 = contrast(mode.hex("text-3"), bg);
-            assert!(c1 >= c2, "{label}: text-1 ({c1:.2}) does not outrank text-2 ({c2:.2})");
-            assert!(c2 >= c3, "{label}: text-2 ({c2:.2}) does not outrank text-3 ({c3:.2})");
+            assert!(
+                c1 >= c2,
+                "{label}: text-1 ({c1:.2}) does not outrank text-2 ({c2:.2})"
+            );
+            assert!(
+                c2 >= c3,
+                "{label}: text-2 ({c2:.2}) does not outrank text-3 ({c3:.2})"
+            );
 
             // borders and dividers must separate from the page bg, or
             // rules and surfaces vanish
             assert!(
                 contrast(mode.hex("border"), bg) >= 1.1,
-                "{label}: border {:?} vanishes on bg {bg:?}", mode.hex("border")
+                "{label}: border {:?} vanishes on bg {bg:?}",
+                mode.hex("border")
             );
 
             // elevated surfaces (dropdowns, popovers) are never darker
             // than the page bg — the stock look's convention
             assert!(
                 luminance(mode.hex("bg-elv")) >= luminance(bg) - 1e-9,
-                "{label}: bg-elv {:?} is darker than bg {bg:?}", mode.hex("bg-elv")
+                "{label}: bg-elv {:?} is darker than bg {bg:?}",
+                mode.hex("bg-elv")
             );
 
             // container semantics must stay distinguishable: distinct
             // hues per role, and the brand is not the body text color
             let sems: Vec<(u8, u8, u8)> = ["success-1", "warning-1", "danger-1"]
-                .iter().map(|t| mode.hex(t)).collect();
+                .iter()
+                .map(|t| mode.hex(t))
+                .collect();
             for i in 0..sems.len() {
                 for j in i + 1..sems.len() {
                     assert_ne!(sems[i], sems[j], "{label}: semantic colors collapsed");
@@ -431,7 +481,15 @@ fn themes_meet_contrast_minimums() {
 
             // badge / container foregrounds, measured against their own
             // soft background (composited over the page bg when rgba)
-            for kind in ["tip", "note", "success", "important", "warning", "danger", "caution"] {
+            for kind in [
+                "tip",
+                "note",
+                "success",
+                "important",
+                "warning",
+                "danger",
+                "caution",
+            ] {
                 let soft = mode.color_over(&format!("{kind}-soft"), bg);
                 assert_contrast(&mode, &format!("{kind}-1"), soft, 4.5, &label);
             }

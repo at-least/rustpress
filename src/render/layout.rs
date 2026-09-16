@@ -1,11 +1,11 @@
 //! The document shell (ported from templates/base.html): head with the
 //! blocking anti-FOUC script, body scaffolding, footer, script tags.
 
-use hypertext::prelude::*;
 use hypertext::Raw;
+use hypertext::prelude::*;
 
-use crate::render::navbar;
 use crate::render::Site;
+use crate::render::navbar;
 
 /// Everything the shell needs to know about the current page.
 pub struct Shell<'a> {
@@ -36,7 +36,12 @@ pub struct Shell<'a> {
 }
 
 /// The whole HTML document; `content` is the VPContent body.
-pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::markdown::Heading], body_html: String) -> impl Renderable + 'a {
+pub fn layout<'a>(
+    site: &'a Site,
+    shell: &'a Shell<'a>,
+    headings: &'a [crate::markdown::Heading],
+    body_html: String,
+) -> impl Renderable + 'a {
     let lang = shell.lang.clone();
     let title = shell.title.clone();
     let description = shell.description.clone();
@@ -59,12 +64,20 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
     let content_class = if has_sidebar {
         format!(
             "grow shrink-0 m-0 w-full lg:mt-[var(--vp-layout-top-height,0px)] lg:pt-(--vp-nav-height) lg:pl-(--vp-sidebar-width) 2xl:pr-[calc((100%-var(--vp-layout-max-width))/2)] 2xl:pl-[calc((100%-var(--vp-layout-max-width))/2+var(--vp-sidebar-width))]{}",
-            shell.page_class.as_ref().map(|c| format!(" {c}")).unwrap_or_default()
+            shell
+                .page_class
+                .as_ref()
+                .map(|c| format!(" {c}"))
+                .unwrap_or_default()
         )
     } else {
         format!(
             "grow shrink-0 w-full mx-auto mt-[var(--vp-layout-top-height,0px)] max-w-full lg:pt-(--vp-nav-height){}",
-            shell.page_class.as_ref().map(|c| format!(" {c}")).unwrap_or_default()
+            shell
+                .page_class
+                .as_ref()
+                .map(|c| format!(" {c}"))
+                .unwrap_or_default()
         )
     };
 
@@ -123,8 +136,10 @@ pub fn layout<'a>(site: &'a Site, shell: &'a Shell<'a>, headings: &'a [crate::ma
                     </footer>
                 }
 
-                @if site.config.search.is_some() && shell.has_navbar {
-                    (super::search_modal::search_modal(&search_index_url, site.config.search.as_ref().unwrap()))
+                @if shell.has_navbar
+                    && let Some(search) = site.config.search.as_ref()
+                {
+                    (super::search_modal::search_modal(&search_index_url, search))
                 }
 
                 <script src=(app_js) defer></script>
@@ -147,7 +162,6 @@ window.MathJax = {
 };
 </script>
 <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>"#;
-
 
 /// Serialize the `[[head]]` config tags to raw HTML.
 pub(crate) fn serialize_head_tags_to_string(tags: &[crate::config::HeadTag]) -> String {

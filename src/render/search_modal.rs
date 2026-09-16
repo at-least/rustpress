@@ -8,7 +8,10 @@ use hypertext::prelude::*;
 
 use super::icons::icon;
 
-pub fn search_modal<'a>(index_url: &'a str, search: &'a crate::config::Search) -> impl Renderable + 'a {
+pub fn search_modal<'a>(
+    index_url: &'a str,
+    search: &'a crate::config::Search,
+) -> impl Renderable + 'a {
     let button_aria = search.translations.button_aria_label.clone();
     let placeholder = search.translations.placeholder.clone();
     let no_results = search.translations.no_results_text.clone();

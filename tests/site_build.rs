@@ -82,7 +82,8 @@ fn builds_pages_404_syntax_and_search_docs() {
     let css = std::fs::read_to_string(root.join("syntax.css")).unwrap();
     assert!(css.contains("html.dark .tk-"));
     let docs: serde_json::Value =
-        serde_json::from_str(&std::fs::read_to_string(root.join("search-docs.json")).unwrap()).unwrap();
+        serde_json::from_str(&std::fs::read_to_string(root.join("search-docs.json")).unwrap())
+            .unwrap();
     let entries = docs.as_array().unwrap();
     assert_eq!(entries.len(), 8);
     let home = entries.iter().find(|e| e["url"] == "/").unwrap();
@@ -98,7 +99,8 @@ fn builds_pages_404_syntax_and_search_docs() {
 #[test]
 fn built_pages_carry_alpine_and_landmarks() {
     let (out, _) = build_fixture();
-    let html = std::fs::read_to_string(out.path().join("guide/getting-started/index.html")).unwrap();
+    let html =
+        std::fs::read_to_string(out.path().join("guide/getting-started/index.html")).unwrap();
     for probe in [
         "x-data=\"docPage\"",
         "x-data=\"searchModal\"",
@@ -119,7 +121,8 @@ fn built_pages_render_the_aside_outline() {
     // hydrates it client-side, so the baseline records it empty) — this
     // is the renderer-level guard instead
     let (out, _) = build_fixture();
-    let html = std::fs::read_to_string(out.path().join("guide/getting-started/index.html")).unwrap();
+    let html =
+        std::fs::read_to_string(out.path().join("guide/getting-started/index.html")).unwrap();
     assert!(html.contains("VPDocAsideOutline"), "outline aside missing");
     let outline_links = html.matches("class=\"outline-link").count();
     assert!(outline_links > 0, "outline has no items");
@@ -137,9 +140,10 @@ fn dead_links_fail_the_build_and_ignore_works() {
         let content = Content::load(&fixtures.join("en"), &[]).unwrap();
         Site {
             sidebars: Sidebars::build(&config, &content),
-            engine: MarkdownEngine::new(&config.markdown, &config.code, Path::new("."), "/").unwrap(),
-        theme_link: None,
-        theme_source: None,
+            engine: MarkdownEngine::new(&config.markdown, &config.code, Path::new("."), "/")
+                .unwrap(),
+            theme_link: None,
+            theme_source: None,
             config,
             content,
         }
@@ -170,8 +174,14 @@ fn dead_links_fail_the_build_and_ignore_works() {
     };
     let out3 = tempdir::tempdir();
     let err = site.build(fixtures, out3.path()).unwrap_err();
-    assert!(!err.to_string().contains("guide/deploy"), "ignored prefix filtered: {err}");
-    assert!(err.to_string().contains("guide/custom-theme"), "others still reported");
+    assert!(
+        !err.to_string().contains("guide/deploy"),
+        "ignored prefix filtered: {err}"
+    );
+    assert!(
+        err.to_string().contains("guide/custom-theme"),
+        "others still reported"
+    );
 }
 
 #[test]
@@ -184,7 +194,11 @@ fn locales_and_rewrites_end_to_end() {
     std::fs::create_dir_all(content.join("zh/guide")).unwrap();
     let page_body = "---\ndescription: d\n---\n\n# Page\n\nhello\n";
     std::fs::write(content.join("en/guide/page.md"), page_body).unwrap();
-    std::fs::write(content.join("zh/guide/page.md"), "---\ndescription: 目录\n---\n\n# 页面\n\n内容\n").unwrap();
+    std::fs::write(
+        content.join("zh/guide/page.md"),
+        "---\ndescription: 目录\n---\n\n# 页面\n\n内容\n",
+    )
+    .unwrap();
     std::fs::write(
         site_dir.path().join("rustpress.toml"),
         r#"
@@ -209,7 +223,10 @@ provider = "local"
 
     let site = Site::load(site_dir.path()).unwrap();
     // rewritten URLs: en/ promoted to root, zh stays under /zh/
-    assert!(site.content.get("/guide/page/").is_some(), "en rewritten to root");
+    assert!(
+        site.content.get("/guide/page/").is_some(),
+        "en rewritten to root"
+    );
     assert_eq!(site.content.get("/guide/page/").unwrap().locale, "root");
     assert!(site.content.get("/zh/guide/page/").is_some(), "zh at /zh/");
     assert_eq!(site.content.get("/zh/guide/page/").unwrap().locale, "zh");
@@ -227,7 +244,10 @@ provider = "local"
     let en_html = std::fs::read_to_string(out.path().join("guide/page/index.html")).unwrap();
     assert!(en_html.contains(r#"<html lang="en""#), "en lang attr");
     assert!(en_html.contains("Change language"), "flyout present");
-    assert!(en_html.contains("href=\"/zh/guide/page/\""), "cross-locale link");
+    assert!(
+        en_html.contains("href=\"/zh/guide/page/\""),
+        "cross-locale link"
+    );
     let zh_html = std::fs::read_to_string(out.path().join("zh/guide/page/index.html")).unwrap();
     assert!(zh_html.contains(r#"<html lang="zh-CN""#), "zh lang attr");
     assert!(zh_html.contains(r#"<title>页面"#), "localized title");
@@ -256,30 +276,56 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
     let css = std::fs::read_to_string(out.path().join("themes/catppuccin.css")).unwrap();
     assert!(css.contains("--vp-c-bg: #eff1f5;"), "{css}");
     let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
-    assert!(html.contains(r#"<link rel="stylesheet" href="/themes/catppuccin.css">"#), "linked");
-    assert!(out.path().join("themes/nord.css").is_file(), "all bundled themes ship");
+    assert!(
+        html.contains(r#"<link rel="stylesheet" href="/themes/catppuccin.css">"#),
+        "linked"
+    );
+    assert!(
+        out.path().join("themes/nord.css").is_file(),
+        "all bundled themes ship"
+    );
 
     // custom css: copied to themes/<basename>, linked there
     let dir = mk_site("theme = \"my-theme.css\"");
-    std::fs::write(dir.path().join("my-theme.css"), ":root { --vp-c-brand-1: #123456; }\n").unwrap();
+    std::fs::write(
+        dir.path().join("my-theme.css"),
+        ":root { --vp-c-brand-1: #123456; }\n",
+    )
+    .unwrap();
     let site = Site::load(dir.path()).unwrap();
     let out = tempdir::tempdir();
     site.build(dir.path(), out.path()).unwrap();
     let css = std::fs::read_to_string(out.path().join("themes/my-theme.css")).unwrap();
-    assert!(css.contains("--vp-c-brand-1: #123456;"), "verbatim copy: {css}");
+    assert!(
+        css.contains("--vp-c-brand-1: #123456;"),
+        "verbatim copy: {css}"
+    );
     let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
-    assert!(html.contains(r#"<link rel="stylesheet" href="/themes/my-theme.css">"#), "linked");
+    assert!(
+        html.contains(r#"<link rel="stylesheet" href="/themes/my-theme.css">"#),
+        "linked"
+    );
 
     // custom css from a subdirectory: linked by its basename
     let dir = mk_site("theme = \"css/my.css\"");
     std::fs::create_dir_all(dir.path().join("css")).unwrap();
-    std::fs::write(dir.path().join("css/my.css"), ":root { --vp-c-brand-1: #654321; }\n").unwrap();
+    std::fs::write(
+        dir.path().join("css/my.css"),
+        ":root { --vp-c-brand-1: #654321; }\n",
+    )
+    .unwrap();
     let site = Site::load(dir.path()).unwrap();
     let out = tempdir::tempdir();
     site.build(dir.path(), out.path()).unwrap();
-    assert!(out.path().join("themes/my.css").is_file(), "flattened into themes/");
+    assert!(
+        out.path().join("themes/my.css").is_file(),
+        "flattened into themes/"
+    );
     let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
-    assert!(html.contains(r#"href="/themes/my.css""#), "linked by basename");
+    assert!(
+        html.contains(r#"href="/themes/my.css""#),
+        "linked by basename"
+    );
 
     // unset: stock look, nothing linked (bundled files still ship)
     let dir = mk_site("");
@@ -296,7 +342,10 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
         Err(e) => e.to_string(),
         Ok(_) => panic!("unknown theme should fail at load"),
     };
-    assert!(err.contains("nope") && err.contains("more, all live in the Theme gallery"), "{err}");
+    assert!(
+        err.contains("nope") && err.contains("more, all live in the Theme gallery"),
+        "{err}"
+    );
 
     // missing file: error at load
     let dir = mk_site("theme = \"missing.css\"");
@@ -374,7 +423,13 @@ fn custom_helix_toml_theme_file_path() {
 #[test]
 fn helix_themes_are_built_ins() {
     // all vendored Helix themes resolve by file stem
-    let names = ["catppuccin_mocha", "gruvbox", "tokyonight", "everforest_dark", "nord"];
+    let names = [
+        "catppuccin_mocha",
+        "gruvbox",
+        "tokyonight",
+        "everforest_dark",
+        "nord",
+    ];
     for name in names {
         assert!(
             rustpress::markdown::syntax_theme::helix_builtin(name).is_some(),
@@ -401,7 +456,10 @@ fn helix_themes_are_built_ins() {
     let out = tempdir::tempdir();
     site.build(site_dir.path(), out.path()).unwrap();
     let css = std::fs::read_to_string(out.path().join("syntax.css")).unwrap();
-    assert!(!css.contains("catppuccin"), "no catppuccin name leaked into css");
+    assert!(
+        !css.contains("catppuccin"),
+        "no catppuccin name leaked into css"
+    );
 }
 
 #[test]
@@ -508,7 +566,11 @@ fn last_updated_uses_git_commit_timestamps() {
     // pins the git-timestamp behavior through the batched-log refactor:
     // newest commit wins per file, non-ASCII names resolve, untracked
     // pages fall back to their mtime
-    if std::process::Command::new("git").arg("--version").output().is_err() {
+    if std::process::Command::new("git")
+        .arg("--version")
+        .output()
+        .is_err()
+    {
         panic!("git is required for the last-updated test (CI and dev machines have it)");
     }
     let repo = tempdir::tempdir();
@@ -528,7 +590,10 @@ fn last_updated_uses_git_commit_timestamps() {
     };
     git("2024-12-01 00:00:00", &["init"]);
     git("2024-12-01 00:00:00", &["config", "user.name", "t"]);
-    git("2024-12-01 00:00:00", &["config", "user.email", "t@example.com"]);
+    git(
+        "2024-12-01 00:00:00",
+        &["config", "user.email", "t@example.com"],
+    );
     std::fs::create_dir_all(repo.path().join("content")).unwrap();
     // committed twice: the newer commit's timestamp must win
     std::fs::write(repo.path().join("content/index.md"), "# H\n").unwrap();

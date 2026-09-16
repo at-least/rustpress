@@ -5,7 +5,7 @@
 use std::path::Path;
 
 use rustpress::parity::{self, Deltas, Mode};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 const UPSTREAM_DOC: &str = "tests/parity/fixtures/upstream-doc-page.html";
 const LOCAL_DOC: &str = "tests/parity/fixtures/local-doc-page.html";
@@ -41,10 +41,12 @@ fn upstream_landmarks_extract() {
     assert_eq!(fp["outline_items"], json!([]));
     assert_eq!(fp["pager"][0]["desc"], "Next page");
     assert_eq!(fp["pager"][0]["title"], "Getting Started");
-    assert!(fp["edit_link"]
-        .as_str()
-        .unwrap()
-        .ends_with("docs/en/guide/what-is-vitepress.md"));
+    assert!(
+        fp["edit_link"]
+            .as_str()
+            .unwrap()
+            .ends_with("docs/en/guide/what-is-vitepress.md")
+    );
     assert_eq!(fp["last_updated"], "2026-07-25");
     assert_eq!(fp["site_footer"][0], "Released under the MIT License.");
     assert!(fp["has_search"].as_bool().unwrap());
@@ -63,7 +65,11 @@ fn local_landmarks_extract() {
     assert!(!items.is_empty());
     let ids: Vec<_> = items.iter().map(|l| l["href"].clone()).collect();
     let unique: std::collections::HashSet<_> = ids.iter().collect();
-    assert_eq!(ids.len(), unique.len(), "outline items must be deduplicated");
+    assert_eq!(
+        ids.len(),
+        unique.len(),
+        "outline items must be deduplicated"
+    );
     // sidebar config mirrors the vitepress.dev docs sidebar
     assert_eq!(fp["sidebar"][0]["kind"], "group");
     assert_eq!(fp["sidebar"][0]["text"], "Introduction");
@@ -87,7 +93,10 @@ fn home_hero_and_features_extract() {
     for (fixture, _label) in [(UPSTREAM_HOME, "upstream"), (LOCAL_HOME, "local")] {
         let fp = extract_fixture_at(fixture, "/");
         assert_eq!(fp["hero"]["lines"][0], "VitePress");
-        assert_eq!(fp["hero"]["tagline"], "Markdown to beautiful docs in minutes");
+        assert_eq!(
+            fp["hero"]["tagline"],
+            "Markdown to beautiful docs in minutes"
+        );
         // `./guide/x` resolves to the same normalized href on both sides
         assert_eq!(fp["hero"]["actions"][0]["href"], "/guide/what-is-vitepress");
         assert!(fp["features"].as_array().unwrap().len() >= 4);
@@ -101,7 +110,10 @@ fn extraction_is_deterministic() {
     // snapshots must be byte-stable: same HTML → same fingerprint JSON
     let a = extract_fixture(UPSTREAM_DOC);
     let b = extract_fixture(UPSTREAM_DOC);
-    assert_eq!(serde_json::to_string(&a).unwrap(), serde_json::to_string(&b).unwrap());
+    assert_eq!(
+        serde_json::to_string(&a).unwrap(),
+        serde_json::to_string(&b).unwrap()
+    );
 }
 
 #[test]

@@ -8,7 +8,7 @@ use std::collections::BTreeMap;
 use std::path::Path;
 
 use crate::config::{Sidebar as SidebarConfig, SidebarItem, SiteConfig};
-use crate::content::{natural_cmp, Content};
+use crate::content::{Content, natural_cmp};
 
 /// A resolved sidebar node: `url` is absolute and base-free, with a
 /// trailing slash when it points at an internal page.
@@ -60,7 +60,10 @@ impl Sidebars {
             SidebarConfig::Auto => auto_trees(content),
             SidebarConfig::Items(items) => {
                 let nodes = resolve_items(items, "", content);
-                vec![SidebarTree { prefix: "/".into(), items: nodes }]
+                vec![SidebarTree {
+                    prefix: "/".into(),
+                    items: nodes,
+                }]
             }
             SidebarConfig::Map(map) => map
                 .iter()
@@ -100,7 +103,10 @@ impl Sidebars {
     pub fn flatten(tree: &SidebarTree) -> Vec<(String, String)> {
         fn walk(n: &SidebarNode, out: &mut Vec<(String, String)>) {
             if let Some(url) = &n.url {
-                out.push((n.doc_footer.clone().unwrap_or_else(|| n.text.clone()), url.clone()));
+                out.push((
+                    n.doc_footer.clone().unwrap_or_else(|| n.text.clone()),
+                    url.clone(),
+                ));
             }
             for c in &n.children {
                 walk(c, out);
@@ -137,7 +143,9 @@ fn auto_trees(content: &Content) -> Vec<SidebarTree> {
     // (top segment) → ((group url|None) , group title) … grouped by parent dir
     let mut sections: BTreeMap<String, Vec<&crate::content::Page>> = BTreeMap::new();
     for page in &content.pages {
-        let Some(top) = top_segment(&page.url) else { continue };
+        let Some(top) = top_segment(&page.url) else {
+            continue;
+        };
         sections.entry(top).or_default().push(page);
     }
     sections
@@ -205,7 +213,10 @@ fn resolve_items(items: &[SidebarItem], base: &str, content: &Content) -> Vec<Si
         .iter()
         .map(|item| {
             let effective_base = item.base.as_deref().unwrap_or(base);
-            let url = item.link.as_deref().map(|l| resolve_link(l, effective_base, content));
+            let url = item
+                .link
+                .as_deref()
+                .map(|l| resolve_link(l, effective_base, content));
             SidebarNode {
                 text: item.text.clone(),
                 url,
@@ -221,10 +232,7 @@ fn resolve_items(items: &[SidebarItem], base: &str, content: &Content) -> Vec<Si
 
 /// Resolve one sidebar link against its base into an absolute URL.
 pub fn resolve_link(link: &str, base: &str, content: &Content) -> String {
-    if link.starts_with("http://")
-        || link.starts_with("https://")
-        || link.starts_with("mailto:")
-    {
+    if link.starts_with("http://") || link.starts_with("https://") || link.starts_with("mailto:") {
         return link.to_string();
     }
     if link.starts_with('/') {
@@ -269,7 +277,11 @@ fn canonical(url: &str, content: &Content) -> String {
 }
 
 fn ensure_slashed(prefix: &str) -> String {
-    let with_leading = if prefix.starts_with('/') { prefix } else { &format!("/{prefix}") };
+    let with_leading = if prefix.starts_with('/') {
+        prefix
+    } else {
+        &format!("/{prefix}")
+    };
     if with_leading.ends_with('/') {
         with_leading.to_string()
     } else {
@@ -305,14 +317,23 @@ mod tests {
         for (url, rel, title) in urls {
             c.pages.push(page(url, rel, title));
         }
-        c.by_url = c.pages.iter().enumerate().map(|(i, p)| (p.url.clone(), i)).collect();
+        c.by_url = c
+            .pages
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (p.url.clone(), i))
+            .collect();
         c
     }
 
     #[test]
     fn resolve_link_bases() {
         let content = content_with(&[
-            ("/reference/default-theme-config/", "reference/default-theme-config.md", "Config"),
+            (
+                "/reference/default-theme-config/",
+                "reference/default-theme-config.md",
+                "Config",
+            ),
             ("/guide/intro/", "guide/intro.md", "Intro"),
         ]);
         // nearest base wins (group base replaces section base, VitePress)
@@ -394,7 +415,11 @@ mod tests {
     #[test]
     fn explicit_map_sidebar_longest_prefix_wins() {
         let content = content_with(&[
-            ("/reference/default-theme-config/", "reference/dt-config.md", "Config"),
+            (
+                "/reference/default-theme-config/",
+                "reference/dt-config.md",
+                "Config",
+            ),
             ("/reference/api/", "reference/api.md", "API"),
             ("/reference/api/hooks/", "reference/api/hooks.md", "Hooks"),
         ]);
