@@ -171,7 +171,7 @@ run('git config user.email "drift-watch@users.noreply.github.com"')
 // the sha ls-remote reports (empty → branch is new → plain push)
 let remoteSha = ''
 try {
-  remoteSha = sh(`git ls-remote origin "refs/heads/${branch}"`).split(/\s+/)[0] ?? ''
+  remoteSha = sh(`git ls-remote origin "refs/heads/${branch}"`).split(/\s+/)[0]
 } catch { /* ls-remote failure shouldn't block a first push */ }
 run(`git checkout -B ${branch}`)
 run('git add parity/upstream.json parity/upstream-ref.txt demo/content tests/fixtures/en')

@@ -121,7 +121,7 @@ common `transformHead` use.
 | i18nRouting | diverged | `src/render/mod.rs:324-353` | no toggle; language switcher always targets the same page in the other locale (upstream's default behavior), else the locale root |
 | logo | implemented | `logo_html` `src/render/navbar.rs` | path, `{src, alt}`, `{light, dark}` pair |
 | siteTitle | implemented | `src/render/mod.rs` navbar_site_title | string override or `false` to hide; `<title>` unaffected (upstream scopes it to the navbar) |
-| nav | partial | `src/render/navbar.rs` | text/link/items/activeMatch/target/rel; `noIcon` n/a (items never show icons); overflow `...` collapse still missing |
+| nav | partial | `src/render/navbar.rs` | text/link/items/activeMatch/target/rel; `activeMatch` is prefix matching (upstream: a regex against the path); `noIcon` n/a (items never show icons); overflow `...` collapse still missing |
 | sidebar | implemented | `src/config.rs`, `src/sidebar.rs` | array + multi forms, collapsed, base, per-item target/rel/docFooterText |
 | aside | implemented | `src/render/doc.rs` | `false`/`true`/`"left"` (site config + per-page front matter) |
 | outline | implemented | `OutlineConfig` `src/config.rs` | `false` / bare level / `[a, b]` / `{level, label}` |

@@ -5,42 +5,11 @@
 
 use rustpress::render::Site;
 
-// Minimal tempdir (dev-dependency-free), mirroring site_build.rs.
-mod tempdir {
-    use std::path::{Path, PathBuf};
+mod common;
+use common::tempdir;
 
-    pub struct Guard(PathBuf);
-
-    impl Guard {
-        pub fn path(&self) -> &Path {
-            &self.0
-        }
-    }
-
-    impl Drop for Guard {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.0);
-        }
-    }
-
-    pub fn tempdir() -> Guard {
-        static SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-        let n = SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        let dir = std::env::temp_dir().join(format!(
-            "rustpress-feat-{}-{n}-{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        std::fs::create_dir_all(&dir).unwrap();
-        Guard(dir)
-    }
-}
-
-fn build_site(config: &str, files: &[(&str, &str)]) -> (tempdir::Guard, tempdir::Guard) {
-    let site_dir = tempdir::tempdir();
+fn build_site(config: &str, files: &[(&str, &str)]) -> (common::TempDir, common::TempDir) {
+    let site_dir = tempdir("site-features");
     std::fs::write(site_dir.path().join("rustpress.toml"), config).unwrap();
     for (rel, body) in files {
         let path = site_dir.path().join("content").join(rel);
@@ -50,12 +19,12 @@ fn build_site(config: &str, files: &[(&str, &str)]) -> (tempdir::Guard, tempdir:
         std::fs::write(path, body).unwrap();
     }
     let site = Site::load(site_dir.path()).unwrap();
-    let out = tempdir::tempdir();
+    let out = tempdir("site-features-out");
     site.build(site_dir.path(), out.path()).unwrap();
     (site_dir, out)
 }
 
-fn page(out: &tempdir::Guard, url: &str) -> String {
+fn page(out: &common::TempDir, url: &str) -> String {
     let path = if url == "/" {
         out.path().join("index.html")
     } else {
@@ -480,4 +449,32 @@ navigateText = "zum Navigieren""#,
         "no-results string"
     );
     assert!(html.contains(">zum Navigieren</span>"), "footer hint");
+}
+
+#[test]
+fn edit_link_paths_are_percent_encoded() {
+    // a page name with a space (or non-ASCII bytes) must reach the edit
+    // URL percent-encoded — a raw space in the href is invalid
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[editLink]\npattern = \"https://x/edit/:path\"\n",
+        &[("guide/a b.md", "# A\n"), ("guide/指南.md", "# ZH\n")],
+    );
+    let space = page(&out, "/guide/a b/");
+    assert!(
+        space.contains("https://x/edit/guide/a%20b.md"),
+        "space encoded: {}",
+        space[space
+            .find("edit-link")
+            .map(|i| i.saturating_sub(40))
+            .unwrap_or(0)..]
+            .chars()
+            .take(220)
+            .collect::<String>()
+    );
+    assert!(!space.contains("edit/guide/a b.md"), "raw space leaked");
+    let zh = page(&out, "/guide/指南/");
+    assert!(
+        zh.contains("https://x/edit/guide/%E6%8C%87%E5%8D%97.md"),
+        "utf-8 bytes encoded"
+    );
 }

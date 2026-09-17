@@ -9,26 +9,8 @@ use std::path::{Path, PathBuf};
 
 use rustpress::render::Site;
 
-struct TempDir(PathBuf);
-
-impl Drop for TempDir {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.0);
-    }
-}
-
-fn tempdir() -> TempDir {
-    let dir = std::env::temp_dir().join(format!(
-        "rustpress-docs-{}-{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    std::fs::create_dir_all(&dir).unwrap();
-    TempDir(dir)
-}
+mod common;
+use common::tempdir;
 
 fn markdown_files(dir: &Path) -> usize {
     let mut n = 0;
@@ -65,9 +47,9 @@ fn attr_values<'a>(html: &'a str, attr: &str) -> Vec<&'a str> {
 fn docs_site_builds_with_every_page_and_valid_anchors() {
     let site_dir = Path::new("docs");
     let site = Site::load(site_dir).expect("docs/rustpress.toml + content load");
-    let out = tempdir();
+    let out = tempdir("docs-site");
     let stats = site
-        .build(site_dir, &out.0)
+        .build(site_dir, out.path())
         .expect("docs build (dead links fail here)");
 
     let expected = markdown_files(&site_dir.join("content"));
@@ -77,19 +59,19 @@ fn docs_site_builds_with_every_page_and_valid_anchors() {
     );
     assert!(stats.sitemap, "docs config enables [sitemap]");
     assert!(
-        out.0.join("search-docs.json").is_file(),
+        out.path().join("search-docs.json").is_file(),
         "docs config enables local search"
     );
 
     // fragment validation: url → set of element ids, then every internal
     // href with a fragment must name an id on its target page
     let mut files = Vec::new();
-    html_files(&out.0, &mut files);
+    html_files(out.path(), &mut files);
     let mut ids: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     let mut pages: Vec<(String, String)> = Vec::new();
     for file in &files {
         let rel = file
-            .strip_prefix(&out.0)
+            .strip_prefix(out.path())
             .unwrap()
             .to_string_lossy()
             .replace('\\', "/");

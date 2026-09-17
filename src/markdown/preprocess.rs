@@ -1109,15 +1109,9 @@ fn opening_fence(line: &str) -> Option<(char, usize)> {
         return None;
     }
     let n = t.chars().take_while(|&c| c == first).count();
-    if n >= 3 && t[n..].trim() == "" {
-        // bare fence (opening or closing — caller decides); an info
-        // string means definitely opening
-        Some((first, n))
-    } else if n >= 3 {
-        Some((first, n))
-    } else {
-        None
-    }
+    // a bare marker may be opener or closer (the caller decides via
+    // is_closing_fence); an info string means definitely opening
+    (n >= 3).then_some((first, n))
 }
 
 fn is_closing_fence(line: &str, ch: char, n: usize) -> bool {

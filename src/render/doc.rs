@@ -40,7 +40,10 @@ pub fn doc_page<'a>(
             .text
             .clone()
             .unwrap_or_else(|| "Edit this page on GitHub".into());
-        (e.pattern.replace(":path", &page.rel), text)
+        (
+            e.pattern.replace(":path", &percent_encode_path(&page.rel)),
+            text,
+        )
     });
     let last_updated = last_updated.cloned();
     let doc_footer = site.config.doc_footer.clone().unwrap_or_default();
@@ -219,6 +222,22 @@ fn escape_text(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
+}
+
+/// Percent-encode a source-relative path for use in a URL: `/`
+/// separators stay, unreserved bytes (RFC 3986) pass through, anything
+/// else (spaces, non-ASCII, quotes) goes out as `%XX` UTF-8 bytes.
+fn percent_encode_path(path: &str) -> String {
+    let mut out = String::with_capacity(path.len());
+    for b in path.bytes() {
+        match b {
+            b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' | b'/' => {
+                out.push(b as char)
+            }
+            _ => out.push_str(&format!("%{b:02X}")),
+        }
+    }
+    out
 }
 
 /// (datetime, display) for a file modification time — ISO `YYYY-MM-DD`

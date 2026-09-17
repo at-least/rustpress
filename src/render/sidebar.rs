@@ -118,8 +118,7 @@ fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usi
     // static class list to a binding so the caret can toggle it.
     let (section_x_data, section_bind) = if collapsible {
         (
-            r#"{ "open": false }"#
-                .replace("false", if starts_collapsed { "false" } else { "true" }),
+            format!(r#"{{ "open": {} }}"#, !starts_collapsed),
             r#"{ 'collapsed': !open }"#.to_string(),
         )
     } else {

@@ -3,13 +3,16 @@
 
 use std::path::Path;
 
+mod common;
+use common::tempdir;
+
 use rustpress::config::SiteConfig;
 use rustpress::content::Content;
 use rustpress::markdown::MarkdownEngine;
 use rustpress::render::Site;
 use rustpress::sidebar::Sidebars;
 
-fn build_fixture() -> (tempdir::Guard, rustpress::render::BuildStats) {
+fn build_fixture() -> (common::TempDir, rustpress::render::BuildStats) {
     let fixtures = Path::new("tests/fixtures");
     // the fixture subset references pages that were not copied — the
     // dead-link checker would fail the build otherwise
@@ -26,41 +29,9 @@ fn build_fixture() -> (tempdir::Guard, rustpress::render::BuildStats) {
         config,
         content,
     };
-    let out = tempdir::tempdir();
+    let out = tempdir("site-build");
     let stats = site.build(fixtures, out.path()).unwrap();
     (out, stats)
-}
-
-// Minimal tempdir (dev-dependency-free).
-mod tempdir {
-    use std::path::{Path, PathBuf};
-
-    pub struct Guard(PathBuf);
-
-    impl Guard {
-        pub fn path(&self) -> &Path {
-            &self.0
-        }
-    }
-
-    impl Drop for Guard {
-        fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.0);
-        }
-    }
-
-    pub fn tempdir() -> Guard {
-        let dir = std::env::temp_dir().join(format!(
-            "rustpress-test-{}-{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        std::fs::create_dir_all(&dir).unwrap();
-        Guard(dir)
-    }
 }
 
 #[test]
@@ -149,13 +120,13 @@ fn dead_links_fail_the_build_and_ignore_works() {
         }
     };
     // routing.md links ./deploy — outside the subset
-    let out = tempdir::tempdir();
+    let out = tempdir("site-build");
     let err = mk("false").build(fixtures, out.path()).unwrap_err();
     assert!(err.to_string().contains("dead link"), "{err}");
     assert!(err.to_string().contains("guide/deploy"));
 
     // ignore all
-    let out2 = tempdir::tempdir();
+    let out2 = tempdir("site-build");
     assert!(mk("true").build(fixtures, out2.path()).is_ok());
 
     // ignore a single prefix: everything else still fails
@@ -172,7 +143,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
         config,
         content,
     };
-    let out3 = tempdir::tempdir();
+    let out3 = tempdir("site-build");
     let err = site.build(fixtures, out3.path()).unwrap_err();
     assert!(
         !err.to_string().contains("guide/deploy"),
@@ -188,7 +159,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
 fn locales_and_rewrites_end_to_end() {
     // temp site: content/en/** + content/zh/**, rewrite en/:rest* → :rest*,
     // locales root(en) + zh — the canonical VitePress i18n layout
-    let site_dir = tempdir::tempdir();
+    let site_dir = tempdir("site-build");
     let content = site_dir.path().join("content");
     std::fs::create_dir_all(content.join("en/guide")).unwrap();
     std::fs::create_dir_all(content.join("zh/guide")).unwrap();
@@ -239,7 +210,7 @@ provider = "local"
     assert_eq!(zh_entry.1, "/zh/guide/page/");
 
     // build and check rendered html lang + switcher markup
-    let out = tempdir::tempdir();
+    let out = tempdir("site-build");
     site.build(site_dir.path(), out.path()).unwrap();
     let en_html = std::fs::read_to_string(out.path().join("guide/page/index.html")).unwrap();
     assert!(en_html.contains(r#"<html lang="en""#), "en lang attr");
@@ -256,7 +227,7 @@ provider = "local"
 #[test]
 fn theme_picks_a_stylesheet_by_name_or_file() {
     let mk_site = |theme_line: &str| {
-        let dir = tempdir::tempdir();
+        let dir = tempdir("site-build");
         std::fs::create_dir_all(dir.path().join("content")).unwrap();
         std::fs::write(dir.path().join("content/index.md"), "# Home\n").unwrap();
         std::fs::write(
@@ -271,7 +242,7 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
     // one is linked
     let dir = mk_site("theme = \"catppuccin\"");
     let site = Site::load(dir.path()).unwrap();
-    let out = tempdir::tempdir();
+    let out = tempdir("site-build");
     site.build(dir.path(), out.path()).unwrap();
     let css = std::fs::read_to_string(out.path().join("themes/catppuccin.css")).unwrap();
     assert!(css.contains("--vp-c-bg: #eff1f5;"), "{css}");
@@ -293,7 +264,7 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
     )
     .unwrap();
     let site = Site::load(dir.path()).unwrap();
-    let out = tempdir::tempdir();
+    let out = tempdir("site-build");
     site.build(dir.path(), out.path()).unwrap();
     let css = std::fs::read_to_string(out.path().join("themes/my-theme.css")).unwrap();
     assert!(
@@ -315,7 +286,7 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
     )
     .unwrap();
     let site = Site::load(dir.path()).unwrap();
-    let out = tempdir::tempdir();
+    let out = tempdir("site-build");
     site.build(dir.path(), out.path()).unwrap();
     assert!(
         out.path().join("themes/my.css").is_file(),
@@ -330,7 +301,7 @@ fn theme_picks_a_stylesheet_by_name_or_file() {
     // unset: stock look, nothing linked (bundled files still ship)
     let dir = mk_site("");
     let site = Site::load(dir.path()).unwrap();
-    let out = tempdir::tempdir();
+    let out = tempdir("site-build");
     site.build(dir.path(), out.path()).unwrap();
     assert!(out.path().join("themes/github.css").is_file());
     let html = std::fs::read_to_string(out.path().join("index.html")).unwrap();
@@ -388,7 +359,7 @@ fn code_pair_is_selectable() {
 #[test]
 fn custom_helix_toml_theme_file_path() {
     // a Helix TOML theme next to rustpress.toml, selected by path
-    let site_dir = tempdir::tempdir();
+    let site_dir = tempdir("site-build");
     std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
     std::fs::write(site_dir.path().join("content/index.md"), "# Home\n").unwrap();
     std::fs::write(
@@ -406,7 +377,7 @@ fn custom_helix_toml_theme_file_path() {
     .unwrap();
 
     let site = Site::load(site_dir.path()).unwrap();
-    let out = tempdir::tempdir();
+    let out = tempdir("site-build");
     site.build(site_dir.path(), out.path()).unwrap();
     let css = std::fs::read_to_string(out.path().join("syntax.css")).unwrap();
     assert!(css.contains("#123456"), "custom theme colors in syntax.css");
@@ -444,7 +415,7 @@ fn helix_themes_are_built_ins() {
         "inherited palette color from parent"
     );
     // unknown name errors
-    let site_dir = tempdir::tempdir();
+    let site_dir = tempdir("site-build");
     std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
     std::fs::write(site_dir.path().join("content/index.md"), "# H\n").unwrap();
     std::fs::write(
@@ -453,7 +424,7 @@ fn helix_themes_are_built_ins() {
     )
     .unwrap();
     let site = Site::load(site_dir.path()).unwrap();
-    let out = tempdir::tempdir();
+    let out = tempdir("site-build");
     site.build(site_dir.path(), out.path()).unwrap();
     let css = std::fs::read_to_string(out.path().join("syntax.css")).unwrap();
     assert!(
@@ -466,7 +437,7 @@ fn helix_themes_are_built_ins() {
 fn rebuild_removes_pages_deleted_since_the_last_build() {
     // public/ is fully regenerated: a stale output for a deleted page must
     // not survive (it would also keep satisfying the dead-link disk check)
-    let site_dir = tempdir::tempdir();
+    let site_dir = tempdir("site-build");
     std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
     std::fs::write(
         site_dir.path().join("rustpress.toml"),
@@ -495,12 +466,12 @@ fn rebuild_removes_pages_deleted_since_the_last_build() {
 fn build_never_cleans_an_out_dir_outside_the_site() {
     // the cleaner only wipes public/ inside the site dir, never an
     // arbitrary out_dir a caller passes (VitePress's cleanOutDir rule)
-    let site_dir = tempdir::tempdir();
+    let site_dir = tempdir("site-build");
     std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
     std::fs::write(site_dir.path().join("rustpress.toml"), "title = \"T\"\n").unwrap();
     std::fs::write(site_dir.path().join("content/index.md"), "# H\n").unwrap();
     let site = Site::load(site_dir.path()).unwrap();
-    let out = tempdir::tempdir();
+    let out = tempdir("site-build");
     std::fs::write(out.path().join("keep-me.txt"), "precious\n").unwrap();
     site.build(site_dir.path(), out.path()).unwrap();
     assert!(out.path().join("keep-me.txt").is_file());
@@ -511,7 +482,7 @@ fn root_static_overlay_is_config_gated() {
     // the dev-loop overlay (repo-root static/ layered over the output)
     // used to fire for ANY site whose parent had a static/ dir; it is now
     // an explicit per-site setting
-    let parent = tempdir::tempdir();
+    let parent = tempdir("site-build");
     std::fs::create_dir_all(parent.path().join("static")).unwrap();
     std::fs::write(parent.path().join("static/fresh.css"), "body{}\n").unwrap();
     let site_dir = parent.path().join("site");
@@ -542,7 +513,7 @@ fn root_static_overlay_is_config_gated() {
 fn sitemap_xml_escapes_urls() {
     // a file name like "a&b.md" produces a URL containing a bare &, which
     // makes the emitted XML invalid
-    let site_dir = tempdir::tempdir();
+    let site_dir = tempdir("site-build");
     std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
     std::fs::write(
         site_dir.path().join("rustpress.toml"),
@@ -573,7 +544,7 @@ fn last_updated_uses_git_commit_timestamps() {
     {
         panic!("git is required for the last-updated test (CI and dev machines have it)");
     }
-    let repo = tempdir::tempdir();
+    let repo = tempdir("site-build");
     let git = |date: &str, args: &[&str]| {
         let out = std::process::Command::new("git")
             .args(args)
@@ -635,7 +606,7 @@ fn last_updated_works_when_the_site_is_not_the_repo_root() {
     {
         panic!("git is required for the last-updated test (CI and dev machines have it)");
     }
-    let repo = tempdir::tempdir();
+    let repo = tempdir("site-build");
     let site_dir = repo.path().join("some/site");
     let git = |date: &str, args: &[&str]| {
         let out = std::process::Command::new("git")
@@ -683,7 +654,7 @@ fn last_updated_works_when_the_site_is_not_the_repo_root() {
 fn a_failed_build_leaves_the_previous_output_intact() {
     // builds stage into a sibling and swap in at the end: the dev server
     // keeps serving the last good output while a rebuild is broken
-    let site_dir = tempdir::tempdir();
+    let site_dir = tempdir("site-build");
     std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
     std::fs::write(site_dir.path().join("rustpress.toml"), "title = \"T\"\n").unwrap();
     std::fs::write(site_dir.path().join("content/index.md"), "# H\n").unwrap();

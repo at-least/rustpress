@@ -203,7 +203,10 @@ Alpine.data("searchModal", () => ({
     });
     this.$watch("$store.ui.search", (open) => {
       if (open) {
-        this.$nextTick(() => this.$refs.input.focus() || this.$refs.input.select());
+        this.$nextTick(() => {
+          this.$refs.input.focus();
+          this.$refs.input.select();
+        });
       }
     });
   },
@@ -274,7 +277,13 @@ Alpine.data("searchModal", () => ({
   },
 
   esc(s) {
-    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    // & < > for text content, quotes too so the result is also safe in a
+    // double-quoted attribute (data-url)
+    return s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   },
 
   mark(text, tokens) {
@@ -333,7 +342,7 @@ Alpine.data("searchModal", () => ({
         const excerpt =
           '<p class="excerpt">' + this.mark(this.excerpt(r.entry.body || "", tokens), tokens) + "</p>";
         return (
-          '<li class="result" role="option" data-url="' + r.entry.url + '"><div>' + titles + excerpt + "</div></li>"
+          '<li class="result" role="option" data-url="' + this.esc(r.entry.url) + '"><div>' + titles + excerpt + "</div></li>"
         );
       })
       .join("");

@@ -199,7 +199,7 @@ pub fn appearance_script(appearance: &crate::config::Appearance) -> String {
         document.documentElement.classList.toggle('dark', dark);"#.to_string(),
         A::Toggleable { default_dark: true } => r#"
         var s = localStorage.getItem('vitepress-theme-appearance');
-        var dark = s !== 'light';
+        var dark = s === 'light' ? false : s === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : true;
         document.documentElement.classList.toggle('dark', dark);"#.to_string(),
         A::LightOnly => r#"
         document.documentElement.classList.remove('dark');"#.to_string(),
@@ -211,4 +211,28 @@ pub fn appearance_script(appearance: &crate::config::Appearance) -> String {
     format!(
         r#"<script>(function () {{ try {{{body}}} catch (e) {{}} }})(); if (/Mac|iPhone|iPad/.test(navigator.platform)) document.documentElement.classList.add('mac');</script>"#
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_dark_anti_flash_respects_a_stored_auto() {
+        // a visitor arriving from a same-origin VitePress build can carry
+        // 'auto' in localStorage: on a default-dark site it must resolve
+        // against the system preference, not force dark
+        let script =
+            appearance_script(&crate::config::Appearance::Toggleable { default_dark: true });
+        assert!(
+            script.contains("matchMedia"),
+            "stored 'auto' must consult the system preference: {script}"
+        );
+        // a stored 'light' still wins, and the unset default stays dark
+        assert!(script.contains("s === 'light'"), "{script}");
+        assert!(
+            script.contains(": true"),
+            "unset keeps the dark default: {script}"
+        );
+    }
 }

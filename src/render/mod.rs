@@ -108,11 +108,8 @@ impl Site {
         // content/zh/**)
         for page in &mut content.pages {
             for key in config.locales.keys() {
-                if key != "root"
-                    && let Some(rest) = page.rel.strip_prefix(&format!("{key}/"))
-                {
+                if key != "root" && page.rel.starts_with(&format!("{key}/")) {
                     page.locale = key.clone();
-                    let _ = rest;
                 }
             }
         }
@@ -843,12 +840,7 @@ fn find_dead_links(html: &str, page: &Page, site: &Site) -> Vec<String> {
     let mut out = Vec::new();
     for cap in re.captures_iter(html) {
         let raw = &cap[1];
-        if raw.starts_with("http://")
-            || raw.starts_with("https://")
-            || raw.starts_with("mailto:")
-            || raw.starts_with("data:")
-            || raw.starts_with('#')
-        {
+        if is_external_or_fragment(raw) {
             continue;
         }
         let no_frag = raw.split('#').next().unwrap_or(raw);
@@ -907,6 +899,26 @@ fn find_dead_links(html: &str, page: &Page, site: &Site) -> Vec<String> {
     out
 }
 
+/// Anything that cannot name a file in the output: an anchor, a
+/// protocol-relative URL (`//host/…`), or any URI with a scheme
+/// (`https:`, `mailto:`, `data:`, `tel:`, … — letter first, then
+/// letters/digits/`+`/`-`/`.` before the colon, per RFC 3986). Only
+/// root-absolute and relative targets can be disk-checked.
+fn is_external_or_fragment(raw: &str) -> bool {
+    if raw.starts_with("//") || raw.starts_with('#') {
+        return true;
+    }
+    match raw.split_once(':') {
+        Some((scheme, _)) => {
+            scheme.starts_with(|c: char| c.is_ascii_alphabetic())
+                && scheme
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '-' | '.'))
+        }
+        None => false,
+    }
+}
+
 /// Disk check for a dead-link candidate: pages already failed the page
 /// set, so this only clears output files/assets.
 fn path_exists_on_disk(out_dir: &Path, link: &str) -> bool {
@@ -959,7 +971,7 @@ fn plain_text(html: &str) -> String {
 /// input shape).
 fn normalize_rewrite_path(path: &str) -> String {
     let p = path.trim_start_matches('/');
-    if p.ends_with(".md") || p.ends_with("index.md") {
+    if p.ends_with(".md") {
         p.to_string()
     } else {
         format!("{p}.md")

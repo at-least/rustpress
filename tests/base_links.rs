@@ -61,8 +61,7 @@ fn probe_site(base: &str, ignore_dead_links: bool, protocol_relative: bool) -> P
          [mail](mailto:a@b.c)\n",
     );
     if protocol_relative {
-        // the dead-link checker currently treats `//host/…` as internal
-        // (a separate issue), so only the prefix test carries this one
+        // `//host/…` is external — the checker must never disk-check it
         home.push_str("[proto](//cdn.example.com/y)\n");
     }
     write(&site, "content/index.md", &home);
@@ -169,5 +168,37 @@ fn dead_link_check_understands_base_prefixed_links() {
     let msg = format!("{err:#}");
     assert!(msg.contains("dead link"), "unexpected error: {msg}");
     assert!(msg.contains("/guide/missing"), "unexpected error: {msg}");
+    let _ = std::fs::remove_dir_all(&site);
+}
+
+#[test]
+fn protocol_relative_and_scheme_links_are_external() {
+    // `//host/x` and `tel:…` are external URLs: link checking ON (the
+    // default) must not disk-check them as internal targets and fail
+    // the build (the checker used to treat every `/`-leading href as
+    // internal, so a plain CDN link broke `rustpress build`)
+    let site = temp_site("proto-scheme");
+    write(&site, "rustpress.toml", "title = \"probe\"\n");
+    write(
+        &site,
+        "content/index.md",
+        "# Home\n\n[cdn](//cdn.example.com/x.js)\n[call](tel:+1234)\n[abs](/guide/a/)\n",
+    );
+    write(&site, "content/guide/a.md", "# A\n");
+    let out = site.join("public");
+    Site::load(&site).unwrap().build(&site, &out).unwrap();
+    let home = std::fs::read_to_string(out.join("index.html")).unwrap();
+    assert!(
+        home.contains(r#"href="//cdn.example.com/x.js""#),
+        "protocol-relative href kept"
+    );
+    assert!(home.contains(r#"href="tel:+1234""#), "scheme href kept");
+    // a genuinely missing internal link still fails the build
+    write(&site, "content/index.md", "# Home\n\n[nope](/missing/)\n");
+    let err = Site::load(&site)
+        .unwrap()
+        .build(&site, &out)
+        .expect_err("internal dead links must still fail");
+    assert!(err.to_string().contains("/missing"), "{err}");
     let _ = std::fs::remove_dir_all(&site);
 }
