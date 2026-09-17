@@ -455,54 +455,133 @@ fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
 /// (`<nav class="table-of-contents">`).
 fn replace_toc(html: &str, headings: &[Heading]) -> String {
     const MARK: &str = "<!--gd-toc-->";
-    // VitePress's [[toc]] covers h2–h3 regardless of deeper headings
+    // VitePress's [[toc]] covers h2–h3 regardless of deeper headings —
+    // a fixed ±1 band, so the deep-skip demotion in the list builder
+    // never fires here today
     const TOC_LEVELS: (u8, u8) = (2, 3);
     if !html.contains(MARK) {
         return html.to_string();
     }
-    let mut body = String::from("<ul>");
-    let mut stack: Vec<u8> = Vec::new();
-    for h in headings
+    let items: Vec<(u8, String)> = headings
         .iter()
         .filter(|h| h.level >= TOC_LEVELS.0 && h.level <= TOC_LEVELS.1)
-    {
-        if stack.is_empty() {
-            body.push_str("<li>");
-            stack.push(h.level);
-        } else if h.level > *stack.last().unwrap() {
-            body.push_str("<ul><li>");
-            stack.push(h.level);
-        } else {
-            while stack.len() > 1 && h.level < *stack.last().unwrap() {
-                body.push_str("</li></ul>");
-                stack.pop();
-            }
-            body.push_str("</li><li>");
-            *stack.last_mut().unwrap() = h.level;
-        }
-        body.push_str(&format!(
-            "<a href=\"#{}\">{}</a>",
-            h.id,
-            preprocess::escape_text(&h.text)
-        ));
-    }
-    while stack.len() > 1 {
-        body.push_str("</li></ul>");
-        stack.pop();
-    }
-    if !stack.is_empty() {
-        body.push_str("</li>");
-    }
-    body.push_str("</ul>");
-    let toc = format!("<nav class=\"table-of-contents\">{body}</nav>");
+        .map(|h| {
+            (
+                h.level,
+                format!(
+                    "<a href=\"#{}\">{}</a>",
+                    h.id,
+                    preprocess::escape_text(&h.text)
+                ),
+            )
+        })
+        .collect();
+    let toc = format!(
+        "<nav class=\"table-of-contents\">{}</nav>",
+        nested_outline_list(&items, "", "")
+    );
     // both bare and inside the paragraph comrak wraps it in
     html.replace(&format!("<p>{MARK}</p>"), &toc)
         .replace(MARK, &toc)
 }
 
+/// A nested outline list from `(level, link-html)` pairs — a deeper
+/// heading opens a child list, a shallower one closes back (VitePress's
+/// outline nesting). `outer_attr`/`nested_attr` go inside the `<ul>`
+/// tags verbatim (leading space + `class="…"`, or empty).
+///
+/// A heading that escapes only *part* of the nesting (h2 → h4 → h3)
+/// demotes the skipped entry in place: h3 stays inside h2's subtree as
+/// a sibling of h4, instead of closing h4's list and landing beside h2.
+/// (The pre-fix behavior closed past it, escaped the subtree, and let
+/// every later heading inherit the corrupted levels.)
+pub(crate) fn nested_outline_list(
+    items: &[(u8, String)],
+    outer_attr: &str,
+    nested_attr: &str,
+) -> String {
+    let mut html = format!("<ul{outer_attr}>");
+    let mut stack: Vec<u8> = Vec::new();
+    for (level, link) in items {
+        let level = *level;
+        if stack.is_empty() {
+            html.push_str("<li>");
+            stack.push(level);
+        } else if level > *stack.last().unwrap() {
+            html.push_str(&format!("<ul{nested_attr}><li>"));
+            stack.push(level);
+        } else {
+            // pop only entries the heading fully escapes; stop before
+            // skipping one (h2 → h4 → h3 must not close h4's list).
+            // Each pop lands on `below >= level`, so `level <= top`
+            // holds here: the heading joins the top's own list as a
+            // demoted sibling (h4's entry becomes h3), which keeps the
+            // stack truthful for every heading after it.
+            while stack.len() > 1
+                && level < *stack.last().unwrap()
+                && level <= stack[stack.len() - 2]
+            {
+                html.push_str("</li></ul>");
+                stack.pop();
+            }
+            html.push_str("</li><li>");
+            *stack.last_mut().unwrap() = level;
+        }
+        html.push_str(link);
+    }
+    while stack.len() > 1 {
+        html.push_str("</li></ul>");
+        stack.pop();
+    }
+    if !stack.is_empty() {
+        html.push_str("</li>");
+    }
+    html.push_str("</ul>");
+    html
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn li(level: u8, label: &str) -> (u8, String) {
+        (level, format!("[{label}]"))
+    }
+
+    #[test]
+    fn nested_outline_list_demotes_a_partially_escaped_level() {
+        // h2 → h4 → h3: h3 stays inside h2's subtree, in h4's list
+        let html = nested_outline_list(&[li(2, "A"), li(4, "Deep"), li(3, "B")], "", "");
+        assert_eq!(
+            html,
+            "<ul><li>[A]<ul><li>[Deep]</li><li>[B]</li></ul></li></ul>"
+        );
+    }
+
+    #[test]
+    fn nested_outline_list_fully_escaped_levels_close() {
+        // h2 → h3 → h4 → h3′ → h2′: each escape closes exactly one list
+        let html = nested_outline_list(
+            &[li(2, "A"), li(3, "B"), li(4, "C"), li(3, "B2"), li(2, "E")],
+            "",
+            "",
+        );
+        assert_eq!(
+            html,
+            "<ul><li>[A]<ul><li>[B]<ul><li>[C]</li></ul></li><li>[B2]</li></ul></li><li>[E]</li></ul>"
+        );
+    }
+
+    #[test]
+    fn nested_outline_list_attrs_pass_through() {
+        let html = nested_outline_list(
+            &[li(2, "A"), li(3, "B")],
+            " class=\"outer\"",
+            " class=\"inner\"",
+        );
+        assert!(html.starts_with("<ul class=\"outer\">"), "{html}");
+        assert!(html.contains("<ul class=\"inner\"><li>"), "{html}");
+    }
 
     #[test]
     fn relative_link_resolution() {

@@ -913,14 +913,15 @@ fn parse_tip_rest(rest: &str) -> (bool, Option<String>) {
 }
 
 /// `SUMMARY [{open}]` → (summary, open). VitePress also tolerates
-/// `{open}` with spaces inside the braces.
+/// `{open}` with spaces inside the braces; anything else (`{reopen}`,
+/// `{no-open}`) is not the open flag and is ignored.
 fn parse_details_rest(rest: &str) -> (String, bool) {
     if rest.ends_with('}')
         && rest.contains('{')
         && let Some(i) = rest.rfind('{')
     {
         let attr = rest[i + 1..rest.len() - 1].trim();
-        if attr == "open" || attr.contains("open") {
+        if attr == "open" {
             return (rest[..i].trim().to_string(), true);
         }
     }
@@ -1524,6 +1525,29 @@ mod include_and_container_tests {
         let out2 = expand_containers("::: mystery\nx\n:::\n", &ContainerOptions::default());
         assert!(!out2.contains("custom-block"), "{out2}");
         assert!(out2.contains("::: mystery"), "{out2}");
+    }
+
+    #[test]
+    fn details_open_attr_requires_an_exact_match() {
+        // `{reopen}` contains the substring "open" but is not `{open}`:
+        // unknown brace suffixes must be ignored, like upstream
+        let out = expand_containers(
+            "::: details Summary {reopen}\nx\n:::\n",
+            &ContainerOptions::default(),
+        );
+        assert!(
+            !out.contains("<details class=\"custom-block details\" open>"),
+            "an attr merely containing 'open' expanded the details: {out}"
+        );
+        // `{ open }` with spaces inside the braces still opens
+        let out = expand_containers(
+            "::: details Summary { open }\nx\n:::\n",
+            &ContainerOptions::default(),
+        );
+        assert!(
+            out.contains("<details class=\"custom-block details\" open>"),
+            "{out}"
+        );
     }
 }
 

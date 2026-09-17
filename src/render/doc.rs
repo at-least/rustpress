@@ -183,42 +183,29 @@ fn pager_label(label: &Option<crate::config::PagerLabel>, default: &str) -> Resu
 }
 
 /// Nested outline links (h3 nests under the preceding h2, VitePress's
-/// outline behavior). Built as a string: the nesting is stack-driven
-/// serialization, clearer than nested renderables.
+/// outline behavior). The links are pre-rendered strings; the nesting is
+/// the shared list builder (`markdown::nested_outline_list`) so the
+/// outline and `[[toc]]` cannot drift apart again.
 fn outline_links<'a>(headings: &'a [&'a Heading]) -> Raw<String> {
-    let mut html = String::from("<ul class=\"relative z-[1]\">");
-    let mut stack: Vec<u8> = Vec::new();
-    for h in headings {
-        if stack.is_empty() {
-            html.push_str("<li>");
-            stack.push(h.level);
-        } else if h.level > *stack.last().unwrap() {
-            html.push_str("<ul class=\"pr-4 pl-4\"><li>");
-            stack.push(h.level);
-        } else {
-            while stack.len() > 1 && h.level < *stack.last().unwrap() {
-                html.push_str("</li></ul>");
-                stack.pop();
-            }
-            html.push_str("</li><li>");
-            *stack.last_mut().unwrap() = h.level;
-        }
-        html.push_str(&format!(
-            "<a class=\"outline-link block leading-[2.2857143] text-[0.875rem] font-normal text-text-2 whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] [&.active]:text-text-1\" href=\"#{}\" title=\"{}\">{}</a>",
-            h.id,
-            escape_attr(&h.text),
-            escape_text(&h.text),
-        ));
-    }
-    while stack.len() > 1 {
-        html.push_str("</li></ul>");
-        stack.pop();
-    }
-    if !stack.is_empty() {
-        html.push_str("</li>");
-    }
-    html.push_str("</ul>");
-    Raw::dangerously_create(html)
+    let items: Vec<(u8, String)> = headings
+        .iter()
+        .map(|h| {
+            (
+                h.level,
+                format!(
+                    "<a class=\"outline-link block leading-[2.2857143] text-[0.875rem] font-normal text-text-2 whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] [&.active]:text-text-1\" href=\"#{}\" title=\"{}\">{}</a>",
+                    h.id,
+                    escape_attr(&h.text),
+                    escape_text(&h.text),
+                ),
+            )
+        })
+        .collect();
+    Raw::dangerously_create(crate::markdown::nested_outline_list(
+        &items,
+        " class=\"relative z-[1]\"",
+        " class=\"pr-4 pl-4\"",
+    ))
 }
 
 fn escape_attr(s: &str) -> String {
@@ -289,5 +276,29 @@ mod tests {
         assert_eq!(civil_from_days(0), (1970, 1, 1));
         assert_eq!(civil_from_days(19_723), (2024, 1, 1)); // 2024-01-01
         assert_eq!(civil_from_days(20_652), (2026, 7, 18));
+    }
+
+    #[test]
+    fn outline_nests_a_shallower_heading_after_a_deeper_one() {
+        // ## A, #### Deep, ### B under `outline: deep`: B is a child of
+        // A, not a sibling that escaped A's subtree when Deep's nesting
+        // closed
+        let mk = |level: u8, id: &str, text: &str| Heading {
+            level,
+            id: id.into(),
+            text: text.into(),
+            rendered_id: id.into(),
+        };
+        let headings = [mk(2, "a", "A"), mk(4, "deep", "Deep"), mk(3, "b", "B")];
+        let refs: Vec<&Heading> = headings.iter().collect();
+        let html = outline_links(&refs).into_inner();
+        let a = html.find(">A</a>").unwrap();
+        let b = html.find(">B</a>").unwrap();
+        let nested_open = html[a..].find("<ul").unwrap() + a;
+        let first_close = html.find("</ul>").unwrap();
+        assert!(
+            b > nested_open && b < first_close,
+            "B must nest inside A's child list: {html}"
+        );
     }
 }
