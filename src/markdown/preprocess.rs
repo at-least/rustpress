@@ -60,7 +60,10 @@ const GD_GROUP_TOKEN: &str = "gd-ingroup";
 
 impl<'a> Preprocess<'a> {
     pub fn run(&self, body: &str, page_rel: &str) -> Result<String, PreprocessError> {
-        let md = self.resolve_includes(body, page_rel, 0)?;
+        let page_dir = self
+            .content_dir
+            .join(Path::new(page_rel).parent().unwrap_or(Path::new("")));
+        let md = self.resolve_includes(body, &page_dir, 0)?;
         let md = expand_inline_footnotes(&md);
         let md = rewrite_link_attrs(&md);
         let md = expand_alerts(&md, &self.container);
@@ -70,15 +73,18 @@ impl<'a> Preprocess<'a> {
     }
 
     /// Pass 1: `<<<` code includes and `<!--@include:-->` markdown
-    /// includes. `page_rel` is the page's source-relative path.
-    /// Include targets take an optional `#section` (VS Code region or
-    /// heading anchor) and an optional `{a,b}` line range; inside code
-    /// fences the directive inserts the selected lines verbatim
-    /// (upstream "Including Code Files").
+    /// includes. `dir` is the directory of the file currently being
+    /// resolved: relative include targets resolve against the including
+    /// file's directory (upstream recurses `processIncludes` with the
+    /// included file's path), so nested includes are carried by `dir`,
+    /// not pinned to the page. Include targets take an optional
+    /// `#section` (VS Code region or heading anchor) and an optional
+    /// `{a,b}` line range; inside code fences the directive inserts the
+    /// selected lines verbatim (upstream "Including Code Files").
     fn resolve_includes(
         &self,
         md: &str,
-        page_rel: &str,
+        dir: &Path,
         depth: u8,
     ) -> Result<String, PreprocessError> {
         let mut out = String::with_capacity(md.len());
@@ -90,9 +96,6 @@ impl<'a> Preprocess<'a> {
         let mut fence: Option<(char, usize)> = None;
         let mut opener_line: Option<String> = None;
         let mut body = String::new();
-        let page_dir = self
-            .content_dir
-            .join(Path::new(page_rel).parent().unwrap_or(Path::new("")));
         for line in md.split_inclusive('\n') {
             let bare = line.trim_end_matches(['\n', '\r']);
             let t = bare.trim();
@@ -116,7 +119,7 @@ impl<'a> Preprocess<'a> {
                     // the code block content; a missing final newline is
                     // restored or the inserted text glues onto the next
                     // source line (typically the closing fence)
-                    let resolved = self.load_include(&target, &page_dir, depth)?;
+                    let resolved = self.load_include(&target, dir, depth)?;
                     body.push_str(&resolved);
                     if !resolved.ends_with('\n') {
                         body.push('\n');
@@ -132,11 +135,12 @@ impl<'a> Preprocess<'a> {
                 continue;
             }
             if t.starts_with("<<<") {
-                match self.expand_code_include(t, &page_dir) {
-                    Ok(Some(block)) => {
+                match self.expand_code_include(t, dir) {
+                    Ok(Some((block, nested_dir))) => {
                         // The block may itself pull includes (rare);
-                        // recurse on just this chunk.
-                        let resolved = self.resolve_includes(&block, page_rel, depth + 1)?;
+                        // recurse on just this chunk, resolving against
+                        // the included file's directory.
+                        let resolved = self.resolve_includes(&block, &nested_dir, depth + 1)?;
                         out.push_str(&resolved);
                         if !resolved.ends_with('\n') {
                             out.push('\n');
@@ -157,8 +161,9 @@ impl<'a> Preprocess<'a> {
                         path: target.raw_path(),
                     });
                 }
-                let inner = self.load_include(&target, &page_dir, depth)?;
-                let inner = self.resolve_includes(&inner, page_rel, depth + 1)?;
+                let inner = self.load_include(&target, dir, depth)?;
+                let inner_dir = self.include_dir(&target, dir);
+                let inner = self.resolve_includes(&inner, &inner_dir, depth + 1)?;
                 out.push_str(&inner);
                 if !inner.ends_with('\n') {
                     out.push('\n');
@@ -178,11 +183,11 @@ impl<'a> Preprocess<'a> {
 
     /// Read an include target and apply its `#section` + `{range}`
     /// selectors. `@/`-prefixed paths resolve against the site root,
-    /// everything else against the including page's directory.
+    /// everything else against the including file's directory.
     fn load_include(
         &self,
         target: &IncludeTarget,
-        page_dir: &Path,
+        dir: &Path,
         depth: u8,
     ) -> Result<String, PreprocessError> {
         if depth >= MAX_INCLUDE_DEPTH {
@@ -193,7 +198,7 @@ impl<'a> Preprocess<'a> {
         let file = if let Some(rel) = target.path.strip_prefix("@/") {
             self.site_root.join(rel)
         } else {
-            page_dir.join(&target.path)
+            dir.join(&target.path)
         };
         let mut content =
             std::fs::read_to_string(&file).map_err(|source| PreprocessError::Read {
@@ -230,8 +235,8 @@ impl<'a> Preprocess<'a> {
     fn expand_code_include(
         &self,
         line: &str,
-        page_dir: &Path,
-    ) -> Result<Option<String>, PreprocessError> {
+        dir: &Path,
+    ) -> Result<Option<(String, PathBuf)>, PreprocessError> {
         let rest = line.trim_start_matches("<<<").trim();
         let (mut target, label) = match rest.find(" [") {
             Some(i) if rest.ends_with(']') => {
@@ -277,7 +282,7 @@ impl<'a> Preprocess<'a> {
         let file = if let Some(rel) = target.strip_prefix("@/") {
             self.site_root.join(rel)
         } else {
-            page_dir.join(target)
+            dir.join(target)
         };
         let mut content =
             std::fs::read_to_string(&file).map_err(|source| PreprocessError::Read {
@@ -329,7 +334,23 @@ impl<'a> Preprocess<'a> {
         }
         block.push_str(&marker);
         block.push('\n');
-        Ok(Some(block))
+        let nested_dir = file
+            .parent()
+            .map(Path::to_path_buf)
+            .unwrap_or_else(|| dir.to_path_buf());
+        Ok(Some((block, nested_dir)))
+    }
+
+    /// The directory nested includes inside `target`'s content resolve
+    /// against: the included file's own directory (`@/` targets live
+    /// under the site root, everything else under the including file).
+    fn include_dir(&self, target: &IncludeTarget, base: &Path) -> PathBuf {
+        if let Some(rel) = target.path.strip_prefix("@/") {
+            self.site_root
+                .join(Path::new(rel).parent().unwrap_or(Path::new("")))
+        } else {
+            base.join(Path::new(&target.path).parent().unwrap_or(Path::new("")))
+        }
     }
 }
 
@@ -389,12 +410,12 @@ fn apply_line_range(content: &str, spec: &str) -> Result<String, ()> {
     let lines: Vec<&str> = content.split_inclusive('\n').collect();
     let last = lines.len();
     let pick = |from: usize, to: usize, out: &mut String| -> Result<(), ()> {
-        // `to` past EOF clamps to the end; anything else out of bounds
-        // or out of order is a spec mistake
-        if from == 0 || to == 0 || from > to || from > last {
+        // upstream fails a range whose end is out of bounds; anything
+        // out of order or out of file is a spec mistake, not a clamp
+        if from == 0 || to == 0 || from > to || from > last || to > last {
             return Err(());
         }
-        for n in from..=to.min(last) {
+        for n in from..=to {
             if let Some(l) = lines.get(n - 1) {
                 out.push_str(l);
             }

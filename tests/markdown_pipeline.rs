@@ -555,7 +555,7 @@ fn markdown_include_line_range_rejects_garbage_loudly() {
     // a range spec that parses to nothing sensible must fail the build
     // naming the spec — not silently fall through to EOF ({2,5-}, {1,x}),
     // select nothing ({4,2}, {0,2}), or ship the whole file
-    for spec in ["{2,5-}", "{1,x}", "{4,2}", "{0,2}", "{9,}"] {
+    for spec in ["{2,5-}", "{1,x}", "{4,2}", "{0,2}", "{9,}", "{1,99}"] {
         let err = include_site_result(
             &[("parts/ranged2.md", "l1\nl2\nl3\nl4\nl5\n")],
             &format!("<!--@include: ./parts/ranged2.md{spec}-->\n"),
@@ -873,6 +873,25 @@ fn custom_heading_ids_are_attribute_escaped() {
     assert!(
         out.html.contains("href=\"#a&quot;b\""),
         "escaped toc/anchor href: {}",
+        out.html
+    );
+}
+
+#[test]
+fn nested_includes_resolve_against_the_including_file() {
+    // upstream resolves a nested relative include against the file that
+    // contains it (processIncludes recurses with file = includePath), so
+    // parts/a.md's `./b.md` must find parts/b.md — not content/b.md
+    let out = include_site(
+        &[
+            ("parts/a.md", "<!--@include: ./b.md-->\n"),
+            ("parts/b.md", "from b\n"),
+        ],
+        "<!--@include: ./parts/a.md-->\n",
+    );
+    assert!(
+        out.html.contains("from b"),
+        "nested include resolved against the including file: {}",
         out.html
     );
 }
