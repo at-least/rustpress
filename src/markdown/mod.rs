@@ -155,7 +155,6 @@ impl MarkdownEngine {
             site_root,
             content_dir,
             container: self.config_container.clone(),
-            base: &self.base,
         };
         let md = pre.run(&page.body, &page.rel)?;
 

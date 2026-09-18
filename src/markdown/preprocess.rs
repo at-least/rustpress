@@ -45,9 +45,6 @@ pub struct Preprocess<'a> {
     pub content_dir: &'a Path,
     /// Container labels and custom kinds ([markdown.container]).
     pub container: ContainerOptions,
-    /// Site `base`, prefixed onto root-absolute URLs of `[x](/y){attrs}`
-    /// links (they become raw HTML here and never reach the link rewriter).
-    pub base: &'a str,
 }
 
 const MAX_INCLUDE_DEPTH: u8 = 8;
@@ -1532,7 +1529,6 @@ mod tests {
             site_root: Path::new("tests/fixtures"),
             content_dir: Path::new("tests/fixtures/en"),
             container: crate::config::ContainerOptions::default(),
-            base: "/",
         }
         .run("```ansi\n\x1b[32mok\x1b[0m\n```\n", "guide/x.md")
         .unwrap();
@@ -1683,7 +1679,6 @@ mod include_and_container_tests {
             site_root: Path::new("tests/fixtures"),
             content_dir: Path::new("tests/fixtures/en"),
             container: ContainerOptions::default(),
-            base: "/",
         }
     }
 
