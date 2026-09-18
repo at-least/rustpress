@@ -513,6 +513,10 @@ pub fn extract_h1(body: &str) -> Option<String> {
         if t.starts_with("```") || t.starts_with("~~~") {
             break; // headings after the first fence belong to examples
         }
+        // 4+ spaces of indentation is a code block, not a heading
+        if line.starts_with("    ") || line.starts_with('\t') {
+            continue;
+        }
         let Some(rest) = t.strip_prefix("# ") else {
             continue;
         };
@@ -537,15 +541,22 @@ fn strip_heading_attrs(text: &str) -> &str {
 
 fn strip_html_tags(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
-    let mut in_tag = false;
-    for ch in text.chars() {
-        match ch {
-            '<' => in_tag = true,
-            '>' => in_tag = false,
-            c if !in_tag => out.push(c),
-            _ => {}
+    let mut rest = text;
+    while let Some(i) = rest.find('<') {
+        out.push_str(&rest[..i]);
+        match rest[i..].find('>') {
+            // a well-formed tag: drop it whole
+            Some(j) => rest = &rest[i + j + 1..],
+            // a lone `<` with no closing `>` is literal text — dropping
+            // to the end of the line used to truncate titles like
+            // "A < B and C" down to "A"
+            None => {
+                out.push('<');
+                rest = &rest[i + 1..];
+            }
         }
     }
+    out.push_str(rest);
     out
 }
 
@@ -690,6 +701,14 @@ mod tests {
             Some("Anchored".into())
         );
         assert_eq!(extract_h1("no heading here\n"), None);
+        // a 4-space-indented `#` is code, not a heading
+        assert_eq!(
+            extract_h1("    # indented comment\n\n# Real\n"),
+            Some("Real".into())
+        );
+        // a lone `<` is literal text: stripping to the next `>` used to
+        // truncate the title at it
+        assert_eq!(extract_h1("# A < B and C\n"), Some("A < B and C".into()));
     }
 
     #[test]

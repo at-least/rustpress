@@ -726,7 +726,8 @@ fn is_lazy_continuation(t: &str) -> bool {
         || starts("```")
         || starts("~~~")
         || starts(":::")
-        || (starts("<") && t[1..].starts_with(|c: char| c.is_ascii_alphabetic() || c == '/' || c == '!'))
+        || (starts("<")
+            && t[1..].starts_with(|c: char| c.is_ascii_alphabetic() || c == '/' || c == '!'))
     {
         return false;
     }
@@ -751,8 +752,7 @@ fn is_lazy_continuation(t: &str) -> bool {
     let stripped = t.chars().filter(|c| !c.is_whitespace()).collect::<String>();
     if stripped.len() >= 3 {
         let first = stripped.as_bytes()[0];
-        if (first == b'-' || first == b'_' || first == b'*')
-            && stripped.bytes().all(|b| b == first)
+        if (first == b'-' || first == b'_' || first == b'*') && stripped.bytes().all(|b| b == first)
         {
             return false;
         }

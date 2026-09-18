@@ -1,5 +1,5 @@
-//! rustpress CLI: `build` renders a site to `public/`, `serve` (later)
-//! watches and serves.
+//! rustpress CLI: `build` renders a site to `public/`, `serve` watches
+//! and serves it with live reload.
 
 use std::path::PathBuf;
 

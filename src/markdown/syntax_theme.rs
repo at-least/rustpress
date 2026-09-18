@@ -258,14 +258,12 @@ fn collect_chain(
         return Err(ThemeError::Cycle(key));
     }
     visiting.push(key.clone());
-    let raw = RawTheme::parse(src)
-        .map_err(|e| ThemeError::Parse(format!("{key}: {e}")))?;
+    let raw = RawTheme::parse(src).map_err(|e| ThemeError::Parse(format!("{key}: {e}")))?;
     if let Some(parent) = &raw.inherits {
         // parent may be another vendored Helix theme or a .toml file
         if parent.ends_with(".toml") {
-            let src = std::fs::read_to_string(base_dir.join(parent)).map_err(|e| {
-                ThemeError::UnknownInherit(format!("{parent}: cannot read ({e})"))
-            })?;
+            let src = std::fs::read_to_string(base_dir.join(parent))
+                .map_err(|e| ThemeError::UnknownInherit(format!("{parent}: cannot read ({e})")))?;
             collect_chain(&src, Some(parent), base_dir, visiting, out)?;
         } else {
             let Some(src) = helix_src(parent) else {

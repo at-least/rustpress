@@ -5,7 +5,6 @@
 //! pagers, which VitePress takes from the active sidebar.
 
 use std::collections::BTreeMap;
-use std::path::Path;
 
 use crate::config::{Sidebar as SidebarConfig, SidebarItem, SiteConfig};
 use crate::content::{Content, natural_cmp};
@@ -296,11 +295,6 @@ fn ensure_slashed(prefix: &str) -> String {
     } else {
         format!("{with_leading}/")
     }
-}
-
-/// Load-side helper used by the CLI: content dir is fixed as `content/`.
-pub fn content_dir(site_dir: &Path) -> std::path::PathBuf {
-    site_dir.join("content")
 }
 
 #[cfg(test)]

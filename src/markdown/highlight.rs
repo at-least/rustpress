@@ -676,9 +676,9 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                             continue;
                         }
                         if seg_start > pos {
-                            output.write_str(&escape_text(
-                                std::str::from_utf8(&bytes[pos..seg_start]).unwrap(),
-                            ))?;
+                            output.write_str(&escape_text(&String::from_utf8_lossy(
+                                &bytes[pos..seg_start],
+                            )))?;
                             pos = seg_start;
                         }
                         match capture {
@@ -686,18 +686,17 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                                 output,
                                 "<span class=\"{}\">{}</span>",
                                 tk_class(name),
-                                escape_text(std::str::from_utf8(&bytes[pos..seg_end]).unwrap())
+                                escape_text(&String::from_utf8_lossy(&bytes[pos..seg_end]))
                             )?,
-                            None => output.write_str(&escape_text(
-                                std::str::from_utf8(&bytes[pos..seg_end]).unwrap(),
-                            ))?,
+                            None => output.write_str(&escape_text(&String::from_utf8_lossy(
+                                &bytes[pos..seg_end],
+                            )))?,
                         }
                         pos = seg_end;
                     }
                     if pos < end {
-                        output.write_str(&escape_text(
-                            std::str::from_utf8(&bytes[pos..end]).unwrap(),
-                        ))?;
+                        output
+                            .write_str(&escape_text(&String::from_utf8_lossy(&bytes[pos..end])))?;
                     }
                     output.write_str("</span>")?;
                 }

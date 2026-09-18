@@ -338,13 +338,31 @@ pub fn resolve_relative(url: &str, page_rel: &str, content: &Content) -> Option<
 fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
     let mut out = Vec::new();
     let mut anchorizer = Anchorizer::new();
+    // custom ids bypass the anchorizer's dedup: two {#dup} headings must
+    // not emit the same DOM id twice, so track every id the document has
+    // used and suffix repeats the same way auto slugs are suffixed
+    let mut used: std::collections::HashSet<String> = std::collections::HashSet::new();
     for node in root.descendants() {
         let data = node.data.borrow();
         if let NodeValue::Heading(nh) = &data.value {
             let raw = collect_text_with_shortcodes(node);
             let rendered_id = anchorizer.anchorize(&raw);
             let (text, custom) = split_heading_anchor(&raw);
-            let id = custom.clone().unwrap_or_else(|| rendered_id.clone());
+            let id = match custom {
+                Some(c) if !used.contains(&c) => c,
+                Some(c) => {
+                    let mut n = 1;
+                    loop {
+                        let cand = format!("{c}-{n}");
+                        if !used.contains(&cand) {
+                            break cand;
+                        }
+                        n += 1;
+                    }
+                }
+                None => rendered_id.clone(),
+            };
+            used.insert(id.clone());
             out.push(Heading {
                 level: nh.level,
                 id,
@@ -419,8 +437,11 @@ fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
     while let Some(open) = rest.find("<h") {
         let level = rest[open + 2..].chars().next().unwrap_or(' ');
         if !level.is_ascii_digit() || level > '6' {
-            out.push_str(&rest[..open + 3]);
-            rest = &rest[open + 3..];
+            // advance past "<h" plus the whole char: a blind open + 3
+            // would split a multi-byte char after <h
+            let skip = open + 2 + level.len_utf8();
+            out.push_str(&rest[..skip]);
+            rest = &rest[skip..];
             continue;
         }
         let close_tag = format!("</h{}>", level);

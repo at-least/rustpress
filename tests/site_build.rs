@@ -268,7 +268,11 @@ fn rewrite_target_splices_the_rest_capture() {
     assert!(
         site.content.get("/moved/guide/page/").is_some(),
         ":rest spliced into the destination, got {:?}",
-        site.content.pages.iter().map(|p| &p.url).collect::<Vec<_>>()
+        site.content
+            .pages
+            .iter()
+            .map(|p| &p.url)
+            .collect::<Vec<_>>()
     );
     assert!(
         site.content.get("/:rest/").is_none(),
@@ -330,7 +334,7 @@ fn rewrites_reject_colliding_destinations() {
 fn rewrites_validate_rule_shapes() {
     // malformed rules must fail at load, not misbehave at render
     for toml_body in [
-        "title = \"T\"\n\n[rewrites]\n\"guide:rest*/x\" = \"y\"\n",   // :rest* not at the end
+        "title = \"T\"\n\n[rewrites]\n\"guide:rest*/x\" = \"y\"\n", // :rest* not at the end
         "title = \"T\"\n\n[rewrites]\n\"packages/:pkg/:rest*\" = \"y\"\n", // unsupported param
         "title = \"T\"\n\n[rewrites]\n\"guide.md\" = \"m/:rest\"\n", // target captures, pattern doesn't
         "title = \"T\"\n\n[rewrites]\n\"\" = \"y\"\n",               // empty pattern

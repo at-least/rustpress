@@ -581,7 +581,10 @@ impl<'de> Deserialize<'de> for ThemeableImage {
                         .map_err(|e| D::Error::custom(format!("invalid image: {e}")))
                 } else {
                     ImageDetailed::deserialize(value)
-                        .map(|d| ThemeableImage::Detailed { src: d.src, alt: d.alt })
+                        .map(|d| ThemeableImage::Detailed {
+                            src: d.src,
+                            alt: d.alt,
+                        })
                         .map_err(|e| D::Error::custom(format!("invalid image: {e}")))
                 }
             }
@@ -698,9 +701,9 @@ impl<'de> Deserialize<'de> for OutlineConfig {
         let value = toml::Value::deserialize(deserializer)?;
         match value {
             toml::Value::Boolean(b) => Ok(OutlineConfig::Off(b)),
-            v @ (toml::Value::Integer(_) | toml::Value::Array(_)) => {
-                OutlineLevel::deserialize(v).map(OutlineConfig::Level).map_err(|_| D::Error::custom(EXPECTED))
-            }
+            v @ (toml::Value::Integer(_) | toml::Value::Array(_)) => OutlineLevel::deserialize(v)
+                .map(OutlineConfig::Level)
+                .map_err(|_| D::Error::custom(EXPECTED)),
             toml::Value::Table(_) => Outline::deserialize(value)
                 .map(OutlineConfig::Full)
                 .map_err(|e| D::Error::custom(format!("invalid outline table: {e}"))),
@@ -1163,37 +1166,27 @@ mod tests {
     #[test]
     fn themeable_image_typos_name_the_field() {
         // the error must name the unknown field, not just "untagged enum"
-        let err =
-            toml::from_str::<SiteConfig>("title = \"T\"\nlogo = { srcs = \"x.png\" }\n")
-                .unwrap_err();
+        let err = toml::from_str::<SiteConfig>("title = \"T\"\nlogo = { srcs = \"x.png\" }\n")
+            .unwrap_err();
         let msg = err.to_string();
-        assert!(msg.contains("unknown field") && msg.contains("srcs"), "{msg}");
+        assert!(
+            msg.contains("unknown field") && msg.contains("srcs"),
+            "{msg}"
+        );
     }
 
     #[test]
     fn wrong_typed_scalars_name_the_setting() {
         // a wrong-typed value used to leak "untagged enum Raw"; the
         // message must name the setting and its expected shapes
-        let err =
-            toml::from_str::<SiteConfig>("title = \"T\"\nappearance = 123\n").unwrap_err();
-        assert!(
-            err.to_string().contains("appearance must be"),
-            "{err}"
-        );
+        let err = toml::from_str::<SiteConfig>("title = \"T\"\nappearance = 123\n").unwrap_err();
+        assert!(err.to_string().contains("appearance must be"), "{err}");
         let err =
             toml::from_str::<SiteConfig>("title = \"T\"\nignoreDeadLinks = 123\n").unwrap_err();
-        assert!(
-            err.to_string().contains("ignoreDeadLinks must be"),
-            "{err}"
-        );
-        let err = toml::from_str::<SiteConfig>(
-            "title = \"T\"\n[outline]\nlevel = \"two\"\n",
-        )
-        .unwrap_err();
-        assert!(
-            err.to_string().contains("outline level must be"),
-            "{err}"
-        );
+        assert!(err.to_string().contains("ignoreDeadLinks must be"), "{err}");
+        let err = toml::from_str::<SiteConfig>("title = \"T\"\n[outline]\nlevel = \"two\"\n")
+            .unwrap_err();
+        assert!(err.to_string().contains("outline level must be"), "{err}");
     }
 
     #[test]
@@ -1208,10 +1201,9 @@ mod tests {
         .unwrap();
         assert!(cfg.validate().unwrap_err().to_string().contains("nav"));
         // dropdown children need links too
-        let cfg: SiteConfig = toml::from_str(
-            "title = \"T\"\n[[nav]]\ntext = \"X\"\n[[nav.items]]\ntext = \"Y\"\n",
-        )
-        .unwrap();
+        let cfg: SiteConfig =
+            toml::from_str("title = \"T\"\n[[nav]]\ntext = \"X\"\n[[nav.items]]\ntext = \"Y\"\n")
+                .unwrap();
         assert!(cfg.validate().unwrap_err().to_string().contains("nav"));
         // a well-formed dropdown still parses
         let cfg: SiteConfig = toml::from_str(

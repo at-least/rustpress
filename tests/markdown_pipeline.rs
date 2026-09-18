@@ -504,10 +504,7 @@ fn alert_quote_lazy_continuation_stays_inside() {
     let note_start = out.html.find("custom-block note").expect("note container");
     let note_close = out.html[note_start..].find("</div>").expect("note closed") + note_start;
     let list = out.html.find("<li>").expect("list rendered");
-    assert!(
-        list > note_close,
-        "a list after the quote is not absorbed"
-    );
+    assert!(list > note_close, "a list after the quote is not absorbed");
 }
 
 #[test]
@@ -552,8 +549,7 @@ fn broken_theme_toml_fails_engine_init() {
         light: "bad.toml".into(),
         dark: "bad.toml".into(),
     };
-    let err = match MarkdownEngine::new(&rustpress::config::Markdown::default(), &code, &dir, "/")
-    {
+    let err = match MarkdownEngine::new(&rustpress::config::Markdown::default(), &code, &dir, "/") {
         Ok(_) => panic!("a broken theme file fails the engine"),
         Err(e) => e,
     };
@@ -572,8 +568,7 @@ fn broken_theme_toml_fails_engine_init() {
         light: "child.toml".into(),
         dark: "child.toml".into(),
     };
-    let err = match MarkdownEngine::new(&rustpress::config::Markdown::default(), &code, &dir, "/")
-    {
+    let err = match MarkdownEngine::new(&rustpress::config::Markdown::default(), &code, &dir, "/") {
         Ok(_) => panic!("a missing inherits parent fails the engine"),
         Err(e) => e,
     };
@@ -582,6 +577,22 @@ fn broken_theme_toml_fails_engine_init() {
         "error names the parent: {err}"
     );
     std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn duplicate_custom_heading_ids_are_deduped() {
+    // auto slugs dedup ("x", "x-1"); a repeated {#dup} used to emit the
+    // same DOM id twice, so the outline linked one heading twice
+    let out = synthetic("## A {#dup}\n\ntext\n\n## B {#dup}\n");
+    assert_eq!(
+        out.html.matches("id=\"dup\"").count(),
+        1,
+        "exactly one id=\"dup\""
+    );
+    assert!(
+        out.html.contains("id=\"dup-1\""),
+        "the second heading got a suffixed id"
+    );
 }
 
 #[test]

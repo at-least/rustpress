@@ -56,6 +56,16 @@ anchor.
 
 `static/vitepress.css` and `static/js/app.js` are embedded into the binary at compile time (`build.rs` refuses to build without them), so run `npm install && npm run build:js && npm run build:css` once before the first `cargo build`. `vitepress.css` is built by the Tailwind CLI from `styles/vitepress.css` + class strings living in `src/**/*.rs` (`@source "../src"`); after that, `cargo build` alone suffices for Rust-side changes that don't touch classes. A binary installed from the crate is self-contained.
 
+## Trust model
+
+Like upstream VitePress, rustpress trusts the site author: markdown may
+contain raw HTML (`unsafe: true` semantics), `features[].icon` strings are
+inline HTML, and `[[head]]` tags are emitted as written. Include targets
+(`<!--@include:-->`, `<<< @/...`) resolve relative to the content tree and
+`@/`-prefixed paths against the site root without a sandbox — build sites
+whose content you control, as you would with any static site generator.
+The dev server binds to 127.0.0.1 and serves only `public/`.
+
 ## Upstream parity
 
 When VitePress ships a new version, a weekly scheduled workflow
