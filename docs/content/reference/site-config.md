@@ -152,7 +152,7 @@ The UI theme: a complete design (every design token, light and dark) shipped in 
 - Type: table with `light` and `dark` strings
 - Default: `light = "github_light"`, `dark = "github_dark"`
 
-Code colors, one per color mode. Each value is a bundled theme's file stem or a path to a TOML theme file. All 218 themes vendored from the [Helix editor](https://github.com/helix-editor/helix/tree/master/runtime/themes) are bundled. Previewed live in the [Syntax Highlight gallery](/syntax-highlight/).
+Code colors, one per color mode. Each value is a bundled theme's file stem or a path to a TOML theme file. All 218 themes vendored from the [Helix editor](https://github.com/helix-editor/helix/tree/master/runtime/themes) are bundled. Previewed live in the [Syntax Highlight gallery](/syntax-highlight/). A value that cannot be loaded — an unknown name, a theme file with broken TOML, or a missing `inherits` parent — fails the build naming the theme, rather than silently rendering unstyled code.
 
 ```toml
 [code]
