@@ -38,7 +38,7 @@ The goldens are a distilled subset of the full-breakpoint audit — a 4
 pages × 15 widths × 4 states landmark sweep (geometry + computed styles
 + screenshots) against a local build of the pinned upstream. Method,
 findings, and the explained-difference ledger live in
-[VIEWPORT-AUDIT.md](VIEWPORT-AUDIT.md); re-run it with
+[parity/VIEWPORT-AUDIT.md](parity/VIEWPORT-AUDIT.md); re-run it with
 `node scripts/viewport-audit.mjs` after Tailwind refactors or upstream
 re-pins.
 `--update` re-records whatever our build measures — when values change,
