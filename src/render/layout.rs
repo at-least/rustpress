@@ -117,7 +117,9 @@ pub fn layout<'a>(
                 }
 
                 (Raw::dangerously_create(super::local_nav::local_nav(site, is_home, has_sidebar, shell.outline.is_some(), headings)))
-                (Raw::dangerously_create(super::sidebar::sidebar(site, &current_url)))
+                @if has_sidebar {
+                    (Raw::dangerously_create(super::sidebar::sidebar(site, &current_url)))
+                }
 
                 <div class=(content_class) id="VPContent">
                     (Raw::dangerously_create(body_html.clone()))

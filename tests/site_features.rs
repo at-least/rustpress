@@ -288,6 +288,24 @@ fn frontmatter_page_toggles() {
 }
 
 #[test]
+fn frontmatter_sidebar_false_hides_the_sidebar_element() {
+    // `sidebar: false` must remove the fixed desktop aside entirely,
+    // not just the content column's padding class — otherwise the
+    // sidebar paints over the sidebar-less layout (VitePress hides it)
+    let (_, out) = build_site(
+        "title = \"T\"\n",
+        &[
+            ("guide/bare.md", "---\nsidebar: false\n---\n\n# Bare\n"),
+            ("guide/normal.md", "# Normal\n"),
+        ],
+    );
+    let bare = page(&out, "/guide/bare/");
+    assert!(!bare.contains("id=\"VPSidebar\""), "sidebar element hidden");
+    let normal = page(&out, "/guide/normal/");
+    assert!(normal.contains("id=\"VPSidebar\""), "sidebar kept on normal pages");
+}
+
+#[test]
 fn frontmatter_last_updated_date_override() {
     let (_, out) = build_site(
         "title = \"T\"\n",
