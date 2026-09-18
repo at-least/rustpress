@@ -261,9 +261,18 @@ fn normalize_dots(path: &str) -> String {
 /// exists (adds the trailing slash), else pass through (external/anchor
 /// targets keep their exact shape).
 fn canonical(url: &str, content: &Content) -> String {
-    let stripped = url.split('#').next().unwrap_or(url);
+    // keep any #fragment: only the page part is canonicalized, a deep
+    // link to "/guide/a#install" must not lose its anchor
+    let (stripped, frag) = match url.split_once('#') {
+        Some((base, frag)) => (base, Some(frag)),
+        None => (url, None),
+    };
+    let rejoined = |base: &str| match frag {
+        Some(f) => format!("{base}#{f}"),
+        None => base.to_string(),
+    };
     if content.get(stripped).is_some() {
-        return stripped.to_string();
+        return rejoined(stripped);
     }
     let slashed = if stripped.ends_with('/') {
         stripped.to_string()
@@ -271,7 +280,7 @@ fn canonical(url: &str, content: &Content) -> String {
         format!("{stripped}/")
     };
     if content.get(&slashed).is_some() {
-        return slashed;
+        return rejoined(&slashed);
     }
     url.to_string()
 }
@@ -355,6 +364,16 @@ mod tests {
         );
         // unknown internal target: pass through
         assert_eq!(resolve_link("/missing/", "", &content), "/missing/");
+        // an anchor rides on the canonicalized URL: canonical() used to
+        // strip the fragment off deep links
+        assert_eq!(
+            resolve_link("/guide/intro#install", "", &content),
+            "/guide/intro/#install"
+        );
+        assert_eq!(
+            resolve_link("/guide/intro/#install", "", &content),
+            "/guide/intro/#install"
+        );
     }
 
     #[test]

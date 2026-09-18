@@ -331,6 +331,9 @@ impl SiteConfig {
                 value: self.base.clone(),
             });
         }
+        for item in &self.nav {
+            validate_nav_item(item)?;
+        }
         for rule in &self.rewrites {
             if rule.from.is_empty() {
                 return Err(ConfigError::Rewrite {
@@ -369,6 +372,33 @@ impl SiteConfig {
     }
 }
 
+/// Upstream's nav items are either link-type or children-type; a leaf
+/// without a `link` would render as an `<a href="/">`, and a `link`
+/// alongside `items` would be silently ignored by the dropdown branch.
+fn validate_nav_item(item: &NavItem) -> Result<(), ConfigError> {
+    if item.link.is_some() && !item.items.is_empty() {
+        return Err(ConfigError::Nav {
+            text: item.text.clone(),
+            problem: "a dropdown item cannot also set link (it would be ignored)".into(),
+        });
+    }
+    if item.link.is_none() && item.items.is_empty() {
+        return Err(ConfigError::Nav {
+            text: item.text.clone(),
+            problem: "a nav item needs either a link or dropdown items".into(),
+        });
+    }
+    for child in &item.items {
+        if child.link.is_none() && child.items.is_empty() {
+            return Err(ConfigError::Nav {
+                text: child.text.clone(),
+                problem: "a dropdown entry needs a link".into(),
+            });
+        }
+    }
+    Ok(())
+}
+
 /// A navbar entry: `{ text, link, activeMatch }` (plain link) or
 /// `{ text, items }` (dropdown).
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -395,9 +425,10 @@ pub struct NavItem {
 
 /// VitePress's `sidebar` accepts one array (single sidebar) or an object
 /// keyed by URL path prefix (one sidebar per section). Absent → derive
-/// from the content tree.
-#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
-#[serde(untagged)]
+/// from the content tree. A hand-written `Deserialize` (instead of
+/// `untagged`) so a typo inside an item surfaces as "unknown field
+/// `lnik`" rather than "did not match any variant of untagged enum".
+#[derive(Debug, Clone, Default, PartialEq)]
 pub enum Sidebar {
     /// Not configured: derive one sidebar per top-level content section
     /// from the directory tree.
@@ -408,6 +439,27 @@ pub enum Sidebar {
     /// Path-keyed sidebars: the longest matching prefix wins
     /// (`'/reference/': { base, items }`).
     Map(BTreeMapPrefixSections),
+}
+
+impl<'de> Deserialize<'de> for Sidebar {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error as _;
+        let value = toml::Value::deserialize(deserializer)?;
+        match value {
+            toml::Value::Array(_) => Vec::<SidebarItem>::deserialize(value)
+                .map(Sidebar::Items)
+                .map_err(|e| D::Error::custom(format!("invalid sidebar item list: {e}"))),
+            toml::Value::Table(_) => BTreeMapPrefixSections::deserialize(value)
+                .map(Sidebar::Map)
+                .map_err(|e| D::Error::custom(format!("invalid path-keyed sidebar: {e}"))),
+            _ => Err(D::Error::custom(
+                "sidebar must be an array of items or a table keyed by URL prefix",
+            )),
+        }
+    }
 }
 
 /// Newtype alias for the path-keyed sidebar map. Keys sort
@@ -474,22 +526,70 @@ pub struct SocialLink {
 }
 
 /// `themeConfig.logo` / hero images: a plain path, `{ src, alt }`, or a
-/// `{ light, dark }` pair switched by the color scheme.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-#[serde(untagged)]
+/// `{ light, dark }` pair switched by the color scheme. Hand-written
+/// `Deserialize` so an unknown inner field names itself.
+#[derive(Debug, Clone, PartialEq)]
 pub enum ThemeableImage {
     Simple(String),
     Detailed {
         src: String,
-        #[serde(default)]
         alt: Option<String>,
     },
     Dual {
         light: String,
         dark: String,
-        #[serde(default)]
         alt: Option<String>,
     },
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct ImageDetailed {
+    src: String,
+    #[serde(default)]
+    alt: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct ImageDual {
+    light: String,
+    dark: String,
+    #[serde(default)]
+    alt: Option<String>,
+}
+
+impl<'de> Deserialize<'de> for ThemeableImage {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error as _;
+        let value = toml::Value::deserialize(deserializer)?;
+        match value {
+            toml::Value::String(s) => Ok(ThemeableImage::Simple(s)),
+            toml::Value::Table(ref t) => {
+                // route by shape so the reported error is the relevant one
+                let dual = t.contains_key("light") || t.contains_key("dark");
+                if dual {
+                    ImageDual::deserialize(value)
+                        .map(|d| ThemeableImage::Dual {
+                            light: d.light,
+                            dark: d.dark,
+                            alt: d.alt,
+                        })
+                        .map_err(|e| D::Error::custom(format!("invalid image: {e}")))
+                } else {
+                    ImageDetailed::deserialize(value)
+                        .map(|d| ThemeableImage::Detailed { src: d.src, alt: d.alt })
+                        .map_err(|e| D::Error::custom(format!("invalid image: {e}")))
+                }
+            }
+            _ => Err(D::Error::custom(
+                "invalid image: expected a path string, a { src, alt } table, or a { light, dark } table",
+            )),
+        }
+    }
 }
 
 /// `themeConfig.siteTitle`: a string override or `false` to hide.
@@ -529,12 +629,36 @@ pub struct Footer {
 /// (VitePress: `outline: { level: [2, 3] }`; default h2–h3). A
 /// one-element array (`[2]`) is accepted too and means "that level
 /// only" — the shape vitepress.dev's deployed config resolves to.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(untagged)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OutlineLevel {
     Single(u8),
     SingleList([u8; 1]),
     Range((u8, u8)),
+}
+
+impl<'de> Deserialize<'de> for OutlineLevel {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error as _;
+        const EXPECTED: &str = "outline level must be a heading level number or a [min, max] pair";
+        let value = toml::Value::deserialize(deserializer)?;
+        match value {
+            toml::Value::Integer(n) => u8::try_from(n)
+                .map(OutlineLevel::Single)
+                .map_err(|_| D::Error::custom(EXPECTED)),
+            toml::Value::Array(_) => {
+                if let Ok([n]) = <[u8; 1]>::deserialize(value.clone()) {
+                    return Ok(OutlineLevel::SingleList([n]));
+                }
+                <(u8, u8)>::deserialize(value)
+                    .map(|(a, b)| OutlineLevel::Range((a, b)))
+                    .map_err(|_| D::Error::custom(EXPECTED))
+            }
+            _ => Err(D::Error::custom(EXPECTED)),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -554,12 +678,35 @@ impl Default for Outline {
 
 /// The `outline` setting: `false` (no outline), a bare level
 /// (`outline = 2` / `[2, 3]`), or the `{ level, label }` table.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-#[serde(untagged)]
+/// Hand-written `Deserialize` so a bad level names the setting instead
+/// of "did not match any variant of untagged enum".
+#[derive(Debug, Clone, PartialEq)]
 pub enum OutlineConfig {
     Off(bool),
     Level(OutlineLevel),
     Full(Outline),
+}
+
+impl<'de> Deserialize<'de> for OutlineConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error as _;
+        const EXPECTED: &str =
+            "outline must be false, a level number, a [min, max] pair, or a { level, label } table";
+        let value = toml::Value::deserialize(deserializer)?;
+        match value {
+            toml::Value::Boolean(b) => Ok(OutlineConfig::Off(b)),
+            v @ (toml::Value::Integer(_) | toml::Value::Array(_)) => {
+                OutlineLevel::deserialize(v).map(OutlineConfig::Level).map_err(|_| D::Error::custom(EXPECTED))
+            }
+            toml::Value::Table(_) => Outline::deserialize(value)
+                .map(OutlineConfig::Full)
+                .map_err(|e| D::Error::custom(format!("invalid outline table: {e}"))),
+            _ => Err(D::Error::custom(EXPECTED)),
+        }
+    }
 }
 
 impl Default for OutlineConfig {
@@ -738,7 +885,14 @@ impl<'de> Deserialize<'de> for Appearance {
             Bool(bool),
             Word(String),
         }
-        match Raw::deserialize(deserializer)? {
+        // a wrong-typed value (an integer, say) used to leak the private
+        // "untagged enum Raw" name; name the setting instead
+        let raw = Raw::deserialize(deserializer).map_err(|_| {
+            D::Error::custom(
+                "appearance must be true, false, \"dark\", \"force\", \"force-dark\", or \"force-auto\"",
+            )
+        })?;
+        match raw {
             Raw::Bool(true) => Ok(Appearance::Toggleable {
                 default_dark: false,
             }),
@@ -779,7 +933,12 @@ impl<'de> Deserialize<'de> for IgnoreDeadLinks {
             Word(String),
             Prefixes(Vec<String>),
         }
-        match Raw::deserialize(deserializer)? {
+        let raw = Raw::deserialize(deserializer).map_err(|_| {
+            serde::de::Error::custom(
+                "ignoreDeadLinks must be true, false, \"localhostLinks\", or a list of link prefixes",
+            )
+        })?;
+        match raw {
             Raw::Bool(true) => Ok(IgnoreDeadLinks::IgnoreAll),
             Raw::Bool(false) => Ok(IgnoreDeadLinks::Check),
             Raw::Word(w) if w == "localhostLinks" => Ok(IgnoreDeadLinks::IgnoreLocalhost),
@@ -974,6 +1133,8 @@ pub enum ConfigError {
     Base { value: String },
     #[error("invalid rewrite rule {rule:?}: {problem}")]
     Rewrite { rule: String, problem: String },
+    #[error("invalid nav item {text:?}: {problem}")]
+    Nav { text: String, problem: String },
 }
 
 #[cfg(test)]
@@ -982,6 +1143,82 @@ mod tests {
 
     fn parse(src: &str) -> SiteConfig {
         toml::from_str(src).expect("parse")
+    }
+
+    #[test]
+    fn sidebar_typos_name_the_field() {
+        let err = toml::from_str::<SiteConfig>(
+            "title = \"T\"\n[[sidebar]]\ntext = \"Guide\"\nlnik = \"/guide/\"\n",
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("lnik"), "{err}");
+
+        let err = toml::from_str::<SiteConfig>(
+            "title = \"T\"\n[sidebar.\"/guide/\"]\nbse = \"/x/\"\n[[sidebar.\"/guide/\".items]]\ntext = \"A\"\nlink = \"/a/\"\n",
+        )
+        .unwrap_err();
+        assert!(err.to_string().contains("bse"), "{err}");
+    }
+
+    #[test]
+    fn themeable_image_typos_name_the_field() {
+        // the error must name the unknown field, not just "untagged enum"
+        let err =
+            toml::from_str::<SiteConfig>("title = \"T\"\nlogo = { srcs = \"x.png\" }\n")
+                .unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("unknown field") && msg.contains("srcs"), "{msg}");
+    }
+
+    #[test]
+    fn wrong_typed_scalars_name_the_setting() {
+        // a wrong-typed value used to leak "untagged enum Raw"; the
+        // message must name the setting and its expected shapes
+        let err =
+            toml::from_str::<SiteConfig>("title = \"T\"\nappearance = 123\n").unwrap_err();
+        assert!(
+            err.to_string().contains("appearance must be"),
+            "{err}"
+        );
+        let err =
+            toml::from_str::<SiteConfig>("title = \"T\"\nignoreDeadLinks = 123\n").unwrap_err();
+        assert!(
+            err.to_string().contains("ignoreDeadLinks must be"),
+            "{err}"
+        );
+        let err = toml::from_str::<SiteConfig>(
+            "title = \"T\"\n[outline]\nlevel = \"two\"\n",
+        )
+        .unwrap_err();
+        assert!(
+            err.to_string().contains("outline level must be"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn nav_items_need_a_link_or_a_dropdown() {
+        // a linkless leaf used to render an <a href="/">
+        let cfg: SiteConfig = toml::from_str("title = \"T\"\n[[nav]]\ntext = \"X\"\n").unwrap();
+        assert!(cfg.validate().unwrap_err().to_string().contains("nav"));
+        // link alongside items: the link would be silently ignored
+        let cfg: SiteConfig = toml::from_str(
+            "title = \"T\"\n[[nav]]\ntext = \"X\"\nlink = \"/a/\"\n[[nav.items]]\ntext = \"Y\"\nlink = \"/b/\"\n",
+        )
+        .unwrap();
+        assert!(cfg.validate().unwrap_err().to_string().contains("nav"));
+        // dropdown children need links too
+        let cfg: SiteConfig = toml::from_str(
+            "title = \"T\"\n[[nav]]\ntext = \"X\"\n[[nav.items]]\ntext = \"Y\"\n",
+        )
+        .unwrap();
+        assert!(cfg.validate().unwrap_err().to_string().contains("nav"));
+        // a well-formed dropdown still parses
+        let cfg: SiteConfig = toml::from_str(
+            "title = \"T\"\n[[nav]]\ntext = \"X\"\n[[nav.items]]\ntext = \"Y\"\nlink = \"/b/\"\n",
+        )
+        .unwrap();
+        assert!(cfg.validate().is_ok());
     }
 
     #[test]

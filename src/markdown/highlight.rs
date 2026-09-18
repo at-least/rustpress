@@ -181,10 +181,10 @@ fn parse_line_spec(spec: &str) -> Vec<usize> {
                 let room = MAX_HL_RANGE - lines.len();
                 lines.extend((a..=b).take(room));
             }
-        } else if let Ok(n) = part.parse::<usize>() {
-            if lines.len() < MAX_HL_RANGE {
-                lines.push(n);
-            }
+        } else if let Ok(n) = part.parse::<usize>()
+            && lines.len() < MAX_HL_RANGE
+        {
+            lines.push(n);
         }
     }
     lines
