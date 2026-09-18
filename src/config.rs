@@ -367,6 +367,16 @@ impl SiteConfig {
                         .into(),
                 });
             }
+            // destinations are `.md`-spelled source paths; the loader
+            // would append `.md` to a slash-terminated destination and
+            // emit mangled page URLs (`m/a.md//`), so it is rejected
+            if rule.to.ends_with('/') {
+                return Err(ConfigError::Rewrite {
+                    rule: rule.from.clone(),
+                    problem:
+                        "the destination is a `.md`-spelled path — drop the trailing `/`".into(),
+                });
+            }
         }
         Ok(())
     }

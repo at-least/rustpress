@@ -847,3 +847,37 @@ fn sitemap_and_search_urls_are_percent_encoded() {
         "encoded search URL: {docs}"
     );
 }
+
+#[test]
+fn rewrite_destination_with_trailing_slash_is_rejected() {
+    // a destination is a `.md`-spelled source path; a trailing slash
+    // can only produce mangled page URLs (probe: /m/a.md//), so load
+    // must fail naming the rule instead of building broken URLs
+    for dest in ["m/:rest/", "c/"] {
+        let site_dir = tempdir("site-build");
+        std::fs::create_dir_all(site_dir.path().join("content/guide")).unwrap();
+        std::fs::write(
+            site_dir.path().join("rustpress.toml"),
+            format!("title = \"T\"\n\n[rewrites]\n\"guide/:rest*\" = \"{dest}\"\n"),
+        )
+        .unwrap();
+        std::fs::write(site_dir.path().join("content/guide/a.md"), "# A\n").unwrap();
+        let err = Site::load(site_dir.path())
+            .err()
+            .unwrap_or_else(|| panic!("dest {dest:?} must be rejected"));
+        assert!(
+            err.to_string().contains(dest),
+            "error must name the rule: {err}"
+        );
+    }
+    // the documented splice form keeps working
+    let site_dir = tempdir("site-build");
+    std::fs::create_dir_all(site_dir.path().join("content/guide")).unwrap();
+    std::fs::write(
+        site_dir.path().join("rustpress.toml"),
+        "title = \"T\"\n\n[rewrites]\n\"guide/:rest*\" = \"m/:rest\"\n",
+    )
+    .unwrap();
+    std::fs::write(site_dir.path().join("content/guide/a.md"), "# A\n").unwrap();
+    Site::load(site_dir.path()).unwrap();
+}
