@@ -87,14 +87,7 @@ fn start_watcher(site_dir: PathBuf) -> anyhow::Result<()> {
         // the watcher must outlive the loop or no events are produced
         let _keep_alive = watcher;
         let public = site_dir.join("public");
-        // the build stages into this sibling and swaps it in; staging
-        // churn must not trigger rebuilds of its own
-        let staging = crate::render::staging_dir(&public);
-        let is_change = |paths: &[PathBuf]| {
-            !paths
-                .iter()
-                .any(|p| p.starts_with(&public) || p.starts_with(&staging))
-        };
+        let is_change = |paths: &[PathBuf]| !is_build_output(paths, &public);
         while let Ok(paths) = rx.recv() {
             // ignore the build output itself
             if !is_change(&paths) {
@@ -119,6 +112,28 @@ fn start_watcher(site_dir: PathBuf) -> anyhow::Result<()> {
 
 /// Quiet period after the last filesystem event before rebuilding.
 const DEBOUNCE: std::time::Duration = std::time::Duration::from_millis(100);
+
+/// Whether every changed path is the build writing its own output:
+/// the output dir itself, or one of the swap siblings a managed build
+/// moves it through (`public.rustpress-tmp` staging,
+/// `public.rustpress-old` retirement). Their events must be ignored or
+/// every rebuild would trigger the next one.
+fn is_build_output(paths: &[PathBuf], public: &Path) -> bool {
+    let swap_prefix = format!(
+        "{}.rustpress-",
+        public.file_name().and_then(|n| n.to_str()).unwrap_or_default()
+    );
+    paths.iter().all(|p| {
+        if p.starts_with(public) {
+            return true;
+        }
+        p.ancestors().any(|a| {
+            a.file_name()
+                .and_then(|n| n.to_str())
+                .is_some_and(|n| n.starts_with(&swap_prefix))
+        })
+    })
+}
 
 static GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
@@ -348,5 +363,25 @@ mod tests {
         // watcher thread while the server keeps running without reloads
         let err = start_watcher(std::env::temp_dir().join("rp-no-such-dir-for-watcher"));
         assert!(err.is_err(), "watching a nonexistent dir must return Err");
+    }
+
+    #[test]
+    fn rebuild_swaps_never_count_as_content_changes() {
+        // a managed build swaps public/ through two siblings — the
+        // staging dir and the retired dir. Events from either must be
+        // classified as build output, or every rebuild triggers the
+        // next one and serve never settles
+        let site = Path::new("/site");
+        let public = site.join("public");
+        let output = |rel: &str| vec![site.join(rel)];
+        assert!(is_build_output(&output("public/index.html"), &public));
+        assert!(is_build_output(&output("public.rustpress-tmp/x.html"), &public));
+        assert!(
+            is_build_output(&output("public.rustpress-old/404.html"), &public),
+            "the retired dir's removal events must be filtered or serve rebuild-storms"
+        );
+        assert!(!is_build_output(&output("content/index.md"), &public));
+        assert!(!is_build_output(&output("rustpress.toml"), &public));
+        assert!(!is_build_output(&output("public-other/x.md"), &public));
     }
 }
