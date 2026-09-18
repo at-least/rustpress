@@ -165,6 +165,12 @@ fn locales_and_rewrites_end_to_end() {
     std::fs::create_dir_all(content.join("zh/guide")).unwrap();
     let page_body = "---\ndescription: d\n---\n\n# Page\n\nhello\n";
     std::fs::write(content.join("en/guide/page.md"), page_body).unwrap();
+    // a second page so the sidebar and the prev/next pager have content
+    std::fs::write(
+        content.join("en/guide/other.md"),
+        "---\ndescription: o\n---\n\n# Other\n\nmore\n",
+    )
+    .unwrap();
     std::fs::write(
         content.join("zh/guide/page.md"),
         "---\ndescription: 目录\n---\n\n# 页面\n\n内容\n",
@@ -219,9 +225,126 @@ provider = "local"
         en_html.contains("href=\"/zh/guide/page/\""),
         "cross-locale link"
     );
+    // the sidebar and the pager must survive rewrites: Sidebars::build
+    // used to run before the rewrite pass, leaving rewritten pages with
+    // no sidebar nav and no prev/next links at all
+    assert!(
+        en_html.contains("id=\"VPSidebarNav\""),
+        "sidebar present on a rewritten page"
+    );
+    assert!(
+        en_html.contains("href=\"/guide/other/\""),
+        "pager link to the rewritten sibling"
+    );
     let zh_html = std::fs::read_to_string(out.path().join("zh/guide/page/index.html")).unwrap();
     assert!(zh_html.contains(r#"<html lang="zh-CN""#), "zh lang attr");
     assert!(zh_html.contains(r#"<title>页面"#), "localized title");
+    assert!(
+        zh_html.contains("id=\"VPSidebarNav\""),
+        "sidebar present on the zh page too"
+    );
+}
+
+#[test]
+fn rewrite_target_splices_the_rest_capture() {
+    // the target may splice the captured `:rest` (path-to-regexp compile
+    // syntax, what upstream destinations use) — the literal text must
+    // never reach the output
+    let site_dir = tempdir("site-build");
+    let content = site_dir.path().join("content");
+    std::fs::create_dir_all(content.join("en/guide")).unwrap();
+    std::fs::write(
+        content.join("en/guide/page.md"),
+        "---\ntitle: P\n---\n\n# Page\n",
+    )
+    .unwrap();
+    std::fs::write(
+        site_dir.path().join("rustpress.toml"),
+        "title = \"T\"\n\n[rewrites]\n\"en/:rest*\" = \"moved/:rest\"\n",
+    )
+    .unwrap();
+
+    let site = Site::load(site_dir.path()).unwrap();
+    assert!(
+        site.content.get("/moved/guide/page/").is_some(),
+        ":rest spliced into the destination, got {:?}",
+        site.content.pages.iter().map(|p| &p.url).collect::<Vec<_>>()
+    );
+    assert!(
+        site.content.get("/:rest/").is_none(),
+        "literal :rest must not appear"
+    );
+}
+
+#[test]
+fn rewrites_first_match_wins_in_declaration_order() {
+    // upstream applies the first matching rule and stops; the last
+    // (lexicographic) match must not win
+    let site_dir = tempdir("site-build");
+    let content = site_dir.path().join("content");
+    std::fs::create_dir_all(content.join("guide")).unwrap();
+    std::fs::write(content.join("guide/a.md"), "# A\n").unwrap();
+    std::fs::write(content.join("guide/b.md"), "# B\n").unwrap();
+    std::fs::write(
+        site_dir.path().join("rustpress.toml"),
+        "title = \"T\"\n\n[rewrites]\n\"guide/:rest*\" = \"m/:rest*\"\n\"guide/a.md\" = \"other\"\n",
+    )
+    .unwrap();
+
+    let site = Site::load(site_dir.path()).unwrap();
+    let urls: Vec<&str> = site.content.pages.iter().map(|p| p.url.as_str()).collect();
+    assert!(
+        urls.contains(&"/m/a/") && urls.contains(&"/m/b/"),
+        "wildcard first rule wins for every guide page: {urls:?}"
+    );
+    assert!(
+        !urls.contains(&"/other/"),
+        "the second rule never applies: {urls:?}"
+    );
+}
+
+#[test]
+fn rewrites_reject_colliding_destinations() {
+    // two pages rewritten to one URL would silently clobber each other
+    // and double-list the sitemap; the loader's duplicate check must
+    // cover the rewritten URL space too
+    let site_dir = tempdir("site-build");
+    let content = site_dir.path().join("content");
+    std::fs::create_dir_all(&content).unwrap();
+    std::fs::write(content.join("a.md"), "# A\n").unwrap();
+    std::fs::write(content.join("b.md"), "# B\n").unwrap();
+    std::fs::write(
+        site_dir.path().join("rustpress.toml"),
+        "title = \"T\"\n\n[rewrites]\n\"a.md\" = \"c\"\n\"b.md\" = \"c\"\n",
+    )
+    .unwrap();
+
+    let err = Site::load(site_dir.path()).map(|_| ()).unwrap_err();
+    assert!(
+        err.to_string().contains("duplicate"),
+        "collision reported: {err}"
+    );
+}
+
+#[test]
+fn rewrites_validate_rule_shapes() {
+    // malformed rules must fail at load, not misbehave at render
+    for toml_body in [
+        "title = \"T\"\n\n[rewrites]\n\"guide:rest*/x\" = \"y\"\n",   // :rest* not at the end
+        "title = \"T\"\n\n[rewrites]\n\"packages/:pkg/:rest*\" = \"y\"\n", // unsupported param
+        "title = \"T\"\n\n[rewrites]\n\"guide.md\" = \"m/:rest\"\n", // target captures, pattern doesn't
+        "title = \"T\"\n\n[rewrites]\n\"\" = \"y\"\n",               // empty pattern
+        "title = \"T\"\n\n[rewrites]\n\"a.md\" = \"\"\n",            // empty destination
+    ] {
+        let site_dir = tempdir("site-build");
+        std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
+        std::fs::write(site_dir.path().join("rustpress.toml"), toml_body).unwrap();
+        let err = Site::load(site_dir.path()).map(|_| ()).unwrap_err();
+        assert!(
+            err.to_string().contains("rewrite"),
+            "shape rejected with a rewrite error: {toml_body:?} → {err}"
+        );
+    }
 }
 
 #[test]

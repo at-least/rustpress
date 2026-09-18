@@ -143,7 +143,16 @@ A key may end with `:rest*` to capture everything after a prefix:
 "en/:rest*" = ":rest*"
 ```
 
-This is the pattern for VitePress's canonical multi-language layout, where the default language lives in `content/en/` but is served at `/` — see [Internationalization](./i18n). `:rest*` is the only pattern parameter; named segments such as `:pkg/:slug*` and function rewrites are not supported.
+This is the pattern for VitePress's canonical multi-language layout, where the default language lives in `content/en/` but is served at `/` — see [Internationalization](./i18n). `:rest*` is the only pattern parameter; named segments such as `:pkg/:slug*` and function rewrites are not supported (a config using them fails at load with a rewrite error rather than silently matching nothing).
+
+Rules apply **first match wins, in declaration order** — like upstream, a more specific rule placed before a broader one wins. The destination may splice the captured rest back in as `:rest` (or `:rest*`, same thing there):
+
+```toml [rustpress.toml]
+[rewrites]
+"en/:rest*" = "moved/:rest"
+```
+
+Two destinations that collide — with each other or with an untouched page — fail the build with the source files named, instead of silently overwriting each other's output. Rewrites run before the sidebar and the prev/next pager are derived, so rewritten pages keep their navigation.
 
 ::: warning Relative Links with Rewrites
 Relative links are resolved against the **source** paths, so a link from `packages/pkg-a/src/foo.md` to `packages/pkg-b/src/bar.md` is still written `../../pkg-b/src/bar`. The emitted URL is the rewritten one.

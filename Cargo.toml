@@ -48,7 +48,10 @@ serde_json = "1"
 serde_norway = "0.9"
 thiserror = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "net", "macros", "signal"] }
-toml = "0.9"
+# preserve_order: `[rewrites]` rules apply first-match-wins in
+# declaration order (VitePress semantics); a sorted map would make the
+# lexicographically last rule win instead
+toml = { version = "0.9", features = ["preserve_order"] }
 tower = { version = "0.5", default-features = false, features = ["util"] }
 tree-sitter = "0.26"
 tree-sitter-bash = "0.25"

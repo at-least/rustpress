@@ -226,10 +226,12 @@ pub struct SiteConfig {
     #[serde(default = "default_skip_to_content")]
     pub skip_to_content_label: String,
 
-    /// URL rewrites: source content path pattern → destination template.
-    /// A pattern may end with `:rest*` (captured as `:rest`).
-    #[serde(default)]
-    pub rewrites: std::collections::BTreeMap<String, String>,
+    /// URL rewrites: source content path pattern → destination template,
+    /// in declaration order. The first matching rule wins (VitePress
+    /// semantics). A pattern may end with `:rest*`; the target splices
+    /// the capture back with `:rest` (or `:rest*`).
+    #[serde(default, deserialize_with = "deserialize_rewrites")]
+    pub rewrites: Vec<Rewrite>,
 
     /// Locales for multi-language sites. The special key `root` describes
     /// the top-level content; every other key names a content
@@ -240,6 +242,43 @@ pub struct SiteConfig {
 
 fn default_true() -> bool {
     true
+}
+
+/// One `[rewrites]` rule. Kept as an ordered vec of pairs (not a map)
+/// because rules apply first-match-wins in declaration order.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Rewrite {
+    /// Source content path pattern; may end with `:rest*`.
+    pub from: String,
+    /// Destination template; may splice the capture with `:rest`.
+    pub to: String,
+}
+
+/// Deserializes the `[rewrites]` table preserving declaration order
+/// (`toml`'s `preserve_order` feature makes map iteration follow the
+/// document).
+fn deserialize_rewrites<'de, D>(d: D) -> Result<Vec<Rewrite>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    struct V;
+    impl<'de> serde::de::Visitor<'de> for V {
+        type Value = Vec<Rewrite>;
+        fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            f.write_str("a table mapping source paths to destination templates")
+        }
+        fn visit_map<A: serde::de::MapAccess<'de>>(
+            self,
+            mut m: A,
+        ) -> Result<Self::Value, A::Error> {
+            let mut out = Vec::new();
+            while let Some((from, to)) = m.next_entry::<String, String>()? {
+                out.push(Rewrite { from, to });
+            }
+            Ok(out)
+        }
+    }
+    d.deserialize_map(V)
 }
 
 fn default_src_dir() -> String {
@@ -291,6 +330,40 @@ impl SiteConfig {
             return Err(ConfigError::Base {
                 value: self.base.clone(),
             });
+        }
+        for rule in &self.rewrites {
+            if rule.from.is_empty() {
+                return Err(ConfigError::Rewrite {
+                    rule: rule.from.clone(),
+                    problem: "empty source pattern".into(),
+                });
+            }
+            if rule.to.is_empty() {
+                return Err(ConfigError::Rewrite {
+                    rule: rule.from.clone(),
+                    problem: "empty destination".into(),
+                });
+            }
+            // the only capture syntax is a trailing `:rest*`; any other
+            // `:` (a path-to-regexp param like `:pkg`, or a misplaced
+            // capture) would silently match nothing
+            if let Some(i) = rule.from.find(':') {
+                if rule.from[i..] != *":rest*" {
+                    return Err(ConfigError::Rewrite {
+                        rule: rule.from.clone(),
+                        problem:
+                            "only a trailing `:rest*` capture is supported in the source pattern"
+                                .into(),
+                    });
+                }
+            } else if rule.to.contains(":rest") {
+                return Err(ConfigError::Rewrite {
+                    rule: rule.from.clone(),
+                    problem: "the target splices :rest but the source pattern captures nothing \
+                              (end it with `:rest*`)"
+                        .into(),
+                });
+            }
         }
         Ok(())
     }
@@ -899,6 +972,8 @@ pub enum ConfigError {
     },
     #[error("invalid base {value:?}: must start and end with '/'")]
     Base { value: String },
+    #[error("invalid rewrite rule {rule:?}: {problem}")]
+    Rewrite { rule: String, problem: String },
 }
 
 #[cfg(test)]

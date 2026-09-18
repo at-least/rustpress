@@ -314,7 +314,7 @@ impl Page {
     }
 }
 
-/// All pages of a site, ordered by a natural sort of their source paths;
+/// All pages of a site, ordered by a natural sort of their URLs;
 /// `by_url` maps canonical URL to index into `pages`.
 #[derive(Debug, Clone, Default)]
 pub struct Content {
@@ -335,7 +335,7 @@ impl Content {
     /// `**` across segments) matched against source-relative paths.
     pub fn load(content_dir: &Path, excludes: &[String]) -> Result<Content, ContentError> {
         let mut content = Content::default();
-        let mut seen = std::collections::HashSet::new();
+        let mut seen = std::collections::HashMap::new();
         walk(content_dir, "", &mut content, &mut seen, excludes)?;
         content.pages.sort_by(|a, b| natural_cmp(&a.url, &b.url));
         content.by_url = content
@@ -358,7 +358,7 @@ fn walk(
     dir: &Path,
     rel_dir: &str,
     out: &mut Content,
-    seen: &mut std::collections::HashSet<String>,
+    seen: &mut std::collections::HashMap<String, String>,
     excludes: &[String],
 ) -> Result<(), ContentError> {
     let mut entries: Vec<_> = std::fs::read_dir(dir)
@@ -392,8 +392,11 @@ fn walk(
             walk(&path, &rel, out, seen, excludes)?;
         } else if name.ends_with(".md") && !excludes.iter().any(|p| glob_match(p, &rel)) {
             let page = load_page(&path, &rel)?;
-            if !seen.insert(page.url.clone()) {
-                return Err(ContentError::Duplicate { url: page.url });
+            if let Some(prev) = seen.insert(page.url.clone(), page.rel.clone()) {
+                return Err(ContentError::Duplicate {
+                    url: page.url,
+                    sources: vec![prev, page.rel],
+                });
             }
             out.pages.push(page);
         }
@@ -600,8 +603,8 @@ pub enum ContentError {
         path: PathBuf,
         source: serde_norway::Error,
     },
-    #[error("duplicate page URL {url:?}")]
-    Duplicate { url: String },
+    #[error("duplicate page URL {url:?} (produced by {})", .sources.join(" and "))]
+    Duplicate { url: String, sources: Vec<String> },
 }
 
 #[cfg(test)]

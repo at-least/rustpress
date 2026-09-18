@@ -115,7 +115,7 @@ Glob patterns for content files to exclude: `*` matches within a path segment, `
 - Type: map of `source → destination`
 - Default: `{}`
 
-URL rewrites. Keys are source paths (relative to the source directory, `.md` spelling); values are destinations. A pattern may end with `:rest*` (captured as `:rest`). See [Routing: Route Rewrites](../guide/routing#route-rewrites).
+URL rewrites. Keys are source paths (relative to the source directory, `.md` spelling); values are destinations. A pattern may end with `:rest*`; the destination splices the capture back with `:rest` (or `:rest*`). Rules apply first match wins, in declaration order, and malformed rules (`:rest*` not at the end, a destination capturing `:rest` without a capturing pattern, empty patterns) fail at load. See [Routing: Route Rewrites](../guide/routing#route-rewrites).
 
 ### ignoreDeadLinks
 

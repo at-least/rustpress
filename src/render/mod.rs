@@ -20,9 +20,9 @@ use std::sync::OnceLock;
 
 use hypertext::prelude::*;
 
-use crate::config::{IgnoreDeadLinks, OutlineLevel, SiteConfig};
+use crate::config::{IgnoreDeadLinks, OutlineLevel, Rewrite, SiteConfig};
 use crate::content::OutlineSetting as PageOutline;
-use crate::content::{Content, Page};
+use crate::content::{Content, ContentError, Page};
 use crate::markdown::MarkdownEngine;
 use crate::sidebar::Sidebars;
 
@@ -46,6 +46,10 @@ impl Site {
         let config = SiteConfig::load(site_dir)?;
         let content_dir = site_dir.join(&config.src_dir);
         let mut content = Content::load(&content_dir, &config.src_exclude)?;
+        // rewrites must run before the sidebar derivation: Sidebars and
+        // the pager are keyed by URL, so they must cover the rewritten
+        // URL space or rewritten pages lose their navigation entirely
+        apply_rewrites(&mut content, &config.rewrites)?;
         let sidebars = Sidebars::build(&config, &content);
         let engine = MarkdownEngine::new(&config.markdown, &config.code, site_dir, &config.base)?;
         // git timestamps beat mtimes: a fresh clone's mtimes are checkout
@@ -77,33 +81,6 @@ impl Site {
                 }
             }
         }
-        // URL rewrites (VitePress `rewrites`): applied over source rel
-        // paths; patterns may end with `:rest*` captured as `:rest`
-        if !config.rewrites.is_empty() {
-            for page in &mut content.pages {
-                for (from, to) in &config.rewrites {
-                    let dest = if let Some(prefix) = from.strip_suffix(":rest*") {
-                        page.rel
-                            .strip_prefix(prefix)
-                            .map(|rest| to.replace(":rest*", rest))
-                    } else if *from == page.rel {
-                        Some(to.clone())
-                    } else {
-                        None
-                    };
-                    if let Some(dest_rel) = dest {
-                        page.url = crate::content::page_url(&normalize_rewrite_path(&dest_rel));
-                    }
-                }
-            }
-            content.by_url = content
-                .pages
-                .iter()
-                .enumerate()
-                .map(|(i, p)| (p.url.clone(), i))
-                .collect();
-        }
-
         // locale assignment from content subdirectories ([locales.zh] →
         // content/zh/**)
         for page in &mut content.pages {
@@ -965,6 +942,65 @@ fn plain_text(html: &str) -> String {
         }
     }
     out.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// URL rewrites (VitePress `rewrites`): applied over source rel paths
+/// before the sidebar derivation, the pager, and any URL-keyed lookup.
+/// The first matching rule wins, in declaration order (upstream applies
+/// its rules the same way; a sorted map would make the lexicographically
+/// last rule win instead). A pattern ending in `:rest*` prefix-matches
+/// and splices the capture into the target via `:rest` (or `:rest*`).
+fn apply_rewrites(content: &mut Content, rewrites: &[Rewrite]) -> Result<(), ContentError> {
+    if rewrites.is_empty() {
+        return Ok(());
+    }
+    for page in &mut content.pages {
+        for rule in rewrites {
+            let dest = if let Some(prefix) = rule.from.strip_suffix(":rest*") {
+                page.rel
+                    .strip_prefix(prefix)
+                    .map(|rest| rule.to.replace(":rest*", rest).replace(":rest", rest))
+            } else if rule.from == page.rel {
+                Some(rule.to.clone())
+            } else {
+                None
+            };
+            if let Some(dest_rel) = dest {
+                page.url = crate::content::page_url(&normalize_rewrite_path(&dest_rel));
+                break;
+            }
+        }
+    }
+    // A rewrite can collide with another page's URL (or with another
+    // rewrite's). Content::load's duplicate check ran before any of
+    // this, so repeat it over the rewritten URL space — colliding
+    // destinations would otherwise silently clobber each other's output
+    // and double-list the sitemap.
+    let mut by_url: std::collections::BTreeMap<&str, Vec<&str>> = std::collections::BTreeMap::new();
+    for page in &content.pages {
+        by_url
+            .entry(page.url.as_str())
+            .or_default()
+            .push(page.rel.as_str());
+    }
+    if let Some((url, rels)) = by_url.iter().find(|(_, r)| r.len() > 1) {
+        return Err(ContentError::Duplicate {
+            url: (*url).to_string(),
+            sources: rels.iter().map(|r| r.to_string()).collect(),
+        });
+    }
+    // keep the load invariant: pages ordered by a natural sort of their
+    // URLs (sitemap/search output order, auto-sidebar grouping)
+    content
+        .pages
+        .sort_by(|a, b| crate::content::natural_cmp(&a.url, &b.url));
+    content.by_url = content
+        .pages
+        .iter()
+        .enumerate()
+        .map(|(i, p)| (p.url.clone(), i))
+        .collect();
+    Ok(())
 }
 
 /// Normalize a rewrite destination to a content-rel path (page_url
