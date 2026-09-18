@@ -80,7 +80,14 @@ impl<'a> Preprocess<'a> {
         depth: u8,
     ) -> Result<String, PreprocessError> {
         let mut out = String::with_capacity(md.len());
+        // An open fence is buffered instead of streamed: its body can
+        // gain lines from a fenced `@include`, and if those lines carry
+        // a closing run for the fence, the opener (and the author's own
+        // closer) must be emitted longer than it — otherwise the partial
+        // closes the fence and everything after it is swallowed as code
         let mut fence: Option<(char, usize)> = None;
+        let mut opener_line: Option<String> = None;
+        let mut body = String::new();
         let page_dir = self
             .content_dir
             .join(Path::new(page_rel).parent().unwrap_or(Path::new("")));
@@ -88,27 +95,38 @@ impl<'a> Preprocess<'a> {
             let bare = line.trim_end_matches(['\n', '\r']);
             let t = bare.trim();
             if let Some((ch, n)) = fence {
+                if is_closing_fence(bare, ch, n) {
+                    let len = longest_closing_run(&body, ch, n)
+                        .map_or(n, |run| run.max(n) + 1);
+                    out.push_str(&lengthen_fence(
+                        &opener_line.take().expect("open fence has an opener line"),
+                        ch,
+                        len,
+                    ));
+                    out.push_str(&body);
+                    body.clear();
+                    out.push_str(&lengthen_fence(line, ch, len));
+                    fence = None;
+                    continue;
+                }
                 if let Some(target) = md_include_target(t) {
                     // verbatim insertion — the raw selected lines join
                     // the code block content; a missing final newline is
                     // restored or the inserted text glues onto the next
                     // source line (typically the closing fence)
                     let resolved = self.load_include(&target, &page_dir, depth)?;
-                    out.push_str(&resolved);
+                    body.push_str(&resolved);
                     if !resolved.ends_with('\n') {
-                        out.push('\n');
+                        body.push('\n');
                     }
                 } else {
-                    out.push_str(line);
-                    if is_closing_fence(bare, ch, n) {
-                        fence = None;
-                    }
+                    body.push_str(line);
                 }
                 continue;
             }
             if let Some((ch, n)) = opening_fence(bare) {
-                out.push_str(line);
                 fence = Some((ch, n));
+                opener_line = Some(line.to_string());
                 continue;
             }
             if t.starts_with("<<<") {
@@ -146,6 +164,12 @@ impl<'a> Preprocess<'a> {
                 continue;
             }
             out.push_str(line);
+        }
+        // an unclosed fence runs to EOF — no closer exists, so nothing
+        // can break out; flush the buffer verbatim
+        if let Some(opener) = opener_line.take() {
+            out.push_str(&opener);
+            out.push_str(&body);
         }
         Ok(out)
     }
@@ -1257,6 +1281,39 @@ fn is_closing_fence(line: &str, ch: char, n: usize) -> bool {
     let t = line.trim();
     let count = t.chars().take_while(|&c| c == ch).count();
     count >= n && t[count..].trim().is_empty()
+}
+
+/// Longest fence-shaped closing run in `body` (line-initial run of
+/// `ch`, `>= n`, nothing but whitespace after) — the runs an included
+/// partial could use to close a fence opened with `n` markers.
+fn longest_closing_run(body: &str, ch: char, n: usize) -> Option<usize> {
+    body.split_inclusive('\n')
+        .filter_map(|line| {
+            let t = line.trim_end_matches(['\n', '\r']).trim_start();
+            let run = t.chars().take_while(|&c| c == ch).count();
+            (run >= n && t[run..].trim().is_empty()).then_some(run)
+        })
+        .max()
+}
+
+/// Re-emit `line` with its first `ch` run grown to `new_len` markers
+/// (a no-op when it already is that long). Used to out-grow closing
+/// runs that included content smuggled into a fence body.
+fn lengthen_fence(line: &str, ch: char, new_len: usize) -> String {
+    let Some(i) = line.find(ch) else {
+        return line.to_string();
+    };
+    let run = line[i..].chars().take_while(|&c| c == ch).count();
+    if run >= new_len {
+        return line.to_string();
+    }
+    let mut out = String::with_capacity(line.len() + (new_len - run) * ch.len_utf8());
+    out.push_str(&line[..i]);
+    for _ in 0..new_len {
+        out.push(ch);
+    }
+    out.push_str(&line[i + run * ch.len_utf8()..]);
+    out
 }
 
 /// Byte offset just past the opening fence marker in `line` (leading

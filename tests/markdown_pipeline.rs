@@ -466,6 +466,73 @@ fn fence_include_without_trailing_newline_keeps_fence_closed() {
 }
 
 #[test]
+fn fenced_include_cannot_break_out_of_the_authors_fence() {
+    // a partial that itself contains fences must not close the author's
+    // fence: verbatim insertion stays verbatim, but the emitted opening
+    // marker has to out-run any closing run the partial brings in, or
+    // everything after the directive is swallowed as code
+    let out = include_site(
+        &[("fenced.md", "```js\nx\n```\n")],
+        "```md\n<!--@include: ./fenced.md-->\n```\n\nAFTER-PARA\n",
+    );
+    assert!(
+        out.html.contains("<p>AFTER-PARA</p>"),
+        "rest of the page must stay a paragraph: {}",
+        out.html
+    );
+    // the partial's own fence runs survive as code-block content
+    // (tokenized into spans, so the pieces are asserted separately)
+    assert!(out.html.contains("```"), "partial fences kept as content");
+    assert!(
+        out.html.contains(">x<"),
+        "partial body line kept: {}",
+        out.html
+    );
+    assert_eq!(
+        out.html.matches("<pre").count(),
+        1,
+        "one code block, not two: {}",
+        out.html
+    );
+}
+
+#[test]
+fn fenced_include_outgrows_tilde_fences_too() {
+    let out = include_site(
+        &[("tilde.md", "~~~sh\ny\n~~~\n")],
+        "~~~md\n<!--@include: ./tilde.md-->\n~~~\n\nAFTER-TILDE\n",
+    );
+    assert!(
+        out.html.contains("<p>AFTER-TILDE</p>"),
+        "tilde fence not broken out of: {}",
+        out.html
+    );
+    assert_eq!(out.html.matches("<pre").count(), 1, "single block");
+}
+
+#[test]
+fn two_fenced_includes_still_leave_one_block() {
+    let out = include_site(
+        &[("a.md", "```\np\n```\n"), ("b.md", "```\nq\n```\n")],
+        "```md\n<!--@include: ./a.md-->\n<!--@include: ./b.md-->\n```\n\nTAIL\n",
+    );
+    assert!(out.html.contains("<p>TAIL</p>"), "tail intact: {}", out.html);
+    assert_eq!(out.html.matches("<pre").count(), 1, "single block");
+}
+
+#[test]
+fn unclosed_fence_with_include_flushes_verbatim() {
+    // no closing fence: everything runs to EOF, nothing can break out,
+    // and the buffer must still be flushed
+    let out = include_site(
+        &[("loose.md", "text\n")],
+        "opening line\n```md\n<!--@include: ./loose.md-->\nstill inside\n",
+    );
+    assert!(out.html.contains("still inside"), "body flushed: {}", out.html);
+    assert!(out.html.contains("text"), "include flushed");
+}
+
+#[test]
 fn markdown_include_line_range_with_ranges() {
     // `{2,3-4}` = lines 2, 3 and 4 — a hyphen range inside the spec must
     // select its lines, not silently fall through to EOF
