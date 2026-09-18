@@ -790,7 +790,7 @@ You can also use a [VS Code region](https://code.visualstudio.com/docs/editor/co
 The first region with that name is imported (in any comment style); its `#region` / `#endregion` marker lines are removed.
 
 ::: warning
-A `<<<` directive whose file (or region) does not exist is not an error: the line is left in the page as literal text, so check the rendered output.
+A `<<<` directive whose file (or region) does not exist throws a build error naming the path (and the section), the same as `<!--@include:-->`. Nothing is silently published.
 :::
 
 You can also specify the language inside the braces (`{}`) like this:
