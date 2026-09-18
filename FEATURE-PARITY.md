@@ -12,10 +12,11 @@ never looked at" for the *whole* documented surface.
   d6b05d2…fe1cdc9)
 - **Coverage gate:** `tests/feature_parity.rs` extracts every `##`/`###`
   heading from the four reference files in `../vitepress/docs/en` and
-  fails if a heading is not covered here. No clone checked out → test
-  skips. Matching is substring-based, so short generic names (`title`,
-  `nav`) match incidentally — the gate's job is to catch new,
-  distinctively-named upstream options.
+  fails if a heading is not covered here. No clone checked out → the
+  gate FAILS, naming the fix (`bash scripts/sync-upstream.sh`), unless
+  `RUSTPRESS_ALLOW_NO_UPSTREAM=1` opts out. Matching is substring-based,
+  so short generic names (`title`, `nav`) match incidentally — the
+  gate's job is to catch new, distinctively-named upstream options.
 
 | status | meaning |
 |---|---|
@@ -234,7 +235,7 @@ common `transformHead` use.
 
 | feature | status | ours | note |
 |---|---|---|---|
-| `locales` (root + per-locale) | partial | `src/config.rs:612-627`, `src/render/mod.rs:90-101` | `label`/`lang`/`description` honored; locale `title` parsed but unused (finding #3); no per-locale `head`/`themeConfig` |
+| `locales` (root + per-locale) | partial | `src/config.rs`, `src/render/mod.rs` | `label`/`lang`/`description`/`title` honored (locale `title` fixed in d6b05d2); no per-locale `head`/`themeConfig` |
 | Language switcher | implemented | `src/render/mod.rs:324-353`, `src/render/navbar.rs:106-127` | same-page targeting, locale-root fallback |
 | Per-locale markdown strings | missing | — | container labels/code-copy texts are global only |
 | Separate dir per locale | implemented | `src/render/mod.rs:90-101` | `content/zh/**` → `/zh/**` |
@@ -326,11 +327,11 @@ are Vue composables over the SPA runtime.
 |---|---|---|---|
 | nav: custom `component`/`props` | n/a | — | Vue components |
 | sidebar: nested `base` overrides | implemented | `src/sidebar.rs:170-233` | nearest base wins |
-| edit-link: frontmatter `editLink: false` | missing | — | no per-page frontmatter toggle |
-| last-updated: frontmatter `lastUpdated: false` / Date | missing | — | no per-page control |
+| edit-link: frontmatter `editLink: false` | implemented | `src/content.rs`, `src/render/mod.rs` | per-page toggle honored (`edit_link != Some(false)`) |
+| last-updated: frontmatter `lastUpdated: false` / Date | implemented | `src/content.rs`, `src/render/mod.rs` | per-page toggle and verbatim date override |
 | search: local provider | partial | `src/render/mod.rs`, `search_modal.rs` | translations wired (button/modal strings, `{q}` no-results); per-page `search: false`; still no `miniSearch` tuning |
 | search: Algolia / DocSearch / Ask AI | missing | — | external service; see extras for our `askAiUrl` |
-| footer: inline HTML in message/copyright | partial | `src/render/layout.rs:87-98` | plain text only |
+| footer: inline HTML in message/copyright | implemented | `src/render/layout.rs` | `message`/`copyright` rendered as inline HTML |
 | layout: `page` | missing | — | unstyled layout not distinguished from `doc` |
 | home-page: hero `image` light/dark | implemented | `hero_image_html` |  |
 | home-page: hero action `target`/`rel` | implemented | `hero_button` | was finding #5; fixed in d6b05d2 |
