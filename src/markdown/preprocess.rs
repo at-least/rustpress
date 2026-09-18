@@ -60,7 +60,7 @@ impl<'a> Preprocess<'a> {
     pub fn run(&self, body: &str, page_rel: &str) -> Result<String, PreprocessError> {
         let md = self.resolve_includes(body, page_rel, 0)?;
         let md = expand_inline_footnotes(&md);
-        let md = rewrite_link_attrs(&md, self.base);
+        let md = rewrite_link_attrs(&md);
         let md = expand_alerts(&md, &self.container);
         let md = expand_containers(&md, &self.container);
         let md = rewrite_fences(&md);
@@ -586,9 +586,12 @@ fn replace_inline(text: &str, re: &Regex, counter: &mut usize, defs: &mut Vec<St
 
 /// Pass 1.7: link attribute blocks — `[text](url){target="_self" …}`
 /// (upstream's @mdit/plugin-attrs link form). Rewritten to a raw
-/// anchor, so markdown inside the link text is not re-parsed. Fence-
-/// and inline-code-span aware.
-pub fn rewrite_link_attrs(md: &str, base: &str) -> String {
+/// anchor, so markdown inside the link text is not re-parsed. The href
+/// carries a `data-gd-mdlink` marker: these anchors bypass comrak's
+/// link nodes entirely, so `.md` → canonical-URL resolution and base
+/// prefixing happen in a later pass over the rendered HTML
+/// (`resolve_marked_anchors`). Fence- and inline-code-span aware.
+pub fn rewrite_link_attrs(md: &str) -> String {
     static RE: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
     let re = RE.get_or_init(|| {
         // [text](url){k="v" k2="v2"} — attrs must contain =" to avoid
@@ -626,8 +629,8 @@ pub fn rewrite_link_attrs(md: &str, base: &str) -> String {
             let span_end = after[1..].find('`').map(|j| j + 2);
             replaced.push_str(&re.replace_all(before, |c: &regex::Captures| {
                 format!(
-                    r#"<a href="{}"{}>{}</a>"#,
-                    esc(&super::with_base(base, &c[3])),
+                    r#"<a href="{}" data-gd-mdlink{}>{}</a>"#,
+                    esc(&c[3]),
                     parse_attrs(&c[4]),
                     esc(&c[2])
                 )
@@ -645,8 +648,8 @@ pub fn rewrite_link_attrs(md: &str, base: &str) -> String {
         }
         replaced.push_str(&re.replace_all(rest, |c: &regex::Captures| {
             format!(
-                r#"<a href="{}"{}>{}</a>"#,
-                esc(&super::with_base(base, &c[3])),
+                r#"<a href="{}" data-gd-mdlink{}>{}</a>"#,
+                esc(&c[3]),
                 parse_attrs(&c[4]),
                 esc(&c[2])
             )

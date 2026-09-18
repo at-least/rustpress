@@ -173,6 +173,7 @@ impl MarkdownEngine {
         let mut html = String::new();
         comrak::format_html_with_plugins(root, &self.options, &mut html, &plugins)
             .expect("infallible string write");
+        let html = resolve_marked_anchors(&html, page, content, &self.base);
         let html = apply_custom_heading_ids(&html, &headings);
         let mut html = replace_toc(&html, &headings);
         if self.lazy_images {
@@ -247,11 +248,63 @@ fn rewrite_links(root: &comrak::Node<'_>, page: &Page, content: &Content, base: 
     }
 }
 
+/// Anchors emitted by the `{attrs}` link rewrite are raw HTML before
+/// comrak parses, so their hrefs bypass the link-node resolution in
+/// `rewrite_links`. They carry a `data-gd-mdlink` marker; resolve them
+/// here with the same rules (relative `.md` → canonical page URL, then
+/// base prefixing; unknown and external targets keep their href) and
+/// strip the marker.
+fn resolve_marked_anchors(html: &str, page: &Page, content: &Content, base: &str) -> String {
+    static ANCHOR: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    static HREF: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let anchor = ANCHOR.get_or_init(|| regex::Regex::new(r#"<a\b([^>]*)>"#).unwrap());
+    let href = HREF.get_or_init(|| regex::Regex::new(r#"\s?href="([^"]*)""#).unwrap());
+    anchor.replace_all(html, |c: &regex::Captures| {
+        let attrs = &c[1];
+        if !attrs.contains("data-gd-mdlink") {
+            return c[0].to_string();
+        }
+        let raw = href
+            .captures(attrs)
+            .map(|h| unescape_minimal(&h[1]))
+            .unwrap_or_default();
+        let resolved = resolve_relative(&raw, &page.rel, content)
+            .or_else(|| resolve_root(&raw, content));
+        let url = resolved
+            .map(|r| with_base(base, &r))
+            .unwrap_or_else(|| with_base(base, &raw));
+        let unmarked = attrs.replace("data-gd-mdlink", "");
+        let rest = href.replace_all(&unmarked, "");
+        let mut rest = rest.trim().to_string();
+        while let Some(stripped) = rest.strip_prefix("href=") {
+            rest = stripped.to_string();
+        }
+        format!(
+            r#"<a href="{}"{}>"#,
+            preprocess::escape_text(&url),
+            if rest.is_empty() {
+                String::new()
+            } else {
+                format!(" {rest}")
+            }
+        )
+    })
+    .into_owned()
+}
+
+/// Reverse the minimal attribute escaping the raw-anchor emitters apply
+/// to the intermediate href, so resolution sees the author's URL.
+fn unescape_minimal(s: &str) -> String {
+    s.replace("&quot;", "\"")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&amp;", "&")
+}
+
 /// Join the site `base` onto a root-absolute URL (`/guide/` → `/base/guide/`);
 /// anything else — relative, external, protocol-relative (`//host`),
 /// anchor, mailto — is returned unchanged.
-pub fn with_base(base: &str, url: &str) -> String {
-    let base = base.trim_end_matches('/');
+pub fn with_base(base: &str, url: &str) -> String {    let base = base.trim_end_matches('/');
     if base.is_empty() || !url.starts_with('/') || url.starts_with("//") {
         return url.to_string();
     }

@@ -695,6 +695,62 @@ fn link_attribute_blocks() {
 }
 
 #[test]
+fn link_attribute_blocks_resolve_internal_md_targets() {
+    // attrs links are emitted as raw anchors before comrak parses them,
+    // so the .md → canonical-URL resolution must still reach them —
+    // otherwise a valid link ships dead or fails the dead-link gate
+    let site_root = Path::new("tests/fixtures");
+    let content_dir = site_root.join("en");
+    let mut content = Content::default();
+    content.pages.push(Page {
+        rel: "guide/routing.md".into(),
+        url: "/guide/routing/".into(),
+        ..synthetic_page()
+    });
+    content.by_url = content
+        .pages
+        .iter()
+        .enumerate()
+        .map(|(i, p)| (p.url.clone(), i))
+        .collect();
+    content.by_rel = content
+        .pages
+        .iter()
+        .enumerate()
+        .map(|(i, p)| (p.rel.clone(), i))
+        .collect();
+    let render = |body: &str| {
+        let page = Page {
+            body: body.to_string(),
+            ..synthetic_page()
+        };
+        engine()
+            .render(&page, &content, site_root, &content_dir)
+            .expect("render")
+    };
+    let out = render("[API](./guide/routing.md){target=\"_blank\"}\n");
+    assert!(
+        out.html
+            .contains(r#"<a href="/guide/routing/" target="_blank">API</a>"#),
+        "internal .md target resolved: {}",
+        out.html
+    );
+    let out = render("[S](./guide/routing.md#anchor){target=\"_blank\"}\n");
+    assert!(
+        out.html.contains(r#"href="/guide/routing/#anchor""#),
+        "fragment preserved: {}",
+        out.html
+    );
+    let out = render("[G](https://github.com/o/r/README.md){target=\"_blank\"}\n");
+    assert!(
+        out.html
+            .contains(r#"href="https://github.com/o/r/README.md""#),
+        "external .md untouched: {}",
+        out.html
+    );
+}
+
+#[test]
 fn raw_container_wraps_vp_raw() {
     let out = synthetic("::: raw\n<b>embedded</b>\n:::\n");
     assert!(
