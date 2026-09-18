@@ -133,7 +133,7 @@ common `transformHead` use.
 | carbonAds | missing | — | external service |
 | docFooter | implemented | `src/render/doc.rs` | prev/next labels; `false` disables a side; per-item `docFooterText` overrides pager titles |
 | darkModeSwitchLabel | implemented | `src/render/navbar.rs:256,284` | |
-| lightModeSwitchTitle | partial | `src/render/navbar.rs` | static dark-mode title only — no client-side swap between the two titles |
+| lightModeSwitchTitle | implemented | `src/render/navbar.rs` | swapped client-side with `darkModeSwitchTitle` via the `data-title-*` attributes |
 | darkModeSwitchTitle | implemented | `src/render/navbar.rs` | static `title` on the switch |
 | sidebarMenuLabel | implemented | `src/render/local_nav.rs` | the local-nav "Menu" button (our nav screen has no heading) |
 | returnToTopLabel | implemented | `src/render/local_nav.rs` | was parsed-but-dead; wired in d6b05d2 |

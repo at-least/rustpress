@@ -271,7 +271,7 @@ The label next to the appearance switch. It is only displayed in the mobile menu
 - Type: `string`
 - Default: `Switch to light theme`
 
-Accepted for compatibility but currently unused: the appearance switch always carries the [`darkModeSwitchTitle`](#darkmodeswitchtitle) tooltip; there is no client-side swap to this title once dark mode is on.
+Localized tooltip for the appearance switch while the site is in **dark mode** (it names what a click will do — switching to light). The client bundle swaps between this and [`darkModeSwitchTitle`](#darkmodeswitchtitle) on load and on every toggle.
 
 ## darkModeSwitchTitle
 
