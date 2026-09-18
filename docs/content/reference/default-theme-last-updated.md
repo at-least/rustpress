@@ -9,7 +9,7 @@ The update time of the last content will be displayed in the lower right corner 
 ::: info
 rustpress displays the "last updated" time using the timestamp of the most recent Git commit for each file. To use this, the Markdown file must be committed to Git; files with no Git history fall back to their modification time on disk.
 
-Internally, rustpress runs `git log -1 --format=%ct -- <file>` on each file to retrieve its timestamp. If all pages show the same update time, it's likely due to shallow cloning (common in CI environments), which limits Git history.
+Internally, rustpress answers every page's timestamp with a single batched `git log` walk over the content tree (a subprocess per page does not scale). If all pages show the same update time, it's likely due to shallow cloning (common in CI environments), which limits Git history.
 
 To fix this in **GitHub Actions**, use the following in your workflow:
 
@@ -36,7 +36,7 @@ lastUpdated = true
 lastUpdatedText = "Updated at"
 ```
 
-Dates are always rendered as `YYYY/MM/DD` in UTC; VitePress's `formatOptions` has no counterpart. Enabling `lastUpdated` also adds `<lastmod>` to the [sitemap](../guide/sitemap-generation).
+Dates render VitePress-style, as `MMM D, YYYY, h:mm:ss A` in UTC (e.g. `Sep 18, 2026, 4:52:09 PM`); the wrapping `<time>` element carries an ISO `YYYY-MM-DD` `datetime` attribute. VitePress's `formatOptions` has no counterpart. Enabling `lastUpdated` also adds `<lastmod>` to the [sitemap](../guide/sitemap-generation).
 
 ## Frontmatter Config
 
