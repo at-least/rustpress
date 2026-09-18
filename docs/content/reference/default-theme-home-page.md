@@ -106,8 +106,8 @@ features:
 ---
 ```
 
-::: warning Icons are text, not HTML
-A string `icon` is rendered as escaped text. Emoji and plain characters work; an HTML snippet such as `<span class="my-icon"></span>` is shown literally. Use the image forms for anything that is not text.
+::: warning Icons are raw HTML
+Like upstream VitePress, a string `icon` is injected into the page as inline HTML, unescaped (see the trust model in the README): `<span class="my-icon"></span>` renders as a real element, and upstream themes rely on that. Anything that is not markup should use the image forms or plain emoji/text.
 :::
 
 Each feature has:
