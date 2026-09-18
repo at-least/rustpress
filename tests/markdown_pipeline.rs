@@ -797,6 +797,40 @@ fn raw_container_wraps_vp_raw() {
 }
 
 #[test]
+fn auto_slug_colliding_with_custom_id_dedupes() {
+    // an auto slug that collides with an EARLIER custom {#id} must be
+    // suffixed, not silently emit the same DOM id twice
+    let out = synthetic("## B {#dup}\n\nx\n\n## dup\n");
+    assert_eq!(
+        out.html.matches("id=\"dup\"").count(),
+        1,
+        "one id=dup: {}",
+        out.html
+    );
+    let ids: Vec<&str> = out.headings.iter().map(|h| h.id.as_str()).collect();
+    let mut sorted = ids.clone();
+    sorted.sort_unstable();
+    sorted.dedup();
+    assert_eq!(ids.len(), sorted.len(), "outline ids unique: {ids:?}");
+    // forward order keeps working
+    let out = synthetic("## dup\n\nx\n\n## B {#dup}\n");
+    assert_eq!(
+        out.html.matches("id=\"dup\"").count(),
+        1,
+        "one id=dup: {}",
+        out.html
+    );
+    // duplicate customs still dedupe
+    let out = synthetic("## A {#c}\n\n## B {#c}\n");
+    assert_eq!(
+        out.html.matches("id=\"c\"").count(),
+        1,
+        "one id=c: {}",
+        out.html
+    );
+}
+
+#[test]
 fn fence_on_a_list_marker_line_is_a_fence() {
     // CommonMark: a fence may open on the list-marker line itself
     // ("- ```md"). The preprocessor's fence scanners must track it, or

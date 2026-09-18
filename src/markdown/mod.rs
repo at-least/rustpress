@@ -389,40 +389,54 @@ pub fn resolve_relative(url: &str, page_rel: &str, content: &Content) -> Option<
 /// Collect headings for the outline, mirroring comrak's render-time
 /// anchorization (same Anchorizer, same document order).
 fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
-    let mut out = Vec::new();
+    // pass 1: gather in document order with comrak-mirroring rendered ids
     let mut anchorizer = Anchorizer::new();
-    // custom ids bypass the anchorizer's dedup: two {#dup} headings must
-    // not emit the same DOM id twice, so track every id the document has
-    // used and suffix repeats the same way auto slugs are suffixed
-    let mut used: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut rows: Vec<(u8, String, Option<String>, String)> = Vec::new();
     for node in root.descendants() {
         let data = node.data.borrow();
         if let NodeValue::Heading(nh) = &data.value {
             let raw = collect_text_with_shortcodes(node);
             let rendered_id = anchorizer.anchorize(&raw);
             let (text, custom) = split_heading_anchor(&raw);
-            let id = match custom {
-                Some(c) if !used.contains(&c) => c,
-                Some(c) => {
-                    let mut n = 1;
-                    loop {
-                        let cand = format!("{c}-{n}");
-                        if !used.contains(&cand) {
-                            break cand;
-                        }
-                        n += 1;
-                    }
-                }
-                None => rendered_id.clone(),
-            };
-            used.insert(id.clone());
-            out.push(Heading {
-                level: nh.level,
-                id,
-                text,
-                rendered_id,
-            });
+            rows.push((nh.level, text, custom, rendered_id));
         }
+    }
+    // pass 2: every custom id is reserved up front (an auto slug must
+    // never take a custom id that appears LATER in the document), then
+    // finals are assigned in document order — customs claim theirs
+    // (later duplicates suffix), auto slugs dedupe against everything
+    let reserved: std::collections::HashSet<String> =
+        rows.iter().filter_map(|(_, _, c, _)| c.clone()).collect();
+    let mut used = reserved.clone();
+    let mut claimed: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let suffix = |base: &str, used: &std::collections::HashSet<String>| -> String {
+        let mut n = 1;
+        loop {
+            let cand = format!("{base}-{n}");
+            if !used.contains(&cand) {
+                break cand;
+            }
+            n += 1;
+        }
+    };
+    let mut out = Vec::new();
+    for (level, text, custom, rendered_id) in rows {
+        let id = match custom {
+            Some(c) if !claimed.contains(&c) => {
+                claimed.insert(c.clone());
+                c
+            }
+            Some(c) => suffix(&c, &used),
+            None if !used.contains(&rendered_id) => rendered_id.clone(),
+            None => suffix(&rendered_id, &used),
+        };
+        used.insert(id.clone());
+        out.push(Heading {
+            level,
+            id,
+            text,
+            rendered_id,
+        });
     }
     out
 }
