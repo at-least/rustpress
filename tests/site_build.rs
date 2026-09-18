@@ -817,3 +817,33 @@ fn a_failed_build_leaves_the_previous_output_intact() {
     let html = std::fs::read_to_string(out.join("index.html")).unwrap();
     assert!(html.contains("Fixed"));
 }
+
+#[test]
+fn sitemap_and_search_urls_are_percent_encoded() {
+    // a page name with a space (or any byte invalid in a URL) must be
+    // percent-encoded in the sitemap <loc> and the search index —
+    // a raw space is not a valid URL and search engines reject it
+    let site_dir = tempdir("site-build");
+    std::fs::create_dir_all(site_dir.path().join("content/guide")).unwrap();
+    std::fs::write(
+        site_dir.path().join("rustpress.toml"),
+        "title = \"T\"\n\n[search]\nprovider = \"local\"\n\n[sitemap]\nhostname = \"https://example.com\"\n",
+    )
+    .unwrap();
+    std::fs::write(site_dir.path().join("content/index.md"), "# H\n").unwrap();
+    std::fs::write(site_dir.path().join("content/guide/a b.md"), "# Spaced\n").unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    let out = site_dir.path().join("public");
+    site.build(site_dir.path(), &out).unwrap();
+    let xml = std::fs::read_to_string(out.join("sitemap.xml")).unwrap();
+    assert!(
+        xml.contains("<loc>https://example.com/guide/a%20b/</loc>"),
+        "encoded sitemap URL: {xml}"
+    );
+    assert!(!xml.contains("a b/"), "raw space in sitemap: {xml}");
+    let docs = std::fs::read_to_string(out.join("search-docs.json")).unwrap();
+    assert!(
+        docs.contains("/guide/a%20b/"),
+        "encoded search URL: {docs}"
+    );
+}
