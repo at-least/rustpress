@@ -281,7 +281,10 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
             .replace('&', "&amp;")
             .replace('<', "&lt;")
             .replace('>', "&gt;");
-        format!(r#"<a class="{cls}" href="{href}"{attrs}><span>{text}</span></a>"#)
+        format!(
+            r#"<a class="{cls}" href="{}"{attrs}><span>{text}</span></a>"#,
+            crate::render::escape::escape_attr(&href)
+        )
     } else {
         let group_cls = format!(
             "VPFlyout relative group/flyout hover:text-brand-1 transition-colors duration-[250ms]{}",
@@ -318,7 +321,7 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
                                         if child.link.as_deref().is_some_and(|l| l.starts_with("http"))
                                             || child.target.as_deref() == Some("_blank")
                                         { " vp-external-link-icon" } else { "" },
-                                        site.url(&child.link.clone().unwrap_or_default()),
+                                        crate::render::escape::escape_attr(&site.url(&child.link.clone().unwrap_or_default())),
                                         link_attrs(child.target.as_deref(), child.rel.as_deref()),
                                         child.text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;"),
                                     )))
@@ -434,7 +437,10 @@ fn screen_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> 
             .replace('&', "&amp;")
             .replace('<', "&lt;")
             .replace('>', "&gt;");
-        format!(r#"<a class="{cls}" href="{href}"{attrs}>{text}</a>"#)
+        format!(
+            r#"<a class="{cls}" href="{}"{attrs}>{text}</a>"#,
+            crate::render::escape::escape_attr(&href)
+        )
     } else {
         let group_cls = format!(
             "VPNavScreenMenuGroup group{}",
@@ -453,7 +459,7 @@ fn screen_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> 
                         <li>
                             (Raw::dangerously_create(format!(
                                 r#"<a class="block border-b border-divider pt-3 pb-[0.6875rem] leading-[1.7142857] text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1" href="{}"{}>{}</a>"#,
-                                site.url(&child.link.clone().unwrap_or_default()),
+                                crate::render::escape::escape_attr(&site.url(&child.link.clone().unwrap_or_default())),
                                 link_attrs(child.target.as_deref(), child.rel.as_deref()),
                                 child.text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;"),
                             )))

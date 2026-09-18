@@ -496,3 +496,28 @@ fn edit_link_paths_are_percent_encoded() {
         "utf-8 bytes encoded"
     );
 }
+
+#[test]
+fn nav_and_sidebar_link_urls_are_attribute_escaped() {
+    // config link strings are interpolated into hand-built href
+    // attributes; a quote in them must not break out of the attribute
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[[nav]]\ntext = \"Quoted\"\nlink = '/a\"b/'\n\n[[sidebar]]\ntext = \"S\"\nlink = '/s\"x/'\n",
+        &[("index.md", "# H\n")],
+    );
+    let home = page(&out, "/");
+    assert!(
+        home.contains("href=\"/a&quot;b/\""),
+        "escaped nav href: {}",
+        home
+    );
+    assert!(
+        !home.contains("href=\"/a\"b/\""),
+        "raw quote must not reach the nav href"
+    );
+    assert!(
+        home.contains("href=\"/s&quot;x/\""),
+        "escaped sidebar href: {}",
+        home
+    );
+}

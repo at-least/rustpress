@@ -3,6 +3,7 @@
 //! writes the static output (`public/`).
 
 pub mod doc;
+pub(crate) mod escape;
 pub mod home;
 pub mod icons;
 pub mod layout;

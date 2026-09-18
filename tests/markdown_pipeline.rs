@@ -854,3 +854,25 @@ fn fence_on_a_list_marker_line_is_a_fence() {
     );
     assert!(out.html.contains("<ul>"), "list kept");
 }
+
+#[test]
+fn custom_heading_ids_are_attribute_escaped() {
+    // a {#custom} id is spliced into id= and href=# attributes by
+    // hand-built strings; a quote in it must not break the attribute
+    let out = synthetic("## Setup {#a\"b}\n\nbody\n\n[[toc]]\n");
+    assert!(
+        out.html.contains("id=\"a&quot;b\""),
+        "escaped heading id: {}",
+        out.html
+    );
+    assert!(
+        !out.html.contains("id=\"a\"b\""),
+        "raw quote must not reach the attribute: {}",
+        out.html
+    );
+    assert!(
+        out.html.contains("href=\"#a&quot;b\""),
+        "escaped toc/anchor href: {}",
+        out.html
+    );
+}

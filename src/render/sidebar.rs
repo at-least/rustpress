@@ -167,7 +167,8 @@ fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usi
                 <div class=(indicator_cls)></div>
                 @if let Some(href) = href.clone() {
                     (Raw::dangerously_create(format!(
-                        r#"<a class="link flex items-center grow group/link" href="{href}"{}{}><p class="{}{}">{}</p></a>"#,
+                        r#"<a class="link flex items-center grow group/link" href="{}"{}{}><p class="{}{}">{}</p></a>"#,
+                        crate::render::escape::escape_attr(&href),
                         if is_active { r#" aria-current="page""# } else { "" },
                         opt_attrs(n.target.as_deref(), n.rel.as_deref()),
                         link_text_cls,

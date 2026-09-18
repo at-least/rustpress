@@ -522,11 +522,12 @@ fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
             .iter()
             .find(|(rendered, _)| fixed.contains(&format!("id=\"{rendered}\"")))
         {
+            let escaped = preprocess::escape_text(custom);
             fixed = fixed
-                .replace(&format!("id=\"{rendered}\""), &format!("id=\"{custom}\""))
+                .replace(&format!("id=\"{rendered}\""), &format!("id=\"{escaped}\""))
                 .replace(
                     &format!("href=\"#{rendered}\""),
-                    &format!("href=\"#{custom}\""),
+                    &format!("href=\"#{escaped}\""),
                 );
             fixed = fixed.replace(&format!(" {{#{custom}}}"), "");
         }
@@ -558,7 +559,7 @@ fn replace_toc(html: &str, headings: &[Heading]) -> String {
                 h.level,
                 format!(
                     "<a href=\"#{}\">{}</a>",
-                    h.id,
+                    preprocess::escape_text(&h.id),
                     preprocess::escape_text(&h.text)
                 ),
             )
