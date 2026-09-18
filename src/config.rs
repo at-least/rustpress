@@ -373,8 +373,10 @@ impl SiteConfig {
             if rule.to.ends_with('/') {
                 return Err(ConfigError::Rewrite {
                     rule: rule.from.clone(),
-                    problem:
-                        "the destination is a `.md`-spelled path — drop the trailing `/`".into(),
+                    problem: format!(
+                        "destination {:?} is a `.md`-spelled path — drop the trailing `/`",
+                        rule.to
+                    ),
                 });
             }
         }
