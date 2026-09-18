@@ -1215,16 +1215,42 @@ fn badge_attrs(attr_str: &str) -> (String, String) {
 
 // ── fence scanning helpers ─────────────────────────────────────────────
 
+/// Strip a list-item marker (`- `, `* `, `+ `, `2. `, `3) `) from the
+/// front of a list line, so a fence sharing the line with its list
+/// marker ("- ```md", CommonMark-legal) is still recognized as a fence.
+fn strip_list_marker(t: &str) -> &str {
+    let after_bullet = match t.strip_prefix(['-', '*', '+']) {
+        Some(rest) => Some(rest),
+        None => {
+            let digits = t.len() - t.trim_start_matches(|c: char| c.is_ascii_digit()).len();
+            if digits > 0 {
+                t[digits..].strip_prefix(['.', ')'])
+            } else {
+                None
+            }
+        }
+    };
+    match after_bullet {
+        Some(rest) if rest.starts_with(' ') => rest.trim_start_matches(' '),
+        _ => t,
+    }
+}
+
 fn opening_fence(line: &str) -> Option<(char, usize)> {
-    let t = line.trim_start();
+    let t = strip_list_marker(line.trim_start());
     let first = t.chars().next()?;
     if first != '`' && first != '~' {
         return None;
     }
     let n = t.chars().take_while(|&c| c == first).count();
     // a bare marker may be opener or closer (the caller decides via
-    // is_closing_fence); an info string means definitely opening
-    (n >= 3).then_some((first, n))
+    // is_closing_fence); an info string means definitely opening —
+    // but per CommonMark a backtick fence's info string may not contain
+    // a backtick (and a tilde fence's none of its own char), else the
+    // line is inline span text, not a fence opener
+    let info = &t[n..];
+    let forbidden = |c: char| c == first;
+    (n >= 3 && !info.contains(forbidden)).then_some((first, n))
 }
 
 fn is_closing_fence(line: &str, ch: char, n: usize) -> bool {
@@ -1234,11 +1260,15 @@ fn is_closing_fence(line: &str, ch: char, n: usize) -> bool {
 }
 
 /// Byte offset just past the opening fence marker in `line` (leading
-/// indent + marker run). Slicing the raw line by the marker count alone
-/// is only correct at column 0 — inside a list item the indent would
+/// indent, any list marker, then the marker run). Slicing the raw line
+/// by the marker count alone is only correct at column 0 — inside a
+/// list item the indent (or the "- " of a marker-line fence) would
 /// swallow the backticks and corrupt the fence.
 fn fence_info_offset(line: &str, count: usize) -> usize {
-    line.len() - line.trim_start().len() + count
+    let t = line.trim_start();
+    let indent = line.len() - t.len();
+    let after_list = strip_list_marker(t);
+    indent + (t.len() - after_list.len()) + count
 }
 
 pub fn escape_text(s: &str) -> String {

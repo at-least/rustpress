@@ -636,3 +636,28 @@ fn raw_container_wraps_vp_raw() {
     );
     assert!(out.html.contains("<b>embedded</b>"));
 }
+
+#[test]
+fn fence_on_a_list_marker_line_is_a_fence() {
+    // CommonMark: a fence may open on the list-marker line itself
+    // ("- ```md"). The preprocessor's fence scanners must track it, or
+    // every pass rewrites/expands code-fence content inside it
+    let out = synthetic("- ```md\n  ::: tip\n  hi\n  ```\n");
+    assert!(
+        !out.html.contains("custom-block"),
+        "container must stay literal inside the code block: {}",
+        out.html
+    );
+    assert!(
+        !out.html.contains("gdcode"),
+        "closing fence must not be rewritten: {}",
+        out.html
+    );
+    assert_eq!(
+        out.html.matches("<div").count(),
+        out.html.matches("</div>").count(),
+        "balanced divs: {}",
+        out.html
+    );
+    assert!(out.html.contains("<ul>"), "list kept");
+}
