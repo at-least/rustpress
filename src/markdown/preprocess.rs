@@ -31,6 +31,8 @@ pub enum PreprocessError {
     },
     #[error("include {path}: no such region or heading {section:?}")]
     Section { path: PathBuf, section: String },
+    #[error("include {path}: invalid line range {{{spec}}}")]
+    Range { path: PathBuf, spec: String },
     #[error("include depth exceeded at {path}")]
     Depth { path: PathBuf },
 }
@@ -212,7 +214,10 @@ impl<'a> Preprocess<'a> {
             }
         }
         if let Some(range) = &target.range {
-            content = apply_line_range(&content, range);
+            content = apply_line_range(&content, range).map_err(|()| PreprocessError::Range {
+                path: file.clone(),
+                spec: range.clone(),
+            })?;
         }
         Ok(content)
     }
@@ -376,39 +381,58 @@ fn md_include_target(line: &str) -> Option<IncludeTarget> {
 /// markdown includes. Upstream "Markdown File Inclusion" defines the
 /// contiguous slices `{3,}`, `{,10}` and `{1,10}`; a hyphenated second
 /// part (`{a,b-c}`) selects line `a` and then the inclusive range
-/// `b..=c`, the same convention as snippet line highlighting. A
-/// hyphen that fails to parse previously fell through to EOF, silently
-/// shipping the whole file.
-fn apply_line_range(content: &str, spec: &str) -> String {
+/// `b..=c`, the same convention as snippet line highlighting. Any other
+/// shape — an unparsable bound, a dangling hyphen (`{2,5-}`), a zero or
+/// reversed or out-of-file range — is an error: it must fail the build
+/// naming the spec, not silently ship the wrong lines.
+fn apply_line_range(content: &str, spec: &str) -> Result<String, ()> {
     let lines: Vec<&str> = content.split_inclusive('\n').collect();
     let last = lines.len();
-    let pick = |from: usize, to: usize, out: &mut String| {
-        for n in from.max(1)..=to.min(last) {
+    let pick = |from: usize, to: usize, out: &mut String| -> Result<(), ()> {
+        // `to` past EOF clamps to the end; anything else out of bounds
+        // or out of order is a spec mistake
+        if from == 0 || to == 0 || from > to || from > last {
+            return Err(());
+        }
+        for n in from..=to.min(last) {
             if let Some(l) = lines.get(n - 1) {
                 out.push_str(l);
             }
         }
+        Ok(())
+    };
+    let parse = |s: &str, default: usize| -> Result<usize, ()> {
+        let t = s.trim();
+        if t.is_empty() {
+            return Ok(default);
+        }
+        t.parse().map_err(|_| ())
     };
     let (a, b) = spec.split_once(',').unwrap_or((spec, ""));
-    let from: usize = a.trim().parse().unwrap_or(1);
+    let from = parse(a, 1)?;
     if from == 0 {
-        return String::new();
+        return Err(());
     }
     let mut out = String::new();
     let b = b.trim();
     match b.split_once('-') {
         Some((lo, hi)) => {
-            pick(from, from, &mut out);
-            let lo: usize = lo.trim().parse().unwrap_or(1);
-            let hi: usize = hi.trim().parse().unwrap_or(last);
-            pick(lo, hi, &mut out);
+            pick(from, from, &mut out)?;
+            // both halves of the hyphenated form are explicit — an empty
+            // half (`{2,5-}`, `{2,-4}`) is a typo, not an open end
+            let lo = parse(lo, 0)?;
+            let hi = parse(hi, 0)?;
+            if lo == 0 || hi == 0 {
+                return Err(());
+            }
+            pick(lo, hi, &mut out)?;
         }
         None => {
-            let to: usize = b.parse().unwrap_or(last);
-            pick(from, to, &mut out);
+            let to = parse(b, last)?;
+            pick(from, to, &mut out)?;
         }
     }
-    out
+    Ok(out)
 }
 
 /// Heading-anchor section extraction: from the heading whose auto slug

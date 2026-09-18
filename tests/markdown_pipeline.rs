@@ -551,6 +551,42 @@ fn markdown_include_line_range_with_ranges() {
 }
 
 #[test]
+fn markdown_include_line_range_rejects_garbage_loudly() {
+    // a range spec that parses to nothing sensible must fail the build
+    // naming the spec — not silently fall through to EOF ({2,5-}, {1,x}),
+    // select nothing ({4,2}, {0,2}), or ship the whole file
+    for spec in ["{2,5-}", "{1,x}", "{4,2}", "{0,2}", "{9,}"] {
+        let err = include_site_result(
+            &[("parts/ranged2.md", "l1\nl2\nl3\nl4\nl5\n")],
+            &format!("<!--@include: ./parts/ranged2.md{spec}-->\n"),
+        )
+        .err()
+        .unwrap_or_else(|| panic!("{spec} must fail the build"));
+        assert!(
+            err.to_string().contains(spec),
+            "error must name the spec {spec}: {err}"
+        );
+    }
+    // documented open forms keep their meaning
+    let out = include_site(
+        &[("parts/ranged3.md", "l1\nl2\nl3\n")],
+        "<!--@include: ./parts/ranged3.md{2,}-->\n",
+    );
+    assert!(
+        out.html.contains("l2") && out.html.contains("l3") && !out.html.contains("l1"),
+        "{{2,}} = line 2 to EOF: {out:?}"
+    );
+    let out = include_site(
+        &[("parts/ranged4.md", "l1\nl2\nl3\n")],
+        "<!--@include: ./parts/ranged4.md{,2}-->\n",
+    );
+    assert!(
+        out.html.contains("l1") && out.html.contains("l2") && !out.html.contains("l3"),
+        "{{,2}} = line 1 to 2: {out:?}"
+    );
+}
+
+#[test]
 fn alert_quote_lazy_continuation_stays_inside() {
     // a wrapped line without `>` is paragraph continuation text inside
     // the quote (CommonMark/GFM lazy continuation), not a paragraph
