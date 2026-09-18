@@ -160,24 +160,31 @@ impl FenceSpec {
     }
 }
 
-/// `"1,3-4"` → `[1, 3, 4]`. Range expansion is capped: `hl` is
-/// author-supplied and only checked against line numbers that exist, so
-/// `hl=1-999999999` must not materialize a billion-entry vector.
+/// `"1,3-4"` → `[1, 3, 4]`. Range expansion is capped on the TOTAL, not
+/// per range: `hl` is author-supplied and only checked against line
+/// numbers that exist, so `hl=1-999999999` must not materialize a
+/// billion-entry vector and a composite spec must not multiply the bound.
 const MAX_HL_RANGE: usize = 100_000;
 
 fn parse_line_spec(spec: &str) -> Vec<usize> {
     let mut lines = Vec::new();
     for part in spec.split(',') {
+        if lines.len() >= MAX_HL_RANGE {
+            break;
+        }
         let part = part.trim();
         if part.is_empty() {
             continue;
         }
         if let Some((a, b)) = part.split_once('-') {
             if let (Ok(a), Ok(b)) = (a.trim().parse::<usize>(), b.trim().parse::<usize>()) {
-                lines.extend((a..=b).take(MAX_HL_RANGE));
+                let room = MAX_HL_RANGE - lines.len();
+                lines.extend((a..=b).take(room));
             }
         } else if let Ok(n) = part.parse::<usize>() {
-            lines.push(n);
+            if lines.len() < MAX_HL_RANGE {
+                lines.push(n);
+            }
         }
     }
     lines
@@ -635,6 +642,7 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                 if bytes.is_empty() {
                     starts.clear();
                 }
+                let mut seg_first = 0usize;
                 for (idx, &start) in starts.iter().enumerate() {
                     let next = starts.get(idx + 1).copied().unwrap_or(bytes.len());
                     // the newline goes BETWEEN the line spans, never inside:
@@ -650,8 +658,18 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                         output.write_str("\n")?;
                     }
                     write!(output, "<span class=\"{class}\">")?;
+                    // segments are sorted by start, so a single cursor
+                    // skips everything this line and all later ones can
+                    // never overlap again — scanning the whole segment
+                    // list per line made huge blocks quadratic
+                    while seg_first < segments.len() && segments[seg_first].1 <= start {
+                        seg_first += 1;
+                    }
                     let mut pos = start;
-                    for (s, e, capture) in &segments {
+                    for (s, e, capture) in &segments[seg_first..] {
+                        if *s >= end {
+                            break; // sorted by start: the rest is past this line
+                        }
                         let seg_start = (*s).max(start);
                         let seg_end = (*e).min(end);
                         if seg_end <= seg_start {
@@ -1003,9 +1021,17 @@ mod sgr_tests {
             "hl expansion unbounded: {} entries",
             spec.hl.len()
         );
+        // the cap is on the TOTAL, not per range: a composite spec of
+        // many capped ranges used to multiply the bound
         let spec = FenceSpec::parse_meta("lang=js hl=1,5-99999999,9");
-        // the cap is per range: total = capped range + the two singletons
-        assert!(spec.hl.len() <= MAX_HL_RANGE + 2, "{:?}", spec.hl.len());
+        assert!(spec.hl.len() <= MAX_HL_RANGE, "{:?}", spec.hl.len());
+        let composite = "1-100000,".repeat(20);
+        let spec = FenceSpec::parse_meta(&format!("lang=js hl={composite}"));
+        assert!(
+            spec.hl.len() <= MAX_HL_RANGE,
+            "composite ranges multiply: {} entries",
+            spec.hl.len()
+        );
         // sane ranges are untouched
         let spec = FenceSpec::parse_meta("lang=js hl=1,3-4");
         assert_eq!(spec.hl, vec![1, 3, 4]);

@@ -29,6 +29,8 @@ pub enum PreprocessError {
         path: PathBuf,
         source: std::io::Error,
     },
+    #[error("include {path}: no such region or heading {section:?}")]
+    Section { path: PathBuf, section: String },
     #[error("include depth exceeded at {path}")]
     Depth { path: PathBuf },
 }
@@ -111,7 +113,7 @@ impl<'a> Preprocess<'a> {
             }
             if t.starts_with("<<<") {
                 match self.expand_code_include(t, &page_dir) {
-                    Some(block) => {
+                    Ok(Some(block)) => {
                         // The block may itself pull includes (rare);
                         // recurse on just this chunk.
                         let resolved = self.resolve_includes(&block, page_rel, depth + 1)?;
@@ -120,7 +122,12 @@ impl<'a> Preprocess<'a> {
                             out.push('\n');
                         }
                     }
-                    None => out.push_str(line), // unsupported form: keep literal
+                    // unsupported form: keep literal
+                    Ok(None) => out.push_str(line),
+                    // a named target that cannot be read or whose
+                    // region/heading matches nothing must not silently
+                    // ship the literal directive line
+                    Err(e) => return Err(e),
                 }
                 continue;
             }
@@ -168,9 +175,17 @@ impl<'a> Preprocess<'a> {
                 source,
             })?;
         if let Some(section) = &target.section {
-            content = extract_region(&content, section)
+            match extract_region(&content, section)
                 .or_else(|| extract_heading_section(&content, section))
-                .unwrap_or_default();
+            {
+                Some(extracted) => content = extracted,
+                None => {
+                    return Err(PreprocessError::Section {
+                        path: file.clone(),
+                        section: section.clone(),
+                    });
+                }
+            }
         }
         if let Some(range) = &target.range {
             content = apply_line_range(&content, range);
@@ -179,9 +194,15 @@ impl<'a> Preprocess<'a> {
     }
 
     /// `<<< @/snippets/x.ts` / `<<< ../y.js` / `<<< ./z.vue [label]` → a
-    /// fenced block; returns None for forms we don't support, which stay
-    /// literal.
-    fn expand_code_include(&self, line: &str, page_dir: &Path) -> Option<String> {
+    /// fenced block. `Ok(None)` marks forms we don't support, which stay
+    /// literal; a named target that fails to read — or whose
+    /// region/heading matches nothing — is an error, not a silently
+    /// published directive.
+    fn expand_code_include(
+        &self,
+        line: &str,
+        page_dir: &Path,
+    ) -> Result<Option<String>, PreprocessError> {
         let rest = line.trim_start_matches("<<<").trim();
         let (mut target, label) = match rest.find(" [") {
             Some(i) if rest.ends_with(']') => {
@@ -194,7 +215,10 @@ impl<'a> Preprocess<'a> {
         let mut lang_switch: Option<String> = None;
         let mut ln = false;
         if let Some(i) = target.find('{') {
-            let j = target[i..].find('}')?;
+            let j = match target[i..].find('}') {
+                Some(j) => j,
+                None => return Ok(None), // unsupported form: keep literal
+            };
             let spec = &target[i + 1..i + j];
             for token in spec.split_whitespace() {
                 if token == ":line-numbers" {
@@ -226,9 +250,21 @@ impl<'a> Preprocess<'a> {
         } else {
             page_dir.join(target)
         };
-        let mut content = std::fs::read_to_string(&file).ok()?;
+        let mut content =
+            std::fs::read_to_string(&file).map_err(|source| PreprocessError::Read {
+                path: file.clone(),
+                source,
+            })?;
         if let Some(name) = region {
-            content = extract_region(&content, &name)?;
+            match extract_region(&content, &name) {
+                Some(extracted) => content = extracted,
+                None => {
+                    return Err(PreprocessError::Section {
+                        path: file.clone(),
+                        section: name,
+                    });
+                }
+            }
         }
         let mut ext = file
             .extension()
@@ -264,7 +300,7 @@ impl<'a> Preprocess<'a> {
         }
         block.push_str(&marker);
         block.push('\n');
-        Some(block)
+        Ok(Some(block))
     }
 }
 
@@ -313,27 +349,42 @@ fn md_include_target(line: &str) -> Option<IncludeTarget> {
 }
 
 /// `{a,b}` / `{a,}` / `{,b}` / `{a,b-c}` 1-based line selection for
-/// markdown includes (upstream "Markdown File Inclusion").
+/// markdown includes. Upstream "Markdown File Inclusion" defines the
+/// contiguous slices `{3,}`, `{,10}` and `{1,10}`; a hyphenated second
+/// part (`{a,b-c}`) selects line `a` and then the inclusive range
+/// `b..=c`, the same convention as snippet line highlighting. A
+/// hyphen that fails to parse previously fell through to EOF, silently
+/// shipping the whole file.
 fn apply_line_range(content: &str, spec: &str) -> String {
     let lines: Vec<&str> = content.split_inclusive('\n').collect();
-    let pick = |nums: &mut dyn Iterator<Item = usize>| {
-        let mut out = String::new();
-        for n in nums {
-            if let Some(l) = lines.get(n.saturating_sub(1)) {
+    let last = lines.len();
+    let pick = |from: usize, to: usize, out: &mut String| {
+        for n in from.max(1)..=to.min(last) {
+            if let Some(l) = lines.get(n - 1) {
                 out.push_str(l);
             }
         }
-        out
     };
     let (a, b) = spec.split_once(',').unwrap_or((spec, ""));
-    let a: Option<usize> = a.trim().parse().ok();
-    let b: Option<usize> = b.trim().parse().ok();
-    let from = a.unwrap_or(1);
-    let to = b.unwrap_or(lines.len()).min(lines.len());
-    if from == 0 || to < from {
+    let from: usize = a.trim().parse().unwrap_or(1);
+    if from == 0 {
         return String::new();
     }
-    pick(&mut (from..=to))
+    let mut out = String::new();
+    let b = b.trim();
+    match b.split_once('-') {
+        Some((lo, hi)) => {
+            pick(from, from, &mut out);
+            let lo: usize = lo.trim().parse().unwrap_or(1);
+            let hi: usize = hi.trim().parse().unwrap_or(last);
+            pick(lo, hi, &mut out);
+        }
+        None => {
+            let to: usize = b.parse().unwrap_or(last);
+            pick(from, to, &mut out);
+        }
+    }
+    out
 }
 
 /// Heading-anchor section extraction: from the heading whose auto slug
@@ -627,19 +678,26 @@ pub fn expand_alerts(md: &str, opts: &ContainerOptions) -> String {
             out_lines.push(format!("{indent}::: {kind}{title_suffix}"));
             i += 1;
             // Body: the blockquote's `>`-prefixed lines (a `>`-only line
-            // is a blank line *inside* the quote and continues it; any
-            // non-`>` line ends the quote).
+            // is a blank line *inside* the quote and continues it). A
+            // non-`>` line that is paragraph continuation text stays in
+            // the quote too — GFM lazy continuation, what GitHub renders
+            // for a wrapped alert; constructs that could interrupt a
+            // paragraph (headings, fences, lists, …) still end it.
+            let mut in_paragraph = false;
             while i < lines.len() {
                 let b = lines[i].trim_end_matches(['\n', '\r']);
                 let t = b.trim_start();
                 let ind = &b[..b.len() - t.len()];
-                if let Some(rest) = t.strip_prefix('>') {
-                    let rest = rest.strip_prefix(' ').unwrap_or(rest);
-                    out_lines.push(format!("{ind}{rest}"));
-                    i += 1;
+                let body = if let Some(rest) = t.strip_prefix('>') {
+                    rest.strip_prefix(' ').unwrap_or(rest)
+                } else if in_paragraph && is_lazy_continuation(t) {
+                    t
                 } else {
                     break;
-                }
+                };
+                out_lines.push(format!("{ind}{body}"));
+                in_paragraph = !body.trim().is_empty();
+                i += 1;
             }
             out_lines.push(format!("{indent}:::"));
             out_lines.push(String::new());
@@ -651,6 +709,55 @@ pub fn expand_alerts(md: &str, opts: &ContainerOptions) -> String {
     let mut out = out_lines.join("\n");
     out.push('\n');
     out
+}
+
+/// Is a `>`-less line paragraph continuation text inside a quote?
+/// CommonMark's lazy continuation: yes when non-blank and not a
+/// construct that could interrupt a paragraph (ATX heading, fenced
+/// code, blockquote, list item, thematic break, container marker,
+/// HTML block).
+fn is_lazy_continuation(t: &str) -> bool {
+    if t.is_empty() {
+        return false;
+    }
+    let starts = |p: &str| t.starts_with(p);
+    if starts(">")
+        || starts("#")
+        || starts("```")
+        || starts("~~~")
+        || starts(":::")
+        || (starts("<") && t[1..].starts_with(|c: char| c.is_ascii_alphabetic() || c == '/' || c == '!'))
+    {
+        return false;
+    }
+    // bullet list item (`- `, `+ `, `* `)
+    if matches!(t.chars().next(), Some('-' | '+' | '*'))
+        && t.chars().nth(1).is_some_and(char::is_whitespace)
+    {
+        return false;
+    }
+    // ordered list item (`1. `, `12) `)
+    let digits = t.bytes().take_while(|b| b.is_ascii_digit()).count();
+    if digits > 0
+        && digits <= 9
+        && matches!(t.as_bytes().get(digits), Some(b'.' | b')'))
+        && t.as_bytes()
+            .get(digits + 1)
+            .is_some_and(|b| b.is_ascii_whitespace())
+    {
+        return false;
+    }
+    // thematic break (`---`, `* * *`, `___`)
+    let stripped = t.chars().filter(|c| !c.is_whitespace()).collect::<String>();
+    if stripped.len() >= 3 {
+        let first = stripped.as_bytes()[0];
+        if (first == b'-' || first == b'_' || first == b'*')
+            && stripped.bytes().all(|b| b == first)
+        {
+            return false;
+        }
+    }
+    true
 }
 
 /// `> [!KIND] [title]` → (indent, kind, title). Recognized kinds: the

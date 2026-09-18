@@ -971,7 +971,7 @@ Can be created using `.foorc.json`.
 Can be created using `.foorc.json`.
 ```
 
-The format of the selected line range can be: `{3,}`, `{,10}`, `{1,10}`
+The format of the selected line range can be: `{3,}`, `{,10}`, `{1,10}` — and `{1,3-4}` selects line 1 and then lines 3–4 (the same convention as snippet line highlighting)
 
 You can also use a [VS Code region](https://code.visualstudio.com/docs/editor/codebasics#_folding) to only include the corresponding part of the code file. You can provide a custom region name after a `#` following the filepath:
 
@@ -1011,7 +1011,7 @@ You can also use a [VS Code region](https://code.visualstudio.com/docs/editor/co
 ```
 
 ::: warning
-Including a missing file throws a build error. A region or heading anchor that does not exist in the file includes nothing (an empty selection), silently.
+Including a missing file — or a region or heading anchor that does not exist in the included file — throws a build error naming the path and the section.
 :::
 
 Instead of VS Code regions, you can also use header anchors to include a specific section of the file. For example, if you have a header in your markdown file like this:

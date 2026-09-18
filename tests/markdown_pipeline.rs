@@ -358,6 +358,13 @@ fn non_math_pages_unflagged_and_untouched() {
 // ---- stage-4 markdown engine features ---------------------------------
 
 fn include_site(files: &[(&str, &str)], page_body: &str) -> rustpress::markdown::RenderedPage {
+    include_site_result(files, page_body).expect("render")
+}
+
+fn include_site_result(
+    files: &[(&str, &str)],
+    page_body: &str,
+) -> Result<rustpress::markdown::RenderedPage, rustpress::markdown::MarkdownError> {
     static SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     let dir = std::env::temp_dir().join(format!(
         "gd-include-{}-{}",
@@ -374,9 +381,7 @@ fn include_site(files: &[(&str, &str)], page_body: &str) -> rustpress::markdown:
         body: page_body.to_string(),
         ..synthetic_page()
     };
-    let out = engine()
-        .render(&page, &Content::default(), &dir, &content_dir)
-        .expect("render");
+    let out = engine().render(&page, &Content::default(), &dir, &content_dir);
     let _ = std::fs::remove_dir_all(&dir);
     out
 }
@@ -458,6 +463,125 @@ fn fence_include_without_trailing_newline_keeps_fence_closed() {
         after > code_end,
         "following paragraph must sit after the closed block"
     );
+}
+
+#[test]
+fn markdown_include_line_range_with_ranges() {
+    // `{2,3-4}` = lines 2, 3 and 4 — a hyphen range inside the spec must
+    // select its lines, not silently fall through to EOF
+    let out = include_site(
+        &[("parts/ranged.md", "l1\nl2\nl3\nl4\nl5\n")],
+        "<!--@include: ./parts/ranged.md{2,3-4}-->\n",
+    );
+    assert!(
+        out.html.contains("l2") && out.html.contains("l3") && out.html.contains("l4"),
+        "lines 2, 3, 4 selected"
+    );
+    assert!(
+        !out.html.contains("l1") && !out.html.contains("l5"),
+        "range bounds respected"
+    );
+}
+
+#[test]
+fn alert_quote_lazy_continuation_stays_inside() {
+    // a wrapped line without `>` is paragraph continuation text inside
+    // the quote (CommonMark/GFM lazy continuation), not a paragraph
+    // after the container
+    let out = synthetic("> [!NOTE]\n> Applies to version 2 and\nlater versions only.\n\nafter\n");
+    let note_start = out.html.find("custom-block note").expect("note container");
+    let note_close = out.html[note_start..].find("</div>").expect("note closed") + note_start;
+    let later = out
+        .html
+        .find("later versions only.")
+        .expect("continuation text kept");
+    assert!(
+        note_start < later && later < note_close,
+        "lazy line stays inside the container"
+    );
+    // constructs that can interrupt a paragraph still end the quote
+    let out = synthetic("> [!NOTE]\n> point\n- a list item\n");
+    let note_start = out.html.find("custom-block note").expect("note container");
+    let note_close = out.html[note_start..].find("</div>").expect("note closed") + note_start;
+    let list = out.html.find("<li>").expect("list rendered");
+    assert!(
+        list > note_close,
+        "a list after the quote is not absorbed"
+    );
+}
+
+#[test]
+fn code_include_read_failure_fails_render() {
+    // a typo'd <<< target used to ship the literal directive line (a
+    // <<< line inside a fence is verbatim by design; the directive form
+    // stands alone and generates its own fence)
+    let err = match include_site_result(
+        &[("keep.txt", "x\n")],
+        "before\n\n<<< @/no-such-file.js\n\nafter\n",
+    ) {
+        Ok(_) => panic!("a missing snippet must fail the render"),
+        Err(e) => e,
+    };
+    assert!(err.to_string().contains("no-such-file"), "{err}");
+}
+
+#[test]
+fn include_section_miss_fails_render() {
+    // a named section that matches nothing must fail, not emit an
+    // empty include
+    let err = match include_site_result(
+        &[("parts/s.md", "## Real\n\nbody\n")],
+        "<!--@include: ./parts/s.md#no-such-section-->\n",
+    ) {
+        Ok(_) => panic!("a section miss must fail the render"),
+        Err(e) => e,
+    };
+    assert!(err.to_string().contains("no-such-section"), "{err}");
+}
+
+#[test]
+fn broken_theme_toml_fails_engine_init() {
+    // a theme file with a TOML syntax error, or a missing `inherits`
+    // parent, used to be downgraded to an eprintln and silently
+    // produced unstyled code
+    let dir = std::env::temp_dir().join(format!("gd-theme-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("bad.toml"), "styles = [broken").unwrap();
+    let code = rustpress::config::SyntaxHighlight {
+        light: "bad.toml".into(),
+        dark: "bad.toml".into(),
+    };
+    let err = match MarkdownEngine::new(&rustpress::config::Markdown::default(), &code, &dir, "/")
+    {
+        Ok(_) => panic!("a broken theme file fails the engine"),
+        Err(e) => e,
+    };
+    assert!(
+        err.to_string().contains("bad.toml"),
+        "error names the theme: {err}"
+    );
+
+    // a missing `inherits` parent is the same silent--unstyled class
+    std::fs::write(
+        dir.join("child.toml"),
+        "inherits = \"no-such-parent.toml\"\n",
+    )
+    .unwrap();
+    let code = rustpress::config::SyntaxHighlight {
+        light: "child.toml".into(),
+        dark: "child.toml".into(),
+    };
+    let err = match MarkdownEngine::new(&rustpress::config::Markdown::default(), &code, &dir, "/")
+    {
+        Ok(_) => panic!("a missing inherits parent fails the engine"),
+        Err(e) => e,
+    };
+    assert!(
+        err.to_string().contains("no-such-parent"),
+        "error names the parent: {err}"
+    );
+    std::fs::remove_dir_all(&dir).ok();
 }
 
 #[test]

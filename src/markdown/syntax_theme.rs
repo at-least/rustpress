@@ -36,7 +36,7 @@ pub fn helix_src(name: &str) -> Option<&'static str> {
 /// Built-in Helix theme by name.
 pub fn helix_builtin(name: &str) -> Option<SyntaxTheme> {
     let src = helix_src(name)?;
-    Some(load_chain(src, Some(name), Path::new(".")))
+    load_chain(src, Some(name), Path::new(".")).ok()
 }
 /// How many Helix themes are embedded.
 pub fn helix_count() -> usize {
@@ -206,7 +206,7 @@ pub fn load(path: &Path) -> Result<SyntaxTheme, ThemeError> {
         .map_err(|e| ThemeError::Parse(format!("cannot read {}: {e}", path.display())))?;
     let name = path.to_string_lossy().into_owned();
     let base = base_dir_of(path);
-    Ok(load_chain(&src, Some(&name), &base))
+    load_chain(&src, Some(&name), &base)
 }
 
 fn base_dir_of(path: &Path) -> PathBuf {
@@ -218,10 +218,10 @@ fn base_dir_of(path: &Path) -> PathBuf {
 /// (leaf wins on name clashes) and ALL styles resolve against the final
 /// merged palette — Helix semantics (gruvbox_dark_hard's bg0 override
 /// recolors gruvbox's own ui.background too).
-fn load_chain(src: &str, name: Option<&str>, base_dir: &Path) -> SyntaxTheme {
+fn load_chain(src: &str, name: Option<&str>, base_dir: &Path) -> Result<SyntaxTheme, ThemeError> {
     let mut chain: Vec<RawTheme> = Vec::new();
     let mut visiting: Vec<String> = Vec::new();
-    collect_chain(src, name, base_dir, &mut visiting, &mut chain);
+    collect_chain(src, name, base_dir, &mut visiting, &mut chain)?;
 
     // phase 1: merge every palette down the chain (leaf wins on clashes)
     let mut palette: BTreeMap<String, String> = BTreeMap::new();
@@ -241,7 +241,7 @@ fn load_chain(src: &str, name: Option<&str>, base_dir: &Path) -> SyntaxTheme {
             }
         }
     }
-    theme
+    Ok(theme)
 }
 
 fn collect_chain(
@@ -250,32 +250,32 @@ fn collect_chain(
     base_dir: &Path,
     visiting: &mut Vec<String>,
     out: &mut Vec<RawTheme>,
-) {
+) -> Result<(), ThemeError> {
     let key = name
         .map(|n| n.to_string())
         .unwrap_or_else(|| src.chars().take(32).collect());
     if visiting.contains(&key) {
-        return; // cycle: stop here
+        return Err(ThemeError::Cycle(key));
     }
     visiting.push(key.clone());
-    let raw = match RawTheme::parse(src) {
-        Ok(raw) => raw,
-        Err(e) => {
-            eprintln!("rustpress: skipping theme ({key}): {e}");
-            return;
-        }
-    };
+    let raw = RawTheme::parse(src)
+        .map_err(|e| ThemeError::Parse(format!("{key}: {e}")))?;
     if let Some(parent) = &raw.inherits {
         // parent may be another vendored Helix theme or a .toml file
         if parent.ends_with(".toml") {
-            if let Ok(src) = std::fs::read_to_string(base_dir.join(parent)) {
-                collect_chain(&src, Some(parent), base_dir, visiting, out);
-            }
-        } else if let Some(src) = helix_src(parent) {
-            collect_chain(src, Some(parent), base_dir, visiting, out);
+            let src = std::fs::read_to_string(base_dir.join(parent)).map_err(|e| {
+                ThemeError::UnknownInherit(format!("{parent}: cannot read ({e})"))
+            })?;
+            collect_chain(&src, Some(parent), base_dir, visiting, out)?;
+        } else {
+            let Some(src) = helix_src(parent) else {
+                return Err(ThemeError::UnknownInherit(parent.clone()));
+            };
+            collect_chain(src, Some(parent), base_dir, visiting, out)?;
         }
     }
     out.push(raw);
+    Ok(())
 }
 
 /// One resolved capture style, JSON-shaped for the gallery index; absent
@@ -352,7 +352,7 @@ pub fn gallery_entries() -> Vec<GalleryEntry> {
     names
         .into_iter()
         .filter_map(|name| {
-            let theme = load_chain(helix_src(&name)?, Some(&name), Path::new("."));
+            let theme = load_chain(helix_src(&name)?, Some(&name), Path::new(".")).ok()?;
             if theme.is_empty() {
                 return None;
             }
@@ -389,7 +389,7 @@ mod tests {
 
     #[test]
     fn parses_shorthand_and_full_forms() {
-        let t = load_chain(BASE, Some("test"), Path::new("."));
+        let t = load_chain(BASE, Some("test"), Path::new(".")).unwrap();
         assert_eq!(t.resolve("keyword").unwrap().fg.as_deref(), Some("#d73a49"));
         assert!(t.resolve("comment").unwrap().italic);
     }
