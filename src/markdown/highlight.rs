@@ -630,6 +630,11 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
                 // a source ending in a newline produces one trailing empty
                 // start; it has no content and no notation entry
                 starts.retain(|&s| s < bytes.len() || s == 0);
+                // an empty source has no lines at all: the phantom start
+                // at 0 would index notation_classes out of bounds
+                if bytes.is_empty() {
+                    starts.clear();
+                }
                 for (idx, &start) in starts.iter().enumerate() {
                     let next = starts.get(idx + 1).copied().unwrap_or(bytes.len());
                     // the newline goes BETWEEN the line spans, never inside:

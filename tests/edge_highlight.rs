@@ -87,6 +87,33 @@ fn percent(s: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
+#[test]
+fn empty_code_with_grammar_renders_no_lines() {
+    // a placeholder ```js fence with no content used to panic with
+    // "index out of bounds: the len is 0 but the index is 0": the
+    // phantom first-line start survived the retain on an empty source
+    // and indexed the empty notation_classes
+    let mut out = String::new();
+    GdCodeRenderer::default()
+        .write(&mut out, "gdcode", "lang=js", "", None)
+        .unwrap();
+    assert!(out.contains("<code"), "still a code block: {out:?}");
+    assert!(
+        !out.contains("<span class=\"line\">"),
+        "an empty source has no lines: {out:?}"
+    );
+
+    // same for an empty fence carrying hl / line-number specs
+    let mut out = String::new();
+    GdCodeRenderer::default()
+        .write(&mut out, "gdcode", "lang=js hl=1 ln=true", "", None)
+        .unwrap();
+    assert!(
+        !out.contains("<span class=\"line\">"),
+        "specs change nothing on an empty source: {out:?}"
+    );
+}
+
 /// `.line` is an inline-block inside a `white-space: pre` container, so
 /// lines only stack when the newline sits BETWEEN the spans (Shiki's
 /// layout); a newline inside the span leaves every line on one row.

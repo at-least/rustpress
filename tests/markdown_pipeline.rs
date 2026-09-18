@@ -440,6 +440,27 @@ fn include_directive_inside_code_fence_inserts_verbatim() {
 }
 
 #[test]
+fn fence_include_without_trailing_newline_keeps_fence_closed() {
+    // the included file's last line has no trailing newline: the closing
+    // fence must still close the block instead of gluing onto the
+    // inserted content and swallowing the rest of the page
+    let out = include_site(
+        &[("snip2.txt", "raw text line")],
+        "```md\n<!--@include: ./snip2.txt-->\n```\n\nafter the fence\n",
+    );
+    assert!(out.html.contains("raw text line"), "include expanded");
+    let code_end = out.html.find("</code></pre>").expect("code block closed");
+    let after = out
+        .html
+        .find("after the fence")
+        .expect("rest of the page kept");
+    assert!(
+        after > code_end,
+        "following paragraph must sit after the closed block"
+    );
+}
+
+#[test]
 fn inline_footnotes_render() {
     let out = include_site(
         &[],

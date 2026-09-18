@@ -88,8 +88,14 @@ impl<'a> Preprocess<'a> {
             if let Some((ch, n)) = fence {
                 if let Some(target) = md_include_target(t) {
                     // verbatim insertion — the raw selected lines join
-                    // the code block content
-                    out.push_str(&self.load_include(&target, &page_dir, depth)?);
+                    // the code block content; a missing final newline is
+                    // restored or the inserted text glues onto the next
+                    // source line (typically the closing fence)
+                    let resolved = self.load_include(&target, &page_dir, depth)?;
+                    out.push_str(&resolved);
+                    if !resolved.ends_with('\n') {
+                        out.push('\n');
+                    }
                 } else {
                     out.push_str(line);
                     if is_closing_fence(bare, ch, n) {
