@@ -1064,3 +1064,43 @@ fn unclosed_tilde_fence_with_include_flushes_intact() {
     );
     assert!(out.html.contains("~~~"), "tilde runs kept as content");
 }
+
+#[test]
+fn ordered_marker_fences_carry_indent_too() {
+    // `10. ` has a four-column content indent: the inserted lines must
+    // land at column 4 or they fall out of the item
+    let out = include_site(
+        &[("fenced5.md", "```js\nx\n```\n")],
+        "10. ```md\n    <!--@include: ./fenced5.md-->\n    ```\n\nAFTER\n",
+    );
+    assert!(out.html.contains("<ol"), "ordered list kept: {}", out.html);
+    assert_eq!(
+        out.html.matches("<pre").count(),
+        1,
+        "single code block, no breakout: {}",
+        out.html
+    );
+    let li = out.html.find("<li>").expect("list item");
+    let li_end = out.html.find("</li>").expect("list item closed");
+    let pre = out.html.find("<pre").expect("code block");
+    let after = out.html.find("<p>AFTER</p>").expect("AFTER paragraph");
+    assert!(
+        li < pre && pre < li_end,
+        "block inside the item: {}",
+        out.html
+    );
+    assert!(after > li_end, "AFTER after the list: {}", out.html);
+}
+
+#[test]
+fn unclosed_list_marker_fence_flushes_with_indent() {
+    // pad + EOF flush combined: an unclosed marker-line fence whose
+    // include carries a closer must still contain the whole body
+    let out = include_site(
+        &[("open3.md", "```js\nx\n```\n")],
+        "- ```md\n  <!--@include: ./open3.md-->\n",
+    );
+    assert!(out.html.contains("<ul>"), "list kept: {}", out.html);
+    assert!(out.html.contains(">x<"), "include content present as code");
+    assert!(!out.html.contains("<p>x"), "x must not become a paragraph");
+}

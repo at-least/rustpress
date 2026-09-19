@@ -128,10 +128,12 @@ impl<'a> Preprocess<'a> {
                 continue;
             }
             if let Some((ch, n)) = opening_fence(bare) {
-                // the block's content column: everything before the
-                // marker run, re-expressed as spaces (the list marker's
-                // own characters become equivalent indent)
-                let column = fence_info_offset(bare, n) - n;
+                // the block's content column is the column of the fence
+                // marker itself (for `10. ` that is 4, for `- ` that is
+                // 2), re-expressed as spaces; content lines may be
+                // indented up to the opener's indentation without
+                // changing their content, so this is always safe
+                let column = bare.find(ch).unwrap_or(0);
                 fence = Some((ch, n, " ".repeat(column)));
                 opener_line = Some(line.to_string());
                 continue;
