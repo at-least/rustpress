@@ -1103,4 +1103,20 @@ fn unclosed_list_marker_fence_flushes_with_indent() {
     assert!(out.html.contains("<ul>"), "list kept: {}", out.html);
     assert!(out.html.contains(">x<"), "include content present as code");
     assert!(!out.html.contains("<p>x"), "x must not become a paragraph");
+    // structural: exactly one block, and it stays inside the list item
+    // (without the pad these fail: the injected closer ends the item)
+    assert_eq!(
+        out.html.matches("<pre").count(),
+        1,
+        "single code block: {}",
+        out.html
+    );
+    let li = out.html.find("<li>").expect("list item");
+    let li_end = out.html.find("</li>").expect("list item closed");
+    let pre = out.html.find("<pre").expect("code block");
+    assert!(
+        li < pre && pre < li_end,
+        "block inside the item: {}",
+        out.html
+    );
 }
