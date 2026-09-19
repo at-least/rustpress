@@ -538,3 +538,21 @@ fn childless_non_void_head_tags_do_not_self_close() {
     assert!(!home.contains("<title/>"), "no self-closed title");
     assert!(home.contains("<link"), "void tag still emitted");
 }
+
+#[test]
+fn mathjax_is_pinned_with_integrity() {
+    // the CDN script executes on every math page: a floating version
+    // tag plus a missing integrity attribute meant a CDN compromise or
+    // surprise upgrade shipped straight into built sites
+    let (_, out) = build_site(
+        "title = \"T\"\n[markdown]\nmath = true\n",
+        &[("index.md", "# H\n\n$x$\n")],
+    );
+    let home = page(&out, "/");
+    assert!(home.contains("mathjax@3.2.2/"), "version pinned");
+    assert!(
+        home.contains("integrity=\"sha384-"),
+        "integrity attribute present"
+    );
+    assert!(home.contains("crossorigin=\"anonymous\""), "crossorigin set");
+}

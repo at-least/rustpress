@@ -163,7 +163,12 @@ window.MathJax = {
   svg: { fontCache: "global" }
 };
 </script>
-<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>"#;
+// MathJax is the one unvendored runtime dependency. The URL pins the
+// exact version (a floating @3 would break the integrity hash on the
+// next release); re-derive the hash with
+//   curl -L https://cdn.jsdelivr.net/npm/mathjax@<v>/es5/tex-svg.js \
+//     | openssl dgst -sha384 -binary | openssl base64 -A
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" integrity="sha384-KKWa9jJ1MZvssLeOoXG6FiOAZfAgmzsIIfw8BXwI9+kYm0lPCbC6yTQPBC00F1/L" crossorigin="anonymous"></script>"#;
 
 /// Serialize the `[[head]]` config tags to raw HTML.
 pub(crate) fn serialize_head_tags_to_string(tags: &[crate::config::HeadTag]) -> String {
