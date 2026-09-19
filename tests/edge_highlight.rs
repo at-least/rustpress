@@ -145,3 +145,37 @@ fn newlines_sit_between_line_spans() {
         );
     }
 }
+
+#[test]
+fn theme_color_values_must_be_css_hex() {
+    // theme files are third-party data interpolated straight into
+    // syntax.css; an off-hex value must fail the theme load, not reach
+    // the emitted stylesheet
+    let dir = std::env::temp_dir().join(format!("gd-theme-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let theme = dir.join("evil.toml");
+    std::fs::write(
+        &theme,
+        "theme = \"evil\"\n\n[palette]\nred0 = \"#fff; } html { display:none } x{ color:#000\"\n\n[\"keyword\"]\nfg = \"red0\"\n",
+    )
+    .unwrap();
+    let err = rustpress::markdown::syntax_theme::load(&theme).unwrap_err();
+    assert!(
+        err.to_string().contains("invalid color"),
+        "junk palette value must fail the load: {err}"
+    );
+
+    // hex literals get the same gate
+    std::fs::write(
+        &theme,
+        "theme = \"evil\"\n\n[\"keyword\"]\nfg = \"#fff; } html { display:none } x{ color:#000\"\n",
+    )
+    .unwrap();
+    let err = rustpress::markdown::syntax_theme::load(&theme).unwrap_err();
+    assert!(
+        err.to_string().contains("invalid color"),
+        "junk literal must fail the load: {err}"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}

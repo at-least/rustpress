@@ -241,7 +241,33 @@ fn load_chain(src: &str, name: Option<&str>, base_dir: &Path) -> Result<SyntaxTh
             }
         }
     }
+    validate_colors(&theme, name.as_deref().unwrap_or("theme"))?;
+
     Ok(theme)
+}
+
+/// Every resolved color must be a CSS hex form (`#rgb`, `#rgba`,
+/// `#rrggbb`, `#rrggbbaa`). Theme files are third-party data (the ~220
+/// vendored Helix themes among them); an unvalidated value would be
+/// interpolated straight into `syntax.css`, so junk fails the load
+/// naming the scope instead of reaching the emitted stylesheet.
+fn validate_colors(theme: &SyntaxTheme, name: &str) -> Result<(), ThemeError> {
+    let valid = |c: &str| {
+        let hex = c.strip_prefix('#').unwrap_or("");
+        matches!(hex.len(), 3 | 4 | 6 | 8)
+            && hex.bytes().all(|b| b.is_ascii_hexdigit())
+            && c.starts_with('#')
+    };
+    for style in theme.styles.values() {
+        for slot in [&style.fg, &style.bg].into_iter().flatten() {
+            if !valid(slot) {
+                return Err(ThemeError::Parse(format!(
+                    "{name}: invalid color value {slot:?} (expected #rgb/#rgba/#rrggbb/#rrggbbaa)"
+                )));
+            }
+        }
+    }
+    Ok(())
 }
 
 fn collect_chain(
