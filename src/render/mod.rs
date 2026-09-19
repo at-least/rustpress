@@ -276,8 +276,11 @@ impl Site {
             match result {
                 Ok(stats) => {
                     // retire the old output before swapping the staging
-                    // dir in: whatever fails, one of the two is always in
-                    // place at out_dir — never neither
+                    // dir in. The two renames are not atomic as a pair:
+                    // a request landing between them finds neither at
+                    // out_dir and gets the dev server's 404 page for an
+                    // instant (a failed second rename restores the old
+                    // output below).
                     let retired = out_dir.with_extension("rustpress-old");
                     remove_tree(&retired)?;
                     match std::fs::rename(out_dir, &retired) {
