@@ -302,7 +302,10 @@ fn frontmatter_sidebar_false_hides_the_sidebar_element() {
     let bare = page(&out, "/guide/bare/");
     assert!(!bare.contains("id=\"VPSidebar\""), "sidebar element hidden");
     let normal = page(&out, "/guide/normal/");
-    assert!(normal.contains("id=\"VPSidebar\""), "sidebar kept on normal pages");
+    assert!(
+        normal.contains("id=\"VPSidebar\""),
+        "sidebar kept on normal pages"
+    );
 }
 
 #[test]
@@ -554,5 +557,8 @@ fn mathjax_is_pinned_with_integrity() {
         home.contains("integrity=\"sha384-"),
         "integrity attribute present"
     );
-    assert!(home.contains("crossorigin=\"anonymous\""), "crossorigin set");
+    assert!(
+        home.contains("crossorigin=\"anonymous\""),
+        "crossorigin set"
+    );
 }

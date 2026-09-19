@@ -6,7 +6,6 @@ use hypertext::{Raw, prelude::*};
 
 use super::Site;
 use super::icons::icon;
-use crate::config::SocialIcon;
 use crate::content::Page;
 use crate::content::{Feature, HeroAction};
 

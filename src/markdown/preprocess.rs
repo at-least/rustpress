@@ -78,12 +78,7 @@ impl<'a> Preprocess<'a> {
     /// `#section` (VS Code region or heading anchor) and an optional
     /// `{a,b}` line range; inside code fences the directive inserts the
     /// selected lines verbatim (upstream "Including Code Files").
-    fn resolve_includes(
-        &self,
-        md: &str,
-        dir: &Path,
-        depth: u8,
-    ) -> Result<String, PreprocessError> {
+    fn resolve_includes(&self, md: &str, dir: &Path, depth: u8) -> Result<String, PreprocessError> {
         let mut out = String::with_capacity(md.len());
         // An open fence is buffered instead of streamed: its body can
         // gain lines from a fenced `@include`, and if those lines carry
@@ -98,8 +93,7 @@ impl<'a> Preprocess<'a> {
             let t = bare.trim();
             if let Some((ch, n)) = fence {
                 if is_closing_fence(bare, ch, n) {
-                    let len = longest_closing_run(&body, ch, n)
-                        .map_or(n, |run| run.max(n) + 1);
+                    let len = longest_closing_run(&body, ch, n).map_or(n, |run| run.max(n) + 1);
                     out.push_str(&lengthen_fence(
                         &opener_line.take().expect("open fence has an opener line"),
                         ch,

@@ -258,37 +258,38 @@ fn resolve_marked_anchors(html: &str, page: &Page, content: &Content, base: &str
     static HREF: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
     let anchor = ANCHOR.get_or_init(|| regex::Regex::new(r#"<a\b([^>]*)>"#).unwrap());
     let href = HREF.get_or_init(|| regex::Regex::new(r#"\s?href="([^"]*)""#).unwrap());
-    anchor.replace_all(html, |c: &regex::Captures| {
-        let attrs = &c[1];
-        if !attrs.contains("data-gd-mdlink") {
-            return c[0].to_string();
-        }
-        let raw = href
-            .captures(attrs)
-            .map(|h| unescape_minimal(&h[1]))
-            .unwrap_or_default();
-        let resolved = resolve_relative(&raw, &page.rel, content)
-            .or_else(|| resolve_root(&raw, content));
-        let url = resolved
-            .map(|r| with_base(base, &r))
-            .unwrap_or_else(|| with_base(base, &raw));
-        let unmarked = attrs.replace("data-gd-mdlink", "");
-        let rest = href.replace_all(&unmarked, "");
-        let mut rest = rest.trim().to_string();
-        while let Some(stripped) = rest.strip_prefix("href=") {
-            rest = stripped.to_string();
-        }
-        format!(
-            r#"<a href="{}"{}>"#,
-            preprocess::escape_text(&url),
-            if rest.is_empty() {
-                String::new()
-            } else {
-                format!(" {rest}")
+    anchor
+        .replace_all(html, |c: &regex::Captures| {
+            let attrs = &c[1];
+            if !attrs.contains("data-gd-mdlink") {
+                return c[0].to_string();
             }
-        )
-    })
-    .into_owned()
+            let raw = href
+                .captures(attrs)
+                .map(|h| unescape_minimal(&h[1]))
+                .unwrap_or_default();
+            let resolved =
+                resolve_relative(&raw, &page.rel, content).or_else(|| resolve_root(&raw, content));
+            let url = resolved
+                .map(|r| with_base(base, &r))
+                .unwrap_or_else(|| with_base(base, &raw));
+            let unmarked = attrs.replace("data-gd-mdlink", "");
+            let rest = href.replace_all(&unmarked, "");
+            let mut rest = rest.trim().to_string();
+            while let Some(stripped) = rest.strip_prefix("href=") {
+                rest = stripped.to_string();
+            }
+            format!(
+                r#"<a href="{}"{}>"#,
+                preprocess::escape_text(&url),
+                if rest.is_empty() {
+                    String::new()
+                } else {
+                    format!(" {rest}")
+                }
+            )
+        })
+        .into_owned()
 }
 
 /// Reverse the minimal attribute escaping the raw-anchor emitters apply
@@ -303,7 +304,8 @@ fn unescape_minimal(s: &str) -> String {
 /// Join the site `base` onto a root-absolute URL (`/guide/` → `/base/guide/`);
 /// anything else — relative, external, protocol-relative (`//host`),
 /// anchor, mailto — is returned unchanged.
-pub fn with_base(base: &str, url: &str) -> String {    let base = base.trim_end_matches('/');
+pub fn with_base(base: &str, url: &str) -> String {
+    let base = base.trim_end_matches('/');
     if base.is_empty() || !url.starts_with('/') || url.starts_with("//") {
         return url.to_string();
     }

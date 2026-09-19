@@ -516,7 +516,11 @@ fn two_fenced_includes_still_leave_one_block() {
         &[("a.md", "```\np\n```\n"), ("b.md", "```\nq\n```\n")],
         "```md\n<!--@include: ./a.md-->\n<!--@include: ./b.md-->\n```\n\nTAIL\n",
     );
-    assert!(out.html.contains("<p>TAIL</p>"), "tail intact: {}", out.html);
+    assert!(
+        out.html.contains("<p>TAIL</p>"),
+        "tail intact: {}",
+        out.html
+    );
     assert_eq!(out.html.matches("<pre").count(), 1, "single block");
 }
 
@@ -528,7 +532,11 @@ fn unclosed_fence_with_include_flushes_verbatim() {
         &[("loose.md", "text\n")],
         "opening line\n```md\n<!--@include: ./loose.md-->\nstill inside\n",
     );
-    assert!(out.html.contains("still inside"), "body flushed: {}", out.html);
+    assert!(
+        out.html.contains("still inside"),
+        "body flushed: {}",
+        out.html
+    );
     assert!(out.html.contains("text"), "include flushed");
 }
 

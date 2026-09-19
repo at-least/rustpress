@@ -241,7 +241,7 @@ fn load_chain(src: &str, name: Option<&str>, base_dir: &Path) -> Result<SyntaxTh
             }
         }
     }
-    validate_colors(&theme, name.as_deref().unwrap_or("theme"))?;
+    validate_colors(&theme, name.unwrap_or("theme"))?;
 
     Ok(theme)
 }

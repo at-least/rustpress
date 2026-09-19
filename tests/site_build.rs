@@ -842,10 +842,7 @@ fn sitemap_and_search_urls_are_percent_encoded() {
     );
     assert!(!xml.contains("a b/"), "raw space in sitemap: {xml}");
     let docs = std::fs::read_to_string(out.join("search-docs.json")).unwrap();
-    assert!(
-        docs.contains("/guide/a%20b/"),
-        "encoded search URL: {docs}"
-    );
+    assert!(docs.contains("/guide/a%20b/"), "encoded search URL: {docs}");
 }
 
 #[test]

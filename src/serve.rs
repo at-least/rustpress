@@ -121,7 +121,10 @@ const DEBOUNCE: std::time::Duration = std::time::Duration::from_millis(100);
 fn is_build_output(paths: &[PathBuf], public: &Path) -> bool {
     let swap_prefix = format!(
         "{}.rustpress-",
-        public.file_name().and_then(|n| n.to_str()).unwrap_or_default()
+        public
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or_default()
     );
     paths.iter().all(|p| {
         if p.starts_with(public) {
@@ -401,7 +404,10 @@ mod tests {
         let public = site.join("public");
         let output = |rel: &str| vec![site.join(rel)];
         assert!(is_build_output(&output("public/index.html"), &public));
-        assert!(is_build_output(&output("public.rustpress-tmp/x.html"), &public));
+        assert!(is_build_output(
+            &output("public.rustpress-tmp/x.html"),
+            &public
+        ));
         assert!(
             is_build_output(&output("public.rustpress-old/404.html"), &public),
             "the retired dir's removal events must be filtered or serve rebuild-storms"

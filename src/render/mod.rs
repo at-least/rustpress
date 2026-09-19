@@ -558,25 +558,32 @@ impl Site {
         Ok(html)
     }
 
-/// Percent-encode a page URL for emission (sitemap `<loc>`, the search
-/// index): `/` separators and `&` (a reserved sub-delim, valid raw in a
-/// path and XML-escaped separately) pass through; spaces, non-ASCII
-/// bytes and `%` itself go out as `%XX`, so the emitted form is a valid
-/// RFC 3986 URL.
-fn percent_encode_url(url: &str) -> String {
-    let mut out = String::with_capacity(url.len());
-    for b in url.bytes() {
-        match b {
-            b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' | b'/'
-            | b'&' => out.push(b as char),
-            _ => out.push_str(&format!("%{b:02X}")),
+    /// Percent-encode a page URL for emission (sitemap `<loc>`, the search
+    /// index): `/` separators and `&` (a reserved sub-delim, valid raw in a
+    /// path and XML-escaped separately) pass through; spaces, non-ASCII
+    /// bytes and `%` itself go out as `%XX`, so the emitted form is a valid
+    /// RFC 3986 URL.
+    fn percent_encode_url(url: &str) -> String {
+        let mut out = String::with_capacity(url.len());
+        for b in url.bytes() {
+            match b {
+                b'a'..=b'z'
+                | b'A'..=b'Z'
+                | b'0'..=b'9'
+                | b'-'
+                | b'.'
+                | b'_'
+                | b'~'
+                | b'/'
+                | b'&' => out.push(b as char),
+                _ => out.push_str(&format!("%{b:02X}")),
+            }
         }
+        out
     }
-    out
-}
 
-/// sitemap.xml from every page URL, lastmod from the page timestamps.
-fn sitemap_xml(&self, hostname: &str) -> String {
+    /// sitemap.xml from every page URL, lastmod from the page timestamps.
+    fn sitemap_xml(&self, hostname: &str) -> String {
         fn xml_escape(s: &str) -> String {
             s.replace('&', "&amp;")
                 .replace('<', "&lt;")
@@ -835,12 +842,15 @@ pub enum BuildError {
 fn find_dead_links(html: &str, page: &Page, site: &Site) -> Vec<String> {
     static HREF: OnceLock<regex::Regex> = OnceLock::new();
     // raw HTML may quote attribute values with either quote style
-    let re = HREF.get_or_init(|| {
-        regex::Regex::new(r#"(?:href|src)=(?:"([^"]+)"|'([^']+)')"#).unwrap()
-    });
+    let re =
+        HREF.get_or_init(|| regex::Regex::new(r#"(?:href|src)=(?:"([^"]+)"|'([^']+)')"#).unwrap());
     let mut out = Vec::new();
     for cap in re.captures_iter(html) {
-        let raw = cap.get(1).or_else(|| cap.get(2)).map(|m| m.as_str()).unwrap_or_default();
+        let raw = cap
+            .get(1)
+            .or_else(|| cap.get(2))
+            .map(|m| m.as_str())
+            .unwrap_or_default();
         if is_external_or_fragment(raw) {
             continue;
         }
