@@ -155,7 +155,7 @@ Theme files map dotted tree-sitter capture scopes to colors, support `[palette]`
 
 ## Caveats
 
-- Requires `cargo` 1.85+; Node 18+ only for rebuilding the CSS/JS assets (the built artifacts are committed).
+- Requires `cargo` 1.85+; Node 18+ only for rebuilding the CSS/JS assets — they are built once with `npm` (not committed) and embedded at compile time (see above).
 - CJK search recall is whitespace-tokenization-grade, same as before.
 - Math typesetting runs client-side (MathJax tex-svg from a CDN, injected only on pages containing math) — VitePress renders it at build time.
 - Team page/sponsors, Algolia/Carbon ads (external services), and the
