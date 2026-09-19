@@ -959,3 +959,45 @@ fn shiki_style_line_notations_become_line_classes() {
         out.html
     );
 }
+
+#[test]
+fn unclosed_fence_with_include_cannot_be_broken_out_of() {
+    // even with no author closer, the included partial's own closing
+    // run must not terminate the (opener-lengthened) fence: the rest
+    // of the page stays code, not live markdown
+    let out = include_site(
+        &[("open.md", "```js\nx\n```\n")],
+        "```md\n<!--@include: ./open.md-->\nAFTER\n",
+    );
+    assert!(
+        !out.html.contains("<p>AFTER"),
+        "AFTER must stay inside the code block: {}",
+        out.html
+    );
+}
+
+#[test]
+fn attrs_values_with_angle_brackets_survive_the_post_pass() {
+    // the marked-anchor post-pass stops at the first '>'; attr values
+    // must be entity-escaped so a '>' inside a title cannot truncate
+    // the tag and leak the rest as text
+    let out = include_site(&[], "[t](/other/){title=\"a>b\"}\n");
+    assert!(
+        out.html.contains("title=\"a&gt;b\""),
+        "value escaped: {}",
+        out.html
+    );
+    assert!(!out.html.contains("\"> "), "no leaked markup: {}", out.html);
+}
+
+#[test]
+fn custom_heading_strip_handles_escaped_id_text() {
+    // an id containing & renders as &amp; inside the heading text; the
+    // {#…} literal must still be stripped from the visible text
+    let out = synthetic("## T {#a&b}\n");
+    assert!(
+        !out.html.contains("{#a"),
+        "literal attribute stripped: {}",
+        out.html
+    );
+}

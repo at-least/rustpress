@@ -163,10 +163,16 @@ impl<'a> Preprocess<'a> {
             }
             out.push_str(line);
         }
-        // an unclosed fence runs to EOF — no closer exists, so nothing
-        // can break out; flush the buffer verbatim
+        // an unclosed fence runs to EOF. The body can still carry a
+        // closer smuggled in by an include, so the opener must grow
+        // past it exactly like a closed fence's would
         if let Some(opener) = opener_line.take() {
-            out.push_str(&opener);
+            if let Some((ch, n)) = fence {
+                let len = longest_closing_run(&body, ch, n).map_or(n, |run| run.max(n) + 1);
+                out.push_str(&lengthen_fence(&opener, ch, len));
+            } else {
+                out.push_str(&opener);
+            }
             out.push_str(&body);
         }
         Ok(out)
@@ -697,12 +703,20 @@ pub fn rewrite_link_attrs(md: &str) -> String {
 }
 
 /// `k="v" k2="v2"` → ` k="v" k2="v2"` with sanitized names/values.
+/// Values are fully entity-escaped (`& < > "`): the marked-anchor
+/// post-pass matches `<a …>` with a first-`>` regex, and a raw `>`
+/// inside a quoted value would truncate the tag there.
 fn parse_attrs(raw: &str) -> String {
     static PAIR: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
     let pair = PAIR.get_or_init(|| Regex::new(r#"([a-zA-Z-]+)="([^"]*)""#).unwrap());
     let mut out = String::new();
     for c in pair.captures_iter(raw) {
-        out.push_str(&format!(r#" {}="{}""#, &c[1], c[2].replace('"', "&quot;")));
+        let value = c[2]
+            .replace('&', "&amp;")
+            .replace('"', "&quot;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;");
+        out.push_str(&format!(r#" {}="{}""#, &c[1], value));
     }
     out
 }

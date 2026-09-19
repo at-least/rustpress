@@ -530,7 +530,12 @@ fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
                     &format!("href=\"#{rendered}\""),
                     &format!("href=\"#{escaped}\""),
                 );
-            fixed = fixed.replace(&format!(" {{#{custom}}}"), "");
+            // the literal attribute inside the heading TEXT is
+            // entity-escaped by comrak (& → &amp;), so strip the escaped
+            // form too
+            fixed = fixed
+                .replace(&format!(" {{#{custom}}}"), "")
+                .replace(&format!(" {{#{escaped}}}"), "");
         }
         out.push_str(&rest[..open]);
         out.push_str(&fixed);

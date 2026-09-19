@@ -126,16 +126,19 @@ fn is_build_output(paths: &[PathBuf], public: &Path) -> bool {
             .and_then(|n| n.to_str())
             .unwrap_or_default()
     );
-    paths.iter().all(|p| {
-        if p.starts_with(public) {
-            return true;
-        }
-        p.ancestors().any(|a| {
-            a.file_name()
-                .and_then(|n| n.to_str())
-                .is_some_and(|n| n.starts_with(&swap_prefix))
+    // an empty batch (notify's occasional pathless events) must count
+    // as a change — `all` on an empty iterator would swallow it
+    !paths.is_empty()
+        && paths.iter().all(|p| {
+            if p.starts_with(public) {
+                return true;
+            }
+            p.ancestors().any(|a| {
+                a.file_name()
+                    .and_then(|n| n.to_str())
+                    .is_some_and(|n| n.starts_with(&swap_prefix))
+            })
         })
-    })
 }
 
 static GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
@@ -415,6 +418,13 @@ mod tests {
         assert!(!is_build_output(&output("content/index.md"), &public));
         assert!(!is_build_output(&output("rustpress.toml"), &public));
         assert!(!is_build_output(&output("public-other/x.md"), &public));
+    }
+
+    #[test]
+    fn pathless_watcher_events_still_count_as_changes() {
+        // notify emits the occasional pathless event (rescans, other);
+        // an empty batch must count as a change, not be swallowed
+        assert!(!is_build_output(&[], Path::new("/site/public")));
     }
 
     #[test]
