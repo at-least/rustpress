@@ -314,7 +314,12 @@ mod tests {
     use axum::http::Uri;
 
     fn temp_site() -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rp-serve-test-{}", std::process::id()));
+        static SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let dir = std::env::temp_dir().join(format!(
+            "rp-serve-test-{}-{}",
+            std::process::id(),
+            SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        ));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(dir.join("public/sub")).unwrap();
         std::fs::write(dir.join("public/index.html"), "<html></html>").unwrap();
