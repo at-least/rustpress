@@ -181,13 +181,21 @@ if (!existsSync(join(DIST, 'index.html'))) {
   process.stdout.write(out);
 }
 // stale-build guard: measuring an old build records or checks the
-// wrong values (index.html, not the dir: rewriting files doesn't
-// touch the directory's own mtime)
+// wrong values. Sources compare by NEWEST FILE mtime — a directory's
+// own mtime doesn't move when a file inside is edited (the same trap
+// as index.html above, which the comment warned about)
 {
-  const { statSync } = await import('node:fs');
+  const { statSync, readdirSync } = await import('node:fs');
+  const newest = (p) => {
+    const st = statSync(p);
+    if (st.isFile()) return st.mtimeMs;
+    return readdirSync(p, { withFileTypes: true })
+      .map((e) => newest(join(p, e.name)))
+      .reduce((a, b) => Math.max(a, b), 0);
+  };
   const distMtime = statSync(join(DIST, 'index.html')).mtimeMs;
   for (const src of [CSS_PATH, join(ROOT, 'styles/vitepress.css'), join(ROOT, 'src/render')]) {
-    if (existsSync(src) && statSync(src).mtimeMs > distMtime) {
+    if (existsSync(src) && newest(src) > distMtime) {
       console.error(`parity-viewport: demo/public is older than ${src} — rebuild first (npm run check:demo)`);
       process.exit(1);
     }
