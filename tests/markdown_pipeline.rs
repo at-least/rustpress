@@ -1019,3 +1019,44 @@ fn attrs_values_keep_authored_entities() {
         out.html
     );
 }
+
+#[test]
+fn list_marker_fence_includes_carry_the_content_indent() {
+    // inside a marker-line fence ("- ```md") the block's content column
+    // is the list indent: a column-0 inserted line would end the list
+    // item — and the fenced block with it — no matter how long the
+    // opener marker is (de-indentation, not a closing run)
+    let out = include_site(
+        &[("fenced3.md", "```js\nx\n```\n")],
+        "- ```md\n  <!--@include: ./fenced3.md-->\n  ```\n\nAFTER\n",
+    );
+    assert!(out.html.contains("<ul>"), "list kept: {}", out.html);
+    assert_eq!(
+        out.html.matches("<pre").count(),
+        1,
+        "single code block, no breakout: {}",
+        out.html
+    );
+    // the block sits inside the list item, and the text after the
+    // author's closer stays after it
+    let li = out.html.find("<li>").expect("list item");
+    let li_end = out.html.find("</li>").expect("list item closed");
+    let pre = out.html.find("<pre").expect("code block");
+    let after = out.html.find("<p>AFTER</p>").expect("AFTER paragraph");
+    assert!(li < pre && pre < li_end, "block inside the item: {}", out.html);
+    assert!(after > li_end, "AFTER after the list: {}", out.html);
+}
+
+#[test]
+fn unclosed_tilde_fence_with_include_flushes_intact() {
+    let out = include_site(
+        &[("loose2.md", "~~~js\nx\n~~~\n")],
+        "~~~md\n<!--@include: ./loose2.md-->\nstill inside\n",
+    );
+    assert!(
+        out.html.contains("still inside"),
+        "body flushed: {}",
+        out.html
+    );
+    assert!(out.html.contains("~~~"), "tilde runs kept as content");
+}

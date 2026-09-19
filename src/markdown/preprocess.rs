@@ -85,23 +85,23 @@ impl<'a> Preprocess<'a> {
         // a closing run for the fence, the opener (and the author's own
         // closer) must be emitted longer than it — otherwise the partial
         // closes the fence and everything after it is swallowed as code
-        let mut fence: Option<(char, usize)> = None;
+        let mut fence: Option<(char, usize, String)> = None;
         let mut opener_line: Option<String> = None;
         let mut body = String::new();
         for line in md.split_inclusive('\n') {
             let bare = line.trim_end_matches(['\n', '\r']);
             let t = bare.trim();
-            if let Some((ch, n)) = fence {
-                if is_closing_fence(bare, ch, n) {
-                    let len = longest_closing_run(&body, ch, n).map_or(n, |run| run.max(n) + 1);
+            if let Some((ch, n, pad)) = &fence {
+                if is_closing_fence(bare, *ch, *n) {
+                    let len = longest_closing_run(&body, *ch, *n).map_or(*n, |run| run.max(*n) + 1);
                     out.push_str(&lengthen_fence(
                         &opener_line.take().expect("open fence has an opener line"),
-                        ch,
+                        *ch,
                         len,
                     ));
                     out.push_str(&body);
                     body.clear();
-                    out.push_str(&lengthen_fence(line, ch, len));
+                    out.push_str(&lengthen_fence(line, *ch, len));
                     fence = None;
                     continue;
                 }
@@ -109,9 +109,16 @@ impl<'a> Preprocess<'a> {
                     // verbatim insertion — the raw selected lines join
                     // the code block content; a missing final newline is
                     // restored or the inserted text glues onto the next
-                    // source line (typically the closing fence)
+                    // source line (typically the closing fence). Inside
+                    // a list-item fence the inserted lines must carry
+                    // the block's content column, or their column-0
+                    // position would end the list item — and the fenced
+                    // block with it
                     let resolved = self.load_include(&target, dir, depth)?;
-                    body.push_str(&resolved);
+                    for l in resolved.split_inclusive('\n') {
+                        body.push_str(pad);
+                        body.push_str(l);
+                    }
                     if !resolved.ends_with('\n') {
                         body.push('\n');
                     }
@@ -121,7 +128,11 @@ impl<'a> Preprocess<'a> {
                 continue;
             }
             if let Some((ch, n)) = opening_fence(bare) {
-                fence = Some((ch, n));
+                // the block's content column: everything before the
+                // marker run, re-expressed as spaces (the list marker's
+                // own characters become equivalent indent)
+                let column = fence_info_offset(bare, n) - n;
+                fence = Some((ch, n, " ".repeat(column)));
                 opener_line = Some(line.to_string());
                 continue;
             }
@@ -167,9 +178,9 @@ impl<'a> Preprocess<'a> {
         // closer smuggled in by an include, so the opener must grow
         // past it exactly like a closed fence's would
         if let Some(opener) = opener_line.take() {
-            if let Some((ch, n)) = fence {
-                let len = longest_closing_run(&body, ch, n).map_or(n, |run| run.max(n) + 1);
-                out.push_str(&lengthen_fence(&opener, ch, len));
+            if let Some((ch, n, _pad)) = &fence {
+                let len = longest_closing_run(&body, *ch, *n).map_or(*n, |run| run.max(*n) + 1);
+                out.push_str(&lengthen_fence(&opener, *ch, len));
             } else {
                 out.push_str(&opener);
             }
