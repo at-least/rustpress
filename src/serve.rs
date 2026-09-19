@@ -183,6 +183,19 @@ fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
         file_path.push(seg);
     }
     if !file_path.is_file() {
+        // VitePress's dev server sends a slash-less directory URL to the
+        // canonical trailing-slash form instead of a bare 404
+        if file_path.is_dir() {
+            let mut location = path.to_string();
+            if !location.ends_with('/') {
+                location.push('/');
+            }
+            if let Some(q) = uri.query() {
+                location.push('?');
+                location.push_str(q);
+            }
+            return redirect(&location);
+        }
         // directory-style 404: serve the custom 404 page
         let not_found = state.root.join("404.html");
         if let Ok(body) = std::fs::read(&not_found) {
@@ -241,6 +254,14 @@ fn plain(status: StatusCode, msg: &str) -> Response {
         .status(status)
         .header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
         .body(Body::from(msg.to_owned()))
+        .unwrap()
+}
+
+fn redirect(location: &str) -> Response {
+    Response::builder()
+        .status(StatusCode::MOVED_PERMANENTLY)
+        .header(header::LOCATION, location)
+        .body(Body::empty())
         .unwrap()
 }
 
@@ -383,5 +404,28 @@ mod tests {
         assert!(!is_build_output(&output("content/index.md"), &public));
         assert!(!is_build_output(&output("rustpress.toml"), &public));
         assert!(!is_build_output(&output("public-other/x.md"), &public));
+    }
+
+    #[test]
+    fn slash_less_directory_urls_redirect_to_the_trailing_slash() {
+        // VitePress's dev server sends /sub to the canonical /sub/
+        // instead of a bare 404; hand-typed or external links rely on it
+        let dir = temp_site();
+        std::fs::write(dir.join("public/sub/index.html"), "<html></html>").unwrap();
+        let public = dir.join("public");
+        let state = ServeState {
+            root: public.clone(),
+        };
+        let resp = serve_file(&state, &Uri::from_static("/sub"));
+        assert_eq!(resp.status(), StatusCode::MOVED_PERMANENTLY);
+        assert_eq!(
+            resp.headers()
+                .get(header::LOCATION)
+                .and_then(|v| v.to_str().ok()),
+            Some("/sub/")
+        );
+        // a slash-less path with no directory behind it still 404s
+        assert_eq!(status_of(&public, "/no-such-dir"), StatusCode::NOT_FOUND);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
