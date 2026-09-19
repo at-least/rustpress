@@ -41,51 +41,11 @@ fn empty_lines_inside_carried_scope() {
     );
 }
 
-// traversal probes against the serve path resolver logic
-#[test]
-fn traversal_segments_rejected() {
-    // mirror of serve_file's segment loop: ".." must never resolve
-    let rejects = [
-        "/../etc/passwd",
-        "/a/../../etc/passwd",
-        "/%2e%2e/etc/passwd",
-    ];
-    for path in rejects {
-        let decoded = percent(path);
-        let mut escapes = false;
-        for seg in decoded.split('/') {
-            if seg == ".." {
-                escapes = true;
-            }
-        }
-        assert!(escapes, "{path} should decode to an escaping path");
-    }
-}
-
-fn percent(s: &str) -> String {
-    // copy of serve::percent_decode semantics
-    let b = s.as_bytes();
-    let mut out = Vec::with_capacity(b.len());
-    let mut i = 0;
-    while i < b.len() {
-        if b[i] == b'%'
-            && i + 2 < b.len() + 1
-            && i + 2 <= b.len()
-            && let (Some(hex), Ok(v)) = (
-                b.get(i + 1..i + 3),
-                u8::from_str_radix(std::str::from_utf8(&b[i + 1..i + 3]).unwrap_or("zz"), 16),
-            )
-        {
-            let _ = hex;
-            out.push(v);
-            i += 3;
-            continue;
-        }
-        out.push(b[i]);
-        i += 1;
-    }
-    String::from_utf8_lossy(&out).into_owned()
-}
+// NOTE: the traversal probes that used to live here mirrored
+// serve_file's segment loop instead of testing it — they stayed green
+// even if the real resolver drifted. The real coverage now lives in
+// src/serve.rs (serves_files_and_rejects_traversal, plus the redirect
+// test), which exercises the actual server path.
 
 #[test]
 fn empty_code_with_grammar_renders_no_lines() {

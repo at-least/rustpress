@@ -704,7 +704,13 @@ fn inline_footnotes_render() {
         &[],
         "An inline^[careful reader] footnote and code `keep ^[this]` literal.\n",
     );
-    assert!(!out.html.contains("^[") || out.html.contains("<code>keep ^[this]</code>"));
+    // the code-span literal must keep its ^[ marker — the old
+    // disjunction passed whenever NO ^[ appeared, pinning nothing
+    assert!(
+        out.html.contains("keep ^[this]"),
+        "code-span literal intact: {}",
+        out.html
+    );
     assert!(
         out.html.contains("footnote-ref"),
         "became a footnote reference"
@@ -892,6 +898,56 @@ fn nested_includes_resolve_against_the_including_file() {
     assert!(
         out.html.contains("from b"),
         "nested include resolved against the including file: {}",
+        out.html
+    );
+}
+
+#[test]
+fn shiki_style_line_notations_become_line_classes() {
+    // the [!code …] notation path had no direct test: the fixture only
+    // ever contains the literal syntax inside md fences, where it must
+    // stay untouched
+    let out = synthetic(
+        "```ts\nconst a = 1; // [!code highlight]\nconst b = 2; // [!code ++]\nconst c = 3; // [!code error:2]\nconst d = 4;\n```\n",
+    );
+    assert!(
+        out.html.contains("<span class=\"line hl\">"),
+        "highlight line classed: {}",
+        out.html
+    );
+    assert!(
+        out.html.contains("diff add"),
+        "++ line classed: {}",
+        out.html
+    );
+    assert!(
+        out.html.contains("highlighted-error") || out.html.contains("error"),
+        "error line classed: {}",
+        out.html
+    );
+    assert!(
+        !out.html.contains("[!code"),
+        "notations stripped from output: {}",
+        out.html
+    );
+    // a marker shown as text uses the documented double-bang escape
+    // (the transform applies to every fence, matching upstream)
+    let out = synthetic("```md\n// [!!code highlight]\n```\n");
+    // the md grammar tokenizes the text, so the pieces are asserted
+    // separately instead of one contiguous string
+    assert!(
+        out.html.contains("!code highlight"),
+        "escaped notation literal: {}",
+        out.html
+    );
+    assert!(
+        !out.html.contains("[!!code"),
+        "escape marker removed: {}",
+        out.html
+    );
+    assert!(
+        !out.html.contains("line hl"),
+        "no highlight class applied to the escaped line: {}",
         out.html
     );
 }
