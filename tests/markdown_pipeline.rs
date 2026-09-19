@@ -1043,7 +1043,11 @@ fn list_marker_fence_includes_carry_the_content_indent() {
     let li_end = out.html.find("</li>").expect("list item closed");
     let pre = out.html.find("<pre").expect("code block");
     let after = out.html.find("<p>AFTER</p>").expect("AFTER paragraph");
-    assert!(li < pre && pre < li_end, "block inside the item: {}", out.html);
+    assert!(
+        li < pre && pre < li_end,
+        "block inside the item: {}",
+        out.html
+    );
     assert!(after > li_end, "AFTER after the list: {}", out.html);
 }
 
