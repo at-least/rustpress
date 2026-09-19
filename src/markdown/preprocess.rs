@@ -711,14 +711,29 @@ fn parse_attrs(raw: &str) -> String {
     let pair = PAIR.get_or_init(|| Regex::new(r#"([a-zA-Z-]+)="([^"]*)""#).unwrap());
     let mut out = String::new();
     for c in pair.captures_iter(raw) {
-        let value = c[2]
-            .replace('&', "&amp;")
-            .replace('"', "&quot;")
-            .replace('<', "&lt;")
-            .replace('>', "&gt;");
+        let value = escape_attr_value(&c[2]);
         out.push_str(&format!(r#" {}="{}""#, &c[1], value));
     }
     out
+}
+
+/// Entity-escape an attribute value, but leave an `&` alone when it
+/// already opens a well-formed entity reference — author-written
+/// `&amp;` must not double-escape into `&amp;amp;`.
+fn escape_attr_value(s: &str) -> String {
+    static ENT: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
+    let ent = ENT.get_or_init(|| {
+        Regex::new(r#"&(?:[a-zA-Z][a-zA-Z0-9]*|#[0-9]+|#[xX][0-9a-fA-F]+);"#).unwrap()
+    });
+    // protect existing references with a sentinel while escaping
+    const SENTINEL: char = '\u{0}';
+    let protected = ent.replace_all(s, SENTINEL.encode_utf8(&mut [0; 4]));
+    let escaped = protected
+        .replace('&', "&amp;")
+        .replace('"', "&quot;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;");
+    escaped.replace(SENTINEL, "&")
 }
 /// Pass 1.5: `> [!KIND] [title]` GitHub-flavored alerts → `::: kind`
 /// containers, which is exactly what VitePress does (alerts ARE

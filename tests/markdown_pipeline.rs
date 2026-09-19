@@ -1001,3 +1001,21 @@ fn custom_heading_strip_handles_escaped_id_text() {
         out.html
     );
 }
+
+#[test]
+fn attrs_values_keep_authored_entities() {
+    // an entity the author already wrote must not double-escape
+    // (title="Q&amp;A" used to become Q&amp;amp;A); a bare & still escapes
+    let out = include_site(&[], "[t](/other/){title=\"Q&amp;A\"}\n");
+    assert!(
+        out.html.contains("title=\"Q&amp;A\""),
+        "authored entity kept once: {}",
+        out.html
+    );
+    let out = include_site(&[], "[t](/other/){title=\"Q&A\"}\n");
+    assert!(
+        out.html.contains("title=\"Q&amp;A\""),
+        "bare & escaped: {}",
+        out.html
+    );
+}
