@@ -903,3 +903,29 @@ fn dead_links_in_single_quoted_attributes_are_caught() {
     );
     assert!(err.to_string().contains("missing/"), "{err}");
 }
+
+#[test]
+fn search_body_keeps_raw_ampersand_text_intact() {
+    // a bare '&' in raw HTML is not an entity: the search body must not
+    // eat the following character or invent a trailing ';'
+    let site_dir = tempdir("site-build");
+    std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
+    std::fs::write(
+        site_dir.path().join("rustpress.toml"),
+        "title = \"T\"\n\n[search]\nprovider = \"local\"\n",
+    )
+    .unwrap();
+    std::fs::write(
+        site_dir.path().join("content/index.md"),
+        "# H\n\n<div>AT&T Research</div>\n",
+    )
+    .unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    let out = site_dir.path().join("public");
+    site.build(site_dir.path(), &out).unwrap();
+    let docs = std::fs::read_to_string(out.join("search-docs.json")).unwrap();
+    assert!(
+        docs.contains("AT&T Research"),
+        "raw & text intact in search body: {docs}"
+    );
+}

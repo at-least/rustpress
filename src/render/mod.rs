@@ -937,26 +937,42 @@ fn plain_text(html: &str) -> String {
             '<' => in_tag = true,
             '>' => in_tag = false,
             '&' if !in_tag => {
-                // decode the handful of entities comrak/hypertext emit
+                // decode the handful of entities comrak/hypertext emit.
+                // An unterminated or overlong run is literal text: emit
+                // it back verbatim — never eat the following character
+                // or invent a ';' that was not there
                 let mut entity = String::new();
+                let mut terminated = false;
                 while let Some(&c) = chars.peek() {
-                    if c == ';' || entity.len() > 8 {
+                    if c == ';' {
+                        chars.next();
+                        terminated = true;
+                        break;
+                    }
+                    if entity.len() >= 8 {
                         break;
                     }
                     entity.push(c);
                     chars.next();
                 }
-                let _ = chars.next(); // consume ';'
-                let decoded: String = match entity.as_str() {
-                    "amp" => "&".into(),
-                    "lt" => "<".into(),
-                    "gt" => ">".into(),
-                    "quot" => "\"".into(),
-                    "apos" => "'".into(),
-                    "nbsp" => "\u{a0}".into(),
-                    other => format!("&{other};"),
-                };
-                out.push_str(&decoded);
+                if terminated {
+                    match entity.as_str() {
+                        "amp" => out.push('&'),
+                        "lt" => out.push('<'),
+                        "gt" => out.push('>'),
+                        "quot" => out.push('"'),
+                        "apos" => out.push('\''),
+                        "nbsp" => out.push('\u{a0}'),
+                        _ => {
+                            out.push('&');
+                            out.push_str(&entity);
+                            out.push(';');
+                        }
+                    }
+                } else {
+                    out.push('&');
+                    out.push_str(&entity);
+                }
             }
             c if !in_tag => out.push(c),
             _ => {}
