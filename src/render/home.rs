@@ -324,12 +324,3 @@ pub fn resolve_action_link(site: &Site, link: &str) -> String {
         .join("/");
     site.url(&format!("/{clean}"))
 }
-
-/// Unused today (sponsors deferred) but shared by the later stage; keep
-/// the social label logic in one place.
-pub fn _social_label(icon: &SocialIcon) -> String {
-    match icon {
-        SocialIcon::Name(n) => n.clone(),
-        SocialIcon::Svg { .. } => "link".into(),
-    }
-}
