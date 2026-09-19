@@ -383,8 +383,6 @@ for spec in SPECS:
     dark = build_mode("dark", dm, adjusted)
 
     if spec.get("light") == "derived":
-        src = dm if True else None
-        tinted = lambda t: mix(spec_dark_bg, white, t)
         note = f"Dark half from the {spec['name']} palette; the scheme publishes no light mode, so the light half is derived from the same hues. Accents auto-adjusted for WCAG AA where the published colors fell short."
         spec_dark_bg = dm["bg"]
         light_map = dict(
@@ -421,7 +419,6 @@ import colorsys
 import os
 import re
 
-HELI = f"{ROOT}/assets/syntax-themes/helix"
 CURATED = {s["name"] for s in SPECS} | {"github", "catppuccin", "nord", "rose-pine"}
 
 BG_RE = re.compile(r"^(bg|background|base|canvas)", re.I)
@@ -442,7 +439,7 @@ def bucket_of(h):
 def auto_slots(stem):
     """Infer the contract slots from a palette table. Returns
     (mode, slots) where mode is the palette's own half."""
-    data = tomllib.load(open(f"{HELI}/{stem}.toml", "rb"))
+    data = tomllib.load(open(f"{HELVIX}/{stem}.toml", "rb"))
     p = {k: _norm_hex(v) for k, v in (data.get("palette") or {}).items()
          if isinstance(v, str) and v.startswith("#")}
     if len(p) < 6:
@@ -585,13 +582,13 @@ regenerated = set()
 # stems are unique, but two stems can normalize to one name
 # (foo_bar + foo-bar) — that would silently clobber; refuse both
 norm = {}
-for f in sorted(os.listdir(HELI)):
+for f in sorted(os.listdir(HELVIX)):
     if f.endswith(".toml"):
         norm.setdefault(f[:-5].replace("_", "-"), []).append(f[:-5])
 colliding = {n for n, srcs in norm.items() if len(srcs) > 1}
 
 skipped, mapped = [], 0
-for f in sorted(os.listdir(HELI)):
+for f in sorted(os.listdir(HELVIX)):
     if not f.endswith(".toml"):
         continue
     stem = f[:-5]
