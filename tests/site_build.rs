@@ -881,3 +881,25 @@ fn rewrite_destination_with_trailing_slash_is_rejected() {
     std::fs::write(site_dir.path().join("content/guide/a.md"), "# A\n").unwrap();
     Site::load(site_dir.path()).unwrap();
 }
+
+#[test]
+fn dead_links_in_single_quoted_attributes_are_caught() {
+    // raw HTML with single-quoted href/src must hit the dead-link
+    // checker too, or the fail-on-dead-links guarantee under-reports
+    let site_dir = tempdir("site-build");
+    std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
+    std::fs::write(site_dir.path().join("rustpress.toml"), "title = \"T\"\n").unwrap();
+    std::fs::write(
+        site_dir.path().join("content/index.md"),
+        "# H\n\n<a href='./missing/'>gone</a>\n",
+    )
+    .unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    let out = site_dir.path().join("public");
+    let err = site.build(site_dir.path(), &out).unwrap_err();
+    assert!(
+        err.to_string().contains("dead link"),
+        "single-quoted dead link must fail the build: {err}"
+    );
+    assert!(err.to_string().contains("missing/"), "{err}");
+}

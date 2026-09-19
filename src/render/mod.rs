@@ -831,10 +831,13 @@ pub enum BuildError {
 /// base-free output paths; the disk check happens after the copy.
 fn find_dead_links(html: &str, page: &Page, site: &Site) -> Vec<String> {
     static HREF: OnceLock<regex::Regex> = OnceLock::new();
-    let re = HREF.get_or_init(|| regex::Regex::new(r#"(?:href|src)="([^"]+)""#).unwrap());
+    // raw HTML may quote attribute values with either quote style
+    let re = HREF.get_or_init(|| {
+        regex::Regex::new(r#"(?:href|src)=(?:"([^"]+)"|'([^']+)')"#).unwrap()
+    });
     let mut out = Vec::new();
     for cap in re.captures_iter(html) {
-        let raw = &cap[1];
+        let raw = cap.get(1).or_else(|| cap.get(2)).map(|m| m.as_str()).unwrap_or_default();
         if is_external_or_fragment(raw) {
             continue;
         }
