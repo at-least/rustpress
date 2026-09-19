@@ -171,6 +171,13 @@ pub(crate) fn serialize_head_tags_to_string(tags: &[crate::config::HeadTag]) -> 
 }
 
 pub(crate) fn serialize_head_tags(tags: &[crate::config::HeadTag]) -> Raw<String> {
+    // HTML5 void elements may self-close (the slash is ignored); a
+    // childless non-void tag like <title/> would parse as an unclosed
+    // element swallowing the rest of the head
+    const VOID: [&str; 14] = [
+        "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param",
+        "source", "track", "wbr",
+    ];
     let mut out = String::new();
     for tag in tags {
         out.push('<');
@@ -182,8 +189,10 @@ pub(crate) fn serialize_head_tags(tags: &[crate::config::HeadTag]) -> Raw<String
             out.push('>');
             out.push_str(tag.children.as_deref().unwrap_or(""));
             out.push_str(&format!("</{}>", tag.tag));
-        } else {
+        } else if VOID.contains(&tag.tag.to_ascii_lowercase().as_str()) {
             out.push_str("/>");
+        } else {
+            out.push_str(&format!("></{}>", tag.tag));
         }
     }
     Raw::dangerously_create(out)

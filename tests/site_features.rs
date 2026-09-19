@@ -521,3 +521,20 @@ fn nav_and_sidebar_link_urls_are_attribute_escaped() {
         home
     );
 }
+
+#[test]
+fn childless_non_void_head_tags_do_not_self_close() {
+    // <title/> is an unclosed element to the HTML5 parser; only void
+    // elements may self-close, everything else gets an explicit end tag
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[[head]]\ntag = \"title\"\n\n[[head]]\ntag = \"link\"\nattrs = { href = \"/a.css\", rel = \"stylesheet\" }\n",
+        &[("index.md", "# H\n")],
+    );
+    let home = page(&out, "/");
+    assert!(
+        home.contains("<title></title>"),
+        "non-void tag gets an end tag"
+    );
+    assert!(!home.contains("<title/>"), "no self-closed title");
+    assert!(home.contains("<link"), "void tag still emitted");
+}
