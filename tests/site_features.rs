@@ -171,6 +171,31 @@ fn logo_variants_and_outline_false() {
 }
 
 #[test]
+fn dead_link_checker_ignores_data_src_and_checks_spaced_equals() {
+    // the href/src regex matched attribute-name suffixes (data-src=,
+    // xlink:href=) and missed spaced equals, both valid raw HTML
+    let dir = tempdir("dead-links");
+    std::fs::write(dir.path().join("rustpress.toml"), "title = \"T\"\n").unwrap();
+    std::fs::create_dir_all(dir.path().join("content")).unwrap();
+    std::fs::write(
+        dir.path().join("content/index.md"),
+        "# H\n\n<img data-src=\"/no-such-image.png\">\n\n<a href = \"/also-gone/\">x</a>\n",
+    )
+    .unwrap();
+    let site = Site::load(dir.path()).unwrap();
+    let out = tempdir("dead-links-out");
+    let err = site.build(dir.path(), out.path()).unwrap_err().to_string();
+    assert!(
+        err.contains("also-gone"),
+        "href with spaced equals is checked: {err}"
+    );
+    assert!(
+        !err.contains("no-such-image"),
+        "data-src is not a link target: {err}"
+    );
+}
+
+#[test]
 fn frontmatter_outline_reenables_a_site_disabled_outline() {
     // the site gate used to return None unconditionally, so the
     // documented per-page override ("level can be overridden per page
