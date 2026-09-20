@@ -171,6 +171,28 @@ fn logo_variants_and_outline_false() {
 }
 
 #[test]
+fn rest_rewrite_prefix_matches_on_segment_boundaries() {
+    // a `:rest*` prefix captured across the segment boundary:
+    // "guide:rest*" also rewrote guide2/… to docs/2/…
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[rewrites]\n\"guide:rest*\" = \"docs/:rest*\"\n",
+        &[("guide/x.md", "# X\n"), ("guide2/y.md", "# Y\n")],
+    );
+    assert!(
+        out.path().join("docs/x/index.html").is_file(),
+        "guide/ rewritten to docs/"
+    );
+    assert!(
+        out.path().join("guide2/y/index.html").is_file(),
+        "guide2 keeps its URL"
+    );
+    assert!(
+        !out.path().join("docs/2/y/index.html").exists(),
+        "no capture across the segment boundary"
+    );
+}
+
+#[test]
 fn dead_link_checker_ignores_data_src_and_checks_spaced_equals() {
     // the href/src regex matched attribute-name suffixes (data-src=,
     // xlink:href=) and missed spaced equals, both valid raw HTML

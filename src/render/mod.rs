@@ -1011,8 +1011,12 @@ fn apply_rewrites(content: &mut Content, rewrites: &[Rewrite]) -> Result<(), Con
     for page in &mut content.pages {
         for rule in rewrites {
             let dest = if let Some(prefix) = rule.from.strip_suffix(":rest*") {
+                // segment boundary: what follows the prefix must be a
+                // fresh segment (or the prefix ends in `/`, which always
+                // is one) — `guide:rest*` must not capture `guide2/…`
                 page.rel
                     .strip_prefix(prefix)
+                    .filter(|rest| prefix.ends_with('/') || rest.is_empty() || rest.starts_with('/'))
                     .map(|rest| rule.to.replace(":rest*", rest).replace(":rest", rest))
             } else if rule.from == page.rel {
                 Some(rule.to.clone())
