@@ -171,6 +171,25 @@ fn logo_variants_and_outline_false() {
 }
 
 #[test]
+fn frontmatter_outline_reenables_a_site_disabled_outline() {
+    // the site gate used to return None unconditionally, so the
+    // documented per-page override ("level can be overridden per page
+    // via frontmatter") could never turn the outline back on
+    let (_, out) = build_site(
+        "title = \"T\"\noutline = false\n",
+        &[(
+            "guide/a.md",
+            "---\noutline: deep\n---\n\n# A\n\n## Sub\n\n### Deep\n",
+        )],
+    );
+    let html = page(&out, "/guide/a/");
+    assert!(
+        html.contains("VPOutlineMarker"),
+        "front matter overrides the site-off gate"
+    );
+}
+
+#[test]
 fn nav_and_sidebar_link_attrs_with_doc_footer_text() {
     let (_, out) = build_site(
         r#"

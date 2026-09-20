@@ -689,21 +689,24 @@ impl Site {
 /// Effective outline heading-level range: page front matter overrides
 /// the site config (`deep` → 2–6, `false` → none). `None` = disabled.
 pub fn outline_range(config: &SiteConfig, page: &Page) -> Option<(u8, u8)> {
-    if !config.outline.enabled() {
-        return None;
-    }
-    let site = match config.outline.level() {
-        Some(OutlineLevel::Single(n)) => (n, n),
-        Some(OutlineLevel::SingleList([n])) => (n, n),
-        Some(OutlineLevel::Range((a, b))) => (a, b),
-        None => (2, 3),
+    // the site gate only supplies the DEFAULT: an explicit page value
+    // wins even when the site turned the outline off
+    let site = if config.outline.enabled() {
+        match config.outline.level() {
+            Some(OutlineLevel::Single(n)) => Some((n, n)),
+            Some(OutlineLevel::SingleList([n])) => Some((n, n)),
+            Some(OutlineLevel::Range((a, b))) => Some((a, b)),
+            None => Some((2, 3)),
+        }
+    } else {
+        None
     };
     match &page.front.outline {
         Some(PageOutline::Off) => None,
         Some(PageOutline::Deep) => Some((2, 6)),
         Some(PageOutline::Level(n)) => Some((*n, *n)),
         Some(PageOutline::Range((a, b))) => Some((*a, *b)),
-        None => Some(site),
+        None => site,
     }
 }
 
