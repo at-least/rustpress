@@ -215,6 +215,13 @@ impl<'a> Preprocess<'a> {
                 path: file.clone(),
                 source,
             })?;
+        // an included .md file's front matter belongs to the part, not
+        // the including page (upstream strips it too) — except for a
+        // bare `{a,b}` line range, whose numbers count the raw file
+        if target.path.ends_with(".md") && (target.section.is_some() || target.range.is_none()) {
+            let (_, body) = crate::content::split_front_matter(&content);
+            content = body.to_string();
+        }
         if let Some(section) = &target.section {
             match extract_region(&content, section)
                 .or_else(|| extract_heading_section(&content, section))

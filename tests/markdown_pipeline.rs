@@ -387,6 +387,36 @@ fn include_site_result(
 }
 
 #[test]
+fn markdown_include_strips_part_file_frontmatter() {
+    // upstream strips the front matter of included .md files; shipping
+    // it raw rendered a thematic break plus the key: value lines
+    let out = include_site(
+        &[(
+            "parts/changelog.md",
+            "---\ntitle: Changelog\n---\n\nChangelog body.\n",
+        )],
+        "<!--@include: ./parts/changelog.md-->\n",
+    );
+    assert!(out.html.contains("Changelog body."), "body included");
+    assert!(!out.html.contains("title: Changelog"), "front matter gone");
+    assert!(!out.html.contains("<hr"), "no stray thematic break");
+
+    // a bare line range counts raw file lines (front matter included —
+    // that is what makes the numbers stable), so it must NOT strip
+    let out = include_site(
+        &[
+            ("parts/ranged.md", "---\ntitle: R\n---\n\nfirst\nsecond\n"),
+        ],
+        "<!--@include: ./parts/ranged.md{5,6}-->\n",
+    );
+    assert!(
+        out.html.contains("first") && out.html.contains("second"),
+        "range numbering spans the front matter"
+    );
+    assert!(!out.html.contains("title: R"), "out-of-range lines stay out");
+}
+
+#[test]
 fn markdown_include_selectors() {
     let out = include_site(
         &[(
