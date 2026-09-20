@@ -792,28 +792,7 @@ pub fn expand_alerts(md: &str, opts: &ContainerOptions) -> String {
             };
             out_lines.push(format!("{indent}::: {kind}{title_suffix}"));
             i += 1;
-            // Body: the blockquote's `>`-prefixed lines (a `>`-only line
-            // is a blank line *inside* the quote and continues it). A
-            // non-`>` line that is paragraph continuation text stays in
-            // the quote too — GFM lazy continuation, what GitHub renders
-            // for a wrapped alert; constructs that could interrupt a
-            // paragraph (headings, fences, lists, …) still end it.
-            let mut in_paragraph = false;
-            while i < lines.len() {
-                let b = lines[i].trim_end_matches(['\n', '\r']);
-                let t = b.trim_start();
-                let ind = &b[..b.len() - t.len()];
-                let body = if let Some(rest) = t.strip_prefix('>') {
-                    rest.strip_prefix(' ').unwrap_or(rest)
-                } else if in_paragraph && is_lazy_continuation(t) {
-                    t
-                } else {
-                    break;
-                };
-                out_lines.push(format!("{ind}{body}"));
-                in_paragraph = !body.trim().is_empty();
-                i += 1;
-            }
+            alert_quote_lines(&lines, &mut i, opts, &indent, &mut out_lines);
             out_lines.push(format!("{indent}:::"));
             out_lines.push(String::new());
             continue;
@@ -824,6 +803,61 @@ pub fn expand_alerts(md: &str, opts: &ContainerOptions) -> String {
     let mut out = out_lines.join("\n");
     out.push('\n');
     out
+}
+
+/// One alert's body: the blockquote's `>`-prefixed lines (a `>`-only
+/// line is a blank line *inside* the quote and continues it). A
+/// non-`>` line that is paragraph continuation text stays in the quote
+/// too — GFM lazy continuation, what GitHub renders for a wrapped
+/// alert; constructs that could interrupt a paragraph (headings,
+/// fences, lists, …) still end it.
+///
+/// A body line that is itself an alert opener is a nested alert
+/// (GitHub quotes nest): it becomes one container deeper, and the
+/// deeper `>`-prefixed lines are its body — without this, the inner
+/// `[!KIND]` marker survives to comrak, whose built-in alerts
+/// extension renders it with `markdown-alert` classes nothing styles.
+fn alert_quote_lines(
+    lines: &[&str],
+    i: &mut usize,
+    opts: &ContainerOptions,
+    ind: &str,
+    out_lines: &mut Vec<String>,
+) {
+    let mut in_paragraph = false;
+    while *i < lines.len() {
+        let b = lines[*i].trim_end_matches(['\n', '\r']);
+        let t = b.trim_start();
+        let line_ind = &b[..b.len() - t.len()];
+        let Some(rest) = t.strip_prefix('>') else {
+            if in_paragraph && is_lazy_continuation(t) {
+                out_lines.push(format!("{line_ind}{t}"));
+                in_paragraph = !t.is_empty();
+                *i += 1;
+                continue;
+            }
+            break;
+        };
+        let body = rest.strip_prefix(' ').unwrap_or(rest);
+        if let Some((_, inner_kind, inner_title)) = alert_opener(body, opts) {
+            let nested_ind = format!("{ind}  ");
+            let title_suffix = if inner_title.is_empty() {
+                String::new()
+            } else {
+                format!(" {inner_title}")
+            };
+            out_lines.push(format!("{nested_ind}::: {inner_kind}{title_suffix}"));
+            *i += 1;
+            alert_quote_lines(lines, i, opts, &nested_ind, out_lines);
+            out_lines.push(format!("{nested_ind}:::"));
+            out_lines.push(String::new());
+            in_paragraph = false;
+            continue;
+        }
+        out_lines.push(format!("{line_ind}{body}"));
+        in_paragraph = !body.trim().is_empty();
+        *i += 1;
+    }
 }
 
 /// Is a `>`-less line paragraph continuation text inside a quote?

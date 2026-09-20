@@ -443,6 +443,30 @@ fn markdown_include_strips_part_file_frontmatter() {
 }
 
 #[test]
+fn nested_github_alerts_expand_to_nested_containers() {
+    // `> > [!TIP]` inside an alert used to fall through to comrak's
+    // built-in alerts extension, whose markdown-alert classes nothing
+    // styles; it must expand to a nested custom-block like GitHub's
+    let out = synthetic("> [!NOTE]\n> outer\n>\n> > [!TIP]\n> > inner\n");
+    let note = out.html.find("custom-block note").expect("outer note");
+    let tip = out.html.find("custom-block tip").expect("nested tip");
+    let close = out.html.rfind("</div>").expect("outer close");
+    assert!(
+        note < tip && tip < close,
+        "tip block nested inside the note block"
+    );
+    assert!(out.html.contains("inner"), "nested body kept");
+    assert!(
+        !out.html.contains("[!TIP]"),
+        "no literal marker in the output"
+    );
+    assert!(
+        !out.html.contains("markdown-alert"),
+        "comrak's unstyled alert renderer not used"
+    );
+}
+
+#[test]
 fn heading_section_extraction_matches_rendered_unicode_ids() {
     // the local slugify kept ASCII only, while comrak renders CJK and
     // accented headings with their letters intact — so the anchor the
