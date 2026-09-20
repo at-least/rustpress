@@ -443,6 +443,21 @@ fn markdown_include_strips_part_file_frontmatter() {
 }
 
 #[test]
+fn heading_section_extraction_matches_rendered_unicode_ids() {
+    // the local slugify kept ASCII only, while comrak renders CJK and
+    // accented headings with their letters intact — so the anchor the
+    // docs tell authors to copy from the rendered page never matched
+    let out = include_site(
+        &[("parts/zh.md", "## 中文标题\n\nSection body.\n")],
+        "<!--@include: ./parts/zh.md#中文标题-->\n",
+    );
+    assert!(
+        out.html.contains("Section body."),
+        "CJK heading anchor matches its rendered id"
+    );
+}
+
+#[test]
 fn markdown_include_selectors() {
     let out = include_site(
         &[(

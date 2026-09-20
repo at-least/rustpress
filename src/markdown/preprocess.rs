@@ -478,17 +478,15 @@ fn apply_line_range(content: &str, spec: &str) -> Result<String, ()> {
 /// heading of the same or higher level. Fence-aware.
 fn extract_heading_section(content: &str, anchor: &str) -> Option<String> {
     fn slugify(text: &str) -> String {
-        let mut out = String::new();
-        for ch in text.chars() {
-            match ch {
-                ' ' => out.push('-'),
-                c if c.is_ascii_alphanumeric() || c == '-' || c == '_' => {
-                    out.push(c.to_ascii_lowercase())
-                }
-                _ => {}
-            }
-        }
-        out.trim_matches('-').to_string()
+        // mirrors comrak's GFM anchorize (lowercase, spaces → dashes,
+        // letters/marks/numbers/connector punctuation kept, nothing
+        // trimmed) so the anchor an author copies off the rendered page
+        // matches: CJK and accented headings keep their letters
+        text.to_lowercase()
+            .chars()
+            .map(|c| if c == ' ' { '-' } else { c })
+            .filter(|c| c.is_alphanumeric() || *c == '-' || *c == '_')
+            .collect()
     }
     let mut fence: Option<(char, usize)> = None;
     let mut level = 0usize;
