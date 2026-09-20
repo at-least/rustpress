@@ -26,6 +26,7 @@ fn build_fixture() -> (common::TempDir, rustpress::render::BuildStats) {
         engine: MarkdownEngine::new(&config.markdown, &config.code, Path::new("."), "/").unwrap(),
         theme_link: None,
         theme_source: None,
+        content_dir: fixtures.join("en"),
         config,
         content,
     };
@@ -115,6 +116,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
                 .unwrap(),
             theme_link: None,
             theme_source: None,
+            content_dir: fixtures.join("en"),
             config,
             content,
         }
@@ -140,6 +142,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
         engine: MarkdownEngine::new(&config.markdown, &config.code, Path::new("."), "/").unwrap(),
         theme_link: None,
         theme_source: None,
+        content_dir: fixtures.join("en"),
         config,
         content,
     };

@@ -40,6 +40,11 @@ pub struct Site {
     /// into the output under `themes/`. Bundled names need no copy —
     /// they extract with the embedded assets.
     pub theme_source: Option<PathBuf>,
+    /// The content tree the pages came from (`site_dir + src_dir`),
+    /// kept from load: include resolution keys off it, and it cannot be
+    /// re-derived from the pages (the URL-sorted first page only sits
+    /// at the content root when a root index exists).
+    pub content_dir: PathBuf,
 }
 
 impl Site {
@@ -132,6 +137,7 @@ impl Site {
             engine,
             theme_link,
             theme_source,
+            content_dir,
         })
     }
 
@@ -163,7 +169,7 @@ impl Site {
             page,
             &self.content,
             &self.content_root(),
-            &self.content_dir(),
+            &self.content_dir,
         )?;
         self.render_page_inner(page, &rendered)
     }
@@ -327,7 +333,7 @@ impl Site {
                 page,
                 &self.content,
                 &self.content_root(),
-                &self.content_dir(),
+                &self.content_dir,
             )?;
             let dead = find_dead_links(&rendered.html, page, self);
             let dead: Vec<String> = match &self.config.ignore_dead_links {
@@ -673,18 +679,9 @@ impl Site {
     fn content_root(&self) -> std::path::PathBuf {
         // The engine resolves `@/` includes against the site dir; content
         // dir for relative ones. Both are the running site's layout.
-        self.content_dir()
+        self.content_dir
             .parent()
             .map(|p| p.to_path_buf())
-            .unwrap_or_default()
-    }
-
-    fn content_dir(&self) -> std::path::PathBuf {
-        // Recovered from any page's src path (all pages share the root).
-        self.content
-            .pages
-            .first()
-            .and_then(|p| p.src.parent().map(|d| d.to_path_buf()))
             .unwrap_or_default()
     }
 }

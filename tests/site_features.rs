@@ -34,6 +34,23 @@ fn page(out: &common::TempDir, url: &str) -> String {
 }
 
 #[test]
+fn relative_includes_resolve_from_the_content_root_without_a_root_index() {
+    // content_dir() recovered the content root from the first page's
+    // src parent — wrong whenever no content/index.md exists (the
+    // URL-sorted first page is nested), so every relative and `@/`
+    // include failed with a doubled path
+    let (_, out) = build_site(
+        "title = \"T\"\n",
+        &[
+            ("guide/only.md", "# Only\n\n<!--@include: ./part.md-->\n"),
+            ("guide/part.md", "PART BODY\n"),
+        ],
+    );
+    let html = page(&out, "/guide/only/");
+    assert!(html.contains("PART BODY"), "sibling include expands");
+}
+
+#[test]
 fn hero_action_target_and_rel_are_emitted() {
     let (_, out) = build_site(
         "title = \"T\"\n",
