@@ -102,7 +102,12 @@ const corpusNote = fixturesUpdated || fixturesDeleted
   ? `tests/fixtures/en: ${fixturesUpdated} file(s) updated, ${fixturesDeleted} removed (the kept subset re-copied from upstream; upstream pages vanishing shrink it).`
   : 'tests/fixtures/en: no byte changes in the kept subset.'
 
-// 3. re-pin the landmark fingerprints; parity:refresh prints the old→new diff
+// 3. re-pin the landmark fingerprints; parity:refresh prints the old→new diff.
+// The embedded assets must exist before ANY cargo run: build.rs refuses to
+// compile without them, and this is the first cargo invocation on a fresh
+// checkout (parity:refresh → `cargo run -- parity snapshot`).
+run('npm run build:js')
+run('npm run build:css')
 let landmarkDiff = ''
 try {
   landmarkDiff = sh('npm run parity:refresh')
@@ -119,8 +124,6 @@ if (repinned !== generator) {
 }
 
 // 4. rebuild and collect what still diverges after the mechanical part
-run('npm run build:js')
-run('npm run build:css')
 run('cargo run --quiet -- build demo')
 let remaining = ''
 try {
