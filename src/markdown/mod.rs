@@ -28,6 +28,11 @@ pub struct Heading {
     /// The slug id comrak rendered (before the custom-anchor
     /// post-processing swaps it for `id`).
     pub rendered_id: String,
+    /// The literal `{#…}` attribute the author wrote, before
+    /// deduplication. Kept so the rendered-text strip can remove it
+    /// even when the final id was suffixed (`## B {#c}` → `c-1`) or
+    /// happens to equal the slug (`## {#foo}` → `foo`).
+    pub custom_attr: Option<String>,
 }
 
 /// The result of rendering one page's markdown body.
@@ -422,6 +427,7 @@ fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
     };
     let mut out = Vec::new();
     for (level, text, custom, rendered_id) in rows {
+        let custom_attr = custom.clone();
         let id = match custom {
             Some(c) if !claimed.contains(&c) => {
                 claimed.insert(c.clone());
@@ -437,6 +443,7 @@ fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
             id,
             text,
             rendered_id,
+            custom_attr,
         });
     }
     out
@@ -491,11 +498,20 @@ fn split_heading_anchor(text: &str) -> (String, Option<String>) {
 /// unmatched heading cannot desync the rest.
 fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
     // rendered ids are unique (the anchorizer dedups), so a plain list of
-    // (rendered, custom) pairs is an unambiguous lookup table
-    let map: Vec<(&str, &str)> = headings
+    // (rendered, custom) pairs is an unambiguous lookup table. A heading
+    // whose custom attr exists also enters the map when its final id
+    // equals the rendered slug — there is no id swap to do, but the
+    // literal attribute still has to come out of the text.
+    let map: Vec<(&str, &str, Option<&str>)> = headings
         .iter()
-        .filter(|h| h.id != h.rendered_id)
-        .map(|h| (h.rendered_id.as_str(), h.id.as_str()))
+        .filter(|h| h.id != h.rendered_id || h.custom_attr.is_some())
+        .map(|h| {
+            (
+                h.rendered_id.as_str(),
+                h.id.as_str(),
+                h.custom_attr.as_deref(),
+            )
+        })
         .collect();
     if map.is_empty() {
         return html.to_string();
@@ -519,9 +535,9 @@ fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
         };
         let segment = &rest[open..open + close + close_tag.len()];
         let mut fixed = segment.to_string();
-        if let Some((rendered, custom)) = map
+        if let Some((rendered, custom, custom_attr)) = map
             .iter()
-            .find(|(rendered, _)| fixed.contains(&format!("id=\"{rendered}\"")))
+            .find(|(rendered, _, _)| fixed.contains(&format!("id=\"{rendered}\"")))
         {
             let escaped = preprocess::escape_text(custom);
             fixed = fixed
@@ -530,12 +546,26 @@ fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
                     &format!("href=\"#{rendered}\""),
                     &format!("href=\"#{escaped}\""),
                 );
-            // the literal attribute inside the heading TEXT is
-            // entity-escaped by comrak (& → &amp;), so strip the escaped
-            // form too
-            fixed = fixed
-                .replace(&format!(" {{#{custom}}}"), "")
-                .replace(&format!(" {{#{escaped}}}"), "");
+            // the literal attribute inside the heading TEXT (and the
+            // anchor's aria-label / data-heading-content, rendered from
+            // the same raw text) is entity-escaped by comrak (& → &amp;),
+            // so strip the escaped form too. The author-written attr is
+            // the thing to strip: the final id may have been suffixed
+            // (`## B {#c}` → `c-1`) or equal the slug (`## {#foo}`).
+            if let Some(attr) = custom_attr {
+                let attr_escaped = preprocess::escape_text(attr);
+                // space-prefixed first, so `B {#c}` doesn't leave a
+                // trailing space; the bare form covers `## {#foo}`, whose
+                // text node is exactly the attribute
+                for literal in [
+                    format!(" {{#{attr}}}"),
+                    format!(" {{#{attr_escaped}}}"),
+                    format!("{{#{attr}}}"),
+                    format!("{{#{attr_escaped}}}"),
+                ] {
+                    fixed = fixed.replace(&literal, "");
+                }
+            }
         }
         out.push_str(&rest[..open]);
         out.push_str(&fixed);

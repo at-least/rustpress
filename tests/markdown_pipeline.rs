@@ -318,6 +318,32 @@ fn custom_heading_anchors_replace_slugs() {
 }
 
 #[test]
+fn duplicate_and_self_anchorizing_custom_ids_keep_no_literal() {
+    // the literal-text strip used to key off the FINAL (deduplicated)
+    // id, so a second `## B {#c}` (final id c-1) and a self-anchorizing
+    // `## {#foo}` (final id == rendered slug, filtered out entirely)
+    // shipped the `{#…}` attribute as visible heading text
+    let out = synthetic("## A {#c}\n\n## B {#c}\n\ntext\n");
+    let start = out.html.find("<h2 id=\"c-1\"").expect("deduped id");
+    let second = &out.html[start..];
+    assert!(
+        second.contains("<h2 id=\"c-1\">B<a"),
+        "second heading text carries no literal: {}",
+        second.chars().take(120).collect::<String>()
+    );
+    assert!(!out.html.contains("{#c}"), "both literals stripped");
+
+    let out = synthetic("## {#foo}\n\ntext\n");
+    assert!(
+        out.html.contains("<h2 id=\"foo\">"),
+        "self-anchorizing custom id still applies: {}",
+        &out.html
+            [out.html.find("<h2").unwrap()..out.html.find("<h2").unwrap() + 80]
+    );
+    assert!(!out.html.contains("{#foo}"), "attr literal stripped");
+}
+
+#[test]
 fn math_renders_with_delimiters_and_flags_page() {
     let site_root = Path::new("tests/fixtures");
     let content_dir = site_root.join("en");
