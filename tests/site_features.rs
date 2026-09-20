@@ -543,6 +543,31 @@ fn childless_non_void_head_tags_do_not_self_close() {
 }
 
 #[test]
+fn mathjax_head_emits_only_elements_and_escaped_delimiters() {
+    // the snippet is dropped raw into <head>: JS `//` comments between
+    // the tags would parse as visible body text, and an unescaped
+    // `"\("` in a JS string degrades to `"("` — turning bare
+    // parentheses into math delimiters on every math page
+    let (_, out) = build_site(
+        "title = \"T\"\n[markdown]\nmath = true\n",
+        &[("index.md", "# H\n\n$x$\n")],
+    );
+    let home = page(&out, "/");
+    assert!(
+        home.contains("</script><script defer src=\"https://cdn.jsdelivr.net"),
+        "config script and CDN script are adjacent, no raw text between"
+    );
+    assert!(
+        home.contains(r#"["\\(", "\\)"]"#),
+        "inline delimiters reach MathJax as \\( \\)"
+    );
+    assert!(
+        home.contains(r#"["\\[", "\\]"]"#),
+        "display delimiters reach MathJax as \\[ \\]"
+    );
+}
+
+#[test]
 fn mathjax_is_pinned_with_integrity() {
     // the CDN script executes on every math page: a floating version
     // tag plus a missing integrity attribute meant a CDN compromise or

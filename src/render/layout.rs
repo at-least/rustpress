@@ -152,23 +152,26 @@ pub fn layout<'a>(
 
 /// MathJax (SVG) with the standard delimiters; loaded only on pages
 /// whose markdown contained math. pre/code are skipped so code fences
-/// stay literal.
+/// stay literal. Dropped raw into <head>, so the value must hold only
+/// elements: `//` comments between the tags would parse as visible
+/// body text, and a JS string needs `\\(` to deliver the `\(`
+/// delimiter (an unescaped `\(` degrades to `(`).
+///
+/// MathJax is the one unvendored runtime dependency. The URL pins the
+/// exact version (a floating @3 would break the integrity hash on the
+/// next release); re-derive the hash with
+///   curl -L https://cdn.jsdelivr.net/npm/mathjax@<v>/es5/tex-svg.js \
+///     | openssl dgst -sha384 -binary | openssl base64 -A
 pub const MATHJAX_SCRIPT: &str = r#"<script>
 window.MathJax = {
   tex: {
-    inlineMath: [["\(", "\)"]],
-    displayMath: [["\[", "\]"]],
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]],
     skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
   },
   svg: { fontCache: "global" }
 };
-</script>
-// MathJax is the one unvendored runtime dependency. The URL pins the
-// exact version (a floating @3 would break the integrity hash on the
-// next release); re-derive the hash with
-//   curl -L https://cdn.jsdelivr.net/npm/mathjax@<v>/es5/tex-svg.js \
-//     | openssl dgst -sha384 -binary | openssl base64 -A
-<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" integrity="sha384-KKWa9jJ1MZvssLeOoXG6FiOAZfAgmzsIIfw8BXwI9+kYm0lPCbC6yTQPBC00F1/L" crossorigin="anonymous"></script>"#;
+</script><script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" integrity="sha384-KKWa9jJ1MZvssLeOoXG6FiOAZfAgmzsIIfw8BXwI9+kYm0lPCbC6yTQPBC00F1/L" crossorigin="anonymous"></script>"#;
 
 /// Serialize the `[[head]]` config tags to raw HTML.
 pub(crate) fn serialize_head_tags_to_string(tags: &[crate::config::HeadTag]) -> String {
