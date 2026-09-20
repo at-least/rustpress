@@ -1394,12 +1394,12 @@ fn opening_fence(line: &str) -> Option<(char, usize)> {
     let n = t.chars().take_while(|&c| c == first).count();
     // a bare marker may be opener or closer (the caller decides via
     // is_closing_fence); an info string means definitely opening —
-    // but per CommonMark a backtick fence's info string may not contain
-    // a backtick (and a tilde fence's none of its own char), else the
-    // line is inline span text, not a fence opener
+    // but per CommonMark only a BACKTICK fence's info string may not
+    // contain a backtick (else the line is inline span text); a tilde
+    // fence's info may contain tildes
     let info = &t[n..];
-    let forbidden = |c: char| c == first;
-    (n >= 3 && !info.contains(forbidden)).then_some((first, n))
+    let forbidden = first == '`' && info.contains('`');
+    (n >= 3 && !forbidden).then_some((first, n))
 }
 
 fn is_closing_fence(line: &str, ch: char, n: usize) -> bool {
@@ -1674,6 +1674,18 @@ mod edge_tests {
             &ContainerOptions::default(),
         );
         // ::: inside the tilde fence is literal; the real one expands
+        assert!(out.contains("::: tip"), "{out}");
+        assert!(out.contains("<div class=\"custom-block info\">"), "{out}");
+    }
+
+    #[test]
+    fn tilde_fence_info_may_contain_tildes() {
+        // CommonMark restricts info strings for BACKTICK fences only;
+        // a tilde fence's info may contain its own char
+        let out = expand_containers(
+            "~~~a~b\n::: tip\nliteral\n:::\n~~~\n::: info\nreal\n:::\n",
+            &ContainerOptions::default(),
+        );
         assert!(out.contains("::: tip"), "{out}");
         assert!(out.contains("<div class=\"custom-block info\">"), "{out}");
     }
