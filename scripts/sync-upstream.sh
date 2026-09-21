@@ -10,7 +10,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-REF=$(grep -v '^[[:space:]]*#' parity/upstream-ref.txt | sed '/^[[:space:]]*$/d' | head -n1 | tr -d '[:space:]')
+REF=$(sed '/^[[:space:]]*#/d;/^[[:space:]]*$/d' parity/upstream-ref.txt | head -n1 | tr -d '[:space:]')
 if [ -z "$REF" ]; then
   echo "sync-upstream: no ref found in parity/upstream-ref.txt" >&2
   exit 2

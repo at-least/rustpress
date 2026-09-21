@@ -31,7 +31,7 @@ pages=$(cd "$UP" && find . -name '*.md' | sed 's:^\./::' | while read -r f; do
     *)          echo "/${f%.md}" ;;
   esac
 done | sort)
-pinned=$(grep -v '^[[:space:]]*#' parity/pages.txt | sed '/^[[:space:]]*$/d' | sort)
+pinned=$(sed '/^[[:space:]]*#/d;/^[[:space:]]*$/d' parity/pages.txt | sort)
 unpinned=$(comm -13 <(printf '%s\n' "$pinned") <(printf '%s\n' "$pages"))
 if [ -n "$unpinned" ]; then
   echo "diff:upstream: upstream pages not pinned in parity/pages.txt (consider pinning representative ones):"

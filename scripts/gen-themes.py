@@ -82,12 +82,20 @@ def _norm_hex(v):
         v = "#" + "".join(ch * 2 for ch in v[1:])
     return v
 
+def _checked_hex(v, stem, k):
+    """A palette entry must be #rgb/#rrggbb: anything else would flow
+    into int(..., 16) and silently produce garbage across the ramp."""
+    if not isinstance(v, str) or not v.startswith("#") or len(v) not in (4, 7):
+        raise ValueError(
+            f"{stem}.toml: palette[{k!r}] = {v!r} is not a #rgb/#rrggbb hex color"
+        )
+    return _norm_hex(v)
+
 def pal(file):
     data = tomllib.load(open(f"{HELVIX}/{file}.toml", "rb"))
     p = data.get("palette")
     if p:
-        return {k: _norm_hex(v) for k, v in p.items()
-                if isinstance(v, str) and v.startswith("#")}
+        return {k: _checked_hex(v, file, k) for k, v in p.items()}
     out = {}
     def walk(d, prefix=""):
         for k, v in d.items():
@@ -440,8 +448,7 @@ def auto_slots(stem):
     """Infer the contract slots from a palette table. Returns
     (mode, slots) where mode is the palette's own half."""
     data = tomllib.load(open(f"{HELVIX}/{stem}.toml", "rb"))
-    p = {k: _norm_hex(v) for k, v in (data.get("palette") or {}).items()
-         if isinstance(v, str) and v.startswith("#")}
+    p = {k: _checked_hex(v, stem, k) for k, v in (data.get("palette") or {}).items()}
     if len(p) < 6:
         return None
 

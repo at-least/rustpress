@@ -53,7 +53,13 @@ if (!generator) {
 const baseline = JSON.parse(await readFile('parity/upstream.json', 'utf8'))
 const pinned = baseline.meta?.generator
 console.log(`drift-watch: deployed ${generator} / pinned ${pinned}`)
-if (!pinned || generator === pinned) {
+if (pinned === undefined) {
+  console.error(
+    'drift-watch: parity/upstream.json has no meta.generator — the watchdog cannot compare versions; inspect the baseline instead of trusting a skip'
+  )
+  process.exit(1)
+}
+if (generator === pinned) {
   console.log('drift-watch: upstream is at the pinned version — nothing to do')
   process.exit(0)
 }
