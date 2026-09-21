@@ -576,6 +576,20 @@ fn markdown_include_accepts_space_after_comment_open() {
 }
 
 #[test]
+fn list_base_clears_when_the_item_ends() {
+    // a column-0 paragraph after a blank ends the list (lazy
+    // continuation only survives without an intervening blank): a later
+    // 4-space fence is a top-level indented code block again, not an
+    // item fence — the base must not leak across the page
+    let out = synthetic("1. item\n\ntext\n\n    ```js\n    const a = 1\n    ```\n");
+    assert!(
+        !out.html.contains(r#"data-lang="js""#),
+        "no item fence after the list ended: {}",
+        out.html
+    );
+}
+
+#[test]
 fn list_item_fences_without_inline_marker_stay_fences() {
     // regression: the ≤3-space opener cap also rejected the 4-space
     // indented fences CommonMark allows inside list items (content

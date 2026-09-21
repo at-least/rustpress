@@ -4,7 +4,7 @@
   "description": "Standalone VitePress-format docs site generator in Rust",
   "scripts": {
     "test": "npm run build:js && npm run build:css && cargo test --quiet && npm run check:demo && npm run check:parity && npm run check:viewport",
-    "check:demo": "cargo run --quiet -- build demo",
+    "check:demo": "cargo run --quiet -- build demo && node scripts/check-demo-markup.mjs",
     "build:docs": "node scripts/gen-theme-index.mjs && cargo run --quiet -- syntax-index docs/static/syntax-highlight.json && cargo run --quiet -- build docs",
     "dev:docs": "npm run watch:css & npm run watch:js & cargo run -- serve docs & wait",
     "check:parity": "cargo run --quiet -- parity check demo/public",
