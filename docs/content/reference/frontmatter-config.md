@@ -137,7 +137,7 @@ sidebar: false
 ```
 
 ::: warning Partial
-`sidebar: false` currently switches the page to the no-sidebar content layout (centered, wider column, footer visible) but the sidebar panel itself is still rendered when a sidebar matches the page's URL. To have no sidebar on a page today, keep it out of every configured sidebar path instead.
+`sidebar: false` switches the page to the no-sidebar content layout (centered, wider column, footer visible) and removes the sidebar panel entirely, even where a configured sidebar matches the page's URL. What it does not do is remove the page from a configured sidebar's data — other pages' sidebars still list it.
 :::
 
 ### aside
