@@ -470,7 +470,13 @@ impl Site {
         } else {
             format!("/{}", page.locale)
         };
-        let url_rest = page.url.strip_prefix(&own_base).unwrap_or(&page.url);
+        // segment-safe strip: /en must not come off /english/ (a page
+        // rewritten out of the locale prefix keeps its full URL as rest)
+        let url_rest = page
+            .url
+            .strip_prefix(&own_base)
+            .filter(|rest| own_base.is_empty() || rest.starts_with('/'))
+            .unwrap_or(&page.url);
         let mut out = Vec::new();
         for (key, loc) in &self.config.locales {
             let target_base = if key == "root" {

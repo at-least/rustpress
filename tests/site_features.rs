@@ -171,6 +171,33 @@ fn logo_variants_and_outline_false() {
 }
 
 #[test]
+fn locale_switcher_prefix_strip_is_segment_safe() {
+    // with the canonical "en/:rest*" = ":rest*" rewrite, a page named
+    // english.md lands at /english/ while its locale base is /en — a
+    // naive strip_prefix produced rest "glish/" and the switcher fell
+    // back to the locale root instead of the /zh/english/ twin
+    let dir = tempdir("locales");
+    std::fs::write(
+        dir.path().join("rustpress.toml"),
+        "title = \"T\"\n\n[locales.en]\nlabel = \"English\"\nlang = \"en\"\n\n[locales.zh]\nlabel = \"简体中文\"\nlang = \"zh-CN\"\n\n[rewrites]\n\"en/:rest*\" = \":rest*\"\n",
+    )
+    .unwrap();
+    std::fs::create_dir_all(dir.path().join("content/en")).unwrap();
+    std::fs::create_dir_all(dir.path().join("content/zh")).unwrap();
+    std::fs::write(dir.path().join("content/en/english.md"), "# E\n").unwrap();
+    std::fs::write(dir.path().join("content/zh/english.md"), "# Z\n").unwrap();
+    let site = Site::load(dir.path()).unwrap();
+    let page = site.content.get("/english/").unwrap();
+    assert_eq!(page.locale, "en");
+    let tr = site.translations_for(page);
+    let zh = tr
+        .iter()
+        .find(|(label, _, _)| label == "简体中文")
+        .expect("zh entry");
+    assert_eq!(zh.1, "/zh/english/", "twin found across locales");
+}
+
+#[test]
 fn rest_rewrite_prefix_matches_on_segment_boundaries() {
     // a `:rest*` prefix captured across the segment boundary:
     // "guide:rest*" also rewrote guide2/… to docs/2/…
