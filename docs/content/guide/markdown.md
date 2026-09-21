@@ -477,7 +477,7 @@ The bundled grammars and the aliases that select them:
 | C          | `c`                                  |
 | C++        | `cpp`, `c++`                         |
 
-Any other language (`vue`, `md`, `nginx`, …) is accepted, keeps its name as the block label, and renders as plain escaped text.
+Any other language (`vue`, `nginx`, …) is accepted, keeps its name as the block label, and renders as plain escaped text — except `md`/`markdown`, which the bundled markdown grammar highlights.
 
 The colors come from a pair of TOML themes (light/dark), selected in the `[code]` section of `rustpress.toml`; all 218 bundled themes are available by name. See [Theming](./coming-from-vitepress#theming).
 

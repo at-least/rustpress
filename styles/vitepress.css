@@ -5,7 +5,7 @@
  *
  * This file contains ONLY theme variables and the couple of global rules
  * that cannot be expressed as utilities. Every component style lives in
- * templates/ (and js/ for JS-generated markup) as Tailwind utility
+ * src/render/ (and js/ for JS-generated markup) as Tailwind utility
  * classes. */
 
 /* Pin the layer order: syntax.css (linked first) declares the `syntax`

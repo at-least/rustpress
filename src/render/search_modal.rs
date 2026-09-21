@@ -1,8 +1,8 @@
 //! VPLocalSearchBox modal shell (ported verbatim from
 //! partials/search_modal.html). Result markup is built client-side and
 //! styled through the `[&_...]` variants on the results list. The search
-//! index URL is handed to the client via `window.rustPress` (stage 6 moves
-//! the whole modal to Alpine).
+//! index URL is handed to the client via the modal's `data-index-url`
+//! attribute (the Alpine bundle reads it in js/alpine-entry.js).
 
 use hypertext::prelude::*;
 

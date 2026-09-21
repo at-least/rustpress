@@ -69,7 +69,8 @@ pub struct SiteConfig {
     #[serde(default = "default_base")]
     pub base: String,
 
-    /// Show "last updated" timestamps from file modification times.
+    /// Show "last updated" timestamps, preferring git commit times over
+    /// file mtimes (a fresh clone's mtimes are checkout time).
     #[serde(default)]
     pub last_updated: bool,
 
