@@ -290,7 +290,7 @@ fn hero_button(site: &Site, action: &HeroAction) -> String {
 /// Hero action links are written relative to the page (VitePress
 /// convention: `./guide/what-is-vitepress` on the home page).
 pub fn resolve_action_link(site: &Site, link: &str) -> String {
-    if link.starts_with("http://") || link.starts_with("https://") {
+    if crate::render::has_scheme(link) {
         return link.to_string();
     }
     // a link naming a page gets the page's URL, like content links do

@@ -145,10 +145,7 @@ impl Site {
     /// names ("syntax.css") are rooted first so they resolve from any
     /// page depth.
     pub fn url(&self, path: &str) -> String {
-        if path.starts_with("http://")
-            || path.starts_with("https://")
-            || path.starts_with("mailto:")
-        {
+        if has_scheme(path) {
             return path.to_string();
         }
         let base = self.config.base.trim_end_matches('/');
@@ -926,10 +923,13 @@ fn find_dead_links(html: &str, page: &Page, site: &Site) -> Vec<String> {
 /// letters/digits/`+`/`-`/`.` before the colon, per RFC 3986). Only
 /// root-absolute and relative targets can be disk-checked.
 fn is_external_or_fragment(raw: &str) -> bool {
-    if raw.starts_with("//") || raw.starts_with('#') {
-        return true;
-    }
-    match raw.split_once(':') {
+    raw.starts_with("//") || raw.starts_with('#') || has_scheme(raw)
+}
+
+/// Any `scheme:` prefix — letter first, then alphanumerics/`+`/`-`/`.`
+/// (`http:`, `mailto:`, `tel:`, `ftp:`, …).
+pub(crate) fn has_scheme(path: &str) -> bool {
+    match path.split_once(':') {
         Some((scheme, _)) => {
             scheme.starts_with(|c: char| c.is_ascii_alphabetic())
                 && scheme

@@ -171,6 +171,25 @@ fn logo_variants_and_outline_false() {
 }
 
 #[test]
+fn scheme_links_pass_through_nav_and_hero() {
+    // only http/https/mailto used to pass through: tel: got rooted into
+    // /tel:… (404 on the site) and mailto: hero actions too
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[[nav]]\ntext = \"Call\"\nlink = \"tel:+15551234\"\n",
+        &[( 
+            "index.md",
+            "---\nlayout: home\nhero:\n  name: N\n  text: T\n  actions:\n    - text: Mail\n      link: mailto:hi@example.com\nfeatures: []\n---\n",
+        )],
+    );
+    let html = page(&out, "/");
+    assert!(html.contains(r#"href="tel:+15551234""#), "nav tel: {html}");
+    assert!(
+        html.contains(r#"href="mailto:hi@example.com""#),
+        "hero mailto:"
+    );
+}
+
+#[test]
 fn locale_switcher_prefix_strip_is_segment_safe() {
     // with the canonical "en/:rest*" = ":rest*" rewrite, a page named
     // english.md lands at /english/ while its locale base is /en — a
