@@ -870,7 +870,11 @@ pub fn check(site_dir: &Path, baseline: &Baseline, deltas: &Deltas) -> Vec<Misma
 }
 
 /// Human-readable report of what changed between two baselines.
-pub fn diff(old: &Baseline, new: &Baseline) -> Vec<Mismatch> {
+pub fn diff(old: Option<&Baseline>, new: &Baseline) -> Vec<Mismatch> {
+    // a missing previous baseline is the initial pin: every new page
+    // counts as a change (the CLI help documents exactly this)
+    let no_baseline = Baseline::default();
+    let old = old.unwrap_or(&no_baseline);
     let mut urls: Vec<&String> = old.pages.keys().chain(new.pages.keys()).collect();
     urls.sort();
     urls.dedup();

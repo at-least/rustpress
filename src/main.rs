@@ -187,16 +187,12 @@ async fn main() -> anyhow::Result<()> {
                 Ok(())
             }
             ParityCmd::Diff { old, new } => {
-                if !old.exists() {
-                    println!(
-                        "parity: no previous baseline at {} — this is the initial pin",
-                        old.display()
-                    );
-                    return Ok(());
-                }
-                let old_base = rustpress::parity::load_baseline(&old)?;
+                // a missing previous baseline diffs as "every page new",
+                // matching the --help text (the initial pin of
+                // `parity:refresh` still produces a full change report)
+                let old_base = old.exists().then(|| rustpress::parity::load_baseline(&old)).transpose()?;
                 let new_base = rustpress::parity::load_baseline(&new)?;
-                let changes = rustpress::parity::diff(&old_base, &new_base);
+                let changes = rustpress::parity::diff(old_base.as_ref(), &new_base);
                 if changes.is_empty() {
                     println!("parity: upstream unchanged");
                 } else {

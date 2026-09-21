@@ -236,3 +236,22 @@ fn site_file_and_slug_mapping() {
         Path::new("demo/public/index.html")
     );
 }
+
+#[test]
+fn cli_diff_with_missing_old_treats_every_page_as_new() {
+    // `parity diff` help promises "missing file: every page counts as
+    // new"; the CLI used to short-circuit with an "initial pin" message
+    let out = std::process::Command::new(env!("CARGO_BIN_EXE_rustpress"))
+        .args([
+            "parity",
+            "diff",
+            "parity/no-such-baseline.json",
+            "parity/upstream.json",
+        ])
+        .output()
+        .expect("spawn rustpress");
+    assert!(out.status.success(), "exit {:?}", out.status);
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(stdout.contains("upstream change"), "{stdout}");
+    assert!(!stdout.contains("initial pin"), "{stdout}");
+}
