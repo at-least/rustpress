@@ -40,7 +40,7 @@ pub async fn run(site_dir: PathBuf, port: u16) -> anyhow::Result<()> {
         .route("/@rustpress/livereload", get(livereload))
         .fallback(move |uri: axum::http::Uri| {
             let state = Arc::clone(&state);
-            async move { serve_file(&state, &uri) }
+            async move { serve_file(&state, &uri).await }
         })
         .with_state(());
 
@@ -164,7 +164,7 @@ async fn livereload()
 /// path separator on Windows) is rejected before any filesystem access;
 /// symlinks inside public/ are trusted (127.0.0.1 dev server serving its
 /// own build output only).
-fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
+async fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
     let path = uri.path();
     let path = match path {
         "/" => "/index.html",
@@ -204,12 +204,12 @@ fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
         }
         // directory-style 404: serve the custom 404 page
         let not_found = state.root.join("404.html");
-        if let Ok(body) = std::fs::read(&not_found) {
+        if let Ok(body) = tokio::fs::read(&not_found).await {
             return html_response(StatusCode::NOT_FOUND, body);
         }
         return plain(StatusCode::NOT_FOUND, "not found");
     }
-    match std::fs::read(&file_path) {
+    match tokio::fs::read(&file_path).await {
         Ok(body) => {
             // livereload injection follows the decoded path: a
             // percent-encoded dot would otherwise skip it
@@ -334,39 +334,39 @@ mod tests {
         dir
     }
 
-    fn status_of(root: &Path, path: &'static str) -> StatusCode {
+    async fn status_of(root: &Path, path: &'static str) -> StatusCode {
         let state = ServeState {
             root: root.to_path_buf(),
         };
-        serve_file(&state, &Uri::from_static(path)).status()
+        serve_file(&state, &Uri::from_static(path)).await.status()
     }
 
-    #[test]
-    fn serves_files_and_rejects_traversal() {
+    #[tokio::test]
+    async fn serves_files_and_rejects_traversal() {
         let dir = temp_site();
         let public = dir.join("public");
-        assert_eq!(status_of(&public, "/"), StatusCode::OK);
-        assert_eq!(status_of(&public, "/data.txt"), StatusCode::OK);
-        assert_eq!(status_of(&public, "/sub/page.html"), StatusCode::OK);
-        assert_eq!(status_of(&public, "/missing.txt"), StatusCode::NOT_FOUND);
+        assert_eq!(status_of(&public, "/").await, StatusCode::OK);
+        assert_eq!(status_of(&public, "/data.txt").await, StatusCode::OK);
+        assert_eq!(status_of(&public, "/sub/page.html").await, StatusCode::OK);
+        assert_eq!(status_of(&public, "/missing.txt").await, StatusCode::NOT_FOUND);
         // traversal, raw and percent-encoded
         assert_eq!(
-            status_of(&public, "/../rustpress.toml"),
+            status_of(&public, "/../rustpress.toml").await,
             StatusCode::NOT_FOUND
         );
         assert_eq!(
-            status_of(&public, "/%2e%2e/rustpress.toml"),
+            status_of(&public, "/%2e%2e/rustpress.toml").await,
             StatusCode::NOT_FOUND
         );
         // double-encoded decodes to a literal "%2e%2e" name: no second pass
         assert_eq!(
-            status_of(&public, "/%252e%252e/rustpress.toml"),
+            status_of(&public, "/%252e%252e/rustpress.toml").await,
             StatusCode::NOT_FOUND
         );
         // a backslash is a path separator on Windows: never let one ride
         // through a segment ("..\..\rustpress.toml")
         assert_eq!(
-            status_of(&public, "/..%5C..%5Crustpress.toml"),
+            status_of(&public, "/..%5C..%5Crustpress.toml").await,
             StatusCode::NOT_FOUND
         );
 
@@ -375,13 +375,13 @@ mod tests {
         let state = ServeState {
             root: public.clone(),
         };
-        let resp = serve_file(&state, &Uri::from_static("/index%2Ehtml"));
+        let resp = serve_file(&state, &Uri::from_static("/index%2Ehtml")).await;
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(
             resp.headers().get(header::CONTENT_TYPE).unwrap(),
             "text/html; charset=utf-8"
         );
-        let resp = serve_file(&state, &Uri::from_static("/data.txt"));
+        let resp = serve_file(&state, &Uri::from_static("/data.txt")).await;
         assert_eq!(
             resp.headers().get(header::CONTENT_TYPE).unwrap(),
             "text/plain; charset=utf-8"
@@ -427,8 +427,8 @@ mod tests {
         assert!(!is_build_output(&[], Path::new("/site/public")));
     }
 
-    #[test]
-    fn slash_less_directory_urls_redirect_to_the_trailing_slash() {
+    #[tokio::test]
+    async fn slash_less_directory_urls_redirect_to_the_trailing_slash() {
         // VitePress's dev server sends /sub to the canonical /sub/
         // instead of a bare 404; hand-typed or external links rely on it
         let dir = temp_site();
@@ -437,7 +437,7 @@ mod tests {
         let state = ServeState {
             root: public.clone(),
         };
-        let resp = serve_file(&state, &Uri::from_static("/sub"));
+        let resp = serve_file(&state, &Uri::from_static("/sub")).await;
         assert_eq!(resp.status(), StatusCode::MOVED_PERMANENTLY);
         assert_eq!(
             resp.headers()
@@ -446,7 +446,10 @@ mod tests {
             Some("/sub/")
         );
         // a slash-less path with no directory behind it still 404s
-        assert_eq!(status_of(&public, "/no-such-dir"), StatusCode::NOT_FOUND);
+        assert_eq!(
+            status_of(&public, "/no-such-dir").await,
+            StatusCode::NOT_FOUND
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

@@ -47,7 +47,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_norway = "0.9"
 thiserror = "2"
-tokio = { version = "1", features = ["rt-multi-thread", "net", "macros", "signal"] }
+tokio = { version = "1", features = ["rt-multi-thread", "net", "macros", "signal", "fs"] }
 # preserve_order: `[rewrites]` rules apply first-match-wins in
 # declaration order (VitePress semantics); a sorted map would make the
 # lexicographically last rule win instead
