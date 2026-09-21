@@ -388,9 +388,12 @@ impl IncludeTarget {
 
 fn md_include_target(line: &str) -> Option<IncludeTarget> {
     let t = line.trim();
+    // upstream's directive is <!--\s*@include:\s*…-->; the space after
+    // the comment opener is accepted too
     let inner = t
-        .strip_prefix("<!--@include:")
-        .and_then(|r| r.strip_suffix("-->"))?
+        .strip_prefix("<!--")
+        .and_then(|r| r.trim_start().strip_prefix("@include:"))?
+        .strip_suffix("-->")?
         .trim();
     if inner.is_empty() {
         return None;

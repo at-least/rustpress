@@ -561,6 +561,21 @@ fn fence_include_without_trailing_newline_keeps_fence_closed() {
 }
 
 #[test]
+fn markdown_include_accepts_space_after_comment_open() {
+    // upstream's directive regex is <!--\s*@include:\s*…-->; a space
+    // after the comment opener must not ship the directive verbatim
+    let out = include_site(
+        &[("parts/s.md", "SPACE-FORM BODY\n")],
+        "<!-- @include: ./parts/s.md-->\n",
+    );
+    assert!(
+        out.html.contains("SPACE-FORM BODY"),
+        "space form expands: {}",
+        out.html
+    );
+}
+
+#[test]
 fn fenced_include_cannot_break_out_of_the_authors_fence() {
     // a partial that itself contains fences must not close the author's
     // fence: verbatim insertion stays verbatim, but the emitted opening
