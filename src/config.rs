@@ -609,19 +609,57 @@ impl<'de> Deserialize<'de> for ThemeableImage {
 }
 
 /// `themeConfig.siteTitle`: a string override or `false` to hide.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-#[serde(untagged)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum SiteTitleSetting {
     Text(String),
     Hide(bool),
 }
 
+impl<'de> Deserialize<'de> for SiteTitleSetting {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error as _;
+        match toml::Value::deserialize(deserializer)? {
+            toml::Value::String(s) => Ok(Self::Text(s)),
+            toml::Value::Boolean(false) => Ok(Self::Hide(false)),
+            toml::Value::Boolean(true) => Err(D::Error::custom(
+                "siteTitle: only `false` is meaningful as a bool (it hides the title); \
+                 set a string or drop the key",
+            )),
+            other => Err(D::Error::custom(format!(
+                "invalid siteTitle: expected a string or false, got {other}"
+            ))),
+        }
+    }
+}
+
 /// `titleTemplate`: `":title …"` template or `false` (no suffix).
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-#[serde(untagged)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TitleTemplate {
     Tmpl(String),
     Off(bool),
+}
+
+impl<'de> Deserialize<'de> for TitleTemplate {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error as _;
+        match toml::Value::deserialize(deserializer)? {
+            toml::Value::String(s) => Ok(Self::Tmpl(s)),
+            toml::Value::Boolean(false) => Ok(Self::Off(false)),
+            toml::Value::Boolean(true) => Err(D::Error::custom(
+                "titleTemplate: only `false` is meaningful as a bool (it drops the suffix); \
+                 set a \":title …\" template or drop the key",
+            )),
+            other => Err(D::Error::custom(format!(
+                "invalid titleTemplate: expected a string or false, got {other}"
+            ))),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -1159,6 +1197,21 @@ mod tests {
 
     fn parse(src: &str) -> SiteConfig {
         toml::from_str(src).expect("parse")
+    }
+
+    #[test]
+    fn site_title_and_title_template_reject_boolean_true() {
+        // the untagged bool fallback turned `true` into "hide/off" —
+        // only `false` is meaningful for these keys
+        let err =
+            toml::from_str::<SiteConfig>("title = \"T\"\nsiteTitle = true\n").unwrap_err();
+        assert!(err.to_string().contains("only `false`"), "{err}");
+        let err =
+            toml::from_str::<SiteConfig>("title = \"T\"\ntitleTemplate = true\n").unwrap_err();
+        assert!(err.to_string().contains("only `false`"), "{err}");
+        let cfg = parse("title = \"T\"\nsiteTitle = false\ntitleTemplate = false\n");
+        assert_eq!(cfg.site_title, Some(SiteTitleSetting::Hide(false)));
+        assert_eq!(cfg.title_template, Some(TitleTemplate::Off(false)));
     }
 
     #[test]

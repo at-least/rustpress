@@ -137,19 +137,63 @@ pub enum LastUpdatedSetting {
 
 /// `prev`/`next` in front matter: `false`, a text override, or a full
 /// `{ text, link, target?, rel? }` object.
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-#[serde(untagged)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum PrevNext {
     Off(bool),
     Text(String),
     Obj {
         text: String,
         link: String,
-        #[serde(default)]
         target: Option<String>,
-        #[serde(default)]
         rel: Option<String>,
     },
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PrevNextObj {
+    text: String,
+    link: String,
+    #[serde(default)]
+    target: Option<String>,
+    #[serde(default)]
+    rel: Option<String>,
+}
+
+impl<'de> Deserialize<'de> for PrevNext {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error as _;
+        let value = toml::Value::deserialize(deserializer)?;
+        match value {
+            toml::Value::Boolean(false) => Ok(Self::Off(false)),
+            toml::Value::Boolean(true) => Err(D::Error::custom(
+                "prev/next: only `false` is meaningful as a bool (it turns the link off); \
+                 use a text string or { text, link }",
+            )),
+            toml::Value::String(s) => Ok(Self::Text(s)),
+            toml::Value::Table(_) => PrevNextObj::deserialize(value)
+                .map_err(|e| D::Error::custom(format!("invalid prev/next: {e}")))
+                .map(
+                    |PrevNextObj {
+                         text,
+                         link,
+                         target,
+                         rel,
+                     }| Self::Obj {
+                         text,
+                         link,
+                         target,
+                         rel,
+                     },
+                ),
+            other => Err(D::Error::custom(format!(
+                "invalid prev/next: expected false, a text string, or a {{ text, link }} table, got {other}"
+            ))),
+        }
+    }
 }
 
 /// `outline: deep` | `outline: 2` | `outline: [2, 3]` | `outline: false`.
@@ -621,6 +665,16 @@ pub enum ContentError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn prev_next_reject_boolean_true() {
+        // `true` silently disabled the pager side via the untagged bool
+        let err = serde_norway::from_str::<PageFrontMatter>("prev: true\n").unwrap_err();
+        assert!(err.to_string().contains("only `false`"), "{err}");
+        let fm: PageFrontMatter = serde_norway::from_str("prev: false\nnext: false\n").unwrap();
+        assert_eq!(fm.prev, Some(PrevNext::Off(false)));
+        assert_eq!(fm.next, Some(PrevNext::Off(false)));
+    }
 
     #[test]
     fn front_matter_split_basic() {
