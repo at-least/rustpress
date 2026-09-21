@@ -45,6 +45,10 @@ pub struct Site {
     /// re-derived from the pages (the URL-sorted first page only sits
     /// at the content root when a root index exists).
     pub content_dir: PathBuf,
+    /// The site directory itself, kept for the same reason: `@/`
+    /// includes resolve against it, and `content_dir.parent()` is only
+    /// the site dir when `srcDir` is a single path component.
+    pub site_root: PathBuf,
 }
 
 impl Site {
@@ -138,6 +142,7 @@ impl Site {
             theme_link,
             theme_source,
             content_dir,
+            site_root: site_dir.to_path_buf(),
         })
     }
 
@@ -682,10 +687,7 @@ impl Site {
     fn content_root(&self) -> std::path::PathBuf {
         // The engine resolves `@/` includes against the site dir; content
         // dir for relative ones. Both are the running site's layout.
-        self.content_dir
-            .parent()
-            .map(|p| p.to_path_buf())
-            .unwrap_or_default()
+        self.site_root.clone()
     }
 }
 

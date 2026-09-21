@@ -188,10 +188,11 @@ async fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
         }
         file_path.push(seg);
     }
-    if !file_path.is_file() {
+    let meta = tokio::fs::metadata(&file_path).await.ok();
+    if !meta.as_ref().is_some_and(|m| m.is_file()) {
         // VitePress's dev server sends a slash-less directory URL to the
         // canonical trailing-slash form instead of a bare 404
-        if file_path.is_dir() {
+        if meta.is_some_and(|m| m.is_dir()) {
             let mut location = path.to_string();
             if !location.ends_with('/') {
                 location.push('/');

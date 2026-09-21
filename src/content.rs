@@ -150,7 +150,6 @@ pub enum PrevNext {
 }
 
 #[derive(serde::Deserialize)]
-#[serde(deny_unknown_fields)]
 struct PrevNextObj {
     text: String,
     link: String,
@@ -665,6 +664,27 @@ pub enum ContentError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn prev_next_table_form_parses_and_tolerates_extra_keys() {
+        let fm: PageFrontMatter =
+            serde_norway::from_str("prev: { text: \"Back\", link: \"/a/\" }\n").unwrap();
+        assert_eq!(
+            fm.prev,
+            Some(PrevNext::Obj {
+                text: "Back".into(),
+                link: "/a/".into(),
+                target: None,
+                rel: None,
+            })
+        );
+        // upstream ignores keys it does not know instead of failing
+        let fm: PageFrontMatter = serde_norway::from_str(
+            "next: { text: \"Fwd\", link: \"/b/\", target: \"_blank\", something: 1 }\n",
+        )
+        .unwrap();
+        assert!(matches!(fm.next, Some(PrevNext::Obj { target: Some(_), .. })));
+    }
 
     #[test]
     fn prev_next_reject_boolean_true() {

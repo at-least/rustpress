@@ -27,6 +27,7 @@ fn build_fixture() -> (common::TempDir, rustpress::render::BuildStats) {
         theme_link: None,
         theme_source: None,
         content_dir: fixtures.join("en"),
+        site_root: fixtures.to_path_buf(),
         config,
         content,
     };
@@ -117,6 +118,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
             theme_link: None,
             theme_source: None,
             content_dir: fixtures.join("en"),
+            site_root: fixtures.to_path_buf(),
             config,
             content,
         }
@@ -143,6 +145,7 @@ fn dead_links_fail_the_build_and_ignore_works() {
         theme_link: None,
         theme_source: None,
         content_dir: fixtures.join("en"),
+        site_root: fixtures.to_path_buf(),
         config,
         content,
     };

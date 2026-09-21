@@ -576,6 +576,21 @@ fn markdown_include_accepts_space_after_comment_open() {
 }
 
 #[test]
+fn list_item_fences_without_inline_marker_stay_fences() {
+    // regression: the ≤3-space opener cap also rejected the 4-space
+    // indented fences CommonMark allows inside list items (content
+    // column 3 for "1. "), un-styling every fenced block under a list
+    // — the shape demo/content/guide/cms.md ships
+    let out = synthetic("1. Do it:\n\n    ```js\n    const a = 1\n    ```\n\ntail\n");
+    assert!(
+        out.html.contains(r#"data-lang="js""#),
+        "item fence keeps its info rewrite: {}",
+        out.html
+    );
+    assert_eq!(out.html.matches("<pre").count(), 1, "single fenced block");
+}
+
+#[test]
 fn region_include_matches_tokens_dedents_and_nests() {
     // upstream semantics: the name is an exact token (demo does not
     // match demo2), a nested #region inside the selected one does not

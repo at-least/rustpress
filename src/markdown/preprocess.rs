@@ -85,7 +85,8 @@ impl<'a> Preprocess<'a> {
         // a closing run for the fence, the opener (and the author's own
         // closer) must be emitted longer than it — otherwise the partial
         // closes the fence and everything after it is swallowed as code
-        let mut fence: Option<(char, usize, usize, String)> = None;
+        let mut list_base = 0usize;
+    let mut fence: Option<(char, usize, usize, String)> = None;
         let mut opener_line: Option<String> = None;
         let mut body = String::new();
         for line in md.split_inclusive('\n') {
@@ -127,7 +128,8 @@ impl<'a> Preprocess<'a> {
                 }
                 continue;
             }
-            if let Some((ch, n, col)) = opening_fence(bare) {
+            list_base = update_list_base(bare, list_base);
+        if let Some((ch, n, col)) = opening_fence(bare, list_base) {
                 // the block's content column is the column of the fence
                 // marker itself (for `10. ` that is 4, for `- ` that is
                 // 2), re-expressed as spaces; content lines may be
@@ -491,6 +493,7 @@ fn extract_heading_section(content: &str, anchor: &str) -> Option<String> {
             .filter(|c| c.is_alphanumeric() || *c == '-' || *c == '_')
             .collect()
     }
+    let mut list_base = 0usize;
     let mut fence: Option<(char, usize, usize)> = None;
     let mut level = 0usize;
     let mut started = false;
@@ -506,7 +509,8 @@ fn extract_heading_section(content: &str, anchor: &str) -> Option<String> {
             }
             continue;
         }
-        if let Some((ch, n, col)) = opening_fence(bare) {
+        list_base = update_list_base(bare, list_base);
+        if let Some((ch, n, col)) = opening_fence(bare, list_base) {
             if started {
                 out.push_str(line);
             }
@@ -629,6 +633,7 @@ fn fence_marker_for(content: &str) -> String {
 pub fn expand_inline_footnotes(md: &str) -> String {
     static RE: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
     let re = RE.get_or_init(|| Regex::new(r"\^\[([^\[\]]+)\]").unwrap());
+    let mut list_base = 0usize;
     let mut fence: Option<(char, usize, usize)> = None;
     let mut counter = 0usize;
     let mut defs: Vec<String> = Vec::new();
@@ -642,7 +647,8 @@ pub fn expand_inline_footnotes(md: &str) -> String {
             }
             continue;
         }
-        if let Some((ch, n, col)) = opening_fence(bare) {
+        list_base = update_list_base(bare, list_base);
+        if let Some((ch, n, col)) = opening_fence(bare, list_base) {
             out.push_str(line);
             fence = Some((ch, n, col));
             continue;
@@ -712,6 +718,7 @@ pub fn rewrite_link_attrs(md: &str) -> String {
             .replace('<', "&lt;")
             .replace('>', "&gt;")
     }
+    let mut list_base = 0usize;
     let mut fence: Option<(char, usize, usize)> = None;
     let mut out = String::with_capacity(md.len());
     for line in md.split_inclusive('\n') {
@@ -723,7 +730,8 @@ pub fn rewrite_link_attrs(md: &str) -> String {
             }
             continue;
         }
-        if let Some((ch, n, col)) = opening_fence(bare) {
+        list_base = update_list_base(bare, list_base);
+        if let Some((ch, n, col)) = opening_fence(bare, list_base) {
             out.push_str(line);
             fence = Some((ch, n, col));
             continue;
@@ -813,6 +821,7 @@ fn escape_attr_value(s: &str) -> String {
 /// example alerts inside code fences stay literal.
 pub fn expand_alerts(md: &str, opts: &ContainerOptions) -> String {
     let mut out_lines: Vec<String> = Vec::new();
+    let mut list_base = 0usize;
     let mut fence: Option<(char, usize, usize)> = None;
     let lines: Vec<&str> = md.split_inclusive('\n').collect();
     let mut i = 0usize;
@@ -826,7 +835,8 @@ pub fn expand_alerts(md: &str, opts: &ContainerOptions) -> String {
             i += 1;
             continue;
         }
-        if let Some((ch, n, col)) = opening_fence(bare) {
+        list_base = update_list_base(bare, list_base);
+        if let Some((ch, n, col)) = opening_fence(bare, list_base) {
             out_lines.push(bare.to_string());
             fence = Some((ch, n, col));
             i += 1;
@@ -1000,6 +1010,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
     }
     let mut out_lines: Vec<String> = Vec::new();
     let mut stack: Vec<(usize, Open)> = Vec::new();
+    let mut list_base = 0usize;
     let mut fence: Option<(char, usize, usize)> = None;
     let mut group_counter = 0usize;
 
@@ -1031,7 +1042,8 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
             }
             continue;
         }
-        if let Some((ch, n, col)) = opening_fence(bare) {
+        list_base = update_list_base(bare, list_base);
+        if let Some((ch, n, col)) = opening_fence(bare, list_base) {
             // fences inside ::: code-group get a group marker: it tells
             // the fence renderer their label is a tab name, not a
             // standalone block title
@@ -1149,6 +1161,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
 /// language). Label click wiring is the `codeGroup` Alpine component.
 fn code_group_tabs(lines: &[&str], idx: usize, group_no: usize) -> String {
     let mut labels: Vec<String> = Vec::new();
+    let mut list_base = 0usize;
     let mut fence: Option<(char, usize, usize)> = None;
     for line in lines.iter().skip(idx + 1) {
         let bare = line.trim_end_matches(['\n', '\r']);
@@ -1158,7 +1171,8 @@ fn code_group_tabs(lines: &[&str], idx: usize, group_no: usize) -> String {
             }
             continue;
         }
-        if let Some((ch, n, col)) = opening_fence(bare) {
+        list_base = update_list_base(bare, list_base);
+        if let Some((ch, n, col)) = opening_fence(bare, list_base) {
             let info = bare[fence_info_offset(bare, n)..].trim();
             let label = info.find('[').and_then(|i| {
                 info[i + 1..]
@@ -1245,6 +1259,7 @@ fn parse_details_rest(rest: &str) -> (String, bool) {
 /// Pass 3: fence info strings → `gdcode lang=… [hl=…] [label=…]`.
 pub fn rewrite_fences(md: &str) -> String {
     let mut out = String::with_capacity(md.len());
+    let mut list_base = 0usize;
     let mut fence: Option<(char, usize, usize)> = None; // marker, count, column
     for line in md.split_inclusive('\n') {
         let bare = line.trim_end_matches(['\n', '\r']);
@@ -1256,7 +1271,8 @@ pub fn rewrite_fences(md: &str) -> String {
             }
             continue;
         }
-        if let Some((ch, n, col)) = opening_fence(bare) {
+        list_base = update_list_base(bare, list_base);
+        if let Some((ch, n, col)) = opening_fence(bare, list_base) {
             let cut = fence_info_offset(bare, n);
             let info = &bare[cut..];
             let new_line = format!("{}{}", &bare[..cut], rewrite_info(info.trim()));
@@ -1364,6 +1380,7 @@ pub fn rewrite_badges(md: &str) -> String {
         PAIRED.get_or_init(|| Regex::new(r#"(?s)<Badge\s+([^<>]*?)>(.*?)</Badge>"#).unwrap());
 
     let mut out = String::with_capacity(md.len());
+    let mut list_base = 0usize;
     let mut fence: Option<(char, usize, usize)> = None;
     for line in md.split_inclusive('\n') {
         let bare = line.trim_end_matches(['\n', '\r']);
@@ -1374,7 +1391,8 @@ pub fn rewrite_badges(md: &str) -> String {
             }
             continue;
         }
-        if let Some((ch, n, col)) = opening_fence(bare) {
+        list_base = update_list_base(bare, list_base);
+        if let Some((ch, n, col)) = opening_fence(bare, list_base) {
             out.push_str(line);
             fence = Some((ch, n, col));
             continue;
@@ -1433,15 +1451,39 @@ fn strip_list_marker(t: &str) -> &str {
     }
 }
 
-fn opening_fence(line: &str) -> Option<(char, usize, usize)> {
+/// The content column of the most recent list marker line: fences
+/// indented near it belong to the item even without a marker on their
+/// own line (`1. ` sets 3, so a 4-space fence is the item's block).
+/// A non-blank line that cannot be item content (well left of the
+/// base) drops the state; blank lines never do.
+fn update_list_base(line: &str, current: usize) -> usize {
+    let raw = line.trim_start();
+    if raw.is_empty() {
+        return current;
+    }
+    let indent = line.len() - raw.len();
+    let after = strip_list_marker(raw);
+    if after.len() != raw.len() {
+        return indent + (raw.len() - after.len());
+    }
+    if indent + 3 < current {
+        0
+    } else {
+        current
+    }
+}
+
+fn opening_fence(line: &str, list_base: usize) -> Option<(char, usize, usize)> {
     let raw = line.trim_start();
     let marker = strip_list_marker(raw);
     let indent = line.len() - raw.len();
     // ≤3 spaces of indentation may open a fence; 4+ is an indented code
-    // block. Lines carrying a list marker live inside the item, whose
-    // content column the marker defines — the preprocessor does not
-    // track list nesting, so marker lines stay eligible at any indent.
-    if raw.len() == marker.len() && indent >= 4 {
+    // block — except inside a list item, whose content column the last
+    // marker line set: CommonMark allows the item's fence up to 3 past
+    // it. Marker-carrying lines are always eligible (the preprocessor
+    // does not track list nesting).
+    let in_item = list_base > 0 && indent + 3 >= list_base && indent <= list_base + 3;
+    if raw.len() == marker.len() && indent >= 4 && !in_item {
         return None;
     }
     let first = marker.chars().next()?;
