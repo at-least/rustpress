@@ -543,23 +543,68 @@ fn extract_heading_section(content: &str, anchor: &str) -> Option<String> {
     started.then_some(out)
 }
 
-fn extract_region(content: &str, name: &str) -> Option<String> {
-    let mut out = String::new();
-    let mut inside = false;
-    for line in content.split_inclusive('\n') {
-        let l = line;
-        if !inside && l.contains("#region") && l.contains(name) {
-            inside = true;
-            continue;
-        }
-        if inside && l.contains("#endregion") {
-            return Some(out);
-        }
-        if inside {
-            out.push_str(l);
+/// `// #region name` marker check: the name must be the exact token
+/// after `#region`, so `demo` does not open `#region demo2`.
+fn region_opens(line: &str, name: &str) -> bool {
+    let Some(i) = line.find("#region") else {
+        return false;
+    };
+    line[i + "#region".len()..]
+        .split_whitespace()
+        .next()
+        .is_some_and(|token| token == name)
+}
+
+/// Common leading whitespace stripped from every non-blank line
+/// (upstream dedents region and snippet bodies the same way).
+fn dedent(text: &str) -> String {
+    let common = text
+        .split_inclusive('\n')
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| l.len() - l.trim_start().len())
+        .min()
+        .unwrap_or(0);
+    if common == 0 {
+        return text.to_string();
+    }
+    let mut out = String::with_capacity(text.len());
+    for line in text.split_inclusive('\n') {
+        if line.trim().is_empty() {
+            out.push_str(line);
+        } else {
+            out.push_str(line.get(common..).unwrap_or(line));
         }
     }
-    if inside { Some(out) } else { None }
+    out
+}
+
+fn extract_region(content: &str, name: &str) -> Option<String> {
+    let mut out = String::new();
+    let mut depth = 0usize;
+    for line in content.split_inclusive('\n') {
+        let t = line.trim_start();
+        if depth == 0 {
+            if region_opens(t, name) {
+                depth = 1;
+            }
+            continue;
+        }
+        // a nested #region must not end the selection; its own
+        // #endregion closes it
+        if t.contains("#region") {
+            depth += 1;
+            continue;
+        }
+        if t.contains("#endregion") {
+            depth -= 1;
+            if depth == 0 {
+                return Some(dedent(&out));
+            }
+            continue;
+        }
+        out.push_str(line);
+    }
+    (depth > 0).then(|| dedent(&out))
 }
 
 /// A fence marker longer than any backtick run inside the content.

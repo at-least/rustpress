@@ -576,6 +576,28 @@ fn markdown_include_accepts_space_after_comment_open() {
 }
 
 #[test]
+fn region_include_matches_tokens_dedents_and_nests() {
+    // upstream semantics: the name is an exact token (demo does not
+    // match demo2), a nested #region inside the selected one does not
+    // end it early, and the extracted body is dedented
+    let out = include_site(
+        &[(
+            "parts/r.md",
+            "fn wrapper() {\n    #region demo2\n    wrong body\n    #endregion\n    #region demo\n    let a = 1;\n    #region inner\n    let b = 2;\n    #endregion\n    let c = 3;\n    #endregion\n}\n",
+        )],
+        "<!--@include: ./parts/r.md#demo-->\n",
+    );
+    assert!(
+        out.html.contains("<p>let a = 1;\nlet b = 2;\nlet c = 3;</p>"),
+        "dedented to a paragraph, not an indented code block: {}",
+        out.html
+    );
+    assert!(out.html.contains("let c = 3;"), "nested region skipped, not ended");
+    assert!(!out.html.contains("wrong body"), "demo2 not matched by substring");
+    assert!(!out.html.contains("fn wrapper"), "extraction bounds hold");
+}
+
+#[test]
 fn fenced_include_cannot_break_out_of_the_authors_fence() {
     // a partial that itself contains fences must not close the author's
     // fence: verbatim insertion stays verbatim, but the emitted opening
