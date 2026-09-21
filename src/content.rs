@@ -182,11 +182,11 @@ impl<'de> Deserialize<'de> for PrevNext {
                          target,
                          rel,
                      }| Self::Obj {
-                         text,
-                         link,
-                         target,
-                         rel,
-                     },
+                        text,
+                        link,
+                        target,
+                        rel,
+                    },
                 ),
             other => Err(D::Error::custom(format!(
                 "invalid prev/next: expected false, a text string, or a {{ text, link }} table, got {other}"
@@ -683,7 +683,13 @@ mod tests {
             "next: { text: \"Fwd\", link: \"/b/\", target: \"_blank\", something: 1 }\n",
         )
         .unwrap();
-        assert!(matches!(fm.next, Some(PrevNext::Obj { target: Some(_), .. })));
+        assert!(matches!(
+            fm.next,
+            Some(PrevNext::Obj {
+                target: Some(_),
+                ..
+            })
+        ));
     }
 
     #[test]

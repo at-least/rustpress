@@ -167,12 +167,9 @@ impl Site {
 
     /// Render one page's full HTML document.
     pub fn render_page(&self, page: &Page) -> Result<String, BuildError> {
-        let rendered = self.engine.render(
-            page,
-            &self.content,
-            &self.content_root(),
-            &self.content_dir,
-        )?;
+        let rendered =
+            self.engine
+                .render(page, &self.content, &self.content_root(), &self.content_dir)?;
         self.render_page_inner(page, &rendered)
     }
 
@@ -331,12 +328,9 @@ impl Site {
         let search_enabled = self.config.search.is_some();
         let mut dead_links: Vec<(String, Vec<String>)> = Vec::new();
         for page in &self.content.pages {
-            let rendered = self.engine.render(
-                page,
-                &self.content,
-                &self.content_root(),
-                &self.content_dir,
-            )?;
+            let rendered =
+                self.engine
+                    .render(page, &self.content, &self.content_root(), &self.content_dir)?;
             let dead = find_dead_links(&rendered.html, page, self);
             let dead: Vec<String> = match &self.config.ignore_dead_links {
                 IgnoreDeadLinks::IgnorePrefixes(prefixes) => dead
@@ -1024,7 +1018,9 @@ fn apply_rewrites(content: &mut Content, rewrites: &[Rewrite]) -> Result<(), Con
                 // is one) — `guide:rest*` must not capture `guide2/…`
                 page.rel
                     .strip_prefix(prefix)
-                    .filter(|rest| prefix.ends_with('/') || rest.is_empty() || rest.starts_with('/'))
+                    .filter(|rest| {
+                        prefix.ends_with('/') || rest.is_empty() || rest.starts_with('/')
+                    })
                     .map(|rest| rule.to.replace(":rest*", rest).replace(":rest", rest))
             } else if rule.from == page.rel {
                 Some(rule.to.clone())

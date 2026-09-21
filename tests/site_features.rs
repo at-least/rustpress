@@ -176,7 +176,7 @@ fn scheme_links_pass_through_nav_and_hero() {
     // /tel:… (404 on the site) and mailto: hero actions too
     let (_, out) = build_site(
         "title = \"T\"\n\n[[nav]]\ntext = \"Call\"\nlink = \"tel:+15551234\"\n",
-        &[( 
+        &[(
             "index.md",
             "---\nlayout: home\nhero:\n  name: N\n  text: T\n  actions:\n    - text: Mail\n      link: mailto:hi@example.com\nfeatures: []\n---\n",
         )],

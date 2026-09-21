@@ -349,7 +349,10 @@ mod tests {
         assert_eq!(status_of(&public, "/").await, StatusCode::OK);
         assert_eq!(status_of(&public, "/data.txt").await, StatusCode::OK);
         assert_eq!(status_of(&public, "/sub/page.html").await, StatusCode::OK);
-        assert_eq!(status_of(&public, "/missing.txt").await, StatusCode::NOT_FOUND);
+        assert_eq!(
+            status_of(&public, "/missing.txt").await,
+            StatusCode::NOT_FOUND
+        );
         // traversal, raw and percent-encoded
         assert_eq!(
             status_of(&public, "/../rustpress.toml").await,

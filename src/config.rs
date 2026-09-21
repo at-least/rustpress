@@ -1203,8 +1203,7 @@ mod tests {
     fn site_title_and_title_template_reject_boolean_true() {
         // the untagged bool fallback turned `true` into "hide/off" —
         // only `false` is meaningful for these keys
-        let err =
-            toml::from_str::<SiteConfig>("title = \"T\"\nsiteTitle = true\n").unwrap_err();
+        let err = toml::from_str::<SiteConfig>("title = \"T\"\nsiteTitle = true\n").unwrap_err();
         assert!(err.to_string().contains("only `false`"), "{err}");
         let err =
             toml::from_str::<SiteConfig>("title = \"T\"\ntitleTemplate = true\n").unwrap_err();

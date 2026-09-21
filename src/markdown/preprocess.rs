@@ -2,6 +2,16 @@
 //! markdown-it plugins, done as fence-aware line passes:
 //!
 //! 1. `<<< @/path` / `<!--@include: file.md-->` file includes
+//!
+//! Known fence-tracking approximations (the preprocessor does not track
+//! list nesting): (a) list-marker lines are always fence-eligible at
+//! any indent; (b) a marker-less fence counts as inside the item while
+//! it sits within 3 columns of the last marker line's content column,
+//! and that state ends at the first column-0-ish paragraph that follows
+//! a blank line — a resumed OUTER list item after a nested one can
+//! therefore lose a fence; (c) each included file is resolved with
+//! fresh list state (the eight later passes see the merged document
+//! with full context).
 //! 2. `:::` containers → HTML-block wrappers (the markdown-it-container
 //!    trick: an HTML block ends at a blank line, so the inner content is
 //!    parsed as markdown in the *same* comrak pass — footnotes, link
@@ -86,7 +96,7 @@ impl<'a> Preprocess<'a> {
         // closer) must be emitted longer than it — otherwise the partial
         // closes the fence and everything after it is swallowed as code
         let mut list_base = ListBase::default();
-    let mut fence: Option<(char, usize, usize, String)> = None;
+        let mut fence: Option<(char, usize, usize, String)> = None;
         let mut opener_line: Option<String> = None;
         let mut body = String::new();
         for line in md.split_inclusive('\n') {
@@ -129,7 +139,7 @@ impl<'a> Preprocess<'a> {
                 continue;
             }
             list_base.observe(bare);
-        if let Some((ch, n, col)) = opening_fence(bare, list_base.base) {
+            if let Some((ch, n, col)) = opening_fence(bare, list_base.base) {
                 // the block's content column is the column of the fence
                 // marker itself (for `10. ` that is 4, for `- ` that is
                 // 2), re-expressed as spaces; content lines may be
@@ -169,6 +179,8 @@ impl<'a> Preprocess<'a> {
                 }
                 let inner = self.load_include(&target, dir, depth)?;
                 let inner_dir = self.include_dir(&target, dir);
+                // included files resolve with fresh list state: their
+                // fences are judged from their own document context
                 let inner = self.resolve_includes(&inner, &inner_dir, depth + 1)?;
                 out.push_str(&inner);
                 if !inner.ends_with('\n') {

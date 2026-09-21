@@ -190,7 +190,10 @@ async fn main() -> anyhow::Result<()> {
                 // a missing previous baseline diffs as "every page new",
                 // matching the --help text (the initial pin of
                 // `parity:refresh` still produces a full change report)
-                let old_base = old.exists().then(|| rustpress::parity::load_baseline(&old)).transpose()?;
+                let old_base = old
+                    .exists()
+                    .then(|| rustpress::parity::load_baseline(&old))
+                    .transpose()?;
                 let new_base = rustpress::parity::load_baseline(&new)?;
                 let changes = rustpress::parity::diff(old_base.as_ref(), &new_base);
                 if changes.is_empty() {

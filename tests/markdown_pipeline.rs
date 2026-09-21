@@ -337,8 +337,7 @@ fn duplicate_and_self_anchorizing_custom_ids_keep_no_literal() {
     assert!(
         out.html.contains("<h2 id=\"foo\">"),
         "self-anchorizing custom id still applies: {}",
-        &out.html
-            [out.html.find("<h2").unwrap()..out.html.find("<h2").unwrap() + 80]
+        &out.html[out.html.find("<h2").unwrap()..out.html.find("<h2").unwrap() + 80]
     );
     assert!(!out.html.contains("{#foo}"), "attr literal stripped");
 }
@@ -430,16 +429,17 @@ fn markdown_include_strips_part_file_frontmatter() {
     // a bare line range counts raw file lines (front matter included —
     // that is what makes the numbers stable), so it must NOT strip
     let out = include_site(
-        &[
-            ("parts/ranged.md", "---\ntitle: R\n---\n\nfirst\nsecond\n"),
-        ],
+        &[("parts/ranged.md", "---\ntitle: R\n---\n\nfirst\nsecond\n")],
         "<!--@include: ./parts/ranged.md{5,6}-->\n",
     );
     assert!(
         out.html.contains("first") && out.html.contains("second"),
         "range numbering spans the front matter"
     );
-    assert!(!out.html.contains("title: R"), "out-of-range lines stay out");
+    assert!(
+        !out.html.contains("title: R"),
+        "out-of-range lines stay out"
+    );
 }
 
 #[test]
@@ -617,12 +617,19 @@ fn region_include_matches_tokens_dedents_and_nests() {
         "<!--@include: ./parts/r.md#demo-->\n",
     );
     assert!(
-        out.html.contains("<p>let a = 1;\nlet b = 2;\nlet c = 3;</p>"),
+        out.html
+            .contains("<p>let a = 1;\nlet b = 2;\nlet c = 3;</p>"),
         "dedented to a paragraph, not an indented code block: {}",
         out.html
     );
-    assert!(out.html.contains("let c = 3;"), "nested region skipped, not ended");
-    assert!(!out.html.contains("wrong body"), "demo2 not matched by substring");
+    assert!(
+        out.html.contains("let c = 3;"),
+        "nested region skipped, not ended"
+    );
+    assert!(
+        !out.html.contains("wrong body"),
+        "demo2 not matched by substring"
+    );
     assert!(!out.html.contains("fn wrapper"), "extraction bounds hold");
 }
 
