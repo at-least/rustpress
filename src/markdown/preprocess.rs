@@ -22,7 +22,9 @@
 //!
 //! All passes leave code-fence content untouched (a fence line opens on
 //! a run of ≥3 backticks/tildes and closes on a run at least as long;
-//! shorter runs inside are literal text).
+//! shorter runs inside are literal text). Every pass classifies its
+//! lines through one `FenceScanner` — fence state plus the list-item
+//! content column — so those rules and their order live in one place.
 
 use std::path::{Path, PathBuf};
 
@@ -95,64 +97,68 @@ impl<'a> Preprocess<'a> {
         // a closing run for the fence, the opener (and the author's own
         // closer) must be emitted longer than it — otherwise the partial
         // closes the fence and everything after it is swallowed as code
-        let mut list_base = ListBase::default();
-        let mut fence: Option<(char, usize, usize, String)> = None;
+        let mut scanner = FenceScanner::default();
+        // the open fence's marker, run length and content pad
+        let mut fence: Option<(char, usize, String)> = None;
         let mut opener_line: Option<String> = None;
         let mut body = String::new();
         for line in md.split_inclusive('\n') {
             let bare = line.trim_end_matches(['\n', '\r']);
             let t = bare.trim();
-            if let Some((ch, n, col, pad)) = &fence {
-                if is_closing_fence(bare, *ch, *n, *col) {
-                    let len = longest_closing_run(&body, *ch, *n).map_or(*n, |run| run.max(*n) + 1);
+            match scanner.step(bare) {
+                LineKind::Closes => {
+                    let (ch, n, _) = fence.take().expect("closer of an open fence");
+                    let len = longest_closing_run(&body, ch, n).map_or(n, |run| run.max(n) + 1);
                     out.push_str(&lengthen_fence(
                         &opener_line.take().expect("open fence has an opener line"),
-                        *ch,
+                        ch,
                         len,
                     ));
                     out.push_str(&body);
                     body.clear();
-                    out.push_str(&lengthen_fence(line, *ch, len));
-                    fence = None;
+                    out.push_str(&lengthen_fence(line, ch, len));
                     continue;
                 }
-                if let Some(target) = md_include_target(t) {
-                    // verbatim insertion — the raw selected lines join
-                    // the code block content; a missing final newline is
-                    // restored or the inserted text glues onto the next
-                    // source line (typically the closing fence). Inside
-                    // a list-item fence the inserted lines must carry
-                    // the block's content column, or their column-0
-                    // position would end the list item — and the fenced
-                    // block with it
-                    let resolved = self.load_include(&target, dir, depth)?;
-                    for l in resolved.split_inclusive('\n') {
-                        body.push_str(pad);
-                        body.push_str(l);
+                LineKind::Inside => {
+                    let (_, _, pad) = fence.as_ref().expect("content of an open fence");
+                    if let Some(target) = md_include_target(t) {
+                        // verbatim insertion — the raw selected lines join
+                        // the code block content; a missing final newline is
+                        // restored or the inserted text glues onto the next
+                        // source line (typically the closing fence). Inside
+                        // a list-item fence the inserted lines must carry
+                        // the block's content column, or their column-0
+                        // position would end the list item — and the fenced
+                        // block with it
+                        let resolved = self.load_include(&target, dir, depth)?;
+                        for l in resolved.split_inclusive('\n') {
+                            body.push_str(pad);
+                            body.push_str(l);
+                        }
+                        if !resolved.ends_with('\n') {
+                            body.push('\n');
+                        }
+                    } else {
+                        body.push_str(line);
                     }
-                    if !resolved.ends_with('\n') {
-                        body.push('\n');
-                    }
-                } else {
-                    body.push_str(line);
+                    continue;
                 }
-                continue;
-            }
-            list_base.observe(bare);
-            if let Some((ch, n, col)) = opening_fence(bare, list_base.base) {
-                // the block's content column is the column of the fence
-                // marker itself (for `10. ` that is 4, for `- ` that is
-                // 2): the opener's own leading whitespace verbatim — a
-                // tab stays a tab, so it still reaches the tab stop
-                // comrak expands it to — plus the marker's width in
-                // spaces; content lines may be indented up to the
-                // opener's indentation without changing their content,
-                // so this is always safe
-                let ws = &bare[..bare.len() - bare.trim_start().len()];
-                let pad = format!("{ws}{}", " ".repeat(col - ws.len()));
-                fence = Some((ch, n, col, pad));
-                opener_line = Some(line.to_string());
-                continue;
+                LineKind::Opens(ch, n, col) => {
+                    // the block's content column is the column of the
+                    // fence marker itself (for `10. ` that is 4, for `- `
+                    // that is 2): the opener's own leading whitespace
+                    // verbatim — a tab stays a tab, so it still reaches
+                    // the tab stop comrak expands it to — plus the
+                    // marker's width in spaces; content lines may be
+                    // indented up to the opener's indentation without
+                    // changing their content, so this is always safe
+                    let ws = &bare[..bare.len() - bare.trim_start().len()];
+                    let pad = format!("{ws}{}", " ".repeat(col - ws.len()));
+                    fence = Some((ch, n, pad));
+                    opener_line = Some(line.to_string());
+                    continue;
+                }
+                LineKind::Outside => {}
             }
             if t.starts_with("<<<") {
                 match self.expand_code_include(t, dir) {
@@ -502,28 +508,16 @@ fn extract_heading_section(content: &str, anchor: &str) -> Option<String> {
     // page matches, including the `-1`, `-2` suffixes of repeated
     // headings and the marks/connector punctuation comrak keeps
     let mut anchorizer = comrak::Anchorizer::new();
-    let mut list_base = ListBase::default();
-    let mut fence: Option<(char, usize, usize)> = None;
+    let mut scanner = FenceScanner::default();
     let mut level = 0usize;
     let mut started = false;
     let mut out = String::new();
     for line in content.split_inclusive('\n') {
         let bare = line.trim_end_matches(['\n', '\r']);
-        if let Some((ch, n, col)) = fence {
+        if scanner.step(bare) != LineKind::Outside {
             if started {
                 out.push_str(line);
             }
-            if is_closing_fence(bare, ch, n, col) {
-                fence = None;
-            }
-            continue;
-        }
-        list_base.observe(bare);
-        if let Some((ch, n, col)) = opening_fence(bare, list_base.base) {
-            if started {
-                out.push_str(line);
-            }
-            fence = Some((ch, n, col));
             continue;
         }
         let t = bare.trim_start();
@@ -645,24 +639,14 @@ fn fence_marker_for(content: &str) -> String {
 pub fn expand_inline_footnotes(md: &str) -> String {
     static RE: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
     let re = RE.get_or_init(|| Regex::new(r"\^\[([^\[\]]+)\]").unwrap());
-    let mut list_base = ListBase::default();
-    let mut fence: Option<(char, usize, usize)> = None;
+    let mut scanner = FenceScanner::default();
     let mut counter = 0usize;
     let mut defs: Vec<String> = Vec::new();
     let mut out = String::with_capacity(md.len());
     for line in md.split_inclusive('\n') {
         let bare = line.trim_end_matches(['\n', '\r']);
-        if let Some((ch, n, col)) = fence {
+        if scanner.step(bare) != LineKind::Outside {
             out.push_str(line);
-            if is_closing_fence(bare, ch, n, col) {
-                fence = None;
-            }
-            continue;
-        }
-        list_base.observe(bare);
-        if let Some((ch, n, col)) = opening_fence(bare, list_base.base) {
-            out.push_str(line);
-            fence = Some((ch, n, col));
             continue;
         }
         // skip matches inside inline code spans on this line
@@ -724,22 +708,12 @@ pub fn rewrite_link_attrs(md: &str) -> String {
         // eating unrelated braces right after links
         Regex::new(r#"(?m)(!?)\[([^\]\n]*)\]\(([^)\s]+)\)\{([^{}]*="[^}"]*"[^{}]*)\}"#).unwrap()
     });
-    let mut list_base = ListBase::default();
-    let mut fence: Option<(char, usize, usize)> = None;
+    let mut scanner = FenceScanner::default();
     let mut out = String::with_capacity(md.len());
     for line in md.split_inclusive('\n') {
         let bare = line.trim_end_matches(['\n', '\r']);
-        if let Some((ch, n, col)) = fence {
+        if scanner.step(bare) != LineKind::Outside {
             out.push_str(line);
-            if is_closing_fence(bare, ch, n, col) {
-                fence = None;
-            }
-            continue;
-        }
-        list_base.observe(bare);
-        if let Some((ch, n, col)) = opening_fence(bare, list_base.base) {
-            out.push_str(line);
-            fence = Some((ch, n, col));
             continue;
         }
         // leave lines whose only {…} follow code spans alone: split the
@@ -835,24 +809,13 @@ fn escape_attr_value(s: &str) -> String {
 /// example alerts inside code fences stay literal.
 pub fn expand_alerts(md: &str, opts: &ContainerOptions) -> String {
     let mut out_lines: Vec<String> = Vec::new();
-    let mut list_base = ListBase::default();
-    let mut fence: Option<(char, usize, usize)> = None;
+    let mut scanner = FenceScanner::default();
     let lines: Vec<&str> = md.split_inclusive('\n').collect();
     let mut i = 0usize;
     while i < lines.len() {
         let bare = lines[i].trim_end_matches(['\n', '\r']);
-        if let Some((ch, n, col)) = fence {
+        if scanner.step(bare) != LineKind::Outside {
             out_lines.push(bare.to_string());
-            if is_closing_fence(bare, ch, n, col) {
-                fence = None;
-            }
-            i += 1;
-            continue;
-        }
-        list_base.observe(bare);
-        if let Some((ch, n, col)) = opening_fence(bare, list_base.base) {
-            out_lines.push(bare.to_string());
-            fence = Some((ch, n, col));
             i += 1;
             continue;
         }
@@ -1049,8 +1012,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
     }
     let mut out_lines: Vec<String> = Vec::new();
     let mut stack: Vec<(usize, Open)> = Vec::new();
-    let mut list_base = ListBase::default();
-    let mut fence: Option<(char, usize, usize)> = None;
+    let mut scanner = FenceScanner::default();
     let mut group_counter = 0usize;
 
     // Containers opened inside a list item keep the item's indent on
@@ -1074,25 +1036,23 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
         let bare = line.trim_end_matches(['\n', '\r']);
         let trimmed = bare.trim_start();
         let indent = &bare[..bare.len() - trimmed.len()];
-        if let Some((ch, n, col)) = fence {
-            out_lines.push(bare.to_string());
-            if is_closing_fence(bare, ch, n, col) {
-                fence = None;
+        match scanner.step(bare) {
+            LineKind::Opens(..) => {
+                // fences inside ::: code-group get a group marker: it
+                // tells the fence renderer their label is a tab name,
+                // not a standalone block title
+                if stack.iter().any(|(_, o)| matches!(o, Open::CodeGroup)) {
+                    out_lines.push(format!("{bare} {GD_GROUP_TOKEN}"));
+                } else {
+                    out_lines.push(bare.to_string());
+                }
+                continue;
             }
-            continue;
-        }
-        list_base.observe(bare);
-        if let Some((ch, n, col)) = opening_fence(bare, list_base.base) {
-            // fences inside ::: code-group get a group marker: it tells
-            // the fence renderer their label is a tab name, not a
-            // standalone block title
-            if stack.iter().any(|(_, o)| matches!(o, Open::CodeGroup)) {
-                out_lines.push(format!("{bare} {GD_GROUP_TOKEN}"));
-            } else {
+            LineKind::Inside | LineKind::Closes => {
                 out_lines.push(bare.to_string());
+                continue;
             }
-            fence = Some((ch, n, col));
-            continue;
+            LineKind::Outside => {}
         }
         let t = trimmed.trim_end();
         if t == "[[toc]]" {
@@ -1128,7 +1088,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
                 "code-group" => {
                     stack.push((colons, Open::CodeGroup));
                     group_counter += 1;
-                    let tabs = code_group_tabs(&lines, idx, group_counter, list_base.base);
+                    let tabs = code_group_tabs(&lines, idx, group_counter, scanner.base());
                     out_lines.extend([
                         format!("{indent}<div class=\"vp-code-group\" x-data=\"codeGroup\">"),
                         format!("{indent}{tabs}"),
@@ -1204,21 +1164,23 @@ fn code_group_tabs(lines: &[&str], idx: usize, group_no: usize, base: usize) -> 
     // its fences at four spaces, which only count as fences while the
     // item's content column is known — a fresh base would drop every
     // tab of such a group
-    let mut list_base = ListBase {
-        base,
-        prev_blank: false,
-    };
-    let mut fence: Option<(char, usize, usize)> = None;
+    let mut scanner = FenceScanner::from_base(base);
     for line in lines.iter().skip(idx + 1) {
         let bare = line.trim_end_matches(['\n', '\r']);
-        if let Some((ch, n, col)) = fence {
-            if is_closing_fence(bare, ch, n, col) {
-                fence = None;
+        let n = match scanner.step(bare) {
+            LineKind::Opens(_, n, _) => n,
+            LineKind::Inside | LineKind::Closes => continue,
+            LineKind::Outside => {
+                // stop at the container closer (any ::: line)
+                if closing_container(bare.trim()).is_some()
+                    || opening_container(bare.trim()).is_some()
+                {
+                    break;
+                }
+                continue;
             }
-            continue;
-        }
-        list_base.observe(bare);
-        if let Some((ch, n, col)) = opening_fence(bare, list_base.base) {
+        };
+        {
             let info = bare[fence_info_offset(bare, n)..].trim();
             let label = info.find('[').and_then(|i| {
                 info[i + 1..]
@@ -1227,12 +1189,6 @@ fn code_group_tabs(lines: &[&str], idx: usize, group_no: usize, base: usize) -> 
             });
             let lang = info.split_whitespace().next().unwrap_or("").to_string();
             labels.push(label.filter(|l| !l.is_empty()).unwrap_or(lang));
-            fence = Some((ch, n, col));
-            continue;
-        }
-        // stop at the container closer (any ::: line)
-        if closing_container(bare.trim()).is_some() || opening_container(bare.trim()).is_some() {
-            break;
         }
     }
     let mut tabs = String::from("<div class=\"tabs\">");
@@ -1305,27 +1261,24 @@ fn parse_details_rest(rest: &str) -> (String, bool) {
 /// Pass 3: fence info strings → `gdcode lang=… [hl=…] [label=…]`.
 pub fn rewrite_fences(md: &str) -> String {
     let mut out = String::with_capacity(md.len());
-    let mut list_base = ListBase::default();
-    let mut fence: Option<(char, usize, usize)> = None; // marker, count, column
+    let mut scanner = FenceScanner::default();
     for line in md.split_inclusive('\n') {
         let bare = line.trim_end_matches(['\n', '\r']);
-        if let Some((ch, n, col)) = fence {
-            out.push_str(bare);
-            out.push('\n');
-            if is_closing_fence(bare, ch, n, col) {
-                fence = None;
+        match scanner.step(bare) {
+            LineKind::Opens(_, n, _) => {
+                let cut = fence_info_offset(bare, n);
+                let info = &bare[cut..];
+                let new_line = format!("{}{}", &bare[..cut], rewrite_info(info.trim()));
+                out.push_str(&new_line);
+                out.push('\n');
+                continue;
             }
-            continue;
-        }
-        list_base.observe(bare);
-        if let Some((ch, n, col)) = opening_fence(bare, list_base.base) {
-            let cut = fence_info_offset(bare, n);
-            let info = &bare[cut..];
-            let new_line = format!("{}{}", &bare[..cut], rewrite_info(info.trim()));
-            out.push_str(&new_line);
-            out.push('\n');
-            fence = Some((ch, n, col));
-            continue;
+            LineKind::Inside | LineKind::Closes => {
+                out.push_str(bare);
+                out.push('\n');
+                continue;
+            }
+            LineKind::Outside => {}
         }
         out.push_str(bare);
         out.push('\n');
@@ -1426,21 +1379,11 @@ pub fn rewrite_badges(md: &str) -> String {
         PAIRED.get_or_init(|| Regex::new(r#"(?s)<Badge\s+([^<>]*?)>(.*?)</Badge>"#).unwrap());
 
     let mut out = String::with_capacity(md.len());
-    let mut list_base = ListBase::default();
-    let mut fence: Option<(char, usize, usize)> = None;
+    let mut scanner = FenceScanner::default();
     for line in md.split_inclusive('\n') {
         let bare = line.trim_end_matches(['\n', '\r']);
-        if let Some((ch, n, col)) = fence {
+        if scanner.step(bare) != LineKind::Outside {
             out.push_str(line);
-            if is_closing_fence(bare, ch, n, col) {
-                fence = None;
-            }
-            continue;
-        }
-        list_base.observe(bare);
-        if let Some((ch, n, col)) = opening_fence(bare, list_base.base) {
-            out.push_str(line);
-            fence = Some((ch, n, col));
             continue;
         }
         let self_done = self_closing.replace_all(bare, |c: &regex::Captures| {
@@ -1475,6 +1418,70 @@ fn badge_attrs(attr_str: &str) -> (String, String) {
 }
 
 // ── fence scanning helpers ─────────────────────────────────────────────
+
+/// One line's place in the fence structure, as `FenceScanner::step`
+/// classifies it.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum LineKind {
+    /// Opens a fenced block: marker char, run length, marker column.
+    Opens(char, usize, usize),
+    /// Content of an open fenced block.
+    Inside,
+    /// Closes the open fenced block.
+    Closes,
+    /// Ordinary markdown outside any fence.
+    Outside,
+}
+
+/// The fence-and-list state every line pass keeps: which lines are
+/// fenced-block content, and the content column of the most recent
+/// list item (`ListBase`), which decides how far an indented opener may
+/// sit. One implementation of the rules (`opening_fence`,
+/// `is_closing_fence`, `ListBase::observe`) in one order, so no pass
+/// can skip a step or seed the list state differently from the others.
+#[derive(Default)]
+struct FenceScanner {
+    list_base: ListBase,
+    fence: Option<(char, usize, usize)>,
+}
+
+impl FenceScanner {
+    /// Continue from a caller's list state — for a scan that starts
+    /// mid-document, like `code_group_tabs`.
+    fn from_base(base: usize) -> Self {
+        Self {
+            list_base: ListBase {
+                base,
+                prev_blank: false,
+            },
+            fence: None,
+        }
+    }
+
+    /// Classify `bare` (a line without its newline) and advance.
+    fn step(&mut self, bare: &str) -> LineKind {
+        if let Some((ch, n, col)) = self.fence {
+            if is_closing_fence(bare, ch, n, col) {
+                self.fence = None;
+                return LineKind::Closes;
+            }
+            return LineKind::Inside;
+        }
+        self.list_base.observe(bare);
+        match opening_fence(bare, self.list_base.base) {
+            Some((ch, n, col)) => {
+                self.fence = Some((ch, n, col));
+                LineKind::Opens(ch, n, col)
+            }
+            None => LineKind::Outside,
+        }
+    }
+
+    /// The current list item's content column.
+    fn base(&self) -> usize {
+        self.list_base.base
+    }
+}
 
 /// Strip a list-item marker (`- `, `* `, `+ `, `2. `, `3) `) from the
 /// front of a list line, so a fence sharing the line with its list
