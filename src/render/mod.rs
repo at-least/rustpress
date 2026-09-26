@@ -169,7 +169,7 @@ impl Site {
     pub fn render_page(&self, page: &Page) -> Result<String, BuildError> {
         let rendered =
             self.engine
-                .render(page, &self.content, &self.content_root(), &self.content_dir)?;
+                .render(page, &self.content, self.content_root(), &self.content_dir)?;
         self.render_page_inner(page, &rendered)
     }
 
@@ -330,7 +330,7 @@ impl Site {
         for page in &self.content.pages {
             let rendered =
                 self.engine
-                    .render(page, &self.content, &self.content_root(), &self.content_dir)?;
+                    .render(page, &self.content, self.content_root(), &self.content_dir)?;
             let dead = find_dead_links(&rendered.html, page, self);
             let dead: Vec<String> = match &self.config.ignore_dead_links {
                 IgnoreDeadLinks::IgnorePrefixes(prefixes) => dead
@@ -678,10 +678,10 @@ impl Site {
         ))
     }
 
-    fn content_root(&self) -> std::path::PathBuf {
+    fn content_root(&self) -> &Path {
         // The engine resolves `@/` includes against the site dir; content
         // dir for relative ones. Both are the running site's layout.
-        self.site_root.clone()
+        &self.site_root
     }
 }
 
@@ -1015,11 +1015,15 @@ fn apply_rewrites(content: &mut Content, rewrites: &[Rewrite]) -> Result<(), Con
             let dest = if let Some(prefix) = rule.from.strip_suffix(":rest*") {
                 // segment boundary: what follows the prefix must be a
                 // fresh segment (or the prefix ends in `/`, which always
-                // is one) — `guide:rest*` must not capture `guide2/…`
+                // is one; a bare `:rest*` has no prefix and captures the
+                // whole path) — `guide:rest*` must not capture `guide2/…`
                 page.rel
                     .strip_prefix(prefix)
                     .filter(|rest| {
-                        prefix.ends_with('/') || rest.is_empty() || rest.starts_with('/')
+                        prefix.is_empty()
+                            || prefix.ends_with('/')
+                            || rest.is_empty()
+                            || rest.starts_with('/')
                     })
                     .map(|rest| rule.to.replace(":rest*", rest).replace(":rest", rest))
             } else if rule.from == page.rel {

@@ -239,6 +239,20 @@ fn rest_rewrite_prefix_matches_on_segment_boundaries() {
 }
 
 #[test]
+fn bare_rest_rewrite_captures_every_page() {
+    // a bare `:rest*` has no prefix at all: the segment-boundary filter
+    // must not turn it into a rule that matches nothing
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[rewrites]\n\":rest*\" = \"docs/:rest*\"\n",
+        &[("guide/x.md", "# X\n")],
+    );
+    assert!(
+        out.path().join("docs/guide/x/index.html").is_file(),
+        "whole path captured and re-rooted"
+    );
+}
+
+#[test]
 fn dead_link_checker_ignores_data_src_and_checks_spaced_equals() {
     // the href/src regex matched attribute-name suffixes (data-src=,
     // xlink:href=) and missed spaced equals, both valid raw HTML

@@ -4,19 +4,11 @@
 //! values. Escapers that need a narrower set keep their own local
 //! helpers; do not widen their output in this module's name.
 
-/// Escape a string for element-text context.
+/// Escape a string for element-text context — the same `& < > "` set
+/// the markdown side already implements; one implementation, two
+/// names for the two call-site vocabularies.
 pub(crate) fn escape_text(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for ch in s.chars() {
-        match ch {
-            '&' => out.push_str("&amp;"),
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '"' => out.push_str("&quot;"),
-            c => out.push(c),
-        }
-    }
-    out
+    crate::markdown::preprocess::escape_text(s)
 }
 
 /// Escape a string for a double-quoted attribute value.

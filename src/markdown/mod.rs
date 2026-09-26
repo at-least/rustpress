@@ -177,7 +177,7 @@ impl MarkdownEngine {
         let mut html = String::new();
         comrak::format_html_with_plugins(root, &self.options, &mut html, &plugins)
             .expect("infallible string write");
-        let html = resolve_marked_anchors(&html, page, content, &self.base);
+        let html = resolve_marked_urls(html, page, content, &self.base);
         let html = apply_custom_heading_ids(&html, &headings);
         let mut html = replace_toc(&html, &headings);
         if self.lazy_images {
@@ -252,49 +252,63 @@ fn rewrite_links(root: &comrak::Node<'_>, page: &Page, content: &Content, base: 
     }
 }
 
-/// Anchors emitted by the `{attrs}` link rewrite are raw HTML before
-/// comrak parses, so their hrefs bypass the link-node resolution in
+/// Anchors and images emitted by the `{attrs}` rewrite are raw HTML
+/// before comrak parses, so their URLs bypass the node resolution in
 /// `rewrite_links`. They carry a `data-gd-mdlink` marker; resolve them
-/// here with the same rules (relative `.md` → canonical page URL, then
-/// base prefixing; unknown and external targets keep their href) and
-/// strip the marker.
-fn resolve_marked_anchors(html: &str, page: &Page, content: &Content, base: &str) -> String {
-    static ANCHOR: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+/// here with the same rules — links: relative `.md` → canonical page
+/// URL, then base prefixing (unknown and external targets keep their
+/// href); images: base prefixing only — and strip the marker. Pages
+/// without the marker pass through untouched.
+fn resolve_marked_urls(html: String, page: &Page, content: &Content, base: &str) -> String {
+    const MARK: &str = "data-gd-mdlink";
+    if !html.contains(MARK) {
+        return html;
+    }
+    static TAG: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
     static HREF: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
-    let anchor = ANCHOR.get_or_init(|| regex::Regex::new(r#"<a\b([^>]*)>"#).unwrap());
+    static SRC: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let tag = TAG.get_or_init(|| regex::Regex::new(r#"<(a|img)\b([^>]*)>"#).unwrap());
     let href = HREF.get_or_init(|| regex::Regex::new(r#"\s?href="([^"]*)""#).unwrap());
-    anchor
-        .replace_all(html, |c: &regex::Captures| {
-            let attrs = &c[1];
-            if !attrs.contains("data-gd-mdlink") {
-                return c[0].to_string();
+    let src = SRC.get_or_init(|| regex::Regex::new(r#"\s?src="([^"]*)""#).unwrap());
+    tag.replace_all(&html, |c: &regex::Captures| {
+        let attrs = &c[2];
+        if !attrs.contains(MARK) {
+            return c[0].to_string();
+        }
+        let is_img = &c[1] == "img";
+        let (name, attr) = if is_img { ("src", src) } else { ("href", href) };
+        let raw = attr
+            .captures(attrs)
+            .map(|h| unescape_minimal(&h[1]))
+            .unwrap_or_default();
+        let url = if is_img {
+            with_base(base, &raw)
+        } else {
+            resolve_relative(&raw, &page.rel, content)
+                .or_else(|| resolve_root(&raw, content))
+                .map_or_else(|| with_base(base, &raw), |r| with_base(base, &r))
+        };
+        // the emitters write the marker with a leading space; take that
+        // space with it so no double space is left between attributes
+        let unmarked = attrs.replace(&format!(" {MARK}"), "").replace(MARK, "");
+        let rest = attr.replace_all(&unmarked, "");
+        let mut rest = rest.trim().to_string();
+        let bare_attr = format!("{name}=");
+        while let Some(stripped) = rest.strip_prefix(&bare_attr) {
+            rest = stripped.to_string();
+        }
+        format!(
+            r#"<{} {name}="{}"{}>"#,
+            &c[1],
+            preprocess::escape_text(&url),
+            if rest.is_empty() {
+                String::new()
+            } else {
+                format!(" {rest}")
             }
-            let raw = href
-                .captures(attrs)
-                .map(|h| unescape_minimal(&h[1]))
-                .unwrap_or_default();
-            let resolved =
-                resolve_relative(&raw, &page.rel, content).or_else(|| resolve_root(&raw, content));
-            let url = resolved
-                .map(|r| with_base(base, &r))
-                .unwrap_or_else(|| with_base(base, &raw));
-            let unmarked = attrs.replace("data-gd-mdlink", "");
-            let rest = href.replace_all(&unmarked, "");
-            let mut rest = rest.trim().to_string();
-            while let Some(stripped) = rest.strip_prefix("href=") {
-                rest = stripped.to_string();
-            }
-            format!(
-                r#"<a href="{}"{}>"#,
-                preprocess::escape_text(&url),
-                if rest.is_empty() {
-                    String::new()
-                } else {
-                    format!(" {rest}")
-                }
-            )
-        })
-        .into_owned()
+        )
+    })
+    .into_owned()
 }
 
 /// Reverse the minimal attribute escaping the raw-anchor emitters apply

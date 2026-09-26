@@ -145,8 +145,7 @@ impl<'a> Preprocess<'a> {
                 // 2), re-expressed as spaces; content lines may be
                 // indented up to the opener's indentation without
                 // changing their content, so this is always safe
-                let column = bare.find(ch).unwrap_or(0);
-                fence = Some((ch, n, column, " ".repeat(column)));
+                fence = Some((ch, n, col, " ".repeat(col)));
                 opener_line = Some(line.to_string());
                 continue;
             }
@@ -322,7 +321,9 @@ impl<'a> Preprocess<'a> {
             })?;
         if let Some(name) = region {
             match extract_region(&content, &name) {
-                Some(extracted) => content = extracted,
+                // snippet regions are dedented (upstream snippet.ts);
+                // markdown includes keep the region's indentation
+                Some(extracted) => content = dedent(&extracted),
                 None => {
                     return Err(PreprocessError::Section {
                         path: file.clone(),
@@ -494,17 +495,12 @@ fn apply_line_range(content: &str, spec: &str) -> Result<String, ()> {
 /// (or explicit `{#id}`) matches, up to (not including) the next
 /// heading of the same or higher level. Fence-aware.
 fn extract_heading_section(content: &str, anchor: &str) -> Option<String> {
-    fn slugify(text: &str) -> String {
-        // mirrors comrak's GFM anchorize (lowercase, spaces → dashes,
-        // letters/marks/numbers/connector punctuation kept, nothing
-        // trimmed) so the anchor an author copies off the rendered page
-        // matches: CJK and accented headings keep their letters
-        text.to_lowercase()
-            .chars()
-            .map(|c| if c == ' ' { '-' } else { c })
-            .filter(|c| c.is_alphanumeric() || *c == '-' || *c == '_')
-            .collect()
-    }
+    // the same Anchorizer the renderer uses (`collect_headings` feeds it
+    // the raw heading text, `{#id}` literal included), fed every heading
+    // in document order: the anchor an author copies off the rendered
+    // page matches, including the `-1`, `-2` suffixes of repeated
+    // headings and the marks/connector punctuation comrak keeps
+    let mut anchorizer = comrak::Anchorizer::new();
     let mut list_base = ListBase::default();
     let mut fence: Option<(char, usize, usize)> = None;
     let mut level = 0usize;
@@ -543,8 +539,8 @@ fn extract_heading_section(content: &str, anchor: &str) -> Option<String> {
                     .rfind("{#")
                     .filter(|_| text.ends_with('}'))
                     .map(|i| text[i + 2..text.len() - 1].to_string());
-                let plain = text.split("{#").next().unwrap_or(text).trim();
-                if explicit.as_deref() == Some(anchor) || slugify(plain) == anchor {
+                let slug = anchorizer.anchorize(text);
+                if explicit.as_deref() == Some(anchor) || slug == anchor {
                     level = hashes;
                     started = true;
                     out.push_str(line);
@@ -571,8 +567,11 @@ fn region_opens(line: &str, name: &str) -> bool {
         .is_some_and(|token| token == name)
 }
 
-/// Common leading whitespace stripped from every non-blank line
-/// (upstream dedents region and snippet bodies the same way).
+/// Common leading whitespace stripped from every non-blank line.
+/// Upstream applies this to `<<<` snippet regions only (snippet.ts);
+/// a `<!--@include:-->` region keeps its indentation (include.ts
+/// slices the raw lines), so `extract_region` returns the body as-is
+/// and the snippet path dedents.
 fn dedent(text: &str) -> String {
     let common = text
         .split_inclusive('\n')
@@ -614,13 +613,13 @@ fn extract_region(content: &str, name: &str) -> Option<String> {
         if t.contains("#endregion") {
             depth -= 1;
             if depth == 0 {
-                return Some(dedent(&out));
+                return Some(out);
             }
             continue;
         }
         out.push_str(line);
     }
-    (depth > 0).then(|| dedent(&out))
+    (depth > 0).then_some(out)
 }
 
 /// A fence marker longer than any backtick run inside the content.
@@ -724,12 +723,6 @@ pub fn rewrite_link_attrs(md: &str) -> String {
         // eating unrelated braces right after links
         Regex::new(r#"(?m)(!?)\[([^\]\n]*)\]\(([^)\s]+)\)\{([^{}]*="[^}"]*"[^{}]*)\}"#).unwrap()
     });
-    fn esc(s: &str) -> String {
-        s.replace('&', "&amp;")
-            .replace('"', "&quot;")
-            .replace('<', "&lt;")
-            .replace('>', "&gt;")
-    }
     let mut list_base = ListBase::default();
     let mut fence: Option<(char, usize, usize)> = None;
     let mut out = String::with_capacity(md.len());
@@ -755,14 +748,7 @@ pub fn rewrite_link_attrs(md: &str) -> String {
         while let Some(i) = rest.find('`') {
             let (before, after) = rest.split_at(i);
             let span_end = after[1..].find('`').map(|j| j + 2);
-            replaced.push_str(&re.replace_all(before, |c: &regex::Captures| {
-                format!(
-                    r#"<a href="{}" data-gd-mdlink{}>{}</a>"#,
-                    esc(&c[3]),
-                    parse_attrs(&c[4]),
-                    esc(&c[2])
-                )
-            }));
+            replaced.push_str(&re.replace_all(before, render_attrs_element));
             match span_end.map(|e| &after[..e]) {
                 Some(code) => {
                     replaced.push_str(code);
@@ -774,18 +760,33 @@ pub fn rewrite_link_attrs(md: &str) -> String {
                 }
             }
         }
-        replaced.push_str(&re.replace_all(rest, |c: &regex::Captures| {
-            format!(
-                r#"<a href="{}" data-gd-mdlink{}>{}</a>"#,
-                esc(&c[3]),
-                parse_attrs(&c[4]),
-                esc(&c[2])
-            )
-        }));
+        replaced.push_str(&re.replace_all(rest, render_attrs_element));
         out.push_str(&replaced);
         out.push('\n');
     }
     out
+}
+
+/// One `[text](url){attrs}` / `![alt](src){attrs}` match → raw element.
+/// An image stays an image (the attrs land on the `<img>`, as
+/// @mdit/plugin-attrs does) instead of turning into a link; both carry
+/// the `data-gd-mdlink` marker for the post-pass URL resolution.
+fn render_attrs_element(c: &regex::Captures) -> String {
+    if &c[1] == "!" {
+        format!(
+            r#"<img src="{}" alt="{}" data-gd-mdlink{}>"#,
+            escape_text(&c[3]),
+            escape_text(&c[2]),
+            parse_attrs(&c[4])
+        )
+    } else {
+        format!(
+            r#"<a href="{}" data-gd-mdlink{}>{}</a>"#,
+            escape_text(&c[3]),
+            parse_attrs(&c[4]),
+            escape_text(&c[2])
+        )
+    }
 }
 
 /// `k="v" k2="v2"` → ` k="v" k2="v2"` with sanitized names/values.
@@ -862,7 +863,7 @@ pub fn expand_alerts(md: &str, opts: &ContainerOptions) -> String {
             };
             out_lines.push(format!("{indent}::: {kind}{title_suffix}"));
             i += 1;
-            alert_quote_lines(&lines, &mut i, opts, &indent, &mut out_lines);
+            alert_quote_lines(&lines, &mut i, opts, &indent, 1, &mut out_lines);
             out_lines.push(format!("{indent}:::"));
             out_lines.push(String::new());
             continue;
@@ -887,11 +888,19 @@ pub fn expand_alerts(md: &str, opts: &ContainerOptions) -> String {
 /// deeper `>`-prefixed lines are its body — without this, the inner
 /// `[!KIND]` marker survives to comrak, whose built-in alerts
 /// extension renders it with `markdown-alert` classes nothing styles.
+///
+/// `depth` is this quote's nesting level: every body line sheds that
+/// many `>` markers, so a nested body arrives marker-free and a
+/// deeper `> > > [!KIND]` opener is still recognized. A line with
+/// fewer markers is lazy continuation when it continues a paragraph
+/// (CommonMark lets that reach through every nesting level), and
+/// otherwise ends this quote for the enclosing level to handle.
 fn alert_quote_lines(
     lines: &[&str],
     i: &mut usize,
     opts: &ContainerOptions,
     ind: &str,
+    depth: usize,
     out_lines: &mut Vec<String>,
 ) {
     let mut in_paragraph = false;
@@ -899,27 +908,29 @@ fn alert_quote_lines(
         let b = lines[*i].trim_end_matches(['\n', '\r']);
         let t = b.trim_start();
         let line_ind = &b[..b.len() - t.len()];
-        let Some(rest) = t.strip_prefix('>') else {
-            if in_paragraph && is_lazy_continuation(t) {
-                out_lines.push(format!("{line_ind}{t}"));
-                in_paragraph = !t.is_empty();
+        let (layers, body) = strip_quote_markers(t, depth);
+        if layers < depth {
+            if in_paragraph && is_lazy_continuation(body) {
+                out_lines.push(format!("{line_ind}{body}"));
                 *i += 1;
                 continue;
             }
             break;
-        };
-        let body = rest.strip_prefix(' ').unwrap_or(rest);
+        }
         if let Some((_, inner_kind, inner_title)) = alert_opener(body, opts) {
-            let nested_ind = format!("{ind}  ");
+            // the nested container keeps this container's indent: one
+            // level deeper per nesting would put a third-level opener
+            // at four spaces, which comrak reads as an indented code
+            // block instead of an HTML block
             let title_suffix = if inner_title.is_empty() {
                 String::new()
             } else {
                 format!(" {inner_title}")
             };
-            out_lines.push(format!("{nested_ind}::: {inner_kind}{title_suffix}"));
+            out_lines.push(format!("{ind}::: {inner_kind}{title_suffix}"));
             *i += 1;
-            alert_quote_lines(lines, i, opts, &nested_ind, out_lines);
-            out_lines.push(format!("{nested_ind}:::"));
+            alert_quote_lines(lines, i, opts, ind, depth + 1, out_lines);
+            out_lines.push(format!("{ind}:::"));
             out_lines.push(String::new());
             in_paragraph = false;
             continue;
@@ -928,6 +939,21 @@ fn alert_quote_lines(
         in_paragraph = !body.trim().is_empty();
         *i += 1;
     }
+}
+
+/// Shed up to `depth` blockquote markers (`>` plus one optional space,
+/// each allowed leading spaces) from `t`: (markers shed, remainder).
+fn strip_quote_markers(t: &str, depth: usize) -> (usize, &str) {
+    let mut rest = t;
+    let mut layers = 0;
+    while layers < depth {
+        let Some(after) = rest.trim_start_matches(' ').strip_prefix('>') else {
+            break;
+        };
+        rest = after.strip_prefix(' ').unwrap_or(after);
+        layers += 1;
+    }
+    (layers, rest)
 }
 
 /// Is a `>`-less line paragraph continuation text inside a quote?
@@ -967,16 +993,16 @@ fn is_lazy_continuation(t: &str) -> bool {
     {
         return false;
     }
-    // thematic break (`---`, `* * *`, `___`)
+    !is_thematic_break(t)
+}
+
+/// Thematic break (`---`, `* * *`, `___`): three or more of one of
+/// `-`, `_`, `*` with nothing but whitespace between.
+fn is_thematic_break(t: &str) -> bool {
     let stripped = t.chars().filter(|c| !c.is_whitespace()).collect::<String>();
-    if stripped.len() >= 3 {
-        let first = stripped.as_bytes()[0];
-        if (first == b'-' || first == b'_' || first == b'*') && stripped.bytes().all(|b| b == first)
-        {
-            return false;
-        }
-    }
-    true
+    stripped.len() >= 3
+        && matches!(stripped.as_bytes()[0], b'-' | b'_' | b'*')
+        && stripped.bytes().all(|b| b == stripped.as_bytes()[0])
 }
 
 /// `> [!KIND] [title]` → (indent, kind, title). Recognized kinds: the
@@ -1101,7 +1127,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
                 "code-group" => {
                     stack.push((colons, Open::CodeGroup));
                     group_counter += 1;
-                    let tabs = code_group_tabs(&lines, idx, group_counter);
+                    let tabs = code_group_tabs(&lines, idx, group_counter, list_base.base);
                     out_lines.extend([
                         format!("{indent}<div class=\"vp-code-group\" x-data=\"codeGroup\">"),
                         format!("{indent}{tabs}"),
@@ -1171,9 +1197,16 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
 /// scan ahead for the group's fenced blocks and build radio inputs +
 /// labels from their `[label]` annotations (falling back to the fence
 /// language). Label click wiring is the `codeGroup` Alpine component.
-fn code_group_tabs(lines: &[&str], idx: usize, group_no: usize) -> String {
+fn code_group_tabs(lines: &[&str], idx: usize, group_no: usize, base: usize) -> String {
     let mut labels: Vec<String> = Vec::new();
-    let mut list_base = ListBase::default();
+    // continue the caller's list state: a group inside a `1. ` item has
+    // its fences at four spaces, which only count as fences while the
+    // item's content column is known — a fresh base would drop every
+    // tab of such a group
+    let mut list_base = ListBase {
+        base,
+        prev_blank: false,
+    };
     let mut fence: Option<(char, usize, usize)> = None;
     for line in lines.iter().skip(idx + 1) {
         let bare = line.trim_end_matches(['\n', '\r']);
@@ -1484,7 +1517,14 @@ impl ListBase {
             return;
         }
         let indent = line.len() - raw.len();
-        let after = strip_list_marker(raw);
+        // `* * *` / `- - -` is a thematic break, not a `*`/`-` item: it
+        // must not set a content column that turns the indented code
+        // block after it into a fence
+        let after = if is_thematic_break(raw) {
+            raw
+        } else {
+            strip_list_marker(raw)
+        };
         let was_blank = self.prev_blank;
         self.prev_blank = false;
         if after.len() != raw.len() {
@@ -1841,6 +1881,57 @@ mod edge_tests {
         let out = rewrite_fences(md);
         assert!(!out.contains("gdcode"), "{out}");
     }
+    #[test]
+    fn nested_alert_bodies_shed_every_quote_marker() {
+        // depth-2 body lines carry two `>`; stripping one left `> inner`
+        // (a blockquote inside the container) and a depth-3 opener was
+        // never seen at all
+        let opts = ContainerOptions::default();
+        let out = expand_alerts(
+            "> [!NOTE]\n> outer\n>\n> > [!TIP]\n> > inner\n>\n> back\n",
+            &opts,
+        );
+        let tip = out.find("::: tip").unwrap();
+        let tip_end = tip + out[tip..].find("\n:::").unwrap();
+        let tip_body = &out[tip..tip_end];
+        assert!(tip_body.contains("\ninner"), "{out}");
+        assert!(!tip_body.contains("> inner"), "{out}");
+        assert!(!tip_body.contains("back"), "outer line stays outer: {out}");
+
+        let out = expand_alerts(
+            "> [!NOTE]\n> > [!TIP]\n> > > [!WARNING]\n> > > deep\n",
+            &opts,
+        );
+        assert!(out.contains("::: warning"), "{out}");
+        assert!(!out.contains("[!WARNING]"), "{out}");
+        // no per-level indentation: a third-level `:::` at four spaces
+        // would be an indented code block to comrak
+        for line in out.lines() {
+            assert!(!line.starts_with("    :::"), "{out}");
+        }
+    }
+
+    #[test]
+    fn code_group_tabs_see_four_space_item_fences() {
+        // the tab strip scan must continue the caller's list state or
+        // fences at the `1. ` item's four-space column are invisible
+        // to it and the group renders without tabs
+        let out = expand_containers(
+            "1. Step\n\n    ::: code-group\n\n    ```sh [npm]\n    npm i\n    ```\n\n    ```sh [yarn]\n    yarn\n    ```\n\n    :::\n",
+            &ContainerOptions::default(),
+        );
+        assert!(out.contains(">npm<"), "{out}");
+        assert!(out.contains(">yarn<"), "{out}");
+    }
+
+    #[test]
+    fn thematic_break_does_not_open_a_list_item() {
+        // `* * *` is a thematic break, not a `*` item: the indented code
+        // block after it must stay one
+        let out = rewrite_fences("* * *\n\n    ```js\n    x\n    ```\n");
+        assert!(!out.contains("gdcode"), "{out}");
+    }
+
     #[test]
     fn fence_with_trailing_spaces_and_info_closer() {
         // closer with trailing spaces; opener with info string

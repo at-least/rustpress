@@ -605,32 +605,96 @@ fn list_item_fences_without_inline_marker_stay_fences() {
 }
 
 #[test]
-fn region_include_matches_tokens_dedents_and_nests() {
-    // upstream semantics: the name is an exact token (demo does not
-    // match demo2), a nested #region inside the selected one does not
-    // end it early, and the extracted body is dedented
+fn region_include_matches_tokens_keeps_indent_and_nests() {
+    // upstream semantics (include.ts): the name is an exact token (demo
+    // does not match demo2), a nested #region inside the selected one
+    // does not end it early, and the body keeps its indentation — only
+    // `<<<` snippet regions are dedented (snippet.ts)
+    let part = "fn wrapper() {\n    #region demo2\n    wrong body\n    #endregion\n    #region demo\n    let a = 1;\n    #region inner\n    let b = 2;\n    #endregion\n    let c = 3;\n    #endregion\n}\n";
     let out = include_site(
-        &[(
-            "parts/r.md",
-            "fn wrapper() {\n    #region demo2\n    wrong body\n    #endregion\n    #region demo\n    let a = 1;\n    #region inner\n    let b = 2;\n    #endregion\n    let c = 3;\n    #endregion\n}\n",
-        )],
+        &[("parts/r.md", part)],
         "<!--@include: ./parts/r.md#demo-->\n",
     );
     assert!(
         out.html
-            .contains("<p>let a = 1;\nlet b = 2;\nlet c = 3;</p>"),
-        "dedented to a paragraph, not an indented code block: {}",
+            .contains("<pre><code>let a = 1;\nlet b = 2;\nlet c = 3;\n</code></pre>"),
+        "four-space body kept as an indented code block: {}",
         out.html
-    );
-    assert!(
-        out.html.contains("let c = 3;"),
-        "nested region skipped, not ended"
     );
     assert!(
         !out.html.contains("wrong body"),
         "demo2 not matched by substring"
     );
     assert!(!out.html.contains("fn wrapper"), "extraction bounds hold");
+
+    // the snippet form dedents the same region (the body is tokenized
+    // by the highlighter, so the lines are checked by their spans)
+    let out = include_site(&[("parts/r.rs", part)], "<<< ./parts/r.rs#demo\n");
+    assert_eq!(
+        out.html
+            .matches("<span class=\"line\"><span class=\"tk-keyword\">let</span>")
+            .count(),
+        3,
+        "three dedented `let` lines, each starting its line span: {}",
+        out.html
+    );
+    assert!(
+        !out.html.contains("<span class=\"line\">    "),
+        "snippet region dedented: {}",
+        out.html
+    );
+}
+
+#[test]
+fn heading_section_anchor_matches_deduplicated_rendered_ids() {
+    // the rendered page numbers repeated headings (`foo`, `foo-1`); the
+    // anchor an author copies for the second one must select it
+    let out = include_site(
+        &[(
+            "parts/dup.md",
+            "## Foo\n\nfirst body\n\n## Foo\n\nsecond body\n",
+        )],
+        "<!--@include: ./parts/dup.md#foo-1-->\n",
+    );
+    assert!(
+        out.html.contains("second body") && !out.html.contains("first body"),
+        "#foo-1 selects the second heading: {}",
+        out.html
+    );
+}
+
+#[test]
+fn image_attribute_blocks_stay_images_and_get_the_base() {
+    // `![alt](src){attrs}` used to become an <a href=src>alt</a>; the
+    // attrs belong on the <img>, and its src gets the site base like
+    // every other image URL
+    let engine = MarkdownEngine::new(
+        &rustpress::config::Markdown::default(),
+        &rustpress::config::SyntaxHighlight::default(),
+        Path::new("tests/fixtures"),
+        "/b/",
+    )
+    .expect("engine");
+    let page = Page {
+        body: "![alt](/img.png){width=\"100\"}\n".into(),
+        ..synthetic_page()
+    };
+    let out = engine
+        .render(
+            &page,
+            &Content::default(),
+            Path::new("tests/fixtures"),
+            &Path::new("tests/fixtures").join("en"),
+        )
+        .expect("render");
+    assert!(
+        out.html
+            .contains(r#"<img src="/b/img.png" alt="alt" width="100">"#),
+        "image element with attrs and base: {}",
+        out.html
+    );
+    assert!(!out.html.contains("<a href"), "not a link: {}", out.html);
+    assert!(!out.html.contains("data-gd-mdlink"), "marker stripped");
 }
 
 #[test]
