@@ -368,6 +368,21 @@ impl SiteConfig {
                         .into(),
                 });
             }
+            // pages are `.md` files, so a prefix that is itself a full
+            // `.md` path can only capture nothing; the splice would then
+            // leave the destination's delimiter behind (`docs/:rest*` →
+            // `docs/` → the URL /docs//)
+            if let Some(prefix) = rule.from.strip_suffix(":rest*")
+                && prefix.ends_with(".md")
+            {
+                return Err(ConfigError::Rewrite {
+                    rule: rule.from.clone(),
+                    problem: "the prefix before `:rest*` is a full `.md` path, so the \
+                              capture is always empty — use an exact rule (or end a \
+                              directory prefix with `/`)"
+                        .into(),
+                });
+            }
             // destinations are `.md`-spelled source paths; the loader
             // would append `.md` to a slash-terminated destination and
             // emit mangled page URLs (`m/a.md//`), so it is rejected

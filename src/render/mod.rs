@@ -948,6 +948,27 @@ fn path_exists_on_disk(out_dir: &Path, link: &str) -> bool {
 /// Search body text: rendered HTML with tags stripped, entities
 /// decoded, whitespace collapsed to single spaces.
 fn plain_text(html: &str) -> String {
+    // script and style bodies are code and a comment is not text at all:
+    // drop them whole before the scan. Seen by the tag tracker, a
+    // comment holding a `>` closes early and its tail leaks as text.
+    // A comment vanishes without trace (`x<!-- c -->y` reads `xy`);
+    // script and style leave a space so neighbouring blocks stay apart.
+    // A comment ends at `-->` or at HTML5's abrupt closers: `<!-->`,
+    // `<!--->` (tried first so they cannot reach across to a later
+    // comment's `-->`) and `--!>`
+    static SKIP: OnceLock<regex::Regex> = OnceLock::new();
+    let skip = SKIP.get_or_init(|| {
+        regex::Regex::new(
+            r"(?is)<!--(?:>|->|.*?--!?>)|<script\b[^>]*>.*?</script\s*>|<style\b[^>]*>.*?</style\s*>",
+        )
+        .unwrap()
+    });
+    let html = skip.replace_all(
+        html,
+        |m: &regex::Captures| {
+            if m[0].starts_with("<!--") { "" } else { " " }
+        },
+    );
     let mut out = String::with_capacity(html.len());
     let mut in_tag = false;
     let mut chars = html.chars().peekable();
@@ -956,7 +977,8 @@ fn plain_text(html: &str) -> String {
             '<' => in_tag = true,
             '>' => in_tag = false,
             '&' if !in_tag => {
-                // decode the handful of entities comrak/hypertext emit.
+                // decode the handful of entities comrak/hypertext emit
+                // and numeric references from raw HTML.
                 // An unterminated or overlong run is literal text: emit
                 // it back verbatim — never eat the following character
                 // or invent a ';' that was not there
@@ -986,11 +1008,14 @@ fn plain_text(html: &str) -> String {
                         "quot" => out.push('"'),
                         "apos" => out.push('\''),
                         "nbsp" => out.push('\u{a0}'),
-                        _ => {
-                            out.push('&');
-                            out.push_str(&entity);
-                            out.push(';');
-                        }
+                        _ => match numeric_ref(&entity) {
+                            Some(c) => out.push(c),
+                            None => {
+                                out.push('&');
+                                out.push_str(&entity);
+                                out.push(';');
+                            }
+                        },
                     }
                 } else {
                     out.push('&');
@@ -1002,6 +1027,62 @@ fn plain_text(html: &str) -> String {
         }
     }
     out.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// `#39` / `#x27` (the text between `&` and `;`) → the character; None
+/// for anything that is not a well-formed reference to a real char, so
+/// the caller keeps the literal text.
+fn numeric_ref(entity: &str) -> Option<char> {
+    let digits = entity.strip_prefix('#')?;
+    let code = match digits.strip_prefix(['x', 'X']) {
+        Some(hex) => u32::from_str_radix(hex, 16).ok()?,
+        None => digits.parse::<u32>().ok()?,
+    };
+    // HTML reads 0x80–0x9F through the Windows-1252 table (`&#146;` is
+    // the `’` of legacy content); the five holes stay controls
+    if let Some(c) = windows_1252(code) {
+        return Some(c);
+    }
+    // references to control characters (`&#0;`, `&#8;`) are parse errors
+    // in HTML and a raw control byte helps no search; keep the text.
+    // Whitespace references (`&#9;`, `&#10;`) decode like any whitespace
+    char::from_u32(code).filter(|c| !c.is_control() || c.is_whitespace())
+}
+
+/// HTML's remap of numeric references 0x80–0x9F (the C1 range) to the
+/// characters Windows-1252 puts there; the table from the spec's
+/// "numeric character reference end state".
+fn windows_1252(code: u32) -> Option<char> {
+    Some(match code {
+        0x80 => '\u{20AC}',
+        0x82 => '\u{201A}',
+        0x83 => '\u{0192}',
+        0x84 => '\u{201E}',
+        0x85 => '\u{2026}',
+        0x86 => '\u{2020}',
+        0x87 => '\u{2021}',
+        0x88 => '\u{02C6}',
+        0x89 => '\u{2030}',
+        0x8A => '\u{0160}',
+        0x8B => '\u{2039}',
+        0x8C => '\u{0152}',
+        0x8E => '\u{017D}',
+        0x91 => '\u{2018}',
+        0x92 => '\u{2019}',
+        0x93 => '\u{201C}',
+        0x94 => '\u{201D}',
+        0x95 => '\u{2022}',
+        0x96 => '\u{2013}',
+        0x97 => '\u{2014}',
+        0x98 => '\u{02DC}',
+        0x99 => '\u{2122}',
+        0x9A => '\u{0161}',
+        0x9B => '\u{203A}',
+        0x9C => '\u{0153}',
+        0x9E => '\u{017E}',
+        0x9F => '\u{0178}',
+        _ => return None,
+    })
 }
 
 /// URL rewrites (VitePress `rewrites`): applied over source rel paths
@@ -1021,6 +1102,8 @@ fn apply_rewrites(content: &mut Content, rewrites: &[Rewrite]) -> Result<(), Con
                 // fresh segment (or the prefix ends in `/`, which always
                 // is one; a bare `:rest*` has no prefix and captures the
                 // whole path) — `guide:rest*` must not capture `guide2/…`.
+                // An empty rest cannot occur: a prefix that is a full `.md`
+                // path is rejected at load.
                 // The boundary slash belongs to neither side: `guide:rest*`
                 // and `guide/:rest*` capture the same rest, so a
                 // `docs/:rest*` destination splices to `docs/x.md`, not
@@ -1029,10 +1112,7 @@ fn apply_rewrites(content: &mut Content, rewrites: &[Rewrite]) -> Result<(), Con
                 page.rel
                     .strip_prefix(prefix)
                     .filter(|rest| {
-                        prefix.is_empty()
-                            || prefix.ends_with('/')
-                            || rest.is_empty()
-                            || rest.starts_with('/')
+                        prefix.is_empty() || prefix.ends_with('/') || rest.starts_with('/')
                     })
                     .map(|rest| rest.strip_prefix('/').unwrap_or(rest))
                     .map(|rest| rule.to.replace(":rest*", rest).replace(":rest", rest))

@@ -345,6 +345,7 @@ fn rewrites_validate_rule_shapes() {
         "title = \"T\"\n\n[rewrites]\n\"guide.md\" = \"m/:rest\"\n", // target captures, pattern doesn't
         "title = \"T\"\n\n[rewrites]\n\"\" = \"y\"\n",               // empty pattern
         "title = \"T\"\n\n[rewrites]\n\"a.md\" = \"\"\n",            // empty destination
+        "title = \"T\"\n\n[rewrites]\n\"guide/x.md:rest*\" = \"docs/:rest*\"\n", // full-path prefix: empty capture
     ] {
         let site_dir = tempdir("site-build");
         std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
@@ -962,5 +963,70 @@ fn search_body_entity_scan_stops_at_markup() {
     assert!(
         !docs.contains("</div>"),
         "no markup in the search body: {docs}"
+    );
+}
+
+#[test]
+fn search_body_skips_script_style_and_comments() {
+    // script and style bodies are code, and a comment is not text at
+    // all; none of it belongs in the index. A comment holding a `>`
+    // used to close the tag tracker early and leak its tail. HTML5's
+    // abrupt closers (`<!-->`, `<!--->`, `--!>`) end a comment too: the
+    // text after them must not be swallowed up to the next `-->`
+    let site_dir = tempdir("site-build");
+    std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
+    std::fs::write(
+        site_dir.path().join("rustpress.toml"),
+        "title = \"T\"\n\n[search]\nprovider = \"local\"\n",
+    )
+    .unwrap();
+    std::fs::write(
+        site_dir.path().join("content/index.md"),
+        "# H\n\n<script setup>\nimport { ref } from 'vue'\n</script>\n\n<style module>\n.x { color: red }\n</style>\n\n<!-->\n\n<p>one</p>\n\n<!--->\n\n<p>two</p>\n\n<!-- bang --!>\n\n<p>three</p>\n\n<!-- - <https://example.com/> -- replace when published -->\n\n<p>x<!-- c -->y</p>\n\n<p>visible</p>\n",
+    )
+    .unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    let out = site_dir.path().join("public");
+    site.build(site_dir.path(), &out).unwrap();
+    let docs = std::fs::read_to_string(out.join("search-docs.json")).unwrap();
+    assert!(
+        docs.contains("H one two three xy visible"),
+        "the text survives: {docs}"
+    );
+    for leaked in ["import", "color: red", "replace when published"] {
+        assert!(
+            !docs.contains(leaked),
+            "{leaked:?} leaked into the body: {docs}"
+        );
+    }
+}
+
+#[test]
+fn search_body_decodes_numeric_character_references() {
+    // raw HTML may spell characters as `&#39;` / `&#x27;`; the index
+    // must hold the character so a search for it matches. A malformed
+    // reference stays literal, and so does one naming a control
+    // character (a raw C0 byte in the index helps nobody); whitespace
+    // references decode and collapse like any other whitespace, and the
+    // 0x80–0x9F range reads through the Windows-1252 table as HTML does
+    let site_dir = tempdir("site-build");
+    std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
+    std::fs::write(
+        site_dir.path().join("rustpress.toml"),
+        "title = \"T\"\n\n[search]\nprovider = \"local\"\n",
+    )
+    .unwrap();
+    std::fs::write(
+        site_dir.path().join("content/index.md"),
+        "# H\n\n<p>&#39;quoted&#x27; &#169; &#xZZ; &#; &#8;tab&#9;sep it&#146;s a&#133;b</p>\n",
+    )
+    .unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    let out = site_dir.path().join("public");
+    site.build(site_dir.path(), &out).unwrap();
+    let docs = std::fs::read_to_string(out.join("search-docs.json")).unwrap();
+    assert!(
+        docs.contains("'quoted' \u{a9} &#xZZ; &#; &#8;tab sep it\u{2019}s a\u{2026}b"),
+        "decoded body: {docs}"
     );
 }
