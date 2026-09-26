@@ -143,7 +143,7 @@ A key may end with `:rest*` to capture everything after a prefix:
 "en/:rest*" = ":rest*"
 ```
 
-This is the pattern for VitePress's canonical multi-language layout, where the default language lives in `content/en/` but is served at `/` — see [Internationalization](./i18n). `:rest*` is the only pattern parameter; named segments such as `:pkg/:slug*` and function rewrites are not supported (a config using them fails at load with a rewrite error rather than silently matching nothing).
+This is the pattern for VitePress's canonical multi-language layout, where the default language lives in `content/en/` but is served at `/` — see [Internationalization](./i18n). `:rest*` is the only pattern parameter; named segments such as `:pkg/:slug*` and function rewrites are not supported (a config using them fails at load with a rewrite error rather than silently matching nothing). The prefix matches on a segment boundary, and the boundary slash is not part of the capture: `guide:rest*` and `guide/:rest*` both capture `x.md` from `guide/x.md`, and neither matches `guide2/x.md`.
 
 Rules apply **first match wins, in declaration order** — like upstream, a more specific rule placed before a broader one wins. The destination may splice the captured rest back in as `:rest` (or `:rest*`, same thing there):
 

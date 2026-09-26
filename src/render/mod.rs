@@ -968,7 +968,11 @@ fn plain_text(html: &str) -> String {
                         terminated = true;
                         break;
                     }
-                    if entity.len() >= 8 {
+                    // an entity name is alphanumeric (or `#` + digits);
+                    // anything else — a space, a `<` — ends the run, so
+                    // tag markup never lands in the buffer and in_tag
+                    // stays in step with the text that follows
+                    if entity.len() >= 8 || !(c.is_ascii_alphanumeric() || c == '#') {
                         break;
                     }
                     entity.push(c);
@@ -1016,7 +1020,12 @@ fn apply_rewrites(content: &mut Content, rewrites: &[Rewrite]) -> Result<(), Con
                 // segment boundary: what follows the prefix must be a
                 // fresh segment (or the prefix ends in `/`, which always
                 // is one; a bare `:rest*` has no prefix and captures the
-                // whole path) — `guide:rest*` must not capture `guide2/…`
+                // whole path) — `guide:rest*` must not capture `guide2/…`.
+                // The boundary slash belongs to neither side: `guide:rest*`
+                // and `guide/:rest*` capture the same rest, so a
+                // `docs/:rest*` destination splices to `docs/x.md`, not
+                // `docs//x.md` (rel paths never contain `//`, so the strip
+                // only ever removes that boundary)
                 page.rel
                     .strip_prefix(prefix)
                     .filter(|rest| {
@@ -1025,6 +1034,7 @@ fn apply_rewrites(content: &mut Content, rewrites: &[Rewrite]) -> Result<(), Con
                             || rest.is_empty()
                             || rest.starts_with('/')
                     })
+                    .map(|rest| rest.strip_prefix('/').unwrap_or(rest))
                     .map(|rest| rule.to.replace(":rest*", rest).replace(":rest", rest))
             } else if rule.from == page.rel {
                 Some(rule.to.clone())

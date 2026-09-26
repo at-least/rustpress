@@ -239,6 +239,27 @@ fn rest_rewrite_prefix_matches_on_segment_boundaries() {
 }
 
 #[test]
+fn rest_rewrite_boundary_slash_is_not_captured() {
+    // "guide:rest*" matches guide/x.md at the segment boundary; the
+    // boundary slash belongs to neither side, so "docs/:rest*" must give
+    // /docs/x/, not /docs//x/. Path::join hides a double slash in the
+    // written output, but page.url reaches the sidebar, sitemap, search
+    // index and internal links verbatim, so assert on it directly
+    let dir = tempdir("site-features");
+    std::fs::write(
+        dir.path().join("rustpress.toml"),
+        "title = \"T\"\n\n[rewrites]\n\"guide:rest*\" = \"docs/:rest*\"\n",
+    )
+    .unwrap();
+    std::fs::create_dir_all(dir.path().join("content/guide")).unwrap();
+    std::fs::write(dir.path().join("content/guide/x.md"), "# X\n").unwrap();
+    let site = Site::load(dir.path()).unwrap();
+    let urls: Vec<&str> = site.content.pages.iter().map(|p| p.url.as_str()).collect();
+    assert!(site.content.get("/docs/x/").is_some(), "urls: {urls:?}");
+    assert!(!urls.iter().any(|u| u.contains("//")), "urls: {urls:?}");
+}
+
+#[test]
 fn bare_rest_rewrite_captures_every_page() {
     // a bare `:rest*` has no prefix at all: the segment-boundary filter
     // must not turn it into a rule that matches nothing

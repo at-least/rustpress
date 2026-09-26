@@ -932,3 +932,35 @@ fn search_body_keeps_raw_ampersand_text_intact() {
         "raw & text intact in search body: {docs}"
     );
 }
+
+#[test]
+fn search_body_entity_scan_stops_at_markup() {
+    // a bare '&' followed within eight chars by a tag: the entity scan
+    // must stop at the first non-entity char, or the tag's markup is
+    // copied into the body and the tag tracking desynchronises for the
+    // text that follows
+    let site_dir = tempdir("site-build");
+    std::fs::create_dir_all(site_dir.path().join("content")).unwrap();
+    std::fs::write(
+        site_dir.path().join("rustpress.toml"),
+        "title = \"T\"\n\n[search]\nprovider = \"local\"\n",
+    )
+    .unwrap();
+    std::fs::write(
+        site_dir.path().join("content/index.md"),
+        "# H\n\n<div>AT&T</div>\n<p>next</p>\n",
+    )
+    .unwrap();
+    let site = Site::load(site_dir.path()).unwrap();
+    let out = site_dir.path().join("public");
+    site.build(site_dir.path(), &out).unwrap();
+    let docs = std::fs::read_to_string(out.join("search-docs.json")).unwrap();
+    assert!(
+        docs.contains("AT&T next"),
+        "text on both sides of the tags: {docs}"
+    );
+    assert!(
+        !docs.contains("</div>"),
+        "no markup in the search body: {docs}"
+    );
+}
