@@ -16,3 +16,8 @@ node_modules/
 # interrupted mid-swap leaves them behind; the next build cleans them)
 *.rustpress-tmp
 *.rustpress-old
+
+# local tooling (code-index MCP index, zcode session)
+.mcp-index/
+.mcp-index.json
+.zcode/
