@@ -142,10 +142,15 @@ impl<'a> Preprocess<'a> {
             if let Some((ch, n, col)) = opening_fence(bare, list_base.base) {
                 // the block's content column is the column of the fence
                 // marker itself (for `10. ` that is 4, for `- ` that is
-                // 2), re-expressed as spaces; content lines may be
-                // indented up to the opener's indentation without
-                // changing their content, so this is always safe
-                fence = Some((ch, n, col, " ".repeat(col)));
+                // 2): the opener's own leading whitespace verbatim — a
+                // tab stays a tab, so it still reaches the tab stop
+                // comrak expands it to — plus the marker's width in
+                // spaces; content lines may be indented up to the
+                // opener's indentation without changing their content,
+                // so this is always safe
+                let ws = &bare[..bare.len() - bare.trim_start().len()];
+                let pad = format!("{ws}{}", " ".repeat(col - ws.len()));
+                fence = Some((ch, n, col, pad));
                 opener_line = Some(line.to_string());
                 continue;
             }
@@ -192,13 +197,9 @@ impl<'a> Preprocess<'a> {
         // an unclosed fence runs to EOF. The body can still carry a
         // closer smuggled in by an include, so the opener must grow
         // past it exactly like a closed fence's would
-        if let Some(opener) = opener_line.take() {
-            if let Some((ch, n, _col, _pad)) = &fence {
-                let len = longest_closing_run(&body, *ch, *n).map_or(*n, |run| run.max(*n) + 1);
-                out.push_str(&lengthen_fence(&opener, *ch, len));
-            } else {
-                out.push_str(&opener);
-            }
+        if let (Some(opener), Some((ch, n, ..))) = (opener_line.take(), &fence) {
+            let len = longest_closing_run(&body, *ch, *n).map_or(*n, |run| run.max(*n) + 1);
+            out.push_str(&lengthen_fence(&opener, *ch, len));
             out.push_str(&body);
         }
         Ok(out)

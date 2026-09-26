@@ -664,6 +664,30 @@ fn heading_section_anchor_matches_deduplicated_rendered_ids() {
 }
 
 #[test]
+fn include_inside_a_tab_indented_list_item_fence_stays_in_the_item() {
+    // the include pad re-expressed the opener's column in spaces from a
+    // byte count, so a tab-indented item fence padded one space: the
+    // included lines sat left of the item's content column and comrak
+    // ended the item (and its fence) there
+    let out = include_site(
+        &[("parts/x.md", "included line\n")],
+        "1. item\n\n\t```\n\t<!--@include: ./parts/x.md-->\n\t```\n\nafter\n",
+    );
+    let li_end = out.html.find("</li>").expect("a list item");
+    let code = out.html.find("included line").expect("included text");
+    assert!(
+        code < li_end,
+        "included text inside the list item: {}",
+        out.html
+    );
+    assert!(
+        !out.html.contains("<p>included line</p>"),
+        "not a top-level paragraph: {}",
+        out.html
+    );
+}
+
+#[test]
 fn image_attribute_blocks_stay_images_and_get_the_base() {
     // `![alt](src){attrs}` used to become an <a href=src>alt</a>; the
     // attrs belong on the <img>, and its src gets the site base like
@@ -695,6 +719,43 @@ fn image_attribute_blocks_stay_images_and_get_the_base() {
     );
     assert!(!out.html.contains("<a href"), "not a link: {}", out.html);
     assert!(!out.html.contains("data-gd-mdlink"), "marker stripped");
+}
+
+#[test]
+fn attribute_blocks_keep_data_href_and_data_src() {
+    // the post-pass strips the emitter's own href/src before rebuilding
+    // the tag; without an attribute-name boundary it also ate the tail
+    // of an authored `data-href` / `data-src`, leaving a dangling `data-`
+    let engine = MarkdownEngine::new(
+        &rustpress::config::Markdown::default(),
+        &rustpress::config::SyntaxHighlight::default(),
+        Path::new("tests/fixtures"),
+        "/b/",
+    )
+    .expect("engine");
+    let page = Page {
+        body: "[t](/a/){data-href=\"x\"}\n\n![a](/i.png){data-src=\"y\"}\n".into(),
+        ..synthetic_page()
+    };
+    let out = engine
+        .render(
+            &page,
+            &Content::default(),
+            Path::new("tests/fixtures"),
+            &Path::new("tests/fixtures").join("en"),
+        )
+        .expect("render");
+    assert!(
+        out.html.contains(r#"<a href="/b/a/" data-href="x">t</a>"#),
+        "authored data-href kept: {}",
+        out.html
+    );
+    assert!(
+        out.html
+            .contains(r#"<img src="/b/i.png" alt="a" data-src="y">"#),
+        "authored data-src kept: {}",
+        out.html
+    );
 }
 
 #[test]

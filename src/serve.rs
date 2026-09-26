@@ -264,9 +264,14 @@ fn plain(status: StatusCode, msg: &str) -> Response {
         .unwrap()
 }
 
+/// 302, not 301: RFC 9110 §15.4.2 lets a cache reuse a 301 without
+/// revalidation, and a dev server's directory layout changes under the
+/// author, so a browser must ask again next time (§15.4.3: a 302 is
+/// cacheable only with explicit freshness information, which this
+/// response does not carry).
 fn redirect(location: &str) -> Response {
     Response::builder()
-        .status(StatusCode::MOVED_PERMANENTLY)
+        .status(StatusCode::FOUND)
         .header(header::LOCATION, location)
         .body(Body::empty())
         .unwrap()
@@ -442,7 +447,8 @@ mod tests {
             root: public.clone(),
         };
         let resp = serve_file(&state, &Uri::from_static("/sub")).await;
-        assert_eq!(resp.status(), StatusCode::MOVED_PERMANENTLY);
+        // temporary: a cached 301 would outlive the next rebuild
+        assert_eq!(resp.status(), StatusCode::FOUND);
         assert_eq!(
             resp.headers()
                 .get(header::LOCATION)

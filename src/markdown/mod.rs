@@ -268,8 +268,10 @@ fn resolve_marked_urls(html: String, page: &Page, content: &Content, base: &str)
     static HREF: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
     static SRC: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
     let tag = TAG.get_or_init(|| regex::Regex::new(r#"<(a|img)\b([^>]*)>"#).unwrap());
-    let href = HREF.get_or_init(|| regex::Regex::new(r#"\s?href="([^"]*)""#).unwrap());
-    let src = SRC.get_or_init(|| regex::Regex::new(r#"\s?src="([^"]*)""#).unwrap());
+    // anchored on a preceding space (or the start) so an authored
+    // `data-href="…"` / `data-src="…"` is not taken for the emitter's own
+    let href = HREF.get_or_init(|| regex::Regex::new(r#"(?:^|\s)href="([^"]*)""#).unwrap());
+    let src = SRC.get_or_init(|| regex::Regex::new(r#"(?:^|\s)src="([^"]*)""#).unwrap());
     tag.replace_all(&html, |c: &regex::Captures| {
         let attrs = &c[2];
         if !attrs.contains(MARK) {
@@ -291,12 +293,11 @@ fn resolve_marked_urls(html: String, page: &Page, content: &Content, base: &str)
         // the emitters write the marker with a leading space; take that
         // space with it so no double space is left between attributes
         let unmarked = attrs.replace(&format!(" {MARK}"), "").replace(MARK, "");
+        // parse_attrs emits quoted pairs only, so every `name="…"` (the
+        // emitter's and any authored one) is gone after this; `rest` is
+        // the remaining attributes verbatim
         let rest = attr.replace_all(&unmarked, "");
-        let mut rest = rest.trim().to_string();
-        let bare_attr = format!("{name}=");
-        while let Some(stripped) = rest.strip_prefix(&bare_attr) {
-            rest = stripped.to_string();
-        }
+        let rest = rest.trim();
         format!(
             r#"<{} {name}="{}"{}>"#,
             &c[1],

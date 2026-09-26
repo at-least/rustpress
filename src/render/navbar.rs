@@ -206,16 +206,11 @@ pub fn navbar<'a>(
 /// The navbar logo: one `<img>` or a light/dark pair switched by the
 /// color scheme.
 fn logo_html(site: &Site, logo: &crate::config::ThemeableImage) -> String {
-    fn esc(s: &str) -> String {
-        s.replace('&', "&amp;")
-            .replace('"', "&quot;")
-            .replace('<', "&lt;")
-    }
     fn img(site: &Site, src: &str, alt: &str, extra: &str) -> String {
         format!(
             r#"<img class="shrink-0 mr-0 h-(--vp-nav-logo-height){extra}" src="{}" alt="{}">"#,
-            esc(&site.url(src)),
-            esc(alt)
+            crate::render::escape::escape_attr(&site.url(src)),
+            crate::render::escape::escape_attr(alt)
         )
     }
     match logo {
@@ -245,16 +240,17 @@ fn logo_html(site: &Site, logo: &crate::config::ThemeableImage) -> String {
 /// the attrs are omitted, not emitted empty).
 fn link_attrs(target: Option<&str>, rel: Option<&str>) -> String {
     let mut out = String::new();
-    fn esc(s: &str) -> String {
-        s.replace('&', "&amp;")
-            .replace('"', "&quot;")
-            .replace('<', "&lt;")
-    }
     if let Some(t) = target {
-        out.push_str(&format!(r#" target="{}""#, esc(t)));
+        out.push_str(&format!(
+            r#" target="{}""#,
+            crate::render::escape::escape_attr(t)
+        ));
     }
     if let Some(r) = rel {
-        out.push_str(&format!(r#" rel="{}""#, esc(r)));
+        out.push_str(&format!(
+            r#" rel="{}""#,
+            crate::render::escape::escape_attr(r)
+        ));
     }
     out
 }
@@ -276,11 +272,7 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
             }
         );
         let attrs = link_attrs(item.target.as_deref(), item.rel.as_deref());
-        let text = item
-            .text
-            .replace('&', "&amp;")
-            .replace('<', "&lt;")
-            .replace('>', "&gt;");
+        let text = crate::render::escape::escape_text(&item.text);
         format!(
             r#"<a class="{cls}" href="{}"{attrs}><span>{text}</span></a>"#,
             crate::render::escape::escape_attr(&href)
@@ -323,7 +315,7 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
                                         { " vp-external-link-icon" } else { "" },
                                         crate::render::escape::escape_attr(&site.url(&child.link.clone().unwrap_or_default())),
                                         link_attrs(child.target.as_deref(), child.rel.as_deref()),
-                                        child.text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;"),
+                                        crate::render::escape::escape_text(&child.text),
                                     )))
                                 </li>
                             }
@@ -432,11 +424,7 @@ fn screen_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> 
         );
         let href = site.url(&item.link.clone().unwrap_or_default());
         let attrs = link_attrs(item.target.as_deref(), item.rel.as_deref());
-        let text = item
-            .text
-            .replace('&', "&amp;")
-            .replace('<', "&lt;")
-            .replace('>', "&gt;");
+        let text = crate::render::escape::escape_text(&item.text);
         format!(
             r#"<a class="{cls}" href="{}"{attrs}>{text}</a>"#,
             crate::render::escape::escape_attr(&href)
@@ -461,7 +449,7 @@ fn screen_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> 
                                 r#"<a class="block border-b border-divider pt-3 pb-[0.6875rem] leading-[1.7142857] text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1" href="{}"{}>{}</a>"#,
                                 crate::render::escape::escape_attr(&site.url(&child.link.clone().unwrap_or_default())),
                                 link_attrs(child.target.as_deref(), child.rel.as_deref()),
-                                child.text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;"),
+                                crate::render::escape::escape_text(&child.text),
                             )))
                         </li>
                     }

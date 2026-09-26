@@ -352,7 +352,7 @@ impl Site {
                     page.title.clone()
                 };
                 search_docs.push(serde_json::json!({
-                    "url": Self::percent_encode_url(&self.url(&page.url)),
+                    "url": crate::render::escape::percent_encode(&self.url(&page.url), true),
                     "title": title,
                     "body": plain_text(&rendered.html),
                 }));
@@ -566,30 +566,6 @@ impl Site {
         Ok(html)
     }
 
-    /// Percent-encode a page URL for emission (sitemap `<loc>`, the search
-    /// index): `/` separators and `&` (a reserved sub-delim, valid raw in a
-    /// path and XML-escaped separately) pass through; spaces, non-ASCII
-    /// bytes and `%` itself go out as `%XX`, so the emitted form is a valid
-    /// RFC 3986 URL.
-    fn percent_encode_url(url: &str) -> String {
-        let mut out = String::with_capacity(url.len());
-        for b in url.bytes() {
-            match b {
-                b'a'..=b'z'
-                | b'A'..=b'Z'
-                | b'0'..=b'9'
-                | b'-'
-                | b'.'
-                | b'_'
-                | b'~'
-                | b'/'
-                | b'&' => out.push(b as char),
-                _ => out.push_str(&format!("%{b:02X}")),
-            }
-        }
-        out
-    }
-
     /// sitemap.xml from every page URL, lastmod from the page timestamps.
     fn sitemap_xml(&self, hostname: &str) -> String {
         fn xml_escape(s: &str) -> String {
@@ -605,7 +581,10 @@ impl Site {
             xml.push_str(&format!(
                 "    <loc>{}{}</loc>\n",
                 host,
-                xml_escape(&Self::percent_encode_url(&self.url(&page.url)))
+                xml_escape(&crate::render::escape::percent_encode(
+                    &self.url(&page.url),
+                    true
+                ))
             ));
             if let Some(t) = page.modified {
                 let (date, _) = doc::format_date(t);

@@ -253,10 +253,9 @@ fn load_chain(src: &str, name: Option<&str>, base_dir: &Path) -> Result<SyntaxTh
 /// naming the scope instead of reaching the emitted stylesheet.
 fn validate_colors(theme: &SyntaxTheme, name: &str) -> Result<(), ThemeError> {
     let valid = |c: &str| {
+        // no `#` leaves hex empty, which the length check rejects
         let hex = c.strip_prefix('#').unwrap_or("");
-        matches!(hex.len(), 3 | 4 | 6 | 8)
-            && hex.bytes().all(|b| b.is_ascii_hexdigit())
-            && c.starts_with('#')
+        matches!(hex.len(), 3 | 4 | 6 | 8) && hex.bytes().all(|b| b.is_ascii_hexdigit())
     };
     for style in theme.styles.values() {
         for slot in [&style.fg, &style.bg].into_iter().flatten() {

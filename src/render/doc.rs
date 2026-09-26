@@ -41,7 +41,10 @@ pub fn doc_page<'a>(
             .clone()
             .unwrap_or_else(|| "Edit this page on GitHub".into());
         (
-            e.pattern.replace(":path", &percent_encode_path(&page.rel)),
+            e.pattern.replace(
+                ":path",
+                &crate::render::escape::percent_encode(&page.rel, false),
+            ),
             text,
         )
     });
@@ -222,22 +225,6 @@ fn escape_text(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
-}
-
-/// Percent-encode a source-relative path for use in a URL: `/`
-/// separators stay, unreserved bytes (RFC 3986) pass through, anything
-/// else (spaces, non-ASCII, quotes) goes out as `%XX` UTF-8 bytes.
-fn percent_encode_path(path: &str) -> String {
-    let mut out = String::with_capacity(path.len());
-    for b in path.bytes() {
-        match b {
-            b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' | b'/' => {
-                out.push(b as char)
-            }
-            _ => out.push_str(&format!("%{b:02X}")),
-        }
-    }
-    out
 }
 
 /// (datetime, display) for a file modification time — ISO `YYYY-MM-DD`
