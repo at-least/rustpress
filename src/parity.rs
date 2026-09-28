@@ -108,8 +108,24 @@ pub struct PageFingerprint {
     pub has_main: bool,
     /// Sanity guard: counts of block-level content elements inside
     /// `<main>`. `None` when the page has no `<main>` (the home page on
-    /// both sides).
+    /// both sides). Includes renderer landmarks (`.custom-block`,
+    /// `.vp-code-group`, `.VPBadge`, …) so a markdown-pipeline regression
+    /// (a container or code group silently degrading to paragraphs)
+    /// cannot leave the counts unchanged.
     pub block_counts: Option<BTreeMap<String, usize>>,
+    /// `<meta name="description">` content (site- or page-level).
+    pub meta_description: Option<String>,
+    /// `<link rel="icon">` hrefs from `<head>`, in order.
+    pub head_icons: Vec<String>,
+    /// `<meta name="theme-color">` content.
+    pub theme_color: Option<String>,
+    /// Heading anchor ids (h2..h6) inside `<main>` in document order:
+    /// slug-rule drift (e.g. comrak vs GitHub heading-id edge cases)
+    /// surfaces here.
+    pub doc_heading_ids: Vec<String>,
+    /// Per code-group, the tab labels in order: the `[label]` fence-info
+    /// round-trip (server-emitted tab strip) is pinned by this.
+    pub code_group_tabs: Vec<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -147,6 +163,12 @@ struct Sels {
     feature_upstream: Selector,
     feature_local: Selector,
     search: Selector,
+    meta_description: Selector,
+    head_icon: Selector,
+    theme_color: Selector,
+    heading_with_id: Selector,
+    code_group: Selector,
+    code_group_tab: Selector,
 }
 
 fn sel(s: &str) -> Selector {
@@ -174,6 +196,12 @@ impl Sels {
             feature_upstream: sel(".VPFeature article"),
             feature_local: sel("li > div > article"),
             search: sel(".VPNavBarSearch, #VPSearchButton"),
+            meta_description: sel("head meta[name='description']"),
+            head_icon: sel("head link[rel='icon']"),
+            theme_color: sel("head meta[name='theme-color']"),
+            heading_with_id: sel("h2[id], h3[id], h4[id], h5[id], h6[id]"),
+            code_group: sel(".vp-code-group"),
+            code_group_tab: sel(".tabs label"),
         }
     }
 }
@@ -364,23 +392,66 @@ pub fn extract(html: &str, url: &str) -> PageFingerprint {
     let has_main = main.is_some();
     let block_counts = main.map(|m| {
         let mut counts = BTreeMap::new();
-        for tag in [
-            "h2",
-            "h3",
-            "h4",
-            "h5",
-            "h6",
-            "pre",
-            "table",
-            "ul",
-            "ol",
-            "blockquote",
+        // tags and renderer-landmark classes: the tag set alone cannot
+        // see a `:::` container or code group degrading to paragraphs —
+        // the class counts can (both sides emit these class markers;
+        // class ORDER is irrelevant to the selector)
+        for (key, query) in [
+            ("pre", "pre"),
+            ("table", "table"),
+            ("ul", "ul"),
+            ("ol", "ol"),
+            ("blockquote", "blockquote"),
+            ("p", "p"),
+            ("details", "details"),
+            ("img", "img"),
+            ("hr", "hr"),
+            ("custom-block", ".custom-block"),
+            ("code-group", ".vp-code-group"),
+            ("badge", ".VPBadge"),
+            ("toc", "nav.table-of-contents"),
+            ("code-title-bar", ".vp-code-block-title"),
         ] {
-            let n = m.select(&sel(tag)).count();
-            counts.insert(tag.to_string(), n);
+            let n = m.select(&sel(query)).count();
+            counts.insert(key.to_string(), n);
+        }
+        for level in ["h2", "h3", "h4", "h5", "h6"] {
+            let n = m.select(&sel(level)).count();
+            counts.insert(level.to_string(), n);
         }
         counts
     });
+
+    let meta_description = first(&doc, &s.meta_description)
+        .and_then(|m| m.value().attr("content"))
+        .map(|c| norm_text(c))
+        .filter(|c| !c.is_empty());
+    let head_icons: Vec<String> = doc
+        .select(&s.head_icon)
+        .filter_map(|l| l.value().attr("href").map(norm_href))
+        .collect();
+    let theme_color = first(&doc, &s.theme_color)
+        .and_then(|m| m.value().attr("content"))
+        .map(str::to_string);
+    let doc_heading_ids: Vec<String> = main
+        .map(|m| {
+            m.select(&s.heading_with_id)
+                .filter_map(|h| h.value().attr("id").map(str::to_string))
+                .collect()
+        })
+        .unwrap_or_default();
+    let code_group_tabs: Vec<Vec<String>> = main
+        .map(|m| {
+            m.select(&s.code_group)
+                .map(|g| {
+                    g.select(&s.code_group_tab)
+                        .map(el_text)
+                        .filter(|t| !t.is_empty())
+                        .collect()
+                })
+                .collect()
+        })
+        .unwrap_or_default();
 
     PageFingerprint {
         title,
@@ -399,6 +470,11 @@ pub fn extract(html: &str, url: &str) -> PageFingerprint {
         has_search,
         has_main,
         block_counts,
+        meta_description,
+        head_icons,
+        theme_color,
+        doc_heading_ids,
+        code_group_tabs,
     }
 }
 
@@ -644,6 +720,10 @@ pub fn slug_for(url: &str) -> String {
 pub fn site_file_for(site_dir: &Path, url: &str) -> PathBuf {
     if url == "/" {
         site_dir.join("index.html")
+    } else if url.trim_matches('/') == "404" {
+        // the 404 page is a single file at the web root on both sides,
+        // not a directory-style URL
+        site_dir.join("404.html")
     } else {
         site_dir.join(format!("{}/index.html", url.trim_matches('/')))
     }

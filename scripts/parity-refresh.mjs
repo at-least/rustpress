@@ -17,7 +17,9 @@ const etags = {}
 let generator
 
 for (const page of pages) {
-  const res = await fetch(SOURCE + page)
+  // the 404 page is a single file, not a directory URL; the deployed
+  // host serves it at /404.html
+  const res = await fetch(SOURCE + (page === '/404' ? '/404.html' : page))
   if (!res.ok) throw new Error(`${page}: HTTP ${res.status}`)
   const html = await res.text()
   await writeFile(`parity/cache/${slug(page)}.html`, html)

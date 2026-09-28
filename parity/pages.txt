@@ -16,3 +16,5 @@
 /reference/site-config
 /reference/runtime-api
 /reference/default-theme-config
+# the 404 page: a single file at the web root, not a directory URL
+/404

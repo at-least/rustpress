@@ -13,6 +13,7 @@ use comrak::nodes::{NodeLink, NodeValue};
 use comrak::options::{Plugins, RenderPlugins};
 use comrak::{Anchorizer, Arena, Options};
 use std::sync::OnceLock;
+use unicode_normalization::UnicodeNormalization;
 
 use crate::config::Markdown as MarkdownConfig;
 use crate::content::{Content, Page};
@@ -21,18 +22,25 @@ use crate::content::{Content, Page};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Heading {
     pub level: u8,
-    /// The final anchor id: the `{#custom}` attribute when present,
-    /// else comrak's slug.
+    /// The final anchor id: the `{#custom}` attribute when present, else
+    /// the VitePress slug (`slugify` below — the mdit-vue algorithm that
+    /// decides every upstream anchor, not comrak's GitHub anchorizer).
     pub id: String,
     pub text: String,
-    /// The slug id comrak rendered (before the custom-anchor
-    /// post-processing swaps it for `id`).
+    /// The slug id comrak rendered (the `<hN id>` post-processing swaps
+    /// `rendered_id` for `id`); pairing against comrak's own output keeps
+    /// raw-HTML headings from consuming an id mapping (they never get one
+    /// from comrak).
     pub rendered_id: String,
     /// The literal `{#…}` attribute the author wrote, before
     /// deduplication. Kept so the rendered-text strip can remove it
     /// even when the final id was suffixed (`## B {#c}` → `c-1`) or
     /// happens to equal the slug (`## {#foo}` → `foo`).
     pub custom_attr: Option<String>,
+    /// Token-rule text (no HTML tags / badge text / shortcode emoji,
+    /// marker stripped, trimmed) — the `Permalink to “…”` aria-label
+    /// body, matching upstream's permalink title computation.
+    pub permalink_title: String,
 }
 
 /// The result of rendering one page's markdown body.
@@ -89,8 +97,10 @@ impl MarkdownEngine {
         if markdown.math {
             ext.math_dollars = true;
         }
-        // GitHub-style ids on every heading; the trailing `<a
-        // class="anchor">` link comrak appends is styled by the theme CSS.
+        // ids on every heading — comrak's GitHub anchorizer renders them
+        // (uniqueness + pairing key), then apply_heading_rewrites swaps
+        // in the VitePress `slugify`-compatible id, `tabindex="-1"` and
+        // the `header-anchor` permalink shape.
         ext.header_id_prefix = Some(String::new());
         // VitePress renders raw HTML in markdown; our preprocessing emits
         // trusted wrappers (containers, badges) as raw HTML too.
@@ -178,8 +188,17 @@ impl MarkdownEngine {
         comrak::format_html_with_plugins(root, &self.options, &mut html, &plugins)
             .expect("infallible string write");
         let html = resolve_marked_urls(html, page, content, &self.base);
-        let html = apply_custom_heading_ids(&html, &headings);
+        let html = apply_heading_rewrites(&html, &headings);
         let mut html = replace_toc(&html, &headings);
+        // comrak's footnote section lacks the separator <hr> that
+        // markdown-it-footnote emits upstream (visible rule above the
+        // footnote list); comrak 0.55 writes `data-footnotes` on the tag
+        if html.contains("<section class=\"footnotes\" data-footnotes>") {
+            html = html.replace(
+                "<section class=\"footnotes\" data-footnotes>",
+                "<hr class=\"footnotes-sep\"><section class=\"footnotes\" data-footnotes>",
+            );
+        }
         if self.lazy_images {
             html = html.replace("<img ", "<img loading=\"lazy\" ");
         }
@@ -412,14 +431,21 @@ pub fn resolve_relative(url: &str, page_rel: &str, content: &Content) -> Option<
 fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
     // pass 1: gather in document order with comrak-mirroring rendered ids
     let mut anchorizer = Anchorizer::new();
-    let mut rows: Vec<(u8, String, Option<String>, String)> = Vec::new();
+    let mut rows: Vec<(u8, String, Option<String>, String, String, String)> = Vec::new();
     for node in root.descendants() {
         let data = node.data.borrow();
         if let NodeValue::Heading(nh) = &data.value {
             let raw = collect_text_with_shortcodes(node);
             let rendered_id = anchorizer.anchorize(&raw);
             let (text, custom) = split_heading_anchor(&raw);
-            rows.push((nh.level, text, custom, rendered_id));
+            // the auto slug uses the VitePress token rules (no HTML
+            // tokens — this excludes <Badge> text entirely, since badge
+            // text lives in an attribute of the raw HTML that becomes the
+            // VPBadge span — and no shortcode-expanded emoji), slugified
+            // with the mdit-vue algorithm so anchors match vitepress.dev
+            let slug_text = split_heading_anchor(&collect_slug_text(node)).0;
+            let slug = slugify(&slug_text);
+            rows.push((nh.level, text, custom, rendered_id, slug, slug_text.trim().to_string()));
         }
     }
     // pass 2: every custom id is reserved up front (an auto slug must
@@ -427,7 +453,7 @@ fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
     // finals are assigned in document order — customs claim theirs
     // (later duplicates suffix), auto slugs dedupe against everything
     let reserved: std::collections::HashSet<String> =
-        rows.iter().filter_map(|(_, _, c, _)| c.clone()).collect();
+        rows.iter().filter_map(|(_, _, c, ..)| c.clone()).collect();
     let mut used = reserved.clone();
     let mut claimed: std::collections::HashSet<String> = std::collections::HashSet::new();
     let suffix = |base: &str, used: &std::collections::HashSet<String>| -> String {
@@ -441,16 +467,18 @@ fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
         }
     };
     let mut out = Vec::new();
-    for (level, text, custom, rendered_id) in rows {
+    for (level, text, custom, rendered_id, slug, permalink_title) in rows {
         let custom_attr = custom.clone();
         let id = match custom {
             Some(c) if !claimed.contains(&c) => {
                 claimed.insert(c.clone());
                 c
             }
+            // upstream's anchor plugin THROWS on a colliding user-defined
+            // id; we keep our gentler up-front reservation and suffix
             Some(c) => suffix(&c, &used),
-            None if !used.contains(&rendered_id) => rendered_id.clone(),
-            None => suffix(&rendered_id, &used),
+            None if !used.contains(&slug) => slug.clone(),
+            None => suffix(&slug, &used), // same -1/-2 scheme as upstream
         };
         used.insert(id.clone());
         out.push(Heading {
@@ -459,6 +487,7 @@ fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
             text,
             rendered_id,
             custom_attr,
+            permalink_title,
         });
     }
     out
@@ -492,6 +521,114 @@ fn collect_text_with_shortcodes<'a>(
     out
 }
 
+/// Heading text for the anchor slug, mirroring VitePress's
+/// `getTokensText` (markdown.ts): only `text` and `code_inline` tokens
+/// count — `html_inline` (raw HTML tags, and entirely our `<Badge>`
+/// rewrite, whose visible text lives in the markdown source as an HTML
+/// attribute) and `emoji` (shortcode-expanded `:tada:`) are dropped, and
+/// soft/hard line breaks carry no characters.
+fn collect_slug_text<'a>(
+    node: &'a comrak::arena_tree::Node<'a, std::cell::RefCell<comrak::nodes::Ast>>,
+) -> String {
+    fn walk<'a>(
+        node: &'a comrak::arena_tree::Node<'a, std::cell::RefCell<comrak::nodes::Ast>>,
+        out: &mut String,
+        skip_badge: &mut bool,
+    ) {
+        for child in node.children() {
+            match &child.data.borrow().value {
+                NodeValue::Text(literal) if !*skip_badge => out.push_str(literal),
+                NodeValue::Code(code) if !*skip_badge => out.push_str(&code.literal),
+                NodeValue::HtmlInline(html) => {
+                    // the badges' wrapping span swallows its inner text
+                    // (upstream never has it: it sits in the <Badge> tag's
+                    // `text` attribute); anything else's INNER text stays
+                    *skip_badge = !*skip_badge && html.contains("class=\"VPBadge");
+                }
+                NodeValue::ShortCode(_) | NodeValue::SoftBreak | NodeValue::LineBreak => {}
+                NodeValue::Math(_) => {}
+                _ => walk(child, out, skip_badge),
+            }
+        }
+    }
+    let mut out = String::new();
+    let mut skip_badge = false;
+    walk(node, &mut out, &mut skip_badge);
+    out
+}
+
+/// The mdit-vue `slugify` (@mdit-vue/shared) — the function behind every
+/// upstream heading anchor: NFKD, strip combining marks and control
+/// chars, a run of specials/spaces becomes one `-`, dashes collapse and
+/// trim, a leading digit gets a `_` prefix, lowercase at the end.
+pub fn slugify(text: &str) -> String {
+    let is_special = |c: char| {
+        // JS `\s` (incl. U+FEFF) plus the literal mdit-vue special set
+        c.is_whitespace()
+            || c == '\u{feff}'
+            || matches!(
+                c,
+                '~' | '`'
+                    | '!'
+                    | '@'
+                    | '#'
+                    | '$'
+                    | '%'
+                    | '^'
+                    | '&'
+                    | '*'
+                    | '('
+                    | ')'
+                    | '-'
+                    | '_'
+                    | '+'
+                    | '='
+                    | '['
+                    | ']'
+                    | '{'
+                    | '}'
+                    | '|'
+                    | '\\'
+                    | ';'
+                    | ':'
+                    | '"'
+                    | '\''
+                    | '\u{201c}'
+                    | '\u{201d}'
+                    | '\u{2018}'
+                    | '\u{2019}'
+                    | '<'
+                    | '>'
+                    | ','
+                    | '.'
+                    | '?'
+                    | '/'
+            )
+    };
+    let mut out = String::with_capacity(text.len());
+    let mut last_dash = false;
+    for c in text.nfkd() {
+        if ('\u{0300}'..='\u{036f}').contains(&c) || ('\u{0000}'..='\u{001f}').contains(&c) {
+            continue;
+        }
+        if is_special(c) {
+            if !last_dash {
+                out.push('-');
+                last_dash = true;
+            }
+            continue;
+        }
+        last_dash = false;
+        out.extend(c.to_lowercase());
+    }
+    let trimmed = out.trim_matches('-');
+    if trimmed.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+        format!("_{trimmed}")
+    } else {
+        trimmed.to_string()
+    }
+}
+
 /// `Heading {#my-id}` → ("Heading", Some("my-id")).
 fn split_heading_anchor(text: &str) -> (String, Option<String>) {
     if text.ends_with('}')
@@ -505,28 +642,27 @@ fn split_heading_anchor(text: &str) -> (String, Option<String>) {
     (text.to_string(), None)
 }
 
-/// Swap each heading's rendered slug for its `{#custom}` id and strip the
-/// literal attribute from the rendered text (VitePress heading anchors).
+/// Rewrite every comrak-rendered heading segment into the upstream
+/// form: swap the rendered slug for the final id (custom attribute
+/// or parity slug), strip the literal `{#…}` attribute from the heading
+/// text, add `tabindex="-1"` (upstream sets it on every anchored
+/// heading), and replace comrak's trailing `<a class="anchor">` with
+/// upstream's permalink (`class="header-anchor"`, `aria-label="Permalink
+/// to “title”"`, zero-width-space body).
 /// Pairing is by id, not position: only an `<hN>` segment carrying a
 /// heading's rendered slug is its render, so raw HTML headings in the
 /// source (allowed by `render.unsafe`) never consume a mapping and one
 /// unmatched heading cannot desync the rest.
-fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
+fn apply_heading_rewrites(html: &str, headings: &[Heading]) -> String {
     // rendered ids are unique (the anchorizer dedups), so a plain list of
-    // (rendered, custom) pairs is an unambiguous lookup table. A heading
-    // whose custom attr exists also enters the map when its final id
-    // equals the rendered slug — there is no id swap to do, but the
-    // literal attribute still has to come out of the text.
-    let map: Vec<(&str, &str, Option<&str>)> = headings
+    // (rendered → heading) pairs is an unambiguous lookup table. A
+    // heading whose custom attr exists also enters the map when its
+    // final id equals the rendered slug — there is no id swap to do, but
+    // the literal attribute still has to come out of the text.
+    let map: Vec<(&str, &Heading)> = headings
         .iter()
-        .filter(|h| h.id != h.rendered_id || h.custom_attr.is_some())
-        .map(|h| {
-            (
-                h.rendered_id.as_str(),
-                h.id.as_str(),
-                h.custom_attr.as_deref(),
-            )
-        })
+        .filter(|h| !h.rendered_id.is_empty())
+        .map(|h| (h.rendered_id.as_str(), h))
         .collect();
     if map.is_empty() {
         return html.to_string();
@@ -550,24 +686,31 @@ fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
         };
         let segment = &rest[open..open + close + close_tag.len()];
         let mut fixed = segment.to_string();
-        if let Some((rendered, custom, custom_attr)) = map
+        if let Some((rendered, heading)) = map
             .iter()
-            .find(|(rendered, _, _)| fixed.contains(&format!("id=\"{rendered}\"")))
+            .find(|(rendered, _)| fixed.contains(&format!("id=\"{rendered}\"")))
         {
-            let escaped = preprocess::escape_text(custom);
+            let escaped = preprocess::escape_text(&heading.id);
             fixed = fixed
                 .replace(&format!("id=\"{rendered}\""), &format!("id=\"{escaped}\""))
                 .replace(
                     &format!("href=\"#{rendered}\""),
                     &format!("href=\"#{escaped}\""),
                 );
+            // tabindex=-1 on the heading tag itself (first `id=` in the
+            // segment is the opener comrak rendered)
+            fixed = fixed.replacen(
+                &format!("id=\"{escaped}\""),
+                &format!("id=\"{escaped}\" tabindex=\"-1\""),
+                1,
+            );
             // the literal attribute inside the heading TEXT (and the
-            // anchor's aria-label / data-heading-content, rendered from
-            // the same raw text) is entity-escaped by comrak (& → &amp;),
-            // so strip the escaped form too. The author-written attr is
-            // the thing to strip: the final id may have been suffixed
-            // (`## B {#c}` → `c-1`) or equal the slug (`## {#foo}`).
-            if let Some(attr) = custom_attr {
+            // anchor's aria-label, rendered from the same raw text) is
+            // entity-escaped by comrak (& → &amp;), so strip the escaped
+            // form too. The author-written attr is the thing to strip:
+            // the final id may have been suffixed (`## B {#c}` → `c-1`)
+            // or equal the slug (`## {#foo}`).
+            if let Some(attr) = &heading.custom_attr {
                 let attr_escaped = preprocess::escape_text(attr);
                 // space-prefixed first, so `B {#c}` doesn't leave a
                 // trailing space; the bare form covers `## {#foo}`, whose
@@ -580,6 +723,21 @@ fn apply_custom_heading_ids(html: &str, headings: &[Heading]) -> String {
                 ] {
                     fixed = fixed.replace(&literal, "");
                 }
+            }
+            // comrak's tail anchor → upstream's permalink shape
+            let marker = format!("<a href=\"#{escaped}\" aria-label=\"Link to heading '");
+            if let Some(start) = fixed.find(&marker)
+                && let Some(end) = fixed[start..]
+                    .find("class=\"anchor\"></a>")
+                    .map(|i| start + i + "class=\"anchor\"></a>".len())
+            {
+                let title = preprocess::escape_text(&heading.permalink_title);
+                fixed.replace_range(
+                    start..end,
+                    &format!(
+                        "<a class=\"header-anchor\" href=\"#{escaped}\" aria-label=\"Permalink to \u{201c}{title}\u{201d}\">&#8203;</a>"
+                    ),
+                );
             }
         }
         out.push_str(&rest[..open]);

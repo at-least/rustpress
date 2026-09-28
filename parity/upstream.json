@@ -16,13 +16,15 @@
       "/reference/runtime-api": "\"c6f86c1ecf530eb35c763d3a66938464-ssl-df\"",
       "/reference/site-config": "\"d9965bc1cfb9b8ffb20ac230fa3eecb7-ssl-df\""
     },
-    "fetched_at": "2026-09-10T03:02:10.116Z",
+    "fetched_at": "2026-09-11T06:15:48.307Z",
     "generator": "VitePress v2.0.0-alpha.20",
     "source": "https://vitepress.dev"
   },
   "pages": {
     "/": {
       "block_counts": null,
+      "code_group_tabs": [],
+      "doc_heading_ids": [],
       "edit_link": null,
       "features": [
         {
@@ -48,6 +50,10 @@
       },
       "has_main": false,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": {
         "actions": [
           {
@@ -70,6 +76,7 @@
         "tagline": "Markdown to beautiful docs in minutes"
       },
       "last_updated": null,
+      "meta_description": "VitePress is a Vite & Vue powered static site generator that lets you create beautiful documentation sites from Markdown.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -113,21 +120,64 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "VitePress"
+    },
+    "/404": {
+      "block_counts": null,
+      "code_group_tabs": [],
+      "doc_heading_ids": [],
+      "edit_link": null,
+      "features": null,
+      "h1": null,
+      "has_main": false,
+      "has_search": false,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
+      "hero": null,
+      "last_updated": null,
+      "meta_description": "Not Found",
+      "nav_items": [],
+      "nav_title": null,
+      "outline_items": null,
+      "outline_title": null,
+      "pager": [],
+      "sidebar": [],
+      "site_footer": null,
+      "theme_color": "#5f67ee",
+      "title": "404 | VitePress"
     },
     "/guide/asset-handling": {
       "block_counts": {
+        "badge": 0,
         "blockquote": 0,
+        "code-group": 0,
+        "code-title-bar": 0,
+        "custom-block": 2,
+        "details": 0,
         "h2": 4,
         "h3": 0,
         "h4": 0,
         "h5": 0,
         "h6": 0,
+        "hr": 0,
+        "img": 0,
         "ol": 0,
+        "p": 19,
         "pre": 5,
         "table": 0,
+        "toc": 0,
         "ul": 0
       },
+      "code_group_tabs": [],
+      "doc_heading_ids": [
+        "referencing-static-assets",
+        "the-public-directory",
+        "base-url",
+        "serving-assets-from-a-cdn"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/asset-handling.md",
       "features": null,
       "h1": {
@@ -136,8 +186,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-08-27",
+      "meta_description": "Learn how to reference and handle static assets such as images, media, and fonts in VitePress.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -311,21 +366,51 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "Asset Handling | VitePress"
     },
     "/guide/deploy": {
       "block_counts": {
+        "badge": 0,
         "blockquote": 0,
+        "code-group": 0,
+        "code-title-bar": 6,
+        "custom-block": 4,
+        "details": 2,
         "h2": 5,
         "h3": 12,
         "h4": 0,
         "h5": 0,
         "h6": 0,
+        "hr": 0,
+        "img": 0,
         "ol": 6,
+        "p": 46,
         "pre": 17,
         "table": 0,
+        "toc": 0,
         "ul": 4
       },
+      "code_group_tabs": [],
+      "doc_heading_ids": [
+        "build-and-test-locally",
+        "setting-a-public-base-path",
+        "relocatable-builds-relative-base",
+        "http-cache-headers",
+        "platform-guides",
+        "generic",
+        "github-pages",
+        "gitlab-pages",
+        "azure",
+        "cloudray",
+        "firebase",
+        "heroku",
+        "hostinger",
+        "stormkit",
+        "surge",
+        "harvis",
+        "nginx"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/deploy.md",
       "features": null,
       "h1": {
@@ -334,8 +419,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-08-27",
+      "meta_description": "Deploy your VitePress site to popular platforms like Netlify, Vercel, GitHub Pages, and more.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -509,21 +599,43 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "Deploy Your VitePress Site | VitePress"
     },
     "/guide/extending-default-theme": {
       "block_counts": {
+        "badge": 0,
         "blockquote": 0,
+        "code-group": 0,
+        "code-title-bar": 9,
+        "custom-block": 3,
+        "details": 1,
         "h2": 6,
         "h3": 3,
         "h4": 0,
         "h5": 0,
         "h6": 0,
+        "hr": 0,
+        "img": 1,
         "ol": 1,
+        "p": 30,
         "pre": 14,
         "table": 0,
+        "toc": 0,
         "ul": 6
       },
+      "code_group_tabs": [],
+      "doc_heading_ids": [
+        "customizing-css",
+        "navbar",
+        "using-different-fonts",
+        "registering-global-components",
+        "layout-slots",
+        "using-view-transitions-api",
+        "on-appearance-toggle",
+        "on-route-change",
+        "overriding-internal-components"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/extending-default-theme.md",
       "features": null,
       "h1": {
@@ -532,8 +644,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-08-30",
+      "meta_description": "Customize and extend the VitePress default theme with custom CSS, components, layouts, and slots.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -707,21 +824,37 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "Extending the Default Theme | VitePress"
     },
     "/guide/frontmatter": {
       "block_counts": {
+        "badge": 0,
         "blockquote": 0,
+        "code-group": 0,
+        "code-title-bar": 0,
+        "custom-block": 0,
+        "details": 0,
         "h2": 3,
         "h3": 0,
         "h4": 0,
         "h5": 0,
         "h6": 0,
+        "hr": 0,
+        "img": 0,
         "ol": 0,
+        "p": 8,
         "pre": 3,
         "table": 0,
+        "toc": 0,
         "ul": 0
       },
+      "code_group_tabs": [],
+      "doc_heading_ids": [
+        "usage",
+        "accessing-frontmatter-data",
+        "alternative-frontmatter-formats"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/frontmatter.md",
       "features": null,
       "h1": {
@@ -730,8 +863,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-08-30",
+      "meta_description": "Learn how to use YAML frontmatter in VitePress Markdown files to control page-level metadata and behavior.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -905,21 +1043,69 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "Frontmatter | VitePress"
     },
     "/guide/getting-started": {
       "block_counts": {
+        "badge": 0,
         "blockquote": 0,
+        "code-group": 4,
+        "code-title-bar": 3,
+        "custom-block": 3,
+        "details": 0,
         "h2": 5,
         "h3": 4,
         "h4": 0,
         "h5": 0,
         "h6": 0,
+        "hr": 0,
+        "img": 0,
         "ol": 0,
+        "p": 28,
         "pre": 21,
         "table": 0,
+        "toc": 0,
         "ul": 3
       },
+      "code_group_tabs": [
+        [
+          "npm",
+          "pnpm",
+          "yarn",
+          "bun",
+          "deno"
+        ],
+        [
+          "npm",
+          "pnpm",
+          "yarn",
+          "bun"
+        ],
+        [
+          "npm",
+          "pnpm",
+          "yarn",
+          "bun"
+        ],
+        [
+          "npm",
+          "pnpm",
+          "yarn",
+          "bun"
+        ]
+      ],
+      "doc_heading_ids": [
+        "try-it-online",
+        "installation",
+        "prerequisites",
+        "setup-wizard",
+        "file-structure",
+        "the-config-file",
+        "source-files",
+        "up-and-running",
+        "what-s-next"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/getting-started.md",
       "features": null,
       "h1": {
@@ -928,8 +1114,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-07-17",
+      "meta_description": "Get up and running with VitePress. Learn how to install, scaffold, and start developing your documentation site.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -1103,21 +1294,37 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "Getting Started | VitePress"
     },
     "/guide/i18n": {
       "block_counts": {
+        "badge": 0,
         "blockquote": 0,
+        "code-group": 0,
+        "code-title-bar": 4,
+        "custom-block": 0,
+        "details": 0,
         "h2": 3,
         "h3": 0,
         "h4": 0,
         "h5": 0,
         "h6": 0,
+        "hr": 0,
+        "img": 0,
         "ol": 0,
+        "p": 11,
         "pre": 8,
         "table": 0,
+        "toc": 0,
         "ul": 0
       },
+      "code_group_tabs": [],
+      "doc_heading_ids": [
+        "per-locale-markdown-strings",
+        "separate-directory-for-each-locale",
+        "rtl-support-experimental"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/i18n.md",
       "features": null,
       "h1": {
@@ -1126,8 +1333,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-07-26",
+      "meta_description": "Set up internationalization (i18n) in VitePress to support multiple languages for your site.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -1301,21 +1513,76 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "Internationalization | VitePress"
     },
     "/guide/markdown": {
       "block_counts": {
+        "badge": 0,
         "blockquote": 0,
+        "code-group": 2,
+        "code-title-bar": 5,
+        "custom-block": 21,
+        "details": 4,
         "h2": 22,
         "h3": 11,
         "h4": 0,
         "h5": 0,
         "h6": 0,
+        "hr": 1,
+        "img": 0,
         "ol": 1,
+        "p": 171,
         "pre": 84,
         "table": 2,
+        "toc": 1,
         "ul": 9
       },
+      "code_group_tabs": [
+        [
+          "config.js",
+          "config.ts"
+        ],
+        [
+          "snippet.js",
+          "snippet with region"
+        ]
+      ],
+      "doc_heading_ids": [
+        "header-anchors",
+        "custom-anchors",
+        "links",
+        "internal-links",
+        "page-suffix",
+        "external-links",
+        "frontmatter",
+        "github-style-tables",
+        "task-lists",
+        "footnotes",
+        "emoji",
+        "table-of-contents",
+        "custom-containers",
+        "default-title",
+        "custom-title",
+        "registering-new-containers",
+        "nesting",
+        "additional-attributes",
+        "raw",
+        "github-flavored-alerts",
+        "syntax-highlighting-in-code-blocks",
+        "line-highlighting-in-code-blocks",
+        "focus-in-code-blocks",
+        "colored-diffs-in-code-blocks",
+        "errors-and-warnings-in-code-blocks",
+        "line-numbers",
+        "import-code-snippets",
+        "code-groups",
+        "markdown-file-inclusion",
+        "including-code-files",
+        "math-equations",
+        "image-lazy-loading",
+        "advanced-configuration"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/markdown.md",
       "features": null,
       "h1": {
@@ -1324,8 +1591,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-08-13",
+      "meta_description": "VitePress built-in Markdown extensions including custom containers, code blocks with syntax highlighting, line highlighting, code groups, and more.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -1499,21 +1771,50 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "Markdown Extensions | VitePress"
     },
     "/guide/routing": {
       "block_counts": {
+        "badge": 0,
         "blockquote": 0,
+        "code-group": 0,
+        "code-title-bar": 1,
+        "custom-block": 3,
+        "details": 0,
         "h2": 6,
         "h3": 10,
         "h4": 0,
         "h5": 0,
         "h6": 0,
+        "hr": 0,
+        "img": 0,
         "ol": 0,
+        "p": 54,
         "pre": 31,
         "table": 0,
+        "toc": 0,
         "ul": 3
       },
+      "code_group_tabs": [],
+      "doc_heading_ids": [
+        "file-based-routing",
+        "root-and-source-directory",
+        "project-root",
+        "source-directory",
+        "linking-between-pages",
+        "linking-to-non-vitepress-pages",
+        "generating-clean-urls",
+        "route-rewrites",
+        "dynamic-routes",
+        "paths-loader-file",
+        "type-safe-loader-with-defineroutes",
+        "multiple-params",
+        "dynamically-generating-paths",
+        "watching-template-and-data-files",
+        "accessing-params-in-page",
+        "rendering-raw-content"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/routing.md",
       "features": null,
       "h1": {
@@ -1522,8 +1823,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-07-03",
+      "meta_description": "Understand VitePress file-based routing, dynamic routes, clean URLs, and path rewrites.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -1697,21 +2003,54 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "Routing | VitePress"
     },
     "/guide/using-vue": {
       "block_counts": {
+        "badge": 0,
         "blockquote": 0,
+        "code-group": 2,
+        "code-title-bar": 1,
+        "custom-block": 5,
+        "details": 1,
         "h2": 8,
         "h3": 5,
         "h4": 0,
         "h5": 0,
         "h6": 0,
+        "hr": 0,
+        "img": 0,
         "ol": 2,
+        "p": 40,
         "pre": 20,
         "table": 1,
+        "toc": 0,
         "ul": 0
       },
+      "code_group_tabs": [
+        [
+          "tsconfig.json"
+        ],
+        [
+          ".vscode/settings.json"
+        ]
+      ],
+      "doc_heading_ids": [
+        "templating",
+        "interpolation",
+        "directives",
+        "script-and-style",
+        "using-components",
+        "importing-in-markdown",
+        "registering-components-globally",
+        "using-components-in-headers",
+        "escaping",
+        "unescape-in-code-blocks",
+        "using-css-pre-processors",
+        "using-teleports",
+        "vs-code-intellisense-support"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/using-vue.md",
       "features": null,
       "h1": {
@@ -1720,8 +2059,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-07-17",
+      "meta_description": "Use Vue components and dynamic templating features directly inside Markdown files in VitePress.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -1895,21 +2239,38 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "Using Vue in Markdown | VitePress"
     },
     "/guide/what-is-vitepress": {
       "block_counts": {
+        "badge": 0,
         "blockquote": 0,
+        "code-group": 0,
+        "code-title-bar": 0,
+        "custom-block": 1,
+        "details": 0,
         "h2": 4,
         "h3": 0,
         "h4": 0,
         "h5": 0,
         "h6": 0,
+        "hr": 0,
+        "img": 0,
         "ol": 0,
+        "p": 22,
         "pre": 0,
         "table": 0,
+        "toc": 0,
         "ul": 3
       },
+      "code_group_tabs": [],
+      "doc_heading_ids": [
+        "use-cases",
+        "developer-experience",
+        "performance",
+        "what-about-vuepress"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/guide/what-is-vitepress.md",
       "features": null,
       "h1": {
@@ -1918,8 +2279,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-07-25",
+      "meta_description": "VitePress is a static site generator designed for building fast, content-centric websites powered by Vite and Vue.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -2088,21 +2454,61 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "What is VitePress? | VitePress"
     },
     "/reference/default-theme-config": {
       "block_counts": {
+        "badge": 1,
         "blockquote": 0,
+        "code-group": 0,
+        "code-title-bar": 0,
+        "custom-block": 0,
+        "details": 0,
         "h2": 27,
         "h3": 0,
         "h4": 0,
         "h5": 0,
         "h6": 0,
+        "hr": 0,
+        "img": 0,
         "ol": 0,
+        "p": 34,
         "pre": 25,
         "table": 0,
+        "toc": 0,
         "ul": 26
       },
+      "code_group_tabs": [],
+      "doc_heading_ids": [
+        "i18nrouting",
+        "logo",
+        "sitetitle",
+        "nav",
+        "sidebar",
+        "aside",
+        "outline",
+        "sociallinks",
+        "footer",
+        "editlink",
+        "lastupdated",
+        "algolia",
+        "carbon-ads",
+        "docfooter",
+        "darkmodeswitchlabel",
+        "lightmodeswitchtitle",
+        "darkmodeswitchtitle",
+        "sidebarmenulabel",
+        "returntotoplabel",
+        "langmenulabel",
+        "navmenulabel",
+        "mobilemenulabel",
+        "extramenulabel",
+        "skiptocontentlabel",
+        "externallinkicon",
+        "gradedcontainers",
+        "uselayout"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/reference/default-theme-config.md",
       "features": null,
       "h1": {
@@ -2111,8 +2517,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-08-28",
+      "meta_description": "Reference of all configuration options available for the VitePress default theme.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -2278,21 +2689,43 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "Default Theme Config | VitePress"
     },
     "/reference/runtime-api": {
       "block_counts": {
+        "badge": 9,
         "blockquote": 0,
+        "code-group": 0,
+        "code-title-bar": 0,
+        "custom-block": 0,
+        "details": 0,
         "h2": 9,
         "h3": 0,
         "h4": 0,
         "h5": 0,
         "h6": 0,
+        "hr": 0,
+        "img": 0,
         "ol": 0,
+        "p": 22,
         "pre": 11,
         "table": 0,
+        "toc": 0,
         "ul": 3
       },
+      "code_group_tabs": [],
+      "doc_heading_ids": [
+        "usedata",
+        "useroute",
+        "userouter",
+        "useicon",
+        "withbase",
+        "content",
+        "clientonly",
+        "frontmatter",
+        "params"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/reference/runtime-api.md",
       "features": null,
       "h1": {
@@ -2301,8 +2734,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-08-28",
+      "meta_description": "Reference of VitePress runtime APIs including composables, helper functions, and built-in components.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -2468,21 +2906,81 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "Runtime API | VitePress"
     },
     "/reference/site-config": {
       "block_counts": {
+        "badge": 1,
         "blockquote": 0,
+        "code-group": 0,
+        "code-title-bar": 0,
+        "custom-block": 6,
+        "details": 1,
         "h2": 7,
         "h3": 33,
         "h4": 7,
         "h5": 0,
         "h6": 0,
+        "hr": 0,
+        "img": 0,
         "ol": 0,
+        "p": 88,
         "pre": 44,
         "table": 0,
+        "toc": 0,
         "ul": 31
       },
+      "code_group_tabs": [],
+      "doc_heading_ids": [
+        "overview",
+        "config-resolution",
+        "config-intellisense",
+        "typed-theme-config",
+        "vite-vue-markdown-config",
+        "page-level-overrides",
+        "directory-level-overrides",
+        "site-metadata",
+        "title",
+        "titletemplate",
+        "description",
+        "head",
+        "example-adding-a-favicon",
+        "example-adding-google-fonts",
+        "example-registering-a-service-worker",
+        "example-using-google-analytics",
+        "lang",
+        "base",
+        "routing",
+        "cleanurls",
+        "rewrites",
+        "build",
+        "srcdir",
+        "srcexclude",
+        "outdir",
+        "assetsdir",
+        "assetsbase",
+        "icons",
+        "cachedir",
+        "ignoredeadlinks",
+        "mpa",
+        "theming",
+        "appearance",
+        "lastupdated",
+        "customization",
+        "markdown",
+        "vite",
+        "vue",
+        "build-hooks",
+        "buildend",
+        "postrender",
+        "transformhead",
+        "example-adding-og-image-meta",
+        "transformhtml",
+        "transformpagedata",
+        "example-adding-a-meta-name-og-title",
+        "example-adding-a-canonical-url-link"
+      ],
       "edit_link": "https://github.com/vuejs/vitepress/edit/main/docs/en/reference/site-config.md",
       "features": null,
       "h1": {
@@ -2491,8 +2989,13 @@
       },
       "has_main": true,
       "has_search": true,
+      "head_icons": [
+        "/vitepress-logo-mini.svg",
+        "/vitepress-logo-mini.png"
+      ],
       "hero": null,
       "last_updated": "2026-08-28",
+      "meta_description": "Complete reference of VitePress site configuration options including app-level settings, theming, and build options.",
       "nav_items": [
         {
           "href": "/guide/what-is-vitepress",
@@ -2653,6 +3156,7 @@
         "Released under the MIT License.",
         "Copyright © 2019-present Evan You"
       ],
+      "theme_color": "#5f67ee",
       "title": "Site Config | VitePress"
     }
   }

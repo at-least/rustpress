@@ -950,6 +950,7 @@ dependencies = [
  "tree-sitter-toml-ng",
  "tree-sitter-typescript",
  "tree-sitter-yaml",
+ "unicode-normalization",
 ]
 
 [[package]]

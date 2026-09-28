@@ -160,6 +160,50 @@ fn headings_toc_ids_match_rendered_anchors() {
 }
 
 #[test]
+fn heading_ids_follow_upstream_mdit_slug_rules() {
+    // VitePress anchors come from @mdit-vue slugify over text/code tokens
+    // only: HTML (including the whole Badge — its text is an attribute)
+    // and shortcode emoji are dropped; specials collapse into single
+    // dashes; apostrophes are runs too. Expectations computed with the
+    // upstream slugify itself.
+    let out = synthetic(
+        "## Emoji :tada:\n\n## useData <Badge type=\"info\" text=\"composable\" />\n\n## What's Next\n\n## Adding a meta name=\"og:title\" tag\n\n## 123 Start\n",
+    );
+    let html = &out.html;
+    for id in [
+        "emoji",                        // shortcode emoji dropped, no trailing dash
+        "usedata",                      // badge text excluded from the slug
+        "what-s-next",                  // apostrophe is a special run → dash
+        "adding-a-meta-name-og-title-tag", // quotes/colon specials
+        "_123-start",                   // leading digit gets a _ prefix
+    ] {
+        assert!(html.contains(&format!("<h2 id=\"{id}\" tabindex=\"-1\">")), "{id}");
+    }
+    // the permalink is the upstream header-anchor shape, not comrak's
+    assert!(
+        html.contains("<a class=\"header-anchor\" href=\"#emoji\" aria-label=\"Permalink to \u{201c}Emoji\u{201d}\">&#8203;</a>"),
+        "upstream permalink with marker-less title"
+    );
+    assert!(
+        html.contains("aria-label=\"Permalink to \u{201c}useData\u{201d}\""),
+        "badge text out of the permalink label too"
+    );
+    assert!(!html.contains("class=\"anchor\""));
+    // outline text still shows what the reader sees (badge + emoji)
+    assert!(out.headings.iter().any(|h| h.text.contains("🎉")));
+}
+
+#[test]
+fn footnote_section_gets_the_separator_hr() {
+    let out = synthetic("text[^1]\n\n[^1]: note\n");
+    assert!(
+        out.html
+            .contains("<hr class=\"footnotes-sep\"><section class=\"footnotes\""),
+        "markdown-it-footnote separator before the footnotes section"
+    );
+}
+
+#[test]
 fn github_alerts_and_details_render() {
     let out = synthetic("> [!NOTE]\n> this is a note\n\n::: details Click {open}\ncontent\n:::\n");
     // alerts ARE containers here (VitePress semantics): styled, labelable
@@ -295,8 +339,9 @@ fn toc_placeholder_becomes_table_of_contents() {
 fn custom_heading_anchors_replace_slugs() {
     let out = synthetic("## Deep Dive {#dive}\n\ntext\n\n## Plain\n");
     assert!(
-        out.html
-            .contains("<h2 id=\"dive\">Deep Dive<a href=\"#dive\""),
+        out.html.contains(
+            "<h2 id=\"dive\" tabindex=\"-1\">Deep Dive<a class=\"header-anchor\" href=\"#dive\""
+        ),
         "custom id: {}",
         out.html[out.html.find("<h2").unwrap()..]
             .chars()
@@ -304,8 +349,9 @@ fn custom_heading_anchors_replace_slugs() {
             .collect::<String>()
     );
     assert!(
-        out.html
-            .contains("<h2 id=\"plain\">Plain<a href=\"#plain\""),
+        out.html.contains(
+            "<h2 id=\"plain\" tabindex=\"-1\">Plain<a class=\"header-anchor\" href=\"#plain\""
+        ),
         "plain slug kept"
     );
     assert!(
@@ -327,7 +373,7 @@ fn duplicate_and_self_anchorizing_custom_ids_keep_no_literal() {
     let start = out.html.find("<h2 id=\"c-1\"").expect("deduped id");
     let second = &out.html[start..];
     assert!(
-        second.contains("<h2 id=\"c-1\">B<a"),
+        second.contains("<h2 id=\"c-1\" tabindex=\"-1\">B<a"),
         "second heading text carries no literal: {}",
         second.chars().take(120).collect::<String>()
     );
@@ -335,7 +381,7 @@ fn duplicate_and_self_anchorizing_custom_ids_keep_no_literal() {
 
     let out = synthetic("## {#foo}\n\ntext\n");
     assert!(
-        out.html.contains("<h2 id=\"foo\">"),
+        out.html.contains("<h2 id=\"foo\" tabindex=\"-1\">"),
         "self-anchorizing custom id still applies: {}",
         &out.html[out.html.find("<h2").unwrap()..out.html.find("<h2").unwrap() + 80]
     );

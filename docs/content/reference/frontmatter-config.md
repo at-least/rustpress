@@ -93,7 +93,7 @@ The following frontmatter options control the built-in theme.
 Determines the layout of the page.
 
 - `doc` — the documentation layout: sidebar, right-hand outline, edit link, last-updated stamp and prev/next pager around the rendered markdown.
-- `home` — the home-page layout. Add [`hero`](#hero-home-page-only) and [`features`](#features-home-page-only) to build a landing page; the markdown body is not rendered.
+- `home` — the home-page layout. Add [`hero`](#hero) and [`features`](#features) to build a landing page; the markdown body is not rendered. (Heading anchors exclude `<Badge>` text, same as upstream: `### hero <Badge …/>` gets id `hero`.)
 - `page` — like `doc` but without most of the doc chrome: no outline aside, no edit link, no last-updated stamp. The prev/next pager and the sidebar remain, and the markdown body keeps the same content styling as `doc`.
 
 ```yaml

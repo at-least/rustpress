@@ -1,5 +1,27 @@
 {
-  "deltas": [],
+  "deltas": [
+    {
+      "page": "/404",
+      "path": "has_main",
+      "upstream": false,
+      "ours": true,
+      "reason": "upstream's deployed 404.html is a bare app shell (everything client-hydrated); rustpress fully SSRs the NotFound layout, so the shell landmarks exist in our source HTML"
+    },
+    {
+      "page": "/404",
+      "path": "has_search",
+      "upstream": false,
+      "ours": true,
+      "reason": "same as /404 has_main — the full navbar (with search) SSRs in ours; upstream hydrates it client-side on the 404 shell"
+    },
+    {
+      "page": "/404",
+      "path": "nav_items",
+      "upstream": "0 items",
+      "ours": "3 items",
+      "reason": "same as /404 has_main — navbar menu SSRs in ours, is hydration-only upstream"
+    }
+  ],
   "_format": {
     "page": "site URL as listed in parity/pages.txt (e.g. /guide/deploy)",
     "path": "fingerprint path of the mismatch (e.g. sidebar[3].href, hero.tagline); a path matches the mismatch and any of its children",

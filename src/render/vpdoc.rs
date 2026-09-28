@@ -113,6 +113,17 @@ pub const VPDOC_CLASSES: &str = concat!(
     " [&_pre_.vp-copy-button.copied]:bg-(--vp-code-copy-code-hover-bg)",
     " [&_pre_.vp-copy-button.copied_.icon-copy]:hidden",
     " [&_pre_.vp-copy-button:not(.copied)_.icon-copied]:hidden",
+    // heading permalink affordance: the hover-# link every heading
+    // carries (upstream vp-doc.css `.header-anchor`: absolutely placed
+    // left of the heading, opacity 0 until hover/focus)
+    " [&_.header-anchor]:absolute [&_.header-anchor]:top-0 [&_.header-anchor]:left-0",
+    " [&_.header-anchor]:ml-[-0.87em] [&_.header-anchor]:font-medium",
+    " [&_.header-anchor]:select-none [&_.header-anchor]:opacity-0 [&_.header-anchor]:no-underline",
+    " [&_.header-anchor]:[transition:color_0.25s,opacity_0.25s]",
+    " [&_.header-anchor]:before:content-(--vp-header-anchor-symbol)",
+    " [&_h2_.header-anchor]:top-6",
+    " [&_:is(h1,h2,h3,h4,h5,h6):hover_.header-anchor]:opacity-100",
+    " [&_:is(h1,h2,h3,h4,h5,h6)_.header-anchor:focus]:opacity-100",
     // external-link arrow icon (after pseudo-element)
     " [&_:is(a[href*='://'],a[target='_blank']):not(.no-icon,svg a,:has(img,svg))]:after:content-['\\2060']",
     " [&_:is(a[href*='://'],a[target='_blank']):not(.no-icon,svg a,:has(img,svg))]:after:inline",

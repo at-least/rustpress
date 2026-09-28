@@ -295,6 +295,7 @@ mod tests {
             text: text.into(),
             rendered_id: id.into(),
             custom_attr: None,
+            permalink_title: text.into(),
         };
         let headings = [mk(2, "a", "A"), mk(4, "deep", "Deep"), mk(3, "b", "B")];
         let refs: Vec<&Heading> = headings.iter().collect();

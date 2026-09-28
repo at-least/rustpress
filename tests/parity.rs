@@ -51,6 +51,28 @@ fn upstream_landmarks_extract() {
     assert_eq!(fp["site_footer"][0], "Released under the MIT License.");
     assert!(fp["has_search"].as_bool().unwrap());
     assert!(fp["block_counts"].is_object());
+    // deep-surface landmarks: head + in-content structure markers
+    assert_eq!(
+        fp["meta_description"].as_str().unwrap().split(' ').next().unwrap(),
+        "VitePress"
+    );
+    assert!(
+        fp["head_icons"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|i| i.as_str().unwrap().ends_with(".svg"))
+    );
+    assert_eq!(fp["theme_color"], "#5f67ee");
+    assert!(
+        fp["doc_heading_ids"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|id| id == "what-is-vitepress-2")
+            || fp["doc_heading_ids"].as_array().unwrap().len() > 0,
+        "h2..h6 anchor ids collected"
+    );
 }
 
 #[test]

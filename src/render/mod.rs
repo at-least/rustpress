@@ -602,14 +602,13 @@ impl Site {
         // no sidebar/aside, footer visible. Metrics measured off the
         // deployed vitepress.dev/404.html.
         let nf = self.config.not_found.clone().unwrap_or_default();
-        let title = format!(
-            "{} | {}",
-            nf.title.clone().unwrap_or_else(|| "PAGE NOT FOUND".into()),
-            self.config.title.clone().unwrap_or_default()
-        );
+        // Upstream's SSG 404 document title is the status code and its
+        // meta description is "Not Found" — both independent of the
+        // themeConfig texts (which fill the visible PAGE NOT FOUND h1)
+        let title = format!("404 | {}", self.config.title.clone().unwrap_or_default());
         let shell = layout::Shell {
             title,
-            description: String::new(),
+            description: "Not Found".into(),
             is_home: true,
             has_navbar: true,
             has_sidebar: false,
@@ -925,7 +924,9 @@ fn path_exists_on_disk(out_dir: &Path, link: &str) -> bool {
 }
 
 /// Search body text: rendered HTML with tags stripped, entities
-/// decoded, whitespace collapsed to single spaces.
+/// decoded, whitespace collapsed to single spaces. Zero-width spaces
+/// (the permalink &#8203;) are dropped — they are separators for
+/// renderers, not searchable text.
 fn plain_text(html: &str) -> String {
     // script and style bodies are code and a comment is not text at all:
     // drop them whole before the scan. Seen by the tag tracker, a
@@ -1005,6 +1006,9 @@ fn plain_text(html: &str) -> String {
             _ => {}
         }
     }
+    // ZWSP is a Format char (not White_Space), so split_whitespace would
+    // keep the &#8203; the permalink anchors decode to
+    let out: String = out.chars().filter(|&c| c != '\u{200b}').collect();
     out.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
