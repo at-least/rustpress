@@ -74,8 +74,8 @@ fn getting_started_renders_containers_code_groups_and_highlighting() {
         "npm tab label in strip"
     );
     assert!(
-        html.contains("<span class=\"lang\">npm</span>"),
-        "npm lang label"
+        html.contains("<span class=\"lang\">sh</span>"),
+        "group pane corner shows the language, not the tab label (upstream)"
     );
     assert!(html.contains("data-name=\"pnpm\""), "pnpm data-name");
     assert!(
@@ -200,6 +200,31 @@ fn footnote_section_gets_the_separator_hr() {
         out.html
             .contains("<hr class=\"footnotes-sep\"><section class=\"footnotes\""),
         "markdown-it-footnote separator before the footnotes section"
+    );
+}
+
+#[test]
+fn code_group_pane_corner_shows_language_and_atat_include_unescapes() {
+    // upstream group panes label the corner with the LANGUAGE (tab text
+    // stays in the strip); vitepress.dev's docs corpus escapes includes
+    // inside display fences as `@@include` and its code transformer
+    // unescapes them back to `@include` — same effect, core-side here
+    let out = synthetic(
+        "::: code-group\n\n```js [npm]\nconst x = 1;\n```\n\n```sh [pnpm]\npnpm i\n```\n\n:::\n\n```md\n<!--@@include: ./parts/basics.md-->\n```\n",
+    );
+    let html = &out.html;
+    assert!(html.contains(">npm</label>"), "tab strip labels kept");
+    assert!(
+        html.contains("<span class=\"lang\">js</span>"),
+        "pane corner = language"
+    );
+    assert!(
+        !html.contains("<span class=\"lang\">npm</span>"),
+        "tab label no longer doubles as the corner label"
+    );
+    assert!(
+        !html.contains("@@include") && html.contains("@include"),
+        "display fences render the @@-escape as @include"
     );
 }
 
@@ -1296,6 +1321,19 @@ fn shiki_style_line_notations_become_line_classes() {
         !out.html.contains("line hl"),
         "no highlight class applied to the escaped line: {}",
         out.html
+    );
+
+    // an emptied comment loses its marker AND the separating space,
+    // like upstream's shiki transformer: `x = 1 // [!code hl]` → `x = 1`
+    // (plain-text fence: grammar highlighting interleaves tk-* spans)
+    let out = synthetic("```txt\nx = 1 // [!code highlight]\n```\n");
+    assert!(
+        out.html.contains("<span class=\"line hl\">x = 1</span>"),
+        "empty comment shell removed: {}",
+        &out.html[out.html.find("<code").unwrap()..]
+            .chars()
+            .take(160)
+            .collect::<String>()
     );
 }
 

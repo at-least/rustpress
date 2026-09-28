@@ -436,6 +436,7 @@ fn line_notations(lines: &[String]) -> (Vec<String>, Vec<Vec<&'static str>>) {
         let mut line_classes: Vec<&'static str> = Vec::new();
         let mut out = String::with_capacity(line.len());
         let mut last = 0usize;
+        let mut removed = false;
         for cap in re.captures_iter(line) {
             let whole = cap.get(0).unwrap();
             out.push_str(&line[last..whole.start()]);
@@ -451,6 +452,7 @@ fn line_notations(lines: &[String]) -> (Vec<String>, Vec<Vec<&'static str>>) {
                 ));
                 continue;
             }
+            removed = true;
             let class = class_of(&cap[2]);
             line_classes.push(class);
             if let Some(n) = cap.get(3).and_then(|n| n.as_str().parse::<usize>().ok()) {
@@ -461,6 +463,26 @@ fn line_notations(lines: &[String]) -> (Vec<String>, Vec<Vec<&'static str>>) {
             }
         }
         out.push_str(&line[last..]);
+        // upstream (shiki's createCommentNotationTransformer) also drops
+        // the comment marker and its separating space when the notation
+        // leaves the comment empty: `x = 1 // [!code hl]` renders `x = 1`,
+        // not `x = 1 // `. Only after an actual removal — an authored
+        // trailing `//` stays put.
+        if removed {
+            // lines arrive newline-terminated (split_inclusive): keep the
+            // terminator, clean the content part only
+            let (body, eol) = match out.strip_suffix('\n') {
+                Some(b) => (b.to_string(), "\n"),
+                None => (out.clone(), ""),
+            };
+            let trimmed = body.trim_end();
+            for suf in ["-->", "*/", "//", "<!--", "/*", "#"] {
+                if let Some(prefix) = trimmed.strip_suffix(suf) {
+                    out = format!("{}{eol}", prefix.trim_end());
+                    break;
+                }
+            }
+        }
         classes[idx].extend(line_classes.iter().copied());
         clean.push(out);
     }
@@ -524,6 +546,14 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
         // into per-line classes
         let raw_lines: Vec<String> = code.split_inclusive('\n').map(String::from).collect();
         let (lines, notation_classes) = line_notations(&raw_lines);
+        // the docs-corpus escape convention: `<!--@@include: …-->` inside
+        // a display fence renders as `@include` (upstream does this with a
+        // site-level codeTransformers postprocess on vitepress.dev; we
+        // have no JS hook, so the unescape is a core rule like [!!code])
+        let lines: Vec<String> = lines
+            .iter()
+            .map(|l| l.replace("@@include", "@include"))
+            .collect();
         let has_focus = notation_classes.iter().any(|c| c.contains(&"focus"));
         let (show_ln, ln_start) = match spec.ln {
             Some(LineNumbers::On) => (true, None),
@@ -566,10 +596,14 @@ impl CodefenceRendererAdapter for GdCodeRenderer {
             write!(output, "{COPY_BUTTON}")?;
         }
         // VitePress always renders the corner label: the fence's `[title]`
-        // when present, otherwise the language name (empty for plain
+        // for a standalone titled block, otherwise the LANGUAGE name —
+        // including inside code groups, where the label is the tab text
+        // and the pane corner still shows the lang (empty for plain
         // fences, which renders invisible)
         let label = if titled {
             ""
+        } else if spec.group {
+            spec.lang.as_str()
         } else {
             spec.label.as_deref().unwrap_or(spec.lang.as_str())
         };
