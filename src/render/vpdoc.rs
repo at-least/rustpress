@@ -86,6 +86,11 @@ pub const VPDOC_CLASSES: &str = concat!(
     // every width and sit on an 8px margin (upstream `.custom-block
     // div[class*=language-] { margin: .5rem 0; border-radius: .5rem }`)
     " [&_.custom-block_pre]:mx-0 [&_.custom-block_pre]:my-2 [&_.custom-block_pre]:rounded-lg",
+    // adjacent code blocks tighten: upstream `.vp-doc div[class*=language-]
+    // + div[class*=language-] { margin-top: -0.5rem }` (collapses with the
+    // preceding 1rem to an 8px gap). Code-group panes carry `mt-0!` and
+    // custom-block pres carry `my-2`, both out-specific/important this.
+    " [&_pre+pre]:-mt-2",
     " [&_pre>.lang]:absolute [&_pre>.lang]:top-[0.125rem] [&_pre>.lang]:right-2",
     " [&_pre>.lang]:z-[2] [&_pre>.lang]:text-[0.75rem] [&_pre>.lang]:font-medium",
     " [&_pre>.lang]:select-none [&_pre>.lang]:text-(--vp-code-lang-color)",
@@ -137,7 +142,10 @@ pub const VPDOC_CLASSES_2: &str = concat!(
     " [&_.custom-block.details_summary]:font-bold [&_.custom-block.details_summary]:cursor-pointer",
     " [&_.custom-block.details_summary]:select-none [&_.custom-block.details_summary+p]:my-2",
     " [&_.custom-block_a]:[transition:color_0.25s,opacity_0.25s] [&_.custom-block_a:hover]:opacity-75",
-    " [&_.custom-block_code]:text-(--vp-custom-block-code-font-size) [&_.custom-block_th]:text-[0.875rem]",
+    // `text-[length:…]` — the bare `text-(--token)` shorthand compiles to
+    // `color:` (the token name carries no font-size hint), silently
+    // dropping the rule and falling back to the base inline-code size
+    " [&_.custom-block_code]:text-[length:var(--vp-custom-block-code-font-size)] [&_.custom-block_th]:text-[0.875rem]",
     " [&_.custom-block_th]:text-inherit [&_.custom-block_blockquote>p]:text-[0.875rem]",
     " [&_.custom-block_blockquote>p]:text-inherit [&_.custom-block_.vp-code-group]:mt-2",
     " [&_.custom-block_.vp-code-group_.tabs]:m-0 [&_.custom-block_.vp-code-group_.tabs]:rounded-t-lg",
