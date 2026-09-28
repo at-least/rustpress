@@ -11,6 +11,7 @@ const pages = (await readFile('parity/pages.txt', 'utf8'))
   .filter((l) => l && !l.startsWith('#'))
 
 await mkdir('parity/cache', { recursive: true })
+await mkdir('parity/cache/css', { recursive: true })
 
 const slug = (p) => (p === '/' ? 'home' : p.replace(/\/+$/, '').replaceAll('/', '_').replace(/^_/, ''))
 const etags = {}
@@ -30,6 +31,20 @@ for (const page of pages) {
 
 if (!generator) {
   throw new Error('no <meta name="generator"> found — the upstream site may have changed shape; inspect the fetched HTML')
+}
+
+// the deployed stylesheets feed parity/token-goldens.json regeneration
+// (`parity-tokens.mjs --update`) when no local upstream docs build exists
+const homeHtml = await readFile('parity/cache/home.html', 'utf8')
+const cssHrefs = [
+  ...homeHtml.matchAll(/<link[^>]*href="([^"]+\.css)"[^>]*>/g),
+].map((m) => m[1])
+for (const href of cssHrefs) {
+  const res = await fetch(SOURCE + href)
+  if (!res.ok) throw new Error(`stylesheet ${href}: HTTP ${res.status}`)
+  const name = href.split('/').pop()
+  await writeFile(`parity/cache/css/${name}`, await res.text())
+  console.log(`parity:refresh css ${name}`)
 }
 
 await writeFile(

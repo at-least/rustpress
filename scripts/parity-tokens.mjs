@@ -33,18 +33,15 @@
 
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const BASE_CSS = join(ROOT, 'static/vitepress.css');
 const DEMO_THEME = join(ROOT, 'demo/public/themes/theme.css');
 const GOLDENS = join(ROOT, 'parity/token-goldens.json');
 const DELTAS = join(ROOT, 'parity/token-deltas.json');
-const UP = resolve0('../../vitepress');
-
-function resolve0(rel) {
-  return new URL(rel + '/', import.meta.url).pathname;
-}
+// the pinned upstream clone; overridable for sandboxed runs/tests
+const UP = resolve(process.env.RUSTPRESS_VITEPRESS_CLONE ?? new URL('../../vitepress', import.meta.url).pathname);
 
 // --- tiny flat-CSS reader ------------------------------------------------
 function parseTopLevelBlocks(cssPath) {
@@ -164,29 +161,34 @@ function compareScope(scope, goldenMap, oursMap, deltas) {
 if (process.argv.includes('--update')) {
   const varsCss = join(UP, 'src/client/theme-default/styles/vars.css');
   const fontsCss = join(UP, 'src/client/theme-default/styles/fonts.css');
+  // the demo (deployed-truth) scope: prefer a local upstream docs build;
+  // fall back to the stylesheets parity-refresh cached from vitepress.dev
+  // (the drift-watch CI path never builds the clone)
   const distAssets = join(UP, 'docs/.vitepress/dist/assets');
-  for (const [f, hint] of [
-    [varsCss, 'sync the upstream clone: bash scripts/sync-upstream.sh'],
-    [distAssets, 'build the upstream docs: pnpm docs:build in the clone'],
-  ]) {
-    if (!existsSync(f)) {
-      console.error(`parity-tokens: upstream source missing: ${f} — ${hint}`);
-      process.exit(1);
-    }
-  }
-  const distCss = readdirSync(distAssets)
-    .filter((f) => f.endsWith('.css'))
-    .map((f) => join(distAssets, f));
-  if (!distCss.length) {
-    console.error('parity-tokens: no css in upstream dist assets');
+  const cacheCssDir = join(ROOT, 'parity/cache/css');
+  let demoCss;
+  if (existsSync(distAssets) && readdirSync(distAssets).some((f) => f.endsWith('.css'))) {
+    demoCss = readdirSync(distAssets)
+      .filter((f) => f.endsWith('.css'))
+      .map((f) => join(distAssets, f));
+  } else if (existsSync(cacheCssDir) && readdirSync(cacheCssDir).length) {
+    demoCss = readdirSync(cacheCssDir).map((f) => join(cacheCssDir, f));
+  } else {
+    console.error('parity-tokens: no upstream demo css — build the clone (pnpm docs:build) or run npm run parity:refresh first');
     process.exit(1);
   }
+  if (!existsSync(varsCss)) {
+    console.error('parity-tokens: upstream source missing: ' + varsCss + ' — sync the upstream clone: bash scripts/sync-upstream.sh');
+    process.exit(1);
+  }
+  const distCss = demoCss;
   const stock = tokensOf([varsCss, fontsCss]);
   const demo = tokensOf(distCss);
+  // no timestamp in the golden: regeneration must be a no-op diff when
+  // upstream did not move (git history is the provenance)
   const golden = {
     _meta: {
-      generated_from: 'vuejs/vitepress at parity/upstream-ref.txt (src vars.css+fonts.css; docs/.vitepress/dist assets)',
-      generated_at: new Date().toISOString(),
+      generated_from: 'vuejs/vitepress at parity/upstream-ref.txt (src vars.css+fonts.css; docs dist assets or parity/cache/css)',
     },
     scopes: {
       stock,

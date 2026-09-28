@@ -1,7 +1,6 @@
 {
   "_meta": {
-    "generated_from": "vuejs/vitepress at parity/upstream-ref.txt (src vars.css+fonts.css; docs/.vitepress/dist assets)",
-    "generated_at": "2026-09-28T20:46:30.141Z"
+    "generated_from": "vuejs/vitepress at parity/upstream-ref.txt (src vars.css+fonts.css; docs dist assets or parity/cache/css)"
   },
   "scopes": {
     "stock": {
