@@ -17,7 +17,5 @@ node_modules/
 *.rustpress-tmp
 *.rustpress-old
 
-# local tooling (code-index MCP index, zcode session)
-.mcp-index/
-.mcp-index.json
+# local tooling (zcode session)
 .zcode/
