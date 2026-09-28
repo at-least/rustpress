@@ -7,15 +7,18 @@ spans instead of Shiki). So parity is *not* DOM identity — it is two
 mechanical checks that together answer the question: **"VitePress
 released a new version — which parts of rustpress need to change?"**
 
-## The three axes
+## The axes
 
 | axis | what it catches | mechanism |
 |---|---|---|
 | content | new/changed/removed pages, markdown source drift | `npm run diff:upstream` — byte diff of `demo/content` against a vuejs/vitepress clone's `docs/en`; enforced automatically by `cargo test --test upstream_sync` whenever the clone is present |
-| theme/behavior | nav, sidebar, outline, doc footer, hero, features, footer, search, block structure | `npm run check:parity` — landmark fingerprints of our build vs the pinned snapshot `parity/upstream.json` |
+| theme/behavior | nav, sidebar, outline, doc footer, hero, features, footer, search, block structure — plus the deep surface: `<head>` icons/description/theme-color, h2..h6 anchor ids, renderer-structure counts (custom blocks, code groups, badges, details, …), code-group tab labels, the 404 page | `npm run check:parity` — landmark fingerprints of our build vs the pinned snapshot `parity/upstream.json` |
+| tokens | design-token drift: a recolored `--vp-*`, a rem/em swap, a dropped dark override | `npm run check:tokens` — `static/vitepress.css` (+ the demo's theme.css) declaration maps vs `parity/token-goldens.json`, extracted at pin time from the pinned clone's `vars.css`+`fonts.css` (stock) and built docs css (demo); reviewed exceptions live in `parity/token-deltas.json` |
+| block flow | spacing drift between content blocks (margin-collapse regressions), page-flow geometry | `npm run check:blockflow` — leaf-block sequence (tag + text prefix + top + height) vs `parity/blockflow-goldens.json` on the two code-heaviest pages, ±1px |
+| client behavior | broken interactivity: code-group tabs, copy buttons, search modal + ranking, appearance toggle persistence, mobile overlays/scroll-lock, outline scrollspy | `npm run check:behavior` — headless Chromium drives the demo build; self-regression only (upstream's Vue runtime is not cross-compared) |
 | viewport | breakpoint behavior: responsive utilities, breakpoint media queries, geometry at every breakpoint boundary | `npm run check:viewport` — headless-Chromium geometry probes against goldens in `parity/viewport-goldens.json` (verified pixel-for-pixel against the pinned upstream), plus an exact count of the px media queries in the compiled CSS |
 
-Both axes key off the same input: a vuejs/vitepress clone at the tag
+All axes key off the same input: a vuejs/vitepress clone at the tag
 pinned in `parity/upstream-ref.txt` (currently the tag matching the
 deployed vitepress.dev release recorded in `parity/upstream.json`).
 `bash scripts/sync-upstream.sh` clones or updates `../vitepress` to that
@@ -25,14 +28,17 @@ command in the message. For offline local runs set
 `RUSTPRESS_ALLOW_NO_UPSTREAM=1` to turn the failure into a visible
 skip; CI always syncs the clone (`.github/workflows/ci.yml`).
 
-The viewport axis needs no upstream clone — it compares against
-recorded goldens — but it does need the `playwright-chromium`
-devDependency installed (CI caches the browser). It follows the same
+The viewport / block-flow / behavior axes need no upstream clone — they
+compare against recorded goldens (the behavior axis asserts outcomes
+directly) — but they do need the `playwright-chromium`
+devDependency installed (CI caches the browser). They follow the same
 fail-by-default convention: `RUSTPRESS_ALLOW_NO_PLAYWRIGHT=1` turns a
 missing install into a visible skip. Some goldens encode demo content
 (feature count decides grid columns, title length decides wrap): after
 legitimately editing `demo/content`, refresh with
-`node scripts/parity-viewport.mjs --update` and eyeball the golden diff.
+`node scripts/parity-viewport.mjs --update` (and
+`node scripts/parity-blockflow.mjs --update`) and eyeball the golden
+diff.
 
 The goldens are a distilled subset of the full-breakpoint audit — a 4
 pages × 15 widths × 4 states landmark sweep (geometry + computed styles
@@ -48,8 +54,9 @@ otherwise a real regression would be silently blessed. Run it after
 
 The pinned baseline was extracted from the deployed upstream site
 (vitepress.dev, `<meta name="generator">` records the exact version —
-currently `VitePress v2.0.0-alpha.20`) for the 14 pages in
-`parity/pages.txt`. These gates cover the *pinned pages*; the whole
+currently `VitePress v2.0.0-alpha.20`) for the pages in
+`parity/pages.txt` (home, guide core, reference, and `/404`). These
+gates cover the *pinned pages*; the whole
 documented feature surface (every config option, markdown extension,
 theme feature) is audited in [FEATURE-PARITY.md](FEATURE-PARITY.md),
 gated by `cargo test --test feature_parity`. Each page's fingerprint stores landmarks only:
@@ -86,10 +93,12 @@ npm run diff:upstream          # byte diff demo/content vs docs/en
 #     (plus snippets/components when include targets change),
 #     and update demo/rustpress.toml when their sidebar/nav config changed
 
-# 2. theme axis: re-pin the baseline and see what changed upstream
+# 2. theme + tokens axes: re-pin the baseline and see what changed upstream
 npm run parity:refresh
 #   → fetches the deployed site (which tracks the new release),
-#     rewrites parity/upstream.json, and prints the old→new landmark diff
+#     rewrites parity/upstream.json, regenerates parity/token-goldens.json
+#     from the clone's theme vars + built docs css, and prints the
+#     old→new landmark diff
 #   → each line names the page + landmark that changed upstream
 
 # 3. fix rustpress until the gate is green
@@ -124,6 +133,10 @@ entry requires a `reason`.
 | `hero` / `features` | `VPHero` / `VPFeature` | `src/render/home.rs` |
 | `has_search` | `VPNavBarSearch` | `src/render/navbar.rs` + `src/render/search_modal.rs` |
 | `block_counts` | `.vp-doc` content | `src/markdown/` (preprocess + comrak) |
+| `meta_description` / `head_icons` / `theme_color` | site config `head` | `src/render/layout.rs` (`[[head]]` serialize) |
+| `doc_heading_ids` | markdown-it anchor plugin (mdit-vue slugify) | `src/markdown/mod.rs` (`slugify` port, heading rewrites) |
+| `code_group_tabs` | `vp-code-group` tab strip | `src/markdown/preprocess.rs` + `src/render/vpdoc.rs` |
+| `/404` page | `NotFound.vue` | `src/render/mod.rs` (`render_404`) |
 | extraction/check engine | — | `src/parity.rs` (`rustpress parity check/snapshot/diff`) |
 
 ## Reference source

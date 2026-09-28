@@ -9,7 +9,7 @@
 This repo started life as the VitePress default theme ported to Zola. Zola's constraints leaked everywhere: TOML front matter, Tera component calls replacing `:::` containers (`{% <tip kind="tip" title="" no_title={false}> %}` with every parameter mandatory), sidebars derived from directory `_index.md`s because Zola has no sidebar config, a Zola-specific syntax-highlighting pipeline. The content was born VitePress; the format conversion was pure tax. So the renderer became a Rust program and the Zola layer went away:
 
 - **Content format = VitePress**, verbatim. Re-syncing the demo from `vitepress/docs/en` is a file copy.
-- **Renderer = Rust**: comrak (GFM, alerts, footnotes, GitHub-style heading ids) behind a fence-aware preprocessor that expands `:::` containers into HTML blocks (the markdown-it-container trick — inner markdown still parses in the same comrak pass), rewrites ```` ```js{1,3-4} [npm] ```` info strings, inlines `<<< @/path` includes, and rewrites `<Badge>`. Syntax highlighting is tree-sitter (grammars compiled in) with capture-name classes, themes authored in Helix TOML format, producing a `syntax.css` scoped `html.dark` inside `@layer syntax`.
+- **Renderer = Rust**: comrak (GFM, alerts, footnotes) behind a fence-aware preprocessor; heading anchors reproduce VitePress's exact ids (the mdit-vue `slugify` over text/code tokens, so deep links to vitepress.dev anchors resolve the same) that expands `:::` containers into HTML blocks (the markdown-it-container trick — inner markdown still parses in the same comrak pass), rewrites ```` ```js{1,3-4} [npm] ```` info strings, inlines `<<< @/path` includes, and rewrites `<Badge>`. Syntax highlighting is tree-sitter (grammars compiled in) with capture-name classes, themes authored in Helix TOML format, producing a `syntax.css` scoped `html.dark` inside `@layer syntax`.
 - **Markup = hypertext `rsx!`** (see `src/render/`): the whole VitePress default theme — navbar, mobile nav screen, auto sidebar, local nav, right-hand outline, doc footer with pager/edit link, home hero/features, search modal, 404.
 - **Interactivity = Alpine.js 3.17** (bundled with esbuild): scrollspy, sidebar drawer and carets, flyouts, appearance toggle (the anti-FOUC script stays vanilla in `<head>`; Alpine can't run pre-paint), code-group tabs, copy buttons, and the local search modal (Ctrl/Cmd+K, `/`).
 - **Search** = a `search-docs.json` (url/title/body per page) built by Rust, scored client-side (title-exact +20, title hits +5, body occurrences capped at +20/token, top 20).
@@ -151,7 +151,7 @@ Theme files map dotted tree-sitter capture scopes to colors, support `[palette]`
 
 ## Testing
 
-`cargo test` runs 70+ unit and integration tests; the markdown pipeline's golden tests execute the real `tests/fixtures/en` corpus end to end, and `tests/site_build.rs` builds a full site into a temp dir and checks the outputs (pages, 404, syntax.css, search index, Alpine landmarks, tag balance).
+`cargo test` runs 90+ unit and integration tests; the markdown pipeline's golden tests execute the real `tests/fixtures/en` corpus end to end, and `tests/site_build.rs` builds a full site into a temp dir and checks the outputs (pages, 404, syntax.css, search index, Alpine landmarks, tag balance). `npm test` then runs the parity battery beyond Rust: landmark fingerprints (`check:parity`), design-token declarations (`check:tokens`), content block-flow geometry (`check:blockflow`), client interactions (`check:behavior`), and breakpoint geometry (`check:viewport`) — see [PARITY.md](PARITY.md).
 
 ## Caveats
 

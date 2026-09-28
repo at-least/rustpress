@@ -175,8 +175,8 @@ common `transformHead` use.
 
 | heading | status | ours | note |
 |---|---|---|---|
-| Header Anchors | implemented | `src/markdown/mod.rs:260-327` | GitHub-style slugs |
-| Custom anchors | implemented | `src/markdown/mod.rs:260-327` | `{#custom-id}` replaces the slug |
+| Header Anchors | implemented | `src/markdown/mod.rs:431-630` | the mdit-vue `slugify` ported verbatim (NFKD, special runs → `-`, `_` digit prefix), token rules included: HTML/Badge and shortcode emoji excluded from slugs — deep links match vitepress.dev anchors |
+| Custom anchors | implemented | `src/markdown/mod.rs:496-620` | `{#custom-id}` replaces the slug; collisions suffix `-1`/`-2` as upstream (we reserve up front instead of throwing on a duplicate) |
 | Links | — | | group heading |
 | Internal Links | implemented | `src/markdown/mod.rs:183-258` | resolved to canonical URLs at build time (no router — static) |
 | Page Suffix | diverged | `src/content.rs:286-294` | always directory URLs; `.html` suffix never emitted |

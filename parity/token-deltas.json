@@ -1,0 +1,48 @@
+{
+  "_format": {
+    "layer": "stock | demo \u2014 which comparison layer excuses it",
+    "scope": ":root | .dark",
+    "token": "the --vp-* custom property",
+    "upstream": "optional: only suppress when the upstream golden equals this (null = upstream unset)",
+    "ours": "optional: only suppress when our value equals this (null = unset in ours)",
+    "reason": "REQUIRED: why this divergence is intentional"
+  },
+  "deltas": [
+    {
+      "layer": "stock",
+      "scope": ":root",
+      "token": "--vp-custom-block-code-font-size",
+      "reason": "upstream declares 0.8125rem but its own `.custom-block code` rule is specificity-dead against `.vp-doc :not(pre)>code` (0,1,2 vs 0,1,1), so the EFFECTIVE upstream size is --vp-code-font-size = 0.875em \u2014 verified: both sides compute 12.25px inside a 14px custom block; we declare the effective value"
+    },
+    {
+      "layer": "demo",
+      "scope": ":root",
+      "token": "--vp-custom-block-code-font-size",
+      "reason": "same as the stock delta \u2014 declared vs effective (both render 12.25px)"
+    },
+    {
+      "layer": "stock",
+      "scope": ":root",
+      "token": "--vp-icon-copy",
+      "reason": "our copy button renders inline SVGs (src/render/icons.rs) instead of mask-image background tokens"
+    },
+    {
+      "layer": "stock",
+      "scope": ":root",
+      "token": "--vp-icon-copied",
+      "reason": "same as --vp-icon-copy \u2014 inline SVGs, no mask tokens"
+    },
+    {
+      "layer": "demo",
+      "scope": ":root",
+      "token": "--vp-icon-copy",
+      "reason": "same as the stock delta \u2014 inline SVGs"
+    },
+    {
+      "layer": "demo",
+      "scope": ":root",
+      "token": "--vp-icon-copied",
+      "reason": "same as the stock delta \u2014 inline SVGs"
+    }
+  ]
+}
