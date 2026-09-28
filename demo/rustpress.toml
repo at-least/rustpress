@@ -9,9 +9,25 @@ base = "/"
 lastUpdated = true
 logo = "vitepress-logo-mini.svg"
 theme = "theme.css"
+
 # dogfood dev loop: layer the repo's freshly built static/ over the
 # output so `npm run dev` picks up CSS/JS changes without a Rust rebuild
 staticOverlay = "../static"
+
+# Mirror of vitepress.dev's site head tags (docs/.vitepress/config.ts):
+# favicons + theme color. (The fathom analytics script is an external
+# service — intentionally not ported.)
+[[head]]
+tag = "link"
+attrs = { rel = "icon", type = "image/svg+xml", href = "/vitepress-logo-mini.svg" }
+
+[[head]]
+tag = "link"
+attrs = { rel = "icon", type = "image/png", href = "/vitepress-logo-mini.png" }
+
+[[head]]
+tag = "meta"
+attrs = { name = "theme-color", content = "#5f67ee" }
 
 [editLink]
 pattern = "https://github.com/vuejs/vitepress/edit/main/docs/en/:path"
