@@ -60,9 +60,11 @@ const fail = (msg) => { failures++; console.error('FAIL ' + msg); };
   const counts = new Map();
   for (const q of found) counts.set(q, (counts.get(q) || 0) + 1);
   const expected = {
-    '@media (min-width:640px)': 5,
+    // counts verified against the compiled stylesheet; the hero blur
+    // ladder is demo-site CSS (demo/theme.css), not part of the base
+    '@media (min-width:640px)': 4,
     '@media (min-width:768px)': 3,
-    '@media (min-width:960px)': 8,
+    '@media (min-width:960px)': 7,
     '@media (min-width:1280px)': 3,
     '@media (min-width:1440px)': 2,
     '@media not all and (min-width:768px)': 2,
@@ -157,9 +159,13 @@ const CASES = [
   ['hero name fs @390', '/', 390, `getComputedStyle(document.querySelector('h1.heading').children[0]).fontSize`],
   ['hero name fs @640', '/', 640, `getComputedStyle(document.querySelector('h1.heading').children[0]).fontSize`],
   ['hero name fs @960', '/', 960, `getComputedStyle(document.querySelector('h1.heading').children[0]).fontSize`],
-  // hero image container: below text <lg, right column at lg
-  ['hero img top @959', '/', 959, `document.querySelector('[class*="order-1"]').getBoundingClientRect().top.toFixed(0)`],
-  ['hero img left @960', '/', 960, `(() => { const r = document.querySelector('[class*="order-1"]').getBoundingClientRect(); return Math.round(r.left) + ',' + Math.round(r.top); })()`],
+  // hero image container: stacked above text <960 (negative-margin box),
+  // right column at >=960. `.hero-image-box` is the counterpart hook of
+  // upstream's `.VPHero .image` (a `[class*=...]` substring selector once
+  // silently matched the text column via `lg:order-1`)
+  ['hero img top @375', '/', 375, `document.querySelector('.hero-image-box').getBoundingClientRect().top.toFixed(0)`],
+  ['hero img top @959', '/', 959, `document.querySelector('.hero-image-box').getBoundingClientRect().top.toFixed(0)`],
+  ['hero img left @960', '/', 960, `(() => { const r = document.querySelector('.hero-image-box').getBoundingClientRect(); return Math.round(r.left) + ',' + Math.round(r.top); })()`],
   // features: 1 col <640, 2 cols 640-959, 4 cols at 960
   ['feat w @390', '/', 390, `document.querySelector('.VPFeature').closest('li').getBoundingClientRect().width.toFixed(0)`],
   ['feat w @640', '/', 640, `document.querySelector('.VPFeature').closest('li').getBoundingClientRect().width.toFixed(0)`],

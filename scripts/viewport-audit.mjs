@@ -107,7 +107,7 @@ const LANDMARKS = [
   ['hero-text', 'h1.heading span:nth-child(2)', '.VPHero .text', 'home'],
   ['hero-tagline', 'h1.heading + p', '.VPHero .tagline', 'home'],
   ['hero-action-btn', 'h1.heading + p + div a', '.VPHero .actions .VPButton', 'home'],
-  ['hero-image-box', '[class*="order-1"]', '.VPHero .image', 'home'],
+  ['hero-image-box', '.hero-image-box', '.VPHero .image', 'home'],
   ['features-item', '.VPFeature', '.VPFeature', 'home'],
   ['feature-title', '.VPFeature .title', '.VPFeature .title', 'home'],
   ['feature-details', '.VPFeature .details', '.VPFeature .details', 'home'],

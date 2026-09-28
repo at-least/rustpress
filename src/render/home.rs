@@ -67,7 +67,7 @@ pub fn home_page<'a>(site: &'a Site, page: &'a Page) -> impl Renderable + 'a {
                     </div>
 
                     @if let Some(image) = hero_image.clone() {
-                        <div class="order-1 m-[-4.75rem_-1.5rem_-3rem] sm:m-[-6.75rem_-1.5rem_-3rem] lg:order-2 lg:grow lg:m-0 lg:min-h-full">
+                        <div class="hero-image-box order-1 m-[-4.75rem_-1.5rem_-3rem] sm:m-[-6.75rem_-1.5rem_-3rem] lg:order-2 lg:grow lg:m-0 lg:min-h-full">
                             <div class="relative mx-auto w-80 h-80 sm:w-[24.5rem] sm:h-[24.5rem] lg:flex lg:justify-center lg:items-center lg:w-full lg:h-full lg:[transform:translate(-2rem,-2rem)]">
                                 <div class="absolute top-1/2 left-1/2 rounded-full w-48 h-48 [background-image:var(--vp-home-hero-image-background-image)] [filter:var(--vp-home-hero-image-filter)] [transform:translate(-50%,-50%)] sm:w-64 sm:h-64 lg:w-80 lg:h-80"></div>
                                 (Raw::dangerously_create(hero_image_html(site, &image)))
@@ -104,7 +104,10 @@ fn hero_image_html(site: &Site, image: &crate::content::HeroImage) -> String {
     }
     fn img(site: &Site, src: &str, alt: &str, extra: &str) -> String {
         format!(
-            r#"<img class="absolute top-1/2 left-1/2 max-w-48 max-h-48 w-full h-full object-contain [transform:translate(-50%,-50%)] [filter:drop-shadow(-2px_4px_6px_rgba(0,0,0,0.2))] p-[1.125rem] sm:max-w-64 sm:max-h-64 lg:max-w-80 lg:max-h-80{extra}" src="{}" alt="{}">"#,
+            // `hero-image` is a styling hook for site CSS (the demo's
+            // theme.css ports vitepress.dev's drop-shadow/padding here);
+            // upstream's default theme ships no image treatment
+            r#"<img class="hero-image absolute top-1/2 left-1/2 max-w-48 max-h-48 w-full h-full object-contain [transform:translate(-50%,-50%)] sm:max-w-64 sm:max-h-64 lg:max-w-80 lg:max-h-80{extra}" src="{}" alt="{}">"#,
             esc(&site.url(src)),
             esc(alt)
         )
@@ -139,9 +142,9 @@ fn feature_card(site: &Site, feature: &Feature) -> String {
                     (Raw::dangerously_create(icon_html))
                 </div>
             }
-            <h2 class="leading-[1.5] text-[1rem] font-semibold">(feature.title.clone())</h2>
+            <h2 class="title leading-[1.5] text-[1rem] font-semibold">(feature.title.clone())</h2>
             @if let Some(details) = feature.details.clone() {
-                <p class="grow pt-2 leading-[1.7142857] text-[0.875rem] font-medium text-text-2">(details)</p>
+                <p class="details grow pt-2 leading-[1.7142857] text-[0.875rem] font-medium text-text-2">(details)</p>
             }
             @if let Some(link_text) = feature.link_text.clone() {
                 <div class="pt-2">

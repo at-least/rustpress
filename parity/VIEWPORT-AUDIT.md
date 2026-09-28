@@ -106,14 +106,17 @@ All located and quantified; none are breakpoint-CSS regressions.
   table runs ~130 px taller at 375 px. Already tracked on the feature
   axis (FEATURE-PARITY.md, "Math Equations" — client-side MathJax vs
   upstream build-time typesetting).
-- **Two ~16 px segment offsets and one 8 px segment offset** on the
-  markdown/reference pages (between the named h2 anchors: after
-  *github-flavored-alerts*, before *import-code-snippets* /
-  *image-lazy-loading*, and the default-theme-config intro). Every
-  measured block type (pre, custom block, details, code group, table
-  rows/cells, headings, lists, paragraphs) matches individually; the
-  residue sits between blocks. Width-independent to weakly
-  width-dependent, invisible without overlaying screenshots.
+- ~~Two ~16 px segment offsets and one 8 px segment offset~~ **(root cause
+  found + fixed, 2026-09-29):** the residue sat between adjacent code
+  blocks. Upstream tightens consecutive blocks (`vp-doc.css`:
+  `div[class*='language-'] + div[class*='language-'] { margin-top: -.5rem }`,
+  an 8px gap after margin-collapse); our direct-styled `pre`s kept `my-4`
+  (16px). Each input/output adjacent pair added +8px in ours — 2+2
+  junctions on the markdown page (the two 16px segments) and one on
+  reference (8px). Fix: `[&_pre+pre]:-mt-2` on the `.vp-doc` shell;
+  post-fix a leaf-block flow probe (`blocklist` diff, every block's
+  top/height on both sides) shows exact alignment outside the math
+  section.
 - **"Last updated" line width ±2 px** (274 vs 272 at 768): self-hosted
   Inter vs upstream's font stack hinting — same weight, size, and
   layout properties.

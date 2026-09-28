@@ -1,11 +1,16 @@
 /*
- * UI palette overrides — the color-only part of VitePress's
- * "extending the default theme". Every rule here overrides one
- * root-level CSS custom property; full CSS is allowed (color-mix,
- * gradients, var() references, any selector).
+ * The demo site's theme CSS — the port of vitepress.dev's own
+ * docs/.vitepress/theme custom CSS. Two jobs:
  *
- * Source-code syntax colors are NOT set here — they are the separate
- * [syntax] section in rustpress.toml.
+ *  1. The hero look (purple gradient name, glow blob, image
+ *     drop-shadow) — vitepress.dev site customization, NOT the stock
+ *     VitePress default theme. Kept here (site level) so an unthemed
+ *     rustpress build matches upstream's stock look.
+ *  2. The home feature icons (memo/vite/vue/rocket data-URI spans).
+ *
+ * Site colors COULD also be overridden palette-only (see commented
+ * example below); source-code syntax colors are the separate [code]
+ * section in rustpress.toml.
  *
  * Examples (uncomment to apply):
  *
@@ -21,6 +26,43 @@
   --vp-c-brand-1: #83aa63;
 }
  */
+
+/*
+ * Hero — verbatim from vitepress.dev's docs/.vitepress/theme/styles.css.
+ * (`40rem`/`60rem` equal 640px/960px at the default root size.)
+ */
+:root {
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: -webkit-linear-gradient(
+    120deg,
+    #bd34fe 30%,
+    #41d1ff
+  );
+  --vp-home-hero-image-background-image: linear-gradient(
+    -45deg,
+    #bd34fe 50%,
+    #47caff 50%
+  );
+  --vp-home-hero-image-filter: blur(44px);
+}
+
+@media (min-width: 40rem) {
+  :root {
+    --vp-home-hero-image-filter: blur(56px);
+  }
+}
+
+@media (min-width: 60rem) {
+  :root {
+    --vp-home-hero-image-filter: blur(68px);
+  }
+}
+
+/* upstream targets `.VPHero .VPImage`; our hook class is `hero-image` */
+.hero-image {
+  filter: drop-shadow(-2px 4px 6px rgba(0, 0, 0, 0.2));
+  padding: 1.125rem;
+}
 
 /*
  * Feature icons — verbatim from the upstream theme's custom CSS

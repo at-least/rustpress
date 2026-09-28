@@ -34,8 +34,9 @@
   "hero name fs @390": "32px",
   "hero name fs @640": "48px",
   "hero name fs @960": "56px",
-  "hero img top @959": "380",
-  "hero img left @960": "64,144",
+  "hero img top @375": "36",
+  "hero img top @959": "36",
+  "hero img left @960": "656,144",
   "feat w @390": "358",
   "feat w @640": "280",
   "feat w @960": "212"
