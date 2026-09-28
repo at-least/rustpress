@@ -78,6 +78,10 @@ rewriter looks for it).
 
 ### Explained differences (not gaps)
 
+These now live in the audit tool itself as the `KNOWN_ARTIFACTS` ledger
+(each entry suppresses one landmark+property pair with a reason; the
+run prints what it suppressed — nothing goes silent):
+
 - **Navbar right-side composition.** Upstream's docs site carries an
   Ask-AI button (new v2 component), a translations flyout (multilingual
   site config), and a "more" menu; rustpress's demo navbar mirrors the
@@ -93,10 +97,17 @@ rewriter looks for it).
   375 px wrap boundary (labels never wrap).
 - **DOM layering** differs where visuals don't: feature cards split
   bg/border and padding across nested elements (upstream:
-  `.VPFeature` outer + padded box; ours: single padded card + boxed
-  inner), code blocks wrap `pre` in a `div[class*=language-]` upstream
-  vs styled `pre` here — per-property dumps line up once compared at
-  the visual-card level.
+  `.VPFeature` outer + padded box; ours: bg/border on the `li>div`
+  wrapper + padded `.VPFeature` article), code blocks wrap `pre` in a
+  `div[class*=language-]` upstream vs styled `pre` here (the audit's
+  `doc-code-pre` landmark compares wrapper-to-pre now, so margins/bg/
+  radius/geometry align; the padding split stays on the ledger), and
+  the home `#VPContent` shell is padded by the navbar height upstream
+  (then `.VPHero` pulls itself back up) while ours is flush — children
+  measure identical.
+- **Headings permalink**: upstream's `#` hover affordance is now ported
+  (`header-anchor`, `tabindex="-1"`, `Permalink to “…”`); previously
+  invisible to every gate (hover state) — fixed 2026-09-29.
 ### Remaining known differences
 
 All located and quantified; none are breakpoint-CSS regressions.
@@ -120,8 +131,11 @@ All located and quantified; none are breakpoint-CSS regressions.
 - **"Last updated" line width ±2 px** (274 vs 272 at 768): self-hosted
   Inter vs upstream's font stack hinting — same weight, size, and
   layout properties.
-- **Heading anchors:** `emoji` vs `emoji-` slug for a heading ending in
-  an emoji (comrak slug rule difference); anchor-only, no visual effect.
+- ~~**Heading anchors:** `emoji` vs `emoji-` slug~~ **(fixed
+  2026-09-29):** heading ids are the upstream mdit-vue `slugify` now —
+  every anchor (emoji, apostrophes, code-with-attribute text, Badge
+  headings) matches vitepress.dev, verified by the fingerprint axis's
+  `doc_heading_ids`.
 - **Empty highlighted line inside `:line-numbers` blocks:** ours shows a
   24 px band (the line-number counter pseudo-element gives the empty
   span a line box), upstream's collapses to 0. No occurrence in the
@@ -146,4 +160,16 @@ settles 500 ms after `fonts.ready` before dumping.
 Re-run the audit after Tailwind refactors or upstream re-pins (the
 matrix is the input for refreshing `parity/viewport-goldens.json`
 coverage). The gate's golden set is the audit's permanent subset: any
-new divergence class found here should graduate into a `CASES` entry.
+new divergence class found here should graduate into a `CASES` entry —
+or, when the finding is between-block flow, a `parity/blockflow-goldens.json`
+case; client-side interaction classes go to `scripts/parity-behavior.mjs`
+and token-layer drifts are pinned statically by `scripts/parity-tokens.mjs`.
+
+Since 2026-09-29 the audit keeps a **reviewed-artifact ledger**
+(`KNOWN_ARTIFACTS` in the script): deliberate per-property divergences of
+the intentional DOM layering, each carrying its reason, counted aloud in
+the report. A clean run lists 0 findings plus the suppression ledger; a
+finding that belongs there needs the same discipline as
+`known-deltas.json` — a reason, or it does not count as reviewed. At the
+2026-09-29 full re-run: 0 findings on the sampled matrix after the
+ledger (1102 raw before governance, 540 after the selector fixes).

@@ -9,7 +9,7 @@ rustpress renders the VitePress Markdown dialect. Everything on this page is han
 
 ## Header Anchors
 
-Headers automatically get GitHub-style anchor ids and a `#` permalink.
+Headers automatically get anchor ids matching VitePress's own slug rules (the mdit-vue `slugify` — HTML/Badge tags and shortcode emoji don't count toward the id) plus `tabindex="-1"` and a hover `#` permalink whose aria-label reads `Permalink to “…"` — deep links resolve the same as on an upstream-rendered site.
 
 ### Custom anchors
 
