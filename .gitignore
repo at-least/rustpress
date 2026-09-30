@@ -19,3 +19,6 @@ node_modules/
 
 # local tooling (zcode session)
 .zcode/
+
+# codegraph index
+.codegraph/
