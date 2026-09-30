@@ -14,8 +14,9 @@ pub fn upstream_docs() -> PathBuf {
 }
 
 /// `Some(clone dir)` when present; `None` for an explicit, visible skip
-/// (only when `RUSTPRESS_ALLOW_NO_UPSTREAM=1` is set); panics with the
-/// actionable fix when the clone is absent and not opted out.
+/// (when the `RUSTPRESS_ALLOW_NO_UPSTREAM` env var is set, to any value);
+/// panics with the actionable fix when the clone is absent and not opted
+/// out.
 #[allow(dead_code)]
 pub fn ensure_upstream() -> Option<PathBuf> {
     let docs = upstream_docs();

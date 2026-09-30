@@ -7,14 +7,15 @@ verified against source, not README prose). It complements
 pinned demo pages — this file answers "VitePress shipped a feature we
 never looked at" for the *whole* documented surface.
 
-- **Pinned upstream:** `vuejs/vitepress` @ `3e681e2` (v2.0.0-alpha.20;
-  audited 2026-09-10, statuses updated after the fill-in pass
-  d6b05d2…fe1cdc9)
+- **Pinned upstream:** `vuejs/vitepress` @ `22b64ff` (the
+  `v2.0.0-alpha.20` tag commit; audited 2026-09-10, statuses updated
+  after the fill-in pass d6b05d2…fe1cdc9)
 - **Coverage gate:** `tests/feature_parity.rs` extracts every `##`/`###`
   heading from the four reference files in `../vitepress/docs/en` and
   fails if a heading is not covered here. No clone checked out → the
   gate FAILS, naming the fix (`bash scripts/sync-upstream.sh`), unless
-  `RUSTPRESS_ALLOW_NO_UPSTREAM=1` opts out. Matching is substring-based,
+  the `RUSTPRESS_ALLOW_NO_UPSTREAM` env var is set (any value opts out).
+  Matching is substring-based,
   so short generic names (`title`, `nav`) match incidentally — the
   gate's job is to catch new, distinctively-named upstream options.
 
@@ -26,8 +27,8 @@ never looked at" for the *whole* documented surface.
 | missing | upstream has it, we don't, no architectural blocker |
 | n/a | needs a runtime rustpress doesn't have (Vue/Vite/Node/external service) |
 
-Status summary: implemented 76, partial 17, diverged 12, missing 25,
-n/a 24 (154 audited rows).
+Status summary: implemented 88, partial 12, diverged 11, missing 15,
+n/a 23 (149 audited rows).
 
 ## How to update on a new release
 
