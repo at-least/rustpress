@@ -40,6 +40,9 @@ comrak = { version = "0.55", default-features = false, features = ["shortcodes"]
 futures-core = "0.3"
 hypertext = { version = "0.12.1", features = ["alpine"] }
 include_dir = "0.7"
+# locales keep declaration order: the language switcher lists them as
+# written (upstream iterates the config object), not sorted by key
+indexmap = { version = "2", features = ["serde"] }
 notify = "8"
 regex = "1"
 scraper = "0.27.0"

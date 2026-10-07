@@ -234,11 +234,12 @@ pub struct SiteConfig {
     #[serde(default, deserialize_with = "deserialize_rewrites")]
     pub rewrites: Vec<Rewrite>,
 
-    /// Locales for multi-language sites. The special key `root` describes
-    /// the top-level content; every other key names a content
-    /// subdirectory (`content/zh/...` served under `/zh/`).
+    /// Locales for multi-language sites, in declaration order. The
+    /// special key `root` describes the top-level content; every other
+    /// key names a content subdirectory (`content/zh/...` served under
+    /// `/zh/`).
     #[serde(default)]
-    pub locales: std::collections::BTreeMap<String, Locale>,
+    pub locales: indexmap::IndexMap<String, Locale>,
 }
 
 fn default_true() -> bool {

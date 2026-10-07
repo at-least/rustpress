@@ -25,8 +25,8 @@ pub struct Shell<'a> {
     pub has_math: bool,
     /// `lang` attribute (locale-aware).
     pub lang: String,
-    /// (label, href, current) language switcher entries.
-    pub translations: Vec<(String, String, bool)>,
+    /// The language switcher (`None` = no switcher on this page).
+    pub translations: Option<super::Translations>,
     /// The navbar title for this page (locale-aware; `None` = hidden
     /// via `siteTitle: false`).
     pub site_title: Option<String>,
@@ -117,8 +117,8 @@ pub fn layout<'a>(
 
                 @if shell.has_navbar {
                     <header class="relative top-[var(--vp-layout-top-height,0px)] left-0 z-(--vp-z-index-nav) w-full pointer-events-none lg:fixed">
-                        (navbar::navbar(site, &current_url, is_home, has_sidebar, &shell.translations, shell.site_title.as_deref()))
-                        (navbar::nav_screen(site, &current_url, &shell.translations))
+                        (navbar::navbar(site, &current_url, is_home, has_sidebar, shell.translations.as_ref(), shell.site_title.as_deref()))
+                        (navbar::nav_screen(site, &current_url, shell.translations.as_ref()))
                     </header>
                 }
 

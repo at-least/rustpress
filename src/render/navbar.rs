@@ -5,8 +5,8 @@
 use hypertext::Raw;
 use hypertext::prelude::*;
 
-use super::Site;
 use super::icons::{icon, social_icon};
+use super::{Site, Translations};
 use crate::config::NavItem;
 
 /// Upstream's default activeMatch: the current path starts with the
@@ -38,7 +38,7 @@ pub fn navbar<'a>(
     current_url: &'a str,
     is_home: bool,
     has_sidebar: bool,
-    translations: &'a [(String, String, bool)],
+    translations: Option<&'a Translations>,
     site_title: Option<&'a str>,
 ) -> impl Renderable + 'a {
     let home = site.url("/");
@@ -137,9 +137,9 @@ pub fn navbar<'a>(
                                 </nav>
                             }
 
-                            @if !translations.is_empty() {
-                                <div class="VPFlyout relative hidden md:flex md:items-center md:justify-end md:pl-[17px] group/flyout hover:text-brand-1 transition-colors duration-[250ms]"
-                                    x-data="{ open: false }" @click.outside="open = false">
+                            @if let Some(tr) = translations {
+                                <div class="VPFlyout VPNavBarTranslations relative hidden md:flex md:items-center md:justify-end md:pl-[17px] group/flyout hover:text-brand-1 transition-colors duration-[250ms]"
+                                    :class=("{ open: open }") x-data="{ open: false }" @click.outside="open = false">
                                     <button type="button" class="flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" :aria-expanded=("open.toString()") @click="open = !open" aria-haspopup="true" aria-label=(lang_menu_label.clone())>
                                         <span class="flex items-center leading-(--vp-nav-height) text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] group-hover/flyout:text-text-2">
                                             (icon("languages", "size-[1rem]"))
@@ -148,10 +148,13 @@ pub fn navbar<'a>(
                                     </button>
                                     <div class="menu absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-focus-within/flyout:opacity-100 group-focus-within/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
                                         <div class="rounded-xl p-3 min-w-32 border border-divider bg-bg-elv shadow-3 transition-colors duration-500 max-h-[calc(100vh-var(--vp-nav-height))] overflow-y-auto">
+                                            // upstream VPNavBarTranslations: the current
+                                            // language titles the menu, the others follow
+                                            <p class="title pr-6 pl-3 leading-[2.2857143] text-[0.875rem] font-bold text-text-1">(tr.current.clone())</p>
                                             <ul>
-                                                @for (label, href, current) in translations {
+                                                @for link in &tr.links {
                                                     <li>
-                                                        <a class=(format!("block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap{} transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft", if *current { " text-brand-1" } else { " text-text-1" })) href=(href)>(label.clone())</a>
+                                                        <a class="block rounded-md px-3 leading-[2.2857143] text-[0.875rem] font-medium text-left whitespace-nowrap text-text-1 transition-[background-color,color] duration-[250ms] hover:text-brand-1 hover:bg-default-soft" href=(link.href.clone()) lang=(link.lang.clone()) hreflang=(link.lang.clone()) rel="alternate">(link.label.clone())</a>
                                                     </li>
                                                 }
                                             </ul>
@@ -352,7 +355,7 @@ fn appearance_switch(id: &'static str, dark_title: &str, light_title: &str) -> S
 pub fn nav_screen<'a>(
     site: &'a Site,
     current_url: &'a str,
-    translations: &'a [(String, String, bool)],
+    translations: Option<&'a Translations>,
 ) -> impl Renderable + 'a {
     let nav: Vec<&NavItem> = site.config.nav.iter().collect();
     let socials = site.config.social_links.clone();
@@ -375,12 +378,21 @@ pub fn nav_screen<'a>(
                     </ul>
                 </nav>
 
-                @if !translations.is_empty() {
-                    <div class="mt-4">
-                        <ul>
-                            @for (label, href, current) in translations {
+                // upstream VPNavScreenTranslations: an accordion titled
+                // with the current language, collapsed until tapped
+                @if let Some(tr) = translations {
+                    <div class=(format!("VPNavScreenTranslations group/screen-lang{}", if has_nav { " mt-6" } else { "" })) x-data="{ open: false }" :class=("{ open: open }")>
+                        <button type="button" class="title flex items-center text-[0.875rem] font-medium text-text-1 cursor-pointer" :aria-expanded=("open.toString()") aria-controls="VPNavScreenTranslations-list" @click="open = !open">
+                            (icon("languages", "mr-2 size-[1rem]"))
+                            (tr.current.clone())
+                            // open, upstream's rotate(180deg) replaces the
+                            // glyph's own 90° turn: the chevron points left
+                            (icon("chevron-down", "ml-1 size-[1rem] transition-transform duration-[250ms] group-[.open]/screen-lang:rotate-180"))
+                        </button>
+                        <ul class="list pt-1 pl-6" id="VPNavScreenTranslations-list" x-cloak x-show="open">
+                            @for link in &tr.links {
                                 <li>
-                                    <a class=(format!("leading-[2.4615385] text-[0.8125rem]{}", if *current { " text-brand-1" } else { " text-text-1" })) href=(href)>(label.clone())</a>
+                                    <a class="leading-[2.4615385] text-[0.8125rem] text-text-1" href=(link.href.clone()) lang=(link.lang.clone()) hreflang=(link.lang.clone()) rel="alternate">(link.label.clone())</a>
                                 </li>
                             }
                         </ul>
@@ -388,7 +400,7 @@ pub fn nav_screen<'a>(
                 }
 
                 @if toggleable {
-                    <div class=(format!("appearance flex justify-center items-center pt-3{}", if has_nav { " mt-4" } else { "" }))>
+                    <div class=(format!("appearance flex justify-center items-center pt-3{}", if has_nav || translations.is_some() { " mt-4" } else { "" }))>
                         <span class="label mr-3 text-[0.875rem] font-medium text-text-1">(dark_label)</span>
                         (Raw::dangerously_create(appearance_switch("VPSwitchAppearanceScreen", &dark_switch_title, &light_switch_title)))
                     </div>

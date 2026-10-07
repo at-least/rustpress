@@ -216,10 +216,11 @@ provider = "local"
 
     // switcher: en page links to its zh twin and vice versa
     let en_page = site.content.get("/guide/page/").unwrap();
-    let tr = site.translations_for(en_page);
-    assert_eq!(tr.len(), 2);
-    let zh_entry = tr.iter().find(|(label, _, _)| label == "简体中文").unwrap();
-    assert_eq!(zh_entry.1, "/zh/guide/page/");
+    let tr = site.translations_for(en_page).expect("switcher");
+    assert_eq!(tr.current, "English");
+    assert_eq!(tr.links.len(), 1, "the current locale titles the menu");
+    assert_eq!(tr.links[0].label, "简体中文");
+    assert_eq!(tr.links[0].href, "/zh/guide/page/");
 
     // build and check rendered html lang + switcher markup
     let out = tempdir("site-build");

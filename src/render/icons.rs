@@ -34,6 +34,9 @@ pub fn icon(name: &str, class: &str) -> Raw<String> {
         "square-pen" => {
             r#"<svg class="inline-block size-[1em] {c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg>"#
         }
+        "languages" => {
+            r#"<svg class="inline-block size-[1em] {c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><path d="m5 8l6 6m-7 0l6-6l2-3M2 5h12M7 2h1m14 20l-5-10l-5 10m2-4h6"/></svg>"#
+        }
         "plus" => {
             r#"<svg class="inline-block size-[1em] {c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><path d="M5 12h14m-7-7v14"/></svg>"#
         }
@@ -49,7 +52,10 @@ pub fn icon(name: &str, class: &str) -> Raw<String> {
         "copy-checked" => {
             r#"<svg class="inline-block size-[1em] {c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14l2 2l4-4"/></svg>"#
         }
-        _ => "",
+        // names are literals at the call sites: an unknown one is a typo
+        // that would otherwise render nothing (the language flyout shipped
+        // without its glyph that way)
+        _ => panic!("unknown icon {name:?}"),
     };
     // `size-[1em]` is the default only: it sorts after `size-3`/`size-5`
     // in the compiled stylesheet and would override a caller's size

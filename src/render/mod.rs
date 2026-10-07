@@ -474,13 +474,17 @@ impl Site {
         self.url(&search_index_path(&page.locale))
     }
 
-    /// Language switcher entries for a page: (label, href, is_current).
-    /// Same-rel-path page in the other locale when it exists, else that
-    /// locale's root (VitePress behavior).
-    pub fn translations_for(&self, page: &Page) -> Vec<(String, String, bool)> {
+    /// The language switcher of a page, after upstream's useLangs: the
+    /// page's own locale titles the menu, and every other locale gets a
+    /// link in declaration order — to the same page in that locale when
+    /// it exists, else that locale's root. `None` with fewer than two
+    /// locales, or when the page's own locale is undeclared (upstream
+    /// shows no switcher without a current label).
+    pub fn translations_for(&self, page: &Page) -> Option<Translations> {
         if self.config.locales.len() <= 1 {
-            return Vec::new();
+            return None;
         }
+        let current = self.config.locales.get(&page.locale)?.label.clone();
         let own_base = if page.locale == "root" {
             String::new()
         } else {
@@ -493,25 +497,32 @@ impl Site {
             .strip_prefix(&own_base)
             .filter(|rest| own_base.is_empty() || rest.starts_with('/'))
             .unwrap_or(&page.url);
-        let mut out = Vec::new();
-        for (key, loc) in &self.config.locales {
-            let target_base = if key == "root" {
-                String::new()
-            } else {
-                format!("/{key}")
-            };
-            let candidate = format!("{target_base}{url_rest}");
-            let is_current = *key == page.locale;
-            let href = if is_current {
-                self.url(&page.url)
-            } else if self.content.by_url.contains_key(&candidate) {
-                self.url(&candidate)
-            } else {
-                self.url(&format!("{target_base}/"))
-            };
-            out.push((loc.label.clone(), href, is_current));
-        }
-        out
+        let links = self
+            .config
+            .locales
+            .iter()
+            .filter(|(key, _)| **key != page.locale)
+            .map(|(key, loc)| {
+                let target_base = if key == "root" {
+                    String::new()
+                } else {
+                    format!("/{key}")
+                };
+                let candidate = format!("{target_base}{url_rest}");
+                let href = if self.content.by_url.contains_key(&candidate) {
+                    self.url(&candidate)
+                } else {
+                    self.url(&format!("{target_base}/"))
+                };
+                LocaleLink {
+                    label: loc.label.clone(),
+                    href,
+                    // what the target locale's pages carry in <html lang>
+                    lang: loc.lang.clone().unwrap_or_else(|| self.config.lang.clone()),
+                }
+            })
+            .collect();
+        Some(Translations { current, links })
     }
 
     /// The `lang` attribute for a page (its locale's code).
@@ -638,7 +649,7 @@ impl Site {
             current_url: "/404.html",
             has_math: false,
             lang: self.config.lang.clone(),
-            translations: Vec::new(),
+            translations: None,
             site_title: match &self.config.site_title {
                 Some(crate::config::SiteTitleSetting::Text(t)) => Some(t.clone()),
                 Some(crate::config::SiteTitleSetting::Hide(_)) => None,
@@ -1232,6 +1243,21 @@ fn copy_dir(from: &Path, to: &Path) -> Result<(), BuildError> {
         }
     }
     Ok(())
+}
+
+/// A page's language switcher: its own locale's label (the menu title)
+/// and one link per other locale.
+pub struct Translations {
+    pub current: String,
+    pub links: Vec<LocaleLink>,
+}
+
+/// One language switcher link.
+pub struct LocaleLink {
+    pub label: String,
+    pub href: String,
+    /// The target locale's language, for the link's `lang`/`hreflang`.
+    pub lang: String,
 }
 
 /// Site-root-relative path of a locale's search index. Upstream's local

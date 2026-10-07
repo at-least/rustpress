@@ -235,6 +235,74 @@ fn scheme_links_pass_through_nav_and_hero() {
 }
 
 #[test]
+fn language_switcher_follows_upstream() {
+    // upstream VPNavTranslations: the current locale titles the menu and
+    // the other locales follow in declaration order (not key order), each
+    // link carrying lang/hreflang/rel=alternate; on the nav screen they
+    // fold into an accordion titled with the current label
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[locales.root]\nlabel = \"English\"\nlang = \"en-US\"\n\n[locales.zh]\nlabel = \"简体中文\"\nlang = \"zh-Hans\"\n\n[locales.pt]\nlabel = \"Português\"\nlang = \"pt-BR\"\n\n[locales.es]\nlabel = \"Español\"\nlang = \"es\"\n",
+        &[
+            ("guide/a.md", "# A\n"),
+            ("zh/guide/a.md", "# 甲\n"),
+            ("pt/guide/a.md", "# A\n"),
+            ("es/index.md", "# E\n"),
+        ],
+    );
+    let doc = scraper::Html::parse_document(&page(&out, "/zh/guide/a/"));
+    let sel = |s: &str| scraper::Selector::parse(s).unwrap();
+    let texts = |root: scraper::ElementRef, s: &str| -> Vec<String> {
+        root.select(&sel(s))
+            .map(|e| e.text().collect::<String>().trim().to_string())
+            .collect()
+    };
+
+    let bar = doc
+        .select(&sel(".VPNavBarTranslations"))
+        .next()
+        .expect("navbar flyout");
+    assert_eq!(texts(bar, ".title"), ["简体中文"]);
+    assert_eq!(texts(bar, "a"), ["English", "Português", "Español"]);
+    let links: Vec<_> = bar.select(&sel("a")).map(|a| a.value()).collect();
+    assert_eq!(links[0].attr("href"), Some("/guide/a/"), "the twin page");
+    assert_eq!(links[1].attr("href"), Some("/pt/guide/a/"));
+    assert_eq!(links[2].attr("href"), Some("/es/"), "no twin: locale root");
+    assert_eq!(links[0].attr("lang"), Some("en-US"));
+    assert_eq!(links[0].attr("hreflang"), Some("en-US"));
+    assert_eq!(links[0].attr("rel"), Some("alternate"));
+    assert!(
+        bar.select(&sel("button svg path[d^=\"m5 8l6 6\"]"))
+            .next()
+            .is_some(),
+        "the button carries the languages glyph"
+    );
+
+    let screen = doc
+        .select(&sel("#VPNavScreen .VPNavScreenTranslations"))
+        .next()
+        .expect("nav screen accordion");
+    assert_eq!(texts(screen, "button"), ["简体中文"]);
+    assert_eq!(texts(screen, "a"), ["English", "Português", "Español"]);
+    let list = screen.select(&sel("ul")).next().unwrap().value();
+    assert_eq!(list.attr("x-show"), Some("open"), "collapsed until tapped");
+    let screen_link = screen.select(&sel("a")).next().unwrap().value();
+    assert_eq!(screen_link.attr("hreflang"), Some("en-US"));
+
+    // a page whose own locale is undeclared gets no switcher: upstream
+    // shows none without a current label
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[locales.zh]\nlabel = \"中文\"\n\n[locales.ja]\nlabel = \"日本語\"\n",
+        &[
+            ("guide/a.md", "# A\n"),
+            ("zh/a.md", "# 甲\n"),
+            ("ja/a.md", "# あ\n"),
+        ],
+    );
+    assert!(!page(&out, "/guide/a/").contains("VPNavBarTranslations"));
+    assert!(page(&out, "/zh/a/").contains("VPNavBarTranslations"));
+}
+
+#[test]
 fn locale_switcher_prefix_strip_is_segment_safe() {
     // with the canonical "en/:rest*" = ":rest*" rewrite, a page named
     // english.md lands at /english/ while its locale base is /en — a
@@ -253,12 +321,13 @@ fn locale_switcher_prefix_strip_is_segment_safe() {
     let site = Site::load(dir.path()).unwrap();
     let page = site.content.get("/english/").unwrap();
     assert_eq!(page.locale, "en");
-    let tr = site.translations_for(page);
+    let tr = site.translations_for(page).expect("switcher");
     let zh = tr
+        .links
         .iter()
-        .find(|(label, _, _)| label == "简体中文")
+        .find(|link| link.label == "简体中文")
         .expect("zh entry");
-    assert_eq!(zh.1, "/zh/english/", "twin found across locales");
+    assert_eq!(zh.href, "/zh/english/", "twin found across locales");
 }
 
 #[test]
