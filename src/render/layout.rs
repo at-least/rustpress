@@ -108,8 +108,12 @@ pub fn layout<'a>(
                 // body-level elements with Alpine directives each need their
                 // own x-data scope — Alpine 3 never initializes directives on
                 // elements outside any x-data (VPBackdrop here; VPSidebar and
-                // VPNavScreen likewise in their own modules).
-                <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" x-data="{}" x-cloak x-show="$store.ui.screen || $store.ui.sidebar" @click="$store.ui.screen = false; $store.ui.sidebar = false"></div>
+                // VPNavScreen likewise in their own modules). The backdrop
+                // dims the page behind the sidebar drawer only, like
+                // upstream's `:show="isSidebarOpen"`: the nav screen lives in
+                // the navbar layer, below the backdrop's z-index, so a
+                // backdrop shown for it covers it and swallows every tap.
+                <div class="fixed inset-0 z-(--vp-z-index-backdrop) bg-(--vp-backdrop-bg-color) transition-opacity duration-500 xl:hidden" id="VPBackdrop" x-data="{}" x-cloak x-show="$store.ui.sidebar" @click="$store.ui.sidebar = false"></div>
 
                 @if shell.has_navbar {
                     <header class="relative top-[var(--vp-layout-top-height,0px)] left-0 z-(--vp-z-index-nav) w-full pointer-events-none lg:fixed">

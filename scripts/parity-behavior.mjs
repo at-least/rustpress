@@ -170,10 +170,31 @@ try {
     await page.waitForTimeout(300);
     const sidebar = page.locator('#VPSidebar');
     ok('sidebar drawer opens', await page.evaluate(() => document.body.style.overflow === 'hidden'));
+    ok('the drawer dims the page with the backdrop', await page.locator('#VPBackdrop').isVisible());
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
     ok('Escape closes the drawer', await page.evaluate(() => document.body.style.overflow !== 'hidden'));
     ok('focus returns to the menu button', await page.evaluate(() => document.activeElement?.id === 'VPLocalNavMenu'));
+    await ctx.close();
+  }
+
+  // ---- mobile nav screen links -------------------------------------------
+  {
+    const ctx = await browser.newContext({ viewport: { width: 375, height: 800 } });
+    const page = await ctx.newPage();
+    await page.goto(`${base}/guide/what-is-vitepress/`, { waitUntil: 'networkidle' });
+    await page.locator('#VPNavBarHamburger').click();
+    await page.waitForTimeout(300);
+    // upstream shows the backdrop for the sidebar drawer only; one over
+    // the nav screen swallowed every tap (its click handler closed the
+    // menu), so the mobile menu could not navigate anywhere
+    ok('no backdrop over the nav screen', !(await page.locator('#VPBackdrop').isVisible()));
+    const box = await page.locator('#VPNavScreen a[href*="/reference/"]').first().boundingBox();
+    // a real tap at the link's position, not a selector click (which
+    // waits out an intercepting overlay instead of hitting it)
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await page.waitForURL(/\/reference\//, { timeout: 2000 }).catch(() => {});
+    ok('tapping a nav screen link navigates', new URL(page.url()).pathname.startsWith('/reference/'), page.url());
     await ctx.close();
   }
 
