@@ -189,6 +189,18 @@ try {
     // the nav screen swallowed every tap (its click handler closed the
     // menu), so the mobile menu could not navigate anywhere
     ok('no backdrop over the nav screen', !(await page.locator('#VPBackdrop').isVisible()));
+    // a dropdown nav item is an accordion on the screen (upstream
+    // VPNavMenuGroup screen variant); the Alpine port left it inert
+    const group = page.locator('#VPNavScreen .VPNavScreenMenuGroup').first();
+    const groupBtn = group.locator('button').first();
+    const groupLink = group.locator('a').first();
+    ok('screen dropdown starts collapsed', !(await groupLink.isVisible()) && (await groupBtn.getAttribute('aria-expanded')) === 'false');
+    await groupBtn.click();
+    await page.waitForTimeout(300);
+    ok('tapping a screen dropdown expands it', (await groupLink.isVisible()) && (await groupBtn.getAttribute('aria-expanded')) === 'true');
+    await groupBtn.click();
+    await page.waitForTimeout(300);
+    ok('tapping it again collapses it', !(await groupLink.isVisible()) && (await groupBtn.getAttribute('aria-expanded')) === 'false');
     const box = await page.locator('#VPNavScreen a[href*="/reference/"]').first().boundingBox();
     // a real tap at the link's position, not a selector click (which
     // waits out an intercepting overlay instead of hitting it)

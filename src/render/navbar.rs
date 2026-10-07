@@ -367,9 +367,9 @@ pub fn nav_screen<'a>(
             <div class="mx-auto pt-6 pb-24 max-w-[18rem]">
                 <nav class="menu" aria-label=(nav_menu_label.clone())>
                     <ul>
-                        @for item in &nav {
+                        @for (i, item) in nav.iter().enumerate() {
                             <li>
-                                (Raw::dangerously_create(screen_entry(site, item, current_url)))
+                                (Raw::dangerously_create(screen_entry(site, item, current_url, i)))
                             </li>
                         }
                     </ul>
@@ -410,7 +410,15 @@ pub fn nav_screen<'a>(
     }
 }
 
-fn screen_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> String {
+/// One nav screen entry: a plain link, or a dropdown item as an
+/// accordion (upstream VPNavMenuGroup's screen variant). `index` keys the
+/// accordion's `aria-controls` id.
+fn screen_entry<'a>(
+    site: &'a Site,
+    item: &'a NavItem,
+    current_url: &'a str,
+    index: usize,
+) -> String {
     let active = nav_item_active(item, current_url);
 
     if item.items.is_empty() {
@@ -431,22 +439,29 @@ fn screen_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> 
         )
     } else {
         let group_cls = format!(
-            "VPNavScreenMenuGroup group{}",
+            "VPNavScreenMenuGroup group/screen-group border-b border-divider transition-[border-color] duration-500 [&.open]:pb-[0.625rem]{}",
             if active { " active" } else { "" }
         );
+        let list_id = format!("VPNavScreenMenuGroup-{index}");
         let text = item.text.clone();
         let children: Vec<&NavItem> = item.items.iter().collect();
         rsx! {
-            <div class=(group_cls)>
-                <button type="button" class="button cursor-pointer" aria-expanded="false">
+            <div class=(group_cls) x-data="{ open: false }" :class=("{ open: open }")>
+                <button type="button" class="button flex justify-between items-center w-full pt-3 pr-1 pb-[0.6875rem] leading-[1.7142857] text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1 group-[.active]/screen-group:text-brand-1 group-[.open]/screen-group:pb-1.5 group-[.open]/screen-group:text-brand-1 cursor-pointer" :aria-expanded=("open.toString()") aria-controls=(list_id.clone()) @click="open = !open">
                     <span class="button-text">(text)</span>
-                    (icon("plus", "button-icon"))
+                    (icon("plus", "button-icon transition-transform duration-[250ms] group-[.open]/screen-group:rotate-45"))
                 </button>
-                <ul class="items" hidden>
+                <ul class="items" id=(list_id) x-cloak x-show="open">
                     @for child in &children {
                         <li>
                             (Raw::dangerously_create(format!(
-                                r#"<a class="block border-b border-divider pt-3 pb-[0.6875rem] leading-[1.7142857] text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] hover:text-brand-1" href="{}"{}>{}</a>"#,
+                                r#"<a class="block ml-3 leading-[2.2857143] text-[0.875rem]{}{} transition-colors duration-[250ms] hover:text-brand-1" href="{}"{}>{}</a>"#,
+                                if child.link.as_deref().is_some_and(|l| nav_active(current_url, l)) { " text-brand-1" } else { " text-text-1" },
+                                // offsite entries carry upstream's arrow, as
+                                // in the navbar flyout
+                                if child.link.as_deref().is_some_and(|l| l.starts_with("http"))
+                                    || child.target.as_deref() == Some("_blank")
+                                { " vp-external-link-icon" } else { "" },
                                 crate::render::escape::escape_attr(&site.url(&child.link.clone().unwrap_or_default())),
                                 link_attrs(child.target.as_deref(), child.rel.as_deref()),
                                 crate::render::escape::escape_text(&child.text),
