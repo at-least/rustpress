@@ -56,6 +56,29 @@ pub fn navbar<'a>(
     let dark_switch_title = site.config.dark_mode_switch_title.clone();
     let light_switch_title = site.config.light_mode_switch_title.clone();
 
+    // upstream VPNavBar draws a 1px rule before every cluster unit that
+    // follows another (menu, translations, appearance, social links):
+    // 8px on each side, 16px on the side facing the appearance switch
+    let has_nav = !nav.is_empty();
+    let after_menu_or_translations = has_nav || translations.is_some();
+    let translations_rule = if has_nav {
+        " before:content-[''] before:w-px before:h-6 before:bg-divider before:mx-2"
+    } else {
+        ""
+    };
+    let appearance_rule = if after_menu_or_translations {
+        " before:content-[''] before:w-px before:h-6 before:bg-divider before:ml-2 before:mr-4"
+    } else {
+        ""
+    };
+    let social_rule = if toggleable {
+        " before:content-[''] before:w-px before:h-6 before:bg-divider before:ml-4 before:mr-2"
+    } else if after_menu_or_translations {
+        " before:content-[''] before:w-px before:h-6 before:bg-divider before:mx-2"
+    } else {
+        ""
+    };
+
     let home_cls = if is_home { " home" } else { "" };
     let navbar_cls = format!(
         "relative z-[1] h-(--vp-nav-height){home_cls} pointer-events-none whitespace-nowrap [--vp-nav-col-offset:0px] [&::before]:content-[''] [&::before]:absolute [&::before]:top-0 [&::before]:right-0 [&::before]:bottom-0 [&::before]:left-(--vp-nav-col-offset) [&::before]:z-[-1] [&::before]:bg-(--vp-nav-bg-color) [&::before]:[backdrop-filter:var(--vp-nav-backdrop-filter)] [&::before]:transition-colors [&::before]:duration-[250ms]{}{}{}",
@@ -125,7 +148,7 @@ pub fn navbar<'a>(
                                 }
                             </div>
 
-                            @if !nav.is_empty() {
+                            @if has_nav {
                                 <nav class="relative hidden md:flex md:grow md:justify-end min-w-0" aria-label=(nav_menu_label.clone())>
                                     <ul class="flex justify-end">
                                         @for item in &nav {
@@ -138,7 +161,7 @@ pub fn navbar<'a>(
                             }
 
                             @if let Some(tr) = translations {
-                                <div class="VPFlyout VPNavBarTranslations relative hidden md:flex md:items-center md:justify-end md:pl-[17px] group/flyout hover:text-brand-1 transition-colors duration-[250ms]"
+                                <div class=(format!("VPFlyout VPNavBarTranslations relative hidden md:flex md:items-center md:justify-end group/flyout hover:text-brand-1 transition-colors duration-[250ms]{translations_rule}"))
                                     :class=("{ open: open }") x-data="{ open: false }" @click.outside="open = false">
                                     <button type="button" class="flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" :aria-expanded=("open.toString()") @click="open = !open" aria-haspopup="true" aria-label=(lang_menu_label.clone())>
                                         <span class="flex items-center leading-(--vp-nav-height) text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] group-hover/flyout:text-text-2">
@@ -164,13 +187,13 @@ pub fn navbar<'a>(
                             }
 
                             @if toggleable {
-                                <div class="hidden md:flex md:items-center">
+                                <div class=(format!("hidden md:flex md:items-center{appearance_rule}"))>
                                     (Raw::dangerously_create(appearance_switch("VPSwitchAppearance", &dark_switch_title, &light_switch_title)))
                                 </div>
                             }
 
                             @if show_social {
-                                <div class="hidden md:flex md:items-center -mr-2 before:content-[''] before:ml-4 before:mr-2 before:w-px before:h-6 before:bg-divider">
+                                <div class=(format!("hidden md:flex md:items-center -mr-2{social_rule}"))>
                                     <div class="flex">
                                         @for s in &socials {
                                             <a class="flex justify-center items-center w-9 h-9 text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms]" href=(s.link.clone()) aria-label=(s.aria_label.clone().unwrap_or_else(|| social_label(&s.icon))) target=(s.target.clone().unwrap_or_else(|| "_blank".into())) rel="noopener">

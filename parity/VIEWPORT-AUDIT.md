@@ -88,7 +88,10 @@ run prints what it suppressed — nothing goes silent):
   shared components (search, menu links, version flyout, appearance,
   GitHub). This shifts first-menu-link x-position at some widths —
   config/component surface, not breakpoint CSS (tracked on the feature
-  axis, see FEATURE-PARITY.md).
+  axis, see FEATURE-PARITY.md). Part of that shift *was* CSS: the 1px
+  rules upstream draws between the menu, translations, appearance and
+  social units were missing except before the social links — fixed
+  2026-10-08 and pinned by the `appearance divider @1280` golden.
 - **`.vp-doc` is `position:relative` upstream only after hydration**
   (Vue injects an inline style at runtime; the SSG HTML has none). No
   geometry impact; not reproduced by design.

@@ -136,6 +136,11 @@ const CASES = [
   // navbar appearance switch: hidden <768 like upstream .VPNavBarAppearance
   ['appearance @767', '/guide/what-is-vitepress/', 767, `(() => { const e = document.getElementById('VPSwitchAppearance'); return e && !!e.offsetParent ? 'visible' : 'hidden'; })()`],
   ['appearance @768', '/guide/what-is-vitepress/', 768, `(() => { const e = document.getElementById('VPSwitchAppearance'); return e && !!e.offsetParent ? 'visible' : 'hidden'; })()`],
+  // the 1px rule upstream's VPNavBar draws before the switch when the menu
+  // precedes it (8px | rule | 16px): menu-end-to-switch gap + the rule.
+  // Golden measured on the pinned build with its locale flyout and
+  // Ask-AI button removed (the demo config has neither)
+  ['appearance divider @1280', '/guide/what-is-vitepress/', 1280, `(() => { const sw = document.getElementById('VPSwitchAppearance'); const menu = document.querySelector('#VPNavBar nav'); const cs = getComputedStyle(sw.parentElement, '::before'); return [Math.round(sw.getBoundingClientRect().left - menu.getBoundingClientRect().right), cs.width, cs.marginLeft, cs.marginRight].join(','); })()`],
   // code lines are inline (line-height parity): tallest pre is 24 lines
   ['code max-pre h @768', '/guide/markdown/', 768, `Math.max(...[...document.querySelectorAll('.vp-doc pre')].map(p => Math.round(p.getBoundingClientRect().height))).toString()`],
   // highlighted lines full-bleed: as wide as their pre

@@ -22,6 +22,7 @@
   "outline fw @1280": "400",
   "appearance @767": "hidden",
   "appearance @768": "visible",
+  "appearance divider @1280": "25,1px,8px,16px",
   "code max-pre h @768": "611",
   "code hl w @768": "688",
   "include hl lines @768": "3",
