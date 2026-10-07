@@ -68,7 +68,7 @@ pub fn search_modal<'a>(
                 <ul class=(results_cls) id="VPSearchResults" x-ref="results" x-html=(r#"resultsHtml"#) @click="pick($event)" :class=("(results.length) ? '' : 'flex-1'") role="listbox" aria-labelledby="localsearch-label"></ul>
 
                 <div class="text-[0.8rem] opacity-75 flex flex-wrap gap-4 leading-[1.09375] max-md:hidden" id="VPSearchShortcuts">
-                    <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"←"</kbd><kbd class=(kbd_cls)>"→"</kbd>(navigate_text.clone())</span>
+                    <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"↑"</kbd><kbd class=(kbd_cls)>"↓"</kbd>(navigate_text.clone())</span>
                     <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"Enter"</kbd>(select_text.clone())</span>
                     <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"Esc"</kbd>(close_text.clone())</span>
                 </div>

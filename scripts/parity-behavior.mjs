@@ -138,6 +138,39 @@ try {
     await ctx.close();
   }
 
+  // ---- search keyboard flow (upstream VPLocalSearchBox) -------------------
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(`${base}/guide/what-is-vitepress/`, { waitUntil: 'networkidle' });
+    await page.keyboard.press('Control+k');
+    await page.locator('#VPLocalSearchBox input').fill('frontmatter');
+    const results = page.locator('#VPLocalSearchBox li.result');
+    await eventually(results.first().waitFor(POLL));
+    const selectedIndex = () => results.evaluateAll((l) => l.findIndex((x) => x.classList.contains('selected')));
+    const count = await results.count();
+    // the top result is pre-selected and visibly marked, so typing then
+    // Enter opens it
+    ok('the top result starts selected', (await selectedIndex()) === 0, String(await selectedIndex()));
+    await page.keyboard.press('ArrowDown');
+    ok('ArrowDown marks the next result', await eventually(page.waitForFunction(() => document.querySelectorAll('#VPLocalSearchBox li.result')[1]?.classList.contains('selected'), null, POLL)));
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('ArrowUp');
+    ok('ArrowUp wraps from the first to the last', await eventually(page.waitForFunction((n) => document.querySelectorAll('#VPLocalSearchBox li.result')[n - 1]?.classList.contains('selected'), count, POLL)));
+    // the footer names the keys that move the selection
+    const hint = await page.locator('#VPSearchShortcuts').innerText();
+    ok('the footer hints ↑ ↓ for navigation', hint.includes('↑') && hint.includes('↓') && !hint.includes('←'), hint.replace(/\s+/g, ' '));
+    // Enter right after typing opens the top result
+    await page.locator('#VPLocalSearchBox input').fill('');
+    await page.locator('#VPLocalSearchBox input').fill('frontmatter');
+    await eventually(page.waitForFunction(() => document.querySelector('#VPLocalSearchBox li.result')?.classList.contains('selected'), null, POLL));
+    const top = await results.first().getAttribute('data-url');
+    await page.keyboard.press('Enter');
+    await eventually(page.waitForURL((u) => u.pathname === top, POLL));
+    ok('Enter after typing opens the top result', new URL(page.url()).pathname === top, `${page.url()} (top ${top})`);
+    await ctx.close();
+  }
+
   // ---- appearance toggle -----------------------------------------------
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });

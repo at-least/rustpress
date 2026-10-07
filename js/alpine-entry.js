@@ -240,6 +240,8 @@ Alpine.data("searchModal", () => ({
       .then((docs) => {
         this.error = false;
         this.results = this.score(docs, q);
+        // upstream pre-selects the top result: typing then Enter opens it
+        this.selected = this.results.length ? 0 : -1;
       })
       .catch(() => {
         this.error = true;
@@ -329,7 +331,7 @@ Alpine.data("searchModal", () => ({
     }
     const tokens = this.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
     return this.results
-      .map((r) => {
+      .map((r, i) => {
         const path = (r.entry.url || "").replace(/^https?:\/\/[^/]+/, "").split("/").filter(Boolean);
         const chevron =
           '<svg class="inline-block size-[0.875rem] opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><path d="m9 18l6-6l-6-6"/></svg>';
@@ -342,7 +344,7 @@ Alpine.data("searchModal", () => ({
         const excerpt =
           '<p class="excerpt">' + this.mark(this.excerpt(r.entry.body || "", tokens), tokens) + "</p>";
         return (
-          '<li class="result" role="option" data-url="' + this.esc(r.entry.url) + '"><div>' + titles + excerpt + "</div></li>"
+          '<li class="result' + (i === this.selected ? " selected" : "") + '" role="option" aria-selected="' + (i === this.selected) + '" data-url="' + this.esc(r.entry.url) + '"><div>' + titles + excerpt + "</div></li>"
         );
       })
       .join("");
@@ -351,9 +353,13 @@ Alpine.data("searchModal", () => ({
   move(delta) {
     const count = this.results.length;
     if (!count) return;
-    this.selected = Math.max(0, Math.min(this.selected + delta, count - 1));
-    const el = this.$refs.results.querySelectorAll(".result")[this.selected];
-    if (el) el.scrollIntoView({ block: "nearest" });
+    // wraps at both ends, like upstream
+    this.selected = (this.selected + delta + count) % count;
+    // x-html re-renders the list for the new selection first
+    this.$nextTick(() => {
+      const el = this.$refs.results.querySelector(".result.selected");
+      if (el) el.scrollIntoView({ block: "nearest" });
+    });
   },
 
   enter() {
