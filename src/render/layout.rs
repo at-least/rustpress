@@ -30,6 +30,8 @@ pub struct Shell<'a> {
     /// The navbar title for this page (locale-aware; `None` = hidden
     /// via `siteTitle: false`).
     pub site_title: Option<String>,
+    /// The search index this page's modal fetches (its locale's own).
+    pub search_index_url: String,
     /// Effective outline for this page (site setting ∧ front matter):
     /// gates the aside outline and the local-nav dropdown.
     pub outline: Option<(u8, u8)>,
@@ -48,7 +50,7 @@ pub fn layout<'a>(
     let syntax_css = site.url("syntax.css");
     let main_css = site.url("vitepress.css");
     let app_js = site.url("js/app.js");
-    let search_index_url = site.url("search-docs.json");
+    let search_index_url = shell.search_index_url.clone();
     let is_home = shell.is_home;
     let has_sidebar = shell.has_sidebar;
     let current_url = shell.current_url.to_string();

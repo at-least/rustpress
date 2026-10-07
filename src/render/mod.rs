@@ -230,6 +230,7 @@ impl Site {
             lang: self.locale_lang(page),
             translations: self.translations_for(page),
             site_title: self.navbar_site_title(page),
+            search_index_url: self.search_index_url(page),
             outline,
         };
 
@@ -324,8 +325,16 @@ impl Site {
     /// disposable — `build` stages the swap).
     fn build_into(&self, site_dir: &Path, out_dir: &Path) -> Result<BuildStats, BuildError> {
         let mut stats = BuildStats::default();
-        let mut search_docs: Vec<serde_json::Value> = Vec::new();
+        // one index per locale, keyed by every locale that has pages (a
+        // locale whose pages all opt out still gets an empty file) plus
+        // root, which the 404 page searches: no search button fetches a
+        // missing index
         let search_enabled = self.config.search.is_some();
+        let mut search_docs: std::collections::BTreeMap<&str, Vec<serde_json::Value>> =
+            std::collections::BTreeMap::new();
+        if search_enabled {
+            search_docs.insert("root", Vec::new());
+        }
         let mut dead_links: Vec<(String, Vec<String>)> = Vec::new();
         for page in &self.content.pages {
             let rendered =
@@ -342,6 +351,9 @@ impl Site {
             if !dead.is_empty() {
                 dead_links.push((page.url.clone(), dead));
             }
+            if search_enabled {
+                search_docs.entry(page.locale.as_str()).or_default();
+            }
             if search_enabled && page.front.search != Some(false) {
                 let title = if page.is_home() {
                     self.config
@@ -351,11 +363,14 @@ impl Site {
                 } else {
                     page.title.clone()
                 };
-                search_docs.push(serde_json::json!({
-                    "url": crate::render::escape::percent_encode(&self.url(&page.url), true),
-                    "title": title,
-                    "body": plain_text(&rendered.html),
-                }));
+                search_docs
+                    .entry(page.locale.as_str())
+                    .or_default()
+                    .push(serde_json::json!({
+                        "url": crate::render::escape::percent_encode(&self.url(&page.url), true),
+                        "title": title,
+                        "body": plain_text(&rendered.html),
+                    }));
             }
             let html = self.render_page_with(page, rendered)?;
             let file = out_dir
@@ -399,9 +414,9 @@ impl Site {
             &out_dir.join("syntax.css"),
             self.engine.syntax_css().as_bytes(),
         )?;
-        if search_enabled {
-            let json = serde_json::to_string(&search_docs).expect("serializable docs");
-            write_file(&out_dir.join("search-docs.json"), json.as_bytes())?;
+        for (locale, docs) in &search_docs {
+            let json = serde_json::to_string(docs).expect("serializable docs");
+            write_file(&out_dir.join(search_index_path(locale)), json.as_bytes())?;
         }
         // A custom theme is copied in under themes/ (after the embedded
         // assets and static copies, so the selection wins); a bundled
@@ -452,6 +467,11 @@ impl Site {
             IgnoreDeadLinks::IgnoreAll => {}
         }
         Ok(stats)
+    }
+
+    /// The search index URL a page's modal fetches (its own locale's).
+    pub fn search_index_url(&self, page: &Page) -> String {
+        self.url(&search_index_path(&page.locale))
     }
 
     /// Language switcher entries for a page: (label, href, is_current).
@@ -624,6 +644,7 @@ impl Site {
                 Some(crate::config::SiteTitleSetting::Hide(_)) => None,
                 None => self.locale_title("root"),
             },
+            search_index_url: self.url(&search_index_path("root")),
             outline: None,
         };
         let home = self.url("/");
@@ -1211,4 +1232,16 @@ fn copy_dir(from: &Path, to: &Path) -> Result<(), BuildError> {
         }
     }
     Ok(())
+}
+
+/// Site-root-relative path of a locale's search index. Upstream's local
+/// search builds one index per locale, so a page searches only its own
+/// language: the root locale keeps `search-docs.json`, every other
+/// locale gets one under its own prefix.
+fn search_index_path(locale: &str) -> String {
+    if locale == "root" {
+        "search-docs.json".to_string()
+    } else {
+        format!("{locale}/search-docs.json")
+    }
 }

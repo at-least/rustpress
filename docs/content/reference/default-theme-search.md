@@ -18,7 +18,7 @@ provider = "local"
 
 ### How it works
 
-- The build writes `search-docs.json` to the output root: one entry per page with its URL, title and the plain text of its content.
+- The build writes `search-docs.json` to the output root: one entry per page with its URL, title and the plain text of its content. On a [multi-language site](../guide/i18n) each locale gets its own index (`zh/search-docs.json`, …), and a page searches only its own locale's pages.
 - The navbar shows a search button; the modal opens on click, with <kbd>Ctrl</kbd>+<kbd>K</kbd> / <kbd>⌘</kbd>+<kbd>K</kbd>, or with <kbd>/</kbd> while no input field is focused. <kbd>Esc</kbd> closes it.
 - Results are scored client-side per whitespace-separated query token: an exact title match scores highest, then title hits, then occurrences in the body (capped per token), and the top 20 pages are listed.
 - Search runs on page titles and body text; there is no per-heading (section) result list.

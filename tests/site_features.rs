@@ -125,6 +125,51 @@ fn locale_title_used_in_title_and_navbar() {
 }
 
 #[test]
+fn search_index_is_per_locale() {
+    // upstream's local search builds one index per locale: a zh page
+    // must not search (or fetch) the English pages, and vice versa
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[search]\nprovider = \"local\"\n\n[locales.root]\nlabel = \"English\"\n\n[locales.zh]\nlabel = \"中文\"\n\n[locales.ja]\nlabel = \"日本語\"\n",
+        &[
+            ("guide/a.md", "# A\n"),
+            ("zh/guide/a.md", "# 甲\n"),
+            // a locale whose only page opts out still gets an (empty)
+            // index, so its search button never fetches a missing file
+            ("ja/guide/a.md", "---\nsearch: false\n---\n\n# あ\n"),
+        ],
+    );
+    assert_eq!(urls_in(&out, "search-docs.json"), ["/guide/a/"]);
+    assert_eq!(urls_in(&out, "zh/search-docs.json"), ["/zh/guide/a/"]);
+    assert!(urls_in(&out, "ja/search-docs.json").is_empty());
+    // each page's modal fetches its own locale's index
+    assert!(page(&out, "/guide/a/").contains("data-index-url=\"/search-docs.json\""));
+    assert!(page(&out, "/zh/guide/a/").contains("data-index-url=\"/zh/search-docs.json\""));
+    assert!(page(&out, "/ja/guide/a/").contains("data-index-url=\"/ja/search-docs.json\""));
+
+    // the 404 page searches the root index, which therefore exists even
+    // when every page sits under a locale prefix
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[search]\nprovider = \"local\"\n\n[locales.zh]\nlabel = \"中文\"\n",
+        &[("zh/guide/a.md", "# 甲\n")],
+    );
+    assert!(urls_in(&out, "search-docs.json").is_empty());
+    assert!(
+        std::fs::read_to_string(out.path().join("404.html"))
+            .unwrap()
+            .contains("data-index-url=\"/search-docs.json\"")
+    );
+}
+
+fn urls_in(out: &common::TempDir, rel: &str) -> Vec<String> {
+    let json =
+        std::fs::read_to_string(out.path().join(rel)).unwrap_or_else(|e| panic!("read {rel}: {e}"));
+    let docs: Vec<serde_json::Value> = serde_json::from_str(&json).unwrap();
+    docs.iter()
+        .map(|d| d["url"].as_str().unwrap().to_string())
+        .collect()
+}
+
+#[test]
 fn site_title_setting_text_and_hide() {
     let (_, out) = build_site(
         "title = \"Base\"\nsiteTitle = \"Custom Brand\"\n",

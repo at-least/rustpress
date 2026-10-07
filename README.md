@@ -12,7 +12,7 @@ This repo started life as the VitePress default theme ported to Zola. Zola's con
 - **Renderer = Rust**: comrak (GFM, alerts, footnotes) behind a fence-aware preprocessor that expands `:::` containers into HTML blocks (the markdown-it-container trick — inner markdown still parses in the same comrak pass), rewrites ```` ```js{1,3-4} [npm] ```` info strings, inlines `<<< @/path` includes, and rewrites `<Badge>`. Heading anchors reproduce VitePress's exact ids (the mdit-vue `slugify` over text/code tokens, so deep links to vitepress.dev anchors resolve the same), headings carry upstream's permalink affordance (`tabindex`, hover `#`, `Permalink to “…”`). Syntax highlighting is tree-sitter (grammars compiled in) with capture-name classes, themes authored in Helix TOML format, producing a `syntax.css` scoped `html.dark` inside `@layer syntax`.
 - **Markup = hypertext `rsx!`** (see `src/render/`): the whole VitePress default theme — navbar, mobile nav screen, auto sidebar, local nav, right-hand outline, doc footer with pager/edit link, home hero/features, search modal, 404.
 - **Interactivity = Alpine.js 3.17** (bundled with esbuild): scrollspy, sidebar drawer and carets, flyouts, appearance toggle (the anti-FOUC script stays vanilla in `<head>`; Alpine can't run pre-paint), code-group tabs, copy buttons, and the local search modal (Ctrl/Cmd+K, `/`).
-- **Search** = a `search-docs.json` (url/title/body per page) built by Rust, scored client-side (title-exact +20, title hits +5, body occurrences capped at +20/token, top 20).
+- **Search** = a `search-docs.json` per locale (url/title/body per page) built by Rust, scored client-side (title-exact +20, title hits +5, body occurrences capped at +20/token, top 20).
 
 ## Layout
 
