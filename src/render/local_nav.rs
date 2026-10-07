@@ -19,7 +19,6 @@ pub fn local_nav<'a>(
         return String::new();
     }
     let outline_label = site.config.outline.label();
-    let root_url = site.url("/");
     let return_label = site.config.return_to_top_label.clone();
     let menu_label = site.config.sidebar_menu_label.clone();
     let nav_cls = format!(
@@ -45,9 +44,11 @@ pub fn local_nav<'a>(
                         <span>(outline_label.clone())</span>
                         (icon("chevron-right", "inline-block align-middle ml-[0.125rem] size-[0.875rem] transition-transform duration-[250ms] group-[.open]/drop:rotate-90 lg:size-[1rem]"))
                     </button>
-                    <div class="absolute top-10 right-4 left-4 grid gap-px border border-border rounded-lg bg-gutter max-h-[calc(var(--vp-vh,100vh)-5.375rem)] overflow-x-hidden overflow-y-auto overscroll-contain shadow-3 lg:right-auto lg:left-[calc(var(--vp-sidebar-width)+2rem)] lg:w-80" id="VPOutlineDropdownItems" x-cloak x-show="open" "x-collapse"="">
+                    // picking a heading folds the dropdown away (upstream
+                    // onItemClick); "Return to top" scrolls this page up
+                    <div class="absolute top-10 right-4 left-4 grid gap-px border border-border rounded-lg bg-gutter max-h-[calc(var(--vp-vh,100vh)-5.375rem)] overflow-x-hidden overflow-y-auto overscroll-contain shadow-3 lg:right-auto lg:left-[calc(var(--vp-sidebar-width)+2rem)] lg:w-80" id="VPOutlineDropdownItems" x-cloak x-show="open" "x-collapse"="" @click="$event.target.classList.contains('outline-link') && (open = false)">
                         <div class="bg-bg-soft">
-                            <a class="block px-4 leading-[3.4285714] text-[0.875rem] font-medium text-brand-1" href=(root_url)>(return_label)</a>
+                            <a class="block px-4 leading-[3.4285714] text-[0.875rem] font-medium text-brand-1" href="#" @click="open = false; window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })">(return_label)</a>
                         </div>
                         <div class="py-2 bg-bg-soft">
                             (outline_list(headings, false))

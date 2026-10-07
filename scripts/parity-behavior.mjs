@@ -210,6 +210,41 @@ try {
     await ctx.close();
   }
 
+  // ---- mobile outline dropdown ------------------------------------------
+  {
+    const ctx = await browser.newContext({ viewport: { width: 375, height: 800 } });
+    const page = await ctx.newPage();
+    await page.goto(`${base}/guide/routing/`, { waitUntil: 'networkidle' });
+    const items = page.locator('#VPOutlineDropdownItems');
+    const tapAt = async (loc) => {
+      const b = await loc.boundingBox();
+      await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+    };
+    // picking a heading jumps there and folds the dropdown away (upstream
+    // onItemClick), instead of leaving it over the content
+    await tapAt(page.locator('#VPOutlineDropdownButton'));
+    await page.waitForTimeout(400);
+    const heading = items.locator('a.outline-link').nth(1);
+    const hash = await heading.getAttribute('href');
+    await tapAt(heading);
+    await page.waitForTimeout(600);
+    ok('picking a heading navigates to it', new URL(page.url()).hash === hash, page.url());
+    ok('picking a heading closes the dropdown', !(await items.isVisible()));
+    // "Return to top" scrolls this page up — it used to link to the site
+    // root and leave the page (fresh load: independent of the case above)
+    await page.goto(`${base}/guide/routing/`, { waitUntil: 'networkidle' });
+    await page.evaluate(() => window.scrollTo(0, 1500));
+    await page.waitForTimeout(200);
+    await tapAt(page.locator('#VPOutlineDropdownButton'));
+    await page.waitForTimeout(400);
+    await tapAt(items.locator('a:not(.outline-link)').first());
+    await page.waitForTimeout(1200);
+    ok('"Return to top" stays on the page', new URL(page.url()).pathname === '/guide/routing/', page.url());
+    ok('"Return to top" scrolls to the top', (await page.evaluate(() => window.scrollY)) === 0);
+    ok('"Return to top" closes the dropdown', !(await items.isVisible()));
+    await ctx.close();
+  }
+
   // ---- scroll lock keeps the scrollbar gutter ------------------------------
   {
     // classic scrollbars, as on Windows/Linux desktops (headless hides
