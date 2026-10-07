@@ -57,6 +57,8 @@ rustpress serve [site]
 
 The server binds to `127.0.0.1` only. It watches the whole site directory (except `public/`) and rebuilds on any change; every served HTML page carries a small script that subscribes to `/@rustpress/livereload` and reloads the page after a rebuild. A build error is printed to the terminal and the previous output keeps being served.
 
+The site is served under its [`base`](./site-config#base), like a deployment: with `base = "/docs/"`, `public/index.html` is `/docs/`. A request for `/` redirects there; any other path outside the base gets a 404 naming the based URL. Editing `base` while the server runs moves the served tree on the next rebuild.
+
 There is no separate `preview` command: `serve` serves the same production build that `build` writes.
 
 ## `rustpress parity`

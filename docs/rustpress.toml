@@ -34,7 +34,7 @@ math = true
 
 [sitemap]
 # Origin only: page URLs already carry `base`. For the GitHub Pages project
-# site set `base = "/rustpress/"` (the dev server does not serve under a base yet).
+# site set `base = "/rustpress/"` (`serve` then answers under /rustpress/).
 hostname = "https://at-least.github.io"
 
 [[head]]

@@ -313,7 +313,7 @@ theme is customized only via CSS variables (`theme` → a bundled name or `.css`
 | feature | status | ours | note |
 |---|---|---|---|
 | `build [root]` | implemented | `src/main.rs:101` | `rustpress build <site>`; no `--base`/`--outDir` flags |
-| `dev [root]` | implemented | `src/serve.rs:24` | `rustpress serve`: rebuild-on-change + livereload SSE |
+| `dev [root]` | implemented | `src/serve.rs:36` | `rustpress serve`: rebuild-on-change + livereload SSE, served under `base` |
 | `preview [root]` | implemented | `src/serve.rs` | same server serves the built `public/` |
 | `init` wizard | missing | — | no scaffold command |
 

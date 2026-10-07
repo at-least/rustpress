@@ -19,6 +19,18 @@ use crate::render::Site;
 /// Everything the server task needs.
 struct ServeState {
     root: PathBuf,
+    /// The site's `base`, refreshed after every rebuild so a config edit
+    /// takes effect without restarting the server.
+    base: std::sync::RwLock<String>,
+}
+
+impl ServeState {
+    fn new(root: PathBuf, base: String) -> ServeState {
+        ServeState {
+            root,
+            base: std::sync::RwLock::new(base),
+        }
+    }
 }
 
 pub async fn run(site_dir: PathBuf, port: u16) -> anyhow::Result<()> {
@@ -28,13 +40,13 @@ pub async fn run(site_dir: PathBuf, port: u16) -> anyhow::Result<()> {
         .canonicalize()
         .with_context(|| format!("cannot resolve site dir {}", site_dir.display()))?;
     // initial build (fail hard: a broken site should not serve stale output)
-    rebuild(&site_dir)?;
+    let base = rebuild(&site_dir)?;
     let root = site_dir.join("public");
 
-    let state = Arc::new(ServeState { root: root.clone() });
+    let state = Arc::new(ServeState::new(root.clone(), base.clone()));
 
     // watcher: any change under the site dir (minus public/) rebuilds
-    start_watcher(site_dir.clone())?;
+    start_watcher(site_dir.clone(), Arc::clone(&state))?;
 
     let app = Router::new()
         .route("/@rustpress/livereload", get(livereload))
@@ -48,22 +60,24 @@ pub async fn run(site_dir: PathBuf, port: u16) -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(addr)
         .await
         .with_context(|| format!("binding {addr}"))?;
-    println!("rustpress: serving {} on http://{addr}", root.display());
+    println!(
+        "rustpress: serving {} on http://{addr}{base}",
+        root.display()
+    );
 
     axum::serve(listener, app).await.context("server")
 }
 
-/// Rebuild the site; returns whether the build changed anything on disk
-/// (best-effort mtime snapshot comparison is unnecessary — every build
-/// bumps the generation, and the browser reload is cheap).
-fn rebuild(site_dir: &Path) -> anyhow::Result<()> {
+/// Rebuild the site into `public/`; returns the config's `base`, the
+/// URL prefix the server maps onto `public/`.
+fn rebuild(site_dir: &Path) -> anyhow::Result<String> {
     let site = Site::load(site_dir).context("loading site")?;
     let out = site_dir.join("public");
     site.build(site_dir, &out)?;
-    Ok(())
+    Ok(site.config.base)
 }
 
-fn start_watcher(site_dir: PathBuf) -> anyhow::Result<()> {
+fn start_watcher(site_dir: PathBuf, state: Arc<ServeState>) -> anyhow::Result<()> {
     use notify::Watcher as _;
     let (tx, rx) = std::sync::mpsc::channel();
     // created on this thread so a failure returns Err from `serve` — a
@@ -97,9 +111,12 @@ fn start_watcher(site_dir: PathBuf) -> anyhow::Result<()> {
             // that write a temp file and rename it produce ~8), and each
             // rebuild also reloads every open browser tab
             while rx.recv_timeout(DEBOUNCE).is_ok() {}
-            if let Err(e) = rebuild(&site_dir) {
-                eprintln!("rustpress: rebuild failed: {e:#}");
-                continue;
+            match rebuild(&site_dir) {
+                Ok(base) => *state.base.write().unwrap() = base,
+                Err(e) => {
+                    eprintln!("rustpress: rebuild failed: {e:#}");
+                    continue;
+                }
             }
             println!("rustpress: rebuilt");
             // Signal readers via a shared generation counter — the SSE
@@ -159,13 +176,23 @@ async fn livereload()
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
-/// Serves files under public/. Traversal: the path is percent-decoded
-/// once, then segment-split, and any `..` segment (or a backslash, a
-/// path separator on Windows) is rejected before any filesystem access;
-/// symlinks inside public/ are trusted (127.0.0.1 dev server serving its
-/// own build output only).
+/// Serves files under public/, mounted at the site's `base`. Traversal:
+/// the path is percent-decoded once, then segment-split, and any `..`
+/// segment (or a backslash, a path separator on Windows) is rejected
+/// before any filesystem access; symlinks inside public/ are trusted
+/// (127.0.0.1 dev server serving its own build output only).
 async fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
-    let path = uri.path();
+    let base = state.base.read().unwrap().clone();
+    // `base` starts and ends with '/' (config validation), so dropping
+    // its trailing slash leaves the prefix every served path starts with
+    let mount = base.trim_end_matches('/');
+    let Some(path) = uri
+        .path()
+        .strip_prefix(mount)
+        .filter(|rest| rest.starts_with('/'))
+    else {
+        return outside_base(&base, uri);
+    };
     let path = match path {
         "/" => "/index.html",
         p if p.ends_with('/') => &format!("{p}index.html"),
@@ -193,7 +220,7 @@ async fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
         // VitePress's dev server sends a slash-less directory URL to the
         // canonical trailing-slash form instead of a bare 404
         if meta.is_some_and(|m| m.is_dir()) {
-            let mut location = path.to_string();
+            let mut location = format!("{mount}{path}");
             if !location.ends_with('/') {
                 location.push('/');
             }
@@ -227,6 +254,28 @@ async fn serve_file(state: &ServeState, uri: &axum::http::Uri) -> Response {
         }
         Err(_) => plain(StatusCode::NOT_FOUND, "not found"),
     }
+}
+
+/// A request outside a non-root `base`, answered like Vite's base
+/// middleware (what `vitepress dev` runs): the bare origin redirects
+/// into the base, anything else is a 404 naming the based URL.
+fn outside_base(base: &str, uri: &axum::http::Uri) -> Response {
+    let path = uri.path();
+    let query = uri.query().map(|q| format!("?{q}")).unwrap_or_default();
+    if path == "/" || path == "/index.html" {
+        return redirect(&format!("{base}{query}"));
+    }
+    let suggestion = if format!("{path}/") == base {
+        format!("{base}{query}")
+    } else {
+        format!("{}{path}{query}", base.trim_end_matches('/'))
+    };
+    plain(
+        StatusCode::NOT_FOUND,
+        &format!(
+            "The server is configured with a public base URL of {base} - did you mean to visit {suggestion} instead?"
+        ),
+    )
 }
 
 fn inject_livereload(body: Vec<u8>) -> Vec<u8> {
@@ -341,9 +390,7 @@ mod tests {
     }
 
     async fn status_of(root: &Path, path: &'static str) -> StatusCode {
-        let state = ServeState {
-            root: root.to_path_buf(),
-        };
+        let state = ServeState::new(root.to_path_buf(), "/".into());
         serve_file(&state, &Uri::from_static(path)).await.status()
     }
 
@@ -381,9 +428,7 @@ mod tests {
 
         // Content-Type follows the DECODED path: /index%2Ehtml is
         // index.html and must be served as HTML, not octet-stream
-        let state = ServeState {
-            root: public.clone(),
-        };
+        let state = ServeState::new(public.clone(), "/".into());
         let resp = serve_file(&state, &Uri::from_static("/index%2Ehtml")).await;
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(
@@ -402,7 +447,11 @@ mod tests {
     fn watcher_failures_return_err() {
         // startup must fail loudly instead of panicking inside the
         // watcher thread while the server keeps running without reloads
-        let err = start_watcher(std::env::temp_dir().join("rp-no-such-dir-for-watcher"));
+        let state = Arc::new(ServeState::new(PathBuf::new(), "/".into()));
+        let err = start_watcher(
+            std::env::temp_dir().join("rp-no-such-dir-for-watcher"),
+            state,
+        );
         assert!(err.is_err(), "watching a nonexistent dir must return Err");
     }
 
@@ -443,9 +492,7 @@ mod tests {
         let dir = temp_site();
         std::fs::write(dir.join("public/sub/index.html"), "<html></html>").unwrap();
         let public = dir.join("public");
-        let state = ServeState {
-            root: public.clone(),
-        };
+        let state = ServeState::new(public.clone(), "/".into());
         let resp = serve_file(&state, &Uri::from_static("/sub")).await;
         // temporary: a cached 301 would outlive the next rebuild
         assert_eq!(resp.status(), StatusCode::FOUND);
@@ -460,6 +507,84 @@ mod tests {
             status_of(&public, "/no-such-dir").await,
             StatusCode::NOT_FOUND
         );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    fn location(resp: &Response) -> Option<&str> {
+        resp.headers()
+            .get(header::LOCATION)
+            .and_then(|v| v.to_str().ok())
+    }
+
+    async fn body_text(resp: Response) -> String {
+        let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        String::from_utf8(bytes.to_vec()).unwrap()
+    }
+
+    #[tokio::test]
+    async fn serves_the_build_under_its_base() {
+        // a `base = "/docs/"` build links /docs/vitepress.css and
+        // /docs/guide/…: the server answers under the base the way
+        // `vitepress dev` (Vite's base middleware) does
+        let dir = temp_site();
+        std::fs::write(dir.join("public/404.html"), "<html>custom 404</html>").unwrap();
+        let state = ServeState::new(dir.join("public"), "/docs/".into());
+        let get = |p: &'static str| {
+            let state = &state;
+            async move { serve_file(state, &Uri::from_static(p)).await }
+        };
+
+        assert_eq!(get("/docs/").await.status(), StatusCode::OK);
+        assert_eq!(get("/docs/data.txt").await.status(), StatusCode::OK);
+        assert_eq!(get("/docs/sub/page.html").await.status(), StatusCode::OK);
+        // a miss inside the base gets the site's own 404 page
+        let resp = get("/docs/missing/").await;
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+        assert_eq!(body_text(resp).await, "<html>custom 404</html>");
+        // the slash-less directory redirect keeps the base
+        let resp = get("/docs/sub").await;
+        assert_eq!(resp.status(), StatusCode::FOUND);
+        assert_eq!(location(&resp), Some("/docs/sub/"));
+        // traversal is still rejected after the base is stripped
+        assert_eq!(
+            get("/docs/../rustpress.toml").await.status(),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            get("/docs/%2e%2e/rustpress.toml").await.status(),
+            StatusCode::NOT_FOUND
+        );
+
+        // the bare origin redirects into the base, query intact
+        let resp = get("/?q=1").await;
+        assert_eq!(resp.status(), StatusCode::FOUND);
+        assert_eq!(location(&resp), Some("/docs/?q=1"));
+        let resp = get("/index.html").await;
+        assert_eq!(resp.status(), StatusCode::FOUND);
+        assert_eq!(location(&resp), Some("/docs/"));
+        // anything else outside the base is a 404 naming the based URL,
+        // never a file from the root of public/
+        let resp = get("/data.txt?x=1").await;
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+        assert!(
+            body_text(resp)
+                .await
+                .contains("did you mean to visit /docs/data.txt?x=1 instead?")
+        );
+        let resp = get("/docs").await;
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+        assert!(
+            body_text(resp)
+                .await
+                .contains("did you mean to visit /docs/ instead?")
+        );
+
+        // a rebuild that changes `base` moves the served tree with it
+        *state.base.write().unwrap() = "/v2/".into();
+        assert_eq!(get("/v2/data.txt").await.status(), StatusCode::OK);
+        assert_eq!(get("/docs/data.txt").await.status(), StatusCode::NOT_FOUND);
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

@@ -63,7 +63,7 @@ Root language of the site (`en`, `zh-TW`, …) — the `<html lang>` attribute.
 - Type: `string`
 - Default: `"/"`
 
-Base URL path the site is deployed under. Must start and end with `/`.
+Base URL path the site is deployed under. Must start and end with `/`. [`rustpress serve`](./cli#rustpress-serve) serves the build under it too.
 
 ### head
 
