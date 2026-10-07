@@ -141,6 +141,12 @@ const CASES = [
   // Golden measured on the pinned build with its locale flyout and
   // Ask-AI button removed (the demo config has neither)
   ['appearance divider @1280', '/guide/what-is-vitepress/', 1280, `(() => { const sw = document.getElementById('VPSwitchAppearance'); const menu = document.querySelector('#VPNavBar nav'); const cs = getComputedStyle(sw.parentElement, '::before'); return [Math.round(sw.getBoundingClientRect().left - menu.getBoundingClientRect().right), cs.width, cs.marginLeft, cs.marginRight].join(','); })()`],
+  // nav screen (hamburger opened in the probe): upstream's appearance
+  // row is a labeled row on the soft surface (VPNavScreenAppearance), and
+  // its social links center (VPSocialLinks) with rel="me noopener" — the
+  // `me` is what Mastodon-style profile verification looks for
+  ['screen appearance row @375', '/guide/what-is-vitepress/', 375, `(async () => { document.getElementById('VPNavBarHamburger').click(); await new Promise((r) => setTimeout(r, 400)); const row = document.getElementById('VPSwitchAppearanceScreen').parentElement; const cs = getComputedStyle(row); const l = getComputedStyle(row.firstElementChild); return [cs.justifyContent, cs.padding, cs.borderRadius, cs.backgroundColor, l.fontSize, l.color, l.lineHeight].join('|'); })()`],
+  ['screen social @375', '/guide/what-is-vitepress/', 375, `(async () => { document.getElementById('VPNavBarHamburger').click(); await new Promise((r) => setTimeout(r, 400)); const c = document.getElementById('VPSwitchAppearanceScreen').parentElement.parentElement.getBoundingClientRect(); const a = document.querySelector('#VPNavScreen a[aria-label="github"]'); const g = a.getBoundingClientRect(); return Math.round(g.left + g.width / 2 - (c.left + c.width / 2)) + '|' + a.getAttribute('rel'); })()`],
   // code lines are inline (line-height parity): tallest pre is 24 lines
   ['code max-pre h @768', '/guide/markdown/', 768, `Math.max(...[...document.querySelectorAll('.vp-doc pre')].map(p => Math.round(p.getBoundingClientRect().height))).toString()`],
   // highlighted lines full-bleed: as wide as their pre

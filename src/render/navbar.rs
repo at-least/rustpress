@@ -196,7 +196,7 @@ pub fn navbar<'a>(
                                 <div class=(format!("hidden md:flex md:items-center -mr-2{social_rule}"))>
                                     <div class="flex">
                                         @for s in &socials {
-                                            <a class="flex justify-center items-center w-9 h-9 text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms]" href=(s.link.clone()) aria-label=(s.aria_label.clone().unwrap_or_else(|| social_label(&s.icon))) target=(s.target.clone().unwrap_or_else(|| "_blank".into())) rel="noopener">
+                                            <a class="flex justify-center items-center w-9 h-9 text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms]" href=(s.link.clone()) aria-label=(s.aria_label.clone().unwrap_or_else(|| social_label(&s.icon))) target=(s.target.clone().unwrap_or_else(|| "_blank".into())) rel="me noopener">
                                                 (social_link_icon(&s.icon))
                                             </a>
                                         }
@@ -422,18 +422,20 @@ pub fn nav_screen<'a>(
                     </div>
                 }
 
+                // upstream VPNavScreenAppearance: a labeled row on the soft
+                // surface, the label left and the switch right
                 @if toggleable {
-                    <div class=(format!("appearance flex justify-center items-center pt-3{}", if has_nav || translations.is_some() { " mt-4" } else { "" }))>
-                        <span class="label mr-3 text-[0.875rem] font-medium text-text-1">(dark_label)</span>
+                    <div class=(format!("appearance flex justify-between items-center rounded-lg py-3 pr-[0.875rem] pl-4 bg-bg-soft{}", if has_nav || translations.is_some() { " mt-6" } else { "" }))>
+                        <p class="label leading-[2] text-[0.75rem] font-medium text-text-2">(dark_label)</p>
                         (Raw::dangerously_create(appearance_switch("VPSwitchAppearanceScreen", &dark_switch_title, &light_switch_title)))
                     </div>
                 }
 
                 @if !socials.is_empty() {
                     <div class="social-links mt-4">
-                        <div class="flex">
+                        <div class="flex justify-center">
                             @for s in &socials {
-                                <a class="flex justify-center items-center w-9 h-9 text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms]" href=(s.link.clone()) aria-label=(s.aria_label.clone().unwrap_or_else(|| social_label(&s.icon))) target=(s.target.clone().unwrap_or_else(|| "_blank".into())) rel="noopener">
+                                <a class="flex justify-center items-center w-9 h-9 text-text-2 transition-colors duration-500 hover:text-text-1 hover:duration-[250ms]" href=(s.link.clone()) aria-label=(s.aria_label.clone().unwrap_or_else(|| social_label(&s.icon))) target=(s.target.clone().unwrap_or_else(|| "_blank".into())) rel="me noopener">
                                     (social_link_icon(&s.icon))
                                 </a>
                             }

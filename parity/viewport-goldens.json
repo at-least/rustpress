@@ -23,6 +23,8 @@
   "appearance @767": "hidden",
   "appearance @768": "visible",
   "appearance divider @1280": "25,1px,8px,16px",
+  "screen appearance row @375": "space-between|12px 14px 12px 16px|8px|rgb(246, 246, 247)|12px|rgb(103, 103, 108)|24px",
+  "screen social @375": "0|me noopener",
   "code max-pre h @768": "611",
   "code hl w @768": "688",
   "include hl lines @768": "3",
