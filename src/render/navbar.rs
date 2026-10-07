@@ -162,14 +162,14 @@ pub fn navbar<'a>(
 
                             @if let Some(tr) = translations {
                                 <div class=(format!("VPFlyout VPNavBarTranslations relative hidden md:flex md:items-center md:justify-end group/flyout hover:text-brand-1 transition-colors duration-[250ms]{translations_rule}"))
-                                    :class=("{ open: open }") x-data="{ open: false }" @click.outside="open = false">
-                                    <button type="button" class="flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" :aria-expanded=("open.toString()") @click="open = !open" aria-haspopup="true" aria-label=(lang_menu_label.clone())>
+                                    :class=("{ open: open }") x-data="{ open: false }" @click.outside="open = false" @focusout=(FLYOUT_BLUR) @keydown.escape.window=(FLYOUT_ESCAPE)>
+                                    <button type="button" class="flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" x-ref="button" :aria-expanded=("open.toString()") @click="open = !open" aria-haspopup="true" aria-label=(lang_menu_label.clone())>
                                         <span class="flex items-center leading-(--vp-nav-height) text-[0.875rem] font-medium text-text-1 transition-colors duration-[250ms] group-hover/flyout:text-text-2">
                                             (icon("languages", "size-[1rem]"))
                                             (icon("chevron-down", "ml-1 size-[0.875rem]"))
                                         </span>
                                     </button>
-                                    <div class="menu absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-focus-within/flyout:opacity-100 group-focus-within/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
+                                    <div class="menu absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
                                         <div class="rounded-xl p-3 min-w-32 border border-divider bg-bg-elv shadow-3 transition-colors duration-500 max-h-[calc(100vh-var(--vp-nav-height))] overflow-y-auto">
                                             // upstream VPNavBarTranslations: the current
                                             // language titles the menu, the others follow
@@ -262,6 +262,13 @@ fn logo_html(site: &Site, logo: &crate::config::ThemeableImage) -> String {
     }
 }
 
+/// Navbar flyouts follow upstream's VPFlyout keyboard model: focus leaving
+/// the flyout closes it (useFlyout's onBlur), and Escape closes it and,
+/// when focus was inside, hands focus back to the button (WCAG 1.4.13:
+/// content shown on hover or focus must be dismissible).
+const FLYOUT_BLUR: &str = "$el.contains($event.relatedTarget) || (open = false)";
+const FLYOUT_ESCAPE: &str = "if (open) { const inside = $el.contains(document.activeElement); open = false; if (inside) $refs.button.focus() }";
+
 /// Anchor open tag with optional `target`/`rel` (built as a string so
 /// the attrs are omitted, not emitted empty).
 fn link_attrs(target: Option<&str>, rel: Option<&str>) -> String {
@@ -319,14 +326,14 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
         let text = item.text.clone();
         let children: Vec<&NavItem> = item.items.iter().collect();
         rsx! {
-            <div class=(group_cls) :class=("{ open: open }") x-data="{ open: false }" @click.outside="open = false">
-                <button type="button" class="button flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" :aria-expanded=("open.toString()") @click="open = !open" aria-haspopup="true">
+            <div class=(group_cls) :class=("{ open: open }") x-data="{ open: false }" @click.outside="open = false" @focusout=(FLYOUT_BLUR) @keydown.escape.window=(FLYOUT_ESCAPE)>
+                <button type="button" class="button flex items-center px-3 h-(--vp-nav-height) text-text-1 transition-colors duration-500 cursor-pointer" x-ref="button" :aria-expanded=("open.toString()") @click="open = !open" aria-haspopup="true">
                     <span class=(label_cls)>
                         <span>(text)</span>
                         (icon("chevron-down", "ml-1 size-[0.875rem]"))
                     </span>
                 </button>
-                <div class="menu absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-focus-within/flyout:opacity-100 group-focus-within/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
+                <div class="menu absolute top-[calc(var(--vp-nav-height)/2+1.25rem)] right-0 opacity-0 invisible transition-[opacity,visibility] duration-[250ms] group-hover/flyout:opacity-100 group-hover/flyout:visible group-[.open]/flyout:opacity-100 group-[.open]/flyout:visible">
                     <div class="rounded-xl p-3 min-w-32 border border-divider bg-bg-elv shadow-3 transition-colors duration-500 max-h-[calc(100vh-var(--vp-nav-height))] overflow-y-auto">
                         <ul>
                             @for child in &children {

@@ -171,6 +171,35 @@ try {
     await ctx.close();
   }
 
+  // ---- navbar flyout by keyboard (upstream VPFlyout) ------------------------
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(`${base}/guide/what-is-vitepress/`, { waitUntil: 'networkidle' });
+    await page.mouse.move(5, 600); // no hover in play
+    const flyout = page.locator('#VPNavBar nav .VPFlyout').first();
+    const button = flyout.locator('button').first();
+    const items = flyout.locator('.menu a');
+    const shown = () => items.first().isVisible();
+    await button.focus();
+    await page.waitForTimeout(250);
+    ok('focus alone leaves the flyout closed', !(await shown()));
+    await page.keyboard.press('Enter');
+    ok('Enter opens the flyout', await eventually(items.first().waitFor({ state: 'visible', ...POLL })));
+    await page.keyboard.press('Tab');
+    ok('Tab enters the menu', await items.first().evaluate((a) => a === document.activeElement));
+    await page.keyboard.press('Escape');
+    ok('Escape closes the flyout', await eventually(items.first().waitFor({ state: 'hidden', ...POLL })));
+    ok('Escape returns focus to the button', await button.evaluate((b) => b === document.activeElement));
+    // tabbing past the last entry closes it (upstream useFlyout onBlur)
+    await page.keyboard.press('Enter');
+    await eventually(items.first().waitFor({ state: 'visible', ...POLL }));
+    const n = await items.count();
+    for (let i = 0; i <= n; i++) await page.keyboard.press('Tab');
+    ok('tabbing out closes the flyout', await eventually(items.first().waitFor({ state: 'hidden', ...POLL })));
+    await ctx.close();
+  }
+
   // ---- appearance toggle -----------------------------------------------
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
