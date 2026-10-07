@@ -69,6 +69,12 @@ const ok = (label, cond, detail = '') => {
   }
 };
 
+// outcomes that land asynchronously (Alpine's setTimeout-based
+// $nextTick, the clipboard promise) are polled, not read once after a
+// fixed sleep: a loaded machine delays them past any fixed wait
+const eventually = (promise) => promise.then(() => true, () => false);
+const POLL = { timeout: 5000 };
+
 const browser = await chromium.launch({ headless: true });
 try {
   // ---- code-group tabs -------------------------------------------------
@@ -101,8 +107,9 @@ try {
     const pre = page.locator('.vp-doc pre').first();
     const want = await pre.locator('code').innerText();
     await pre.locator('.vp-copy-button').click({ force: true });
-    await page.waitForTimeout(200);
-    const copied = await pre.locator('.vp-copy-button').evaluate((b) => b.classList.contains('copied'));
+    // .copied is set once the clipboard write resolves, so the read below
+    // sees the copied text
+    const copied = await eventually(pre.locator('.vp-copy-button.copied').waitFor({ state: 'attached', ...POLL }));
     const clip = await page.evaluate(() => navigator.clipboard.readText());
     ok('copy button marks .copied', copied);
     ok('clipboard holds the code', clip.trim() === want.trim(), clip.trim().slice(0, 60));
@@ -117,10 +124,9 @@ try {
     const dialog = page.locator('#VPLocalSearchBox'); // role=dialog is on this root
     ok('search modal hidden initially', !(await dialog.isVisible()));
     await page.keyboard.press('Control+k');
-    await page.waitForTimeout(300);
-    ok('Ctrl+K opens the modal', await dialog.isVisible());
+    ok('Ctrl+K opens the modal', await eventually(dialog.waitFor({ state: 'visible', ...POLL })));
     const input = page.locator('#VPLocalSearchBox input[type="search"], #VPLocalSearchBox input').first();
-    ok('input focused', await page.evaluate(() => document.activeElement?.tagName === 'INPUT'));
+    ok('input focused', await eventually(page.waitForFunction(() => document.activeElement?.tagName === 'INPUT', null, POLL)));
     await input.fill('frontmatter');
     await page.waitForTimeout(400); // fetch index + score
     const first = page.locator('#VPLocalSearchBox li.result').first();
