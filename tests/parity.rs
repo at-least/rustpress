@@ -53,7 +53,12 @@ fn upstream_landmarks_extract() {
     assert!(fp["block_counts"].is_object());
     // deep-surface landmarks: head + in-content structure markers
     assert_eq!(
-        fp["meta_description"].as_str().unwrap().split(' ').next().unwrap(),
+        fp["meta_description"]
+            .as_str()
+            .unwrap()
+            .split(' ')
+            .next()
+            .unwrap(),
         "VitePress"
     );
     assert!(
@@ -70,7 +75,7 @@ fn upstream_landmarks_extract() {
             .unwrap()
             .iter()
             .any(|id| id == "what-is-vitepress-2")
-            || fp["doc_heading_ids"].as_array().unwrap().len() > 0,
+            || !fp["doc_heading_ids"].as_array().unwrap().is_empty(),
         "h2..h6 anchor ids collected"
     );
 }

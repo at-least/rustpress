@@ -445,7 +445,14 @@ fn collect_headings(root: &comrak::Node<'_>) -> Vec<Heading> {
             // with the mdit-vue algorithm so anchors match vitepress.dev
             let slug_text = split_heading_anchor(&collect_slug_text(node)).0;
             let slug = slugify(&slug_text);
-            rows.push((nh.level, text, custom, rendered_id, slug, slug_text.trim().to_string()));
+            rows.push((
+                nh.level,
+                text,
+                custom,
+                rendered_id,
+                slug,
+                slug_text.trim().to_string(),
+            ));
         }
     }
     // pass 2: every custom id is reserved up front (an auto slug must

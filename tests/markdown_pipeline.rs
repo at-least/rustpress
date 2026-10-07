@@ -171,13 +171,16 @@ fn heading_ids_follow_upstream_mdit_slug_rules() {
     );
     let html = &out.html;
     for id in [
-        "emoji",                        // shortcode emoji dropped, no trailing dash
-        "usedata",                      // badge text excluded from the slug
-        "what-s-next",                  // apostrophe is a special run → dash
+        "emoji",                           // shortcode emoji dropped, no trailing dash
+        "usedata",                         // badge text excluded from the slug
+        "what-s-next",                     // apostrophe is a special run → dash
         "adding-a-meta-name-og-title-tag", // quotes/colon specials
-        "_123-start",                   // leading digit gets a _ prefix
+        "_123-start",                      // leading digit gets a _ prefix
     ] {
-        assert!(html.contains(&format!("<h2 id=\"{id}\" tabindex=\"-1\">")), "{id}");
+        assert!(
+            html.contains(&format!("<h2 id=\"{id}\" tabindex=\"-1\">")),
+            "{id}"
+        );
     }
     // the permalink is the upstream header-anchor shape, not comrak's
     assert!(
@@ -1330,7 +1333,7 @@ fn shiki_style_line_notations_become_line_classes() {
     assert!(
         out.html.contains("<span class=\"line hl\">x = 1</span>"),
         "empty comment shell removed: {}",
-        &out.html[out.html.find("<code").unwrap()..]
+        out.html[out.html.find("<code").unwrap()..]
             .chars()
             .take(160)
             .collect::<String>()

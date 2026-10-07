@@ -424,7 +424,7 @@ pub fn extract(html: &str, url: &str) -> PageFingerprint {
 
     let meta_description = first(&doc, &s.meta_description)
         .and_then(|m| m.value().attr("content"))
-        .map(|c| norm_text(c))
+        .map(norm_text)
         .filter(|c| !c.is_empty());
     let head_icons: Vec<String> = doc
         .select(&s.head_icon)
