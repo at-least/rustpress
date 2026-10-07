@@ -171,6 +171,35 @@ try {
     await ctx.close();
   }
 
+  // ---- search result click + sidebar carets ---------------------------------
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await ctx.newPage();
+    await page.goto(`${base}/guide/what-is-vitepress/`, { waitUntil: 'networkidle' });
+    // a sidebar group caret folds its group and unfolds it again
+    const caret = page.locator('#VPSidebar [aria-label="toggle section"]').first();
+    const groupLinkShown = () => caret.evaluate((c) => {
+      const group = c.closest('[x-data]');
+      const link = group && group.querySelector('a');
+      return !!(link && link.offsetParent);
+    });
+    ok('a sidebar group starts expanded', (await caret.getAttribute('aria-expanded')) === 'true' && (await groupLinkShown()));
+    await caret.click();
+    ok('its caret folds the group', await eventually(page.waitForFunction(() => document.querySelector('#VPSidebar [aria-label="toggle section"]').getAttribute('aria-expanded') === 'false', null, POLL)) && !(await groupLinkShown()));
+    await caret.click();
+    ok('and unfolds it again', await eventually(page.waitForFunction(() => document.querySelector('#VPSidebar [aria-label="toggle section"]').getAttribute('aria-expanded') === 'true', null, POLL)) && (await groupLinkShown()));
+    // clicking a search result opens it
+    await page.keyboard.press('Control+k');
+    await page.locator('#VPLocalSearchBox input').fill('frontmatter');
+    const second = page.locator('#VPLocalSearchBox li.result').nth(1);
+    await eventually(second.waitFor(POLL));
+    const url = await second.getAttribute('data-url');
+    await second.click();
+    await eventually(page.waitForURL((u) => u.pathname === url, POLL));
+    ok('clicking a search result opens it', new URL(page.url()).pathname === url, `${page.url()} (picked ${url})`);
+    await ctx.close();
+  }
+
   // ---- navbar flyout by keyboard (upstream VPFlyout) ------------------------
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
