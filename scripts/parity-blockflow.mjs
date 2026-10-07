@@ -12,7 +12,12 @@
 //
 // Determinism: external scripts (MathJax CDN — client-side typesetting
 // is a documented feature-axis gap) are aborted so the math section
-// renders raw $…$ everywhere; top/height compared at ±1px.
+// renders raw $…$ everywhere. Each block is compared by FLOW, not
+// position: its gap to the previous block's bottom (the first block: its
+// top) and its height, at ±1px — so one rewrapped paragraph fails once
+// instead of misplacing every block below it. Heights that depend on the
+// machine's system fonts are exempted by FONT_DEPENDENT below (reasoned,
+// printed when applied); their gaps are still checked.
 //
 //   node scripts/parity-blockflow.mjs           # check
 //   node scripts/parity-blockflow.mjs --update  # re-record after a demo
@@ -38,6 +43,20 @@ const CASES = [
   ['markdown @768', '/guide/markdown/', 768],
   ['reference @375', '/reference/default-theme-config/', 375],
   ['reference @768', '/reference/default-theme-config/', 768],
+];
+
+// Blocks whose HEIGHT depends on the machine: their text has a glyph no
+// bundled font covers (Inter is bundled; the mono stack is all system
+// fonts), so the glyph's width comes from whatever system font the
+// machine falls back to, and that width can move a line break. Only the
+// height is skipped — the block's gap is still compared, and so is every
+// later block. Keep the list tight: each entry needs a measured reason.
+const FONT_DEPENDENT = [
+  [
+    'reference @375',
+    'P|Canbeusedtocustomizethearia-labelofthe⋯menubutto',
+    'U+22EF `⋯` in inline code has no bundled font: DejaVu Sans / FreeSans (26px code span) wrap the paragraph to 5 lines (141px), FreeMono / Unifont (19-20px, the GitHub runner) to 4 (113px)',
+  ],
 ];
 
 if (!existsSync(join(DIST, 'index.html'))) {
@@ -134,16 +153,26 @@ try {
         failures++;
         continue;
       }
+      // the gap above block i: its top minus the previous block's bottom
+      // (block 0: its top, which anchors the flow on the page)
+      const gap = (blocks, i) => blocks[i][1] - (i ? blocks[i - 1][1] + blocks[i - 1][2] : 0);
       for (let i = 0; i < want.length; i++) {
-        const [ws, wt, wh] = want[i];
-        const [s, t, h] = flow[i];
+        const [ws, , wh] = want[i];
+        const [s, , h] = flow[i];
         if (s !== ws) {
           console.error(`FAIL ${label} [${i}] block: ${ws} → ${s}`);
           bad++;
           break;
-        } else if (Math.abs(t - wt) > TOL || Math.abs(h - wh) > TOL) {
-          console.error(`FAIL ${label} [${i}] ${s}: top ${wt}→${t} height ${wh}→${h}`);
+        }
+        const wg = gap(want, i);
+        const g = gap(flow, i);
+        const exempt = FONT_DEPENDENT.find(([l, sig]) => l === label && sig === s);
+        const heightOff = Math.abs(h - wh) > TOL;
+        if (Math.abs(g - wg) > TOL || (heightOff && !exempt)) {
+          console.error(`FAIL ${label} [${i}] ${s}: gap ${wg}→${g} height ${wh}→${h}`);
           bad++;
+        } else if (heightOff) {
+          console.log(`exempt ${label} [${i}] ${s}: height ${wh}→${h} — ${exempt[2]}`);
         }
       }
       if (!bad) console.log(`ok ${label} (${flow.length} blocks)`);
