@@ -167,7 +167,7 @@ ariaLabel = "cool link"        # optional but recommended
 target = "_self"               # default "_blank"
 ```
 
-Built-in glyphs exist for `github` and `twitter`/`x` only; there is no icon-set lookup. Any other icon name renders the generic external-link glyph, so bring an `svg` string for other services. Every social link gets `rel="noopener"`.
+Built-in glyphs exist for `github` and `twitter`/`x` only; there is no icon-set lookup. Any other icon name renders the generic external-link glyph, so bring an `svg` string for other services. Every social link gets `rel="me noopener"`, like upstream — the `me` lets profile pages such as Mastodon verify the link back.
 
 ## footer
 

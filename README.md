@@ -151,7 +151,7 @@ Theme files map dotted tree-sitter capture scopes to colors, support `[palette]`
 
 ## Testing
 
-`cargo test` runs 90+ unit and integration tests; the markdown pipeline's golden tests execute the real `tests/fixtures/en` corpus end to end, and `tests/site_build.rs` builds a full site into a temp dir and checks the outputs (pages, 404, syntax.css, search index, Alpine landmarks, tag balance). `npm test` then runs the parity battery beyond Rust: landmark fingerprints (`check:parity`), design-token declarations (`check:tokens`), content block-flow geometry (`check:blockflow`), client interactions (`check:behavior`), and breakpoint geometry (`check:viewport`) — see [PARITY.md](PARITY.md).
+`cargo test` runs 250+ unit and integration tests; the markdown pipeline's golden tests execute the real `tests/fixtures/en` corpus end to end, and `tests/site_build.rs` builds a full site into a temp dir and checks the outputs (pages, 404, syntax.css, search index, Alpine landmarks, tag balance). `npm test` then runs the parity battery beyond Rust: landmark fingerprints (`check:parity`), design-token declarations (`check:tokens`), content block-flow geometry (`check:blockflow`), client interactions (`check:behavior`), and breakpoint geometry (`check:viewport`) — see [PARITY.md](PARITY.md).
 
 ## Caveats
 

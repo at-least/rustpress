@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // Client-behavior gate: the Alpine.js wiring (code-group tabs, copy
-// buttons, search modal + scoring, appearance toggle, mobile overlays,
+// buttons, search modal + scoring + keyboard selection, appearance
+// toggle, mobile overlays and the taps inside them, the outline
+// dropdown, flyouts by keyboard, sidebar carets, scroll lock,
 // scrollspy) has no structural signature in static HTML — a broken
 // bundle or a mistyped x-data passes every other axis. This script is
 // the behavior axis: drive a headless Chromium against the demo build
