@@ -210,6 +210,30 @@ try {
     await ctx.close();
   }
 
+  // ---- scroll lock keeps the scrollbar gutter ------------------------------
+  {
+    // classic scrollbars, as on Windows/Linux desktops (headless hides
+    // them by default): hiding the page's scrollbar under an overlay must
+    // not shift the layout sideways — upstream's useBodyScrollLock keeps
+    // the root gutter with scrollbar-gutter: stable while locked
+    const sbBrowser = await chromium.launch({ headless: true, ignoreDefaultArgs: ['--hide-scrollbars'] });
+    try {
+      const page = await sbBrowser.newPage({ viewport: { width: 1280, height: 800 } });
+      await page.goto(`${base}/guide/what-is-vitepress/`, { waitUntil: 'networkidle' });
+      const x = () => page.evaluate(() => document.getElementById('VPSwitchAppearance').getBoundingClientRect().left);
+      const before = await x();
+      await page.keyboard.press('Control+k');
+      await page.waitForTimeout(300);
+      const during = await x();
+      ok('an open overlay leaves the layout in place', during === before, `navbar switch x ${before} → ${during}`);
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(300);
+      ok('closing it restores the root gutter', await page.evaluate(() => document.documentElement.style.scrollbarGutter === ''));
+    } finally {
+      await sbBrowser.close();
+    }
+  }
+
   // ---- scrollspy ---------------------------------------------------------
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });

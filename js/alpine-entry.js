@@ -386,11 +386,25 @@ Alpine.start();
 
 /* Single writer for the body scroll lock: one effect over the whole
    overlay state, so no two overlays can fight over body.overflow
-   (upstream: the refcounted useBodyScrollLock composable). */
+   (upstream: the refcounted useBodyScrollLock composable). Like upstream,
+   the root keeps its scrollbar gutter while locked, so hiding a classic
+   scrollbar does not shift the layout sideways. */
+let gutterToRestore; // the root's inline scrollbar-gutter, while locked
 Alpine.effect(() => {
   const locked =
     Alpine.store("ui").screen ||
     Alpine.store("ui").search ||
     Alpine.store("ui").sidebar;
+  const root = document.documentElement;
+  if (locked && gutterToRestore === undefined) {
+    gutterToRestore = root.style.scrollbarGutter;
+    // `|| ""`: no scrollbar-gutter support (Safari < 18.2) reads undefined
+    if (!(getComputedStyle(root).scrollbarGutter || "").includes("stable")) {
+      root.style.scrollbarGutter = "stable";
+    }
+  } else if (!locked && gutterToRestore !== undefined) {
+    root.style.scrollbarGutter = gutterToRestore;
+    gutterToRestore = undefined;
+  }
   document.body.style.overflow = locked ? "hidden" : "";
 });
