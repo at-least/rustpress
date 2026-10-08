@@ -73,15 +73,21 @@ pub fn sidebar(site: &Site, current_url: &str) -> String {
     .into_inner()
 }
 
+/// Whether `n` is the current page or holds it somewhere below
+/// (upstream's hasActiveLink).
+fn contains_active(n: &SidebarNode, current_url: &str) -> bool {
+    n.url.as_deref() == Some(current_url)
+        || n.children.iter().any(|c| contains_active(c, current_url))
+}
+
 /// Render one sidebar node at `depth` (0 = the top group level).
 fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usize) -> String {
     let is_active = n.url.as_deref() == Some(current_url);
-    let has_active = n
-        .url
-        .as_deref()
-        .is_some_and(|u| current_url.starts_with(u) && u != "/");
+    let has_active = contains_active(n, current_url);
     let collapsible = n.collapsed.is_some();
-    let starts_collapsed = n.collapsed == Some(true);
+    // a group holding the current page opens however it was configured
+    // (upstream useSidebarItemControl), so the page is never hidden
+    let starts_collapsed = n.collapsed == Some(true) && !has_active;
     let text_cls = if depth == 0 {
         "text grow py-1 leading-[1.7142857] text-[0.875rem] font-bold text-text-1".to_string()
     } else {
@@ -108,11 +114,7 @@ fn node<'a>(site: &'a Site, n: &'a SidebarNode, current_url: &'a str, depth: usi
         },
         if collapsible { " collapsible" } else { "" },
         if is_active { " is-active" } else { "" },
-        if has_active && !is_active {
-            " has-active"
-        } else {
-            ""
-        },
+        if has_active { " has-active" } else { "" },
     );
     // Collapsible groups carry Alpine state; `collapsed` moves from the
     // static class list to a binding so the caret can toggle it.

@@ -566,6 +566,75 @@ fn frontmatter_page_toggles() {
 }
 
 #[test]
+fn collapsed_groups_holding_the_current_page_start_open() {
+    // upstream useSidebarItemControl: a group that is or contains the
+    // current page (hasActiveLink) is expanded however it was configured,
+    // and is marked has-active — its text darkens to text-1. Groups
+    // without links count through their descendants
+    let config = r#"title = "T"
+
+[[sidebar]]
+text = "Open"
+collapsed = true
+
+  [[sidebar.items]]
+  text = "Nested"
+  collapsed = true
+
+    [[sidebar.items.items]]
+    text = "A"
+    link = "/guide/a/"
+
+[[sidebar]]
+text = "Other"
+collapsed = true
+
+  [[sidebar.items]]
+  text = "B"
+  link = "/guide/b/"
+"#;
+    let (_, out) = build_site(config, &[("guide/a.md", "# A\n"), ("guide/b.md", "# B\n")]);
+    // (header text, initially open, has-active) per collapsible group
+    let groups = |url: &str| -> Vec<(String, bool, bool)> {
+        let doc = scraper::Html::parse_document(&page(&out, url));
+        let section = scraper::Selector::parse("#VPSidebarNav section.collapsible").unwrap();
+        let header = scraper::Selector::parse(":scope > .item h3, :scope > .item p").unwrap();
+        doc.select(&section)
+            .map(|s| {
+                let text = s.select(&header).next().unwrap().text().collect::<String>();
+                let open = s.value().attr("x-data").unwrap().contains("true");
+                let has_active = s.value().classes().any(|c| c == "has-active");
+                (text, open, has_active)
+            })
+            .collect()
+    };
+    let owned = |v: &[(&str, bool, bool)]| -> Vec<(String, bool, bool)> {
+        v.iter().map(|(t, o, h)| (t.to_string(), *o, *h)).collect()
+    };
+    assert_eq!(
+        groups("/guide/a/"),
+        owned(&[
+            ("Open", true, true),
+            ("Nested", true, true),
+            ("Other", false, false)
+        ])
+    );
+    assert_eq!(
+        groups("/guide/b/"),
+        owned(&[
+            ("Open", false, false),
+            ("Nested", false, false),
+            ("Other", true, true)
+        ])
+    );
+    // the nested group's header takes the has-active color
+    let a = page(&out, "/guide/a/");
+    let nested = a.find(">Nested</h3>").expect("nested header");
+    let open_tag = &a[a[..nested].rfind("<h3").unwrap()..nested];
+    assert!(open_tag.contains("text-text-1"), "{open_tag}");
+}
+
+#[test]
 fn frontmatter_sidebar_false_hides_the_sidebar_element() {
     // `sidebar: false` must remove the fixed desktop aside entirely,
     // not just the content column's padding class — otherwise the

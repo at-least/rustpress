@@ -173,6 +173,8 @@ collapsed = true
 
 A group with no `collapsed` key at all is not collapsible and shows no toggle.
 
+A collapsed group that holds the current page opens anyway, so the reader can see where they are; the other collapsed groups stay closed.
+
 ## Path Prefix
 
 When your documentation structure has deep directories or groups located under the same subdirectory, you can use the `base` option to automatically prepend a path prefix to all nested `items` inside that group. This avoids repeating the same path prefix for every `link`.
