@@ -95,6 +95,14 @@ try {
     ok('tab click switches panes', !vis0 && vis1, `pane0 visible=${vis0}, pane1 visible=${vis1}`);
     await tabs.nth(0).click();
     ok('tab click switches back', await pres.nth(0).isVisible());
+    // keyboard: arrow keys move the checked radio (and the tab highlight
+    // with it); the pane must follow, as upstream's click-on-input
+    // listener makes it
+    await group.locator('.tabs input').first().focus();
+    await page.keyboard.press('ArrowRight');
+    ok('ArrowRight switches the pane with the tab', await eventually(pres.nth(1).waitFor({ state: 'visible', ...POLL })) && !(await pres.nth(0).isVisible()));
+    await page.keyboard.press('ArrowLeft');
+    ok('ArrowLeft switches it back', await eventually(pres.nth(0).waitFor({ state: 'visible', ...POLL })) && !(await pres.nth(1).isVisible()));
     await ctx.close();
   }
 

@@ -50,17 +50,19 @@ window.addEventListener("keydown", (e) => {
 });
 
 /* Code-group tab switching. The tab strip (radio inputs + labels) is
-   emitted server-side by the markdown preprocessor; this component only
-   wires label clicks to showing the matching <pre>. */
+   emitted server-side by the markdown preprocessor; this component shows
+   the <pre> of whichever radio is checked. `change` fires for a label
+   click and for arrow keys alike (a label-only listener left the pane
+   behind when the keyboard moved the selection). */
 Alpine.data("codeGroup", () => ({
   init() {
     const group = this.$el;
     const pres = Array.from(group.querySelectorAll(":scope > .blocks > pre"));
-    const labels = Array.from(group.querySelectorAll(":scope > .tabs label"));
+    const inputs = Array.from(group.querySelectorAll(":scope > .tabs input"));
     const activate = (i) => {
       pres.forEach((p, j) => p.classList.toggle("active", i === j));
     };
-    labels.forEach((label, i) => label.addEventListener("click", () => activate(i)));
+    inputs.forEach((input, i) => input.addEventListener("change", () => activate(i)));
     activate(0);
   },
 }));
