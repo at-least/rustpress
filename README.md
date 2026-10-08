@@ -1,5 +1,7 @@
 # rustpress
 
+> **Frozen (2026-10-09): no new features.** What rustpress was for, VitePress's look without Node.js in every project, now comes from [vpkit](https://github.com/at-least/vpkit) (the VitePress design as Tailwind CSS v4 variables, components and themes) and the [vpkit-zola](https://github.com/at-least/vpkit-zola) theme for [Zola](https://www.getzola.org). This repository will be archived once vpkit-zola renders rustpress's own docs.
+
 **A standalone documentation site generator in Rust, speaking VitePress's content format.** Content is ordinary VitePress markdown — YAML front matter, `:::` containers, `[!NOTE]` GitHub alerts, labeled code fences, code groups, `<Badge>` — with no Node runtime at render time: a single Rust binary parses and renders every page (comrak + tree-sitter + hypertext `rsx!` templates), and the little client-side interactivity is Alpine.js over server-rendered markup. Styling is Tailwind CSS v4 with the VitePress default theme's `--vp-*` design tokens.
 
 ![Zola-free](https://img.shields.io/badge/zola-not%20required-informational) ![rust](https://img.shields.io/badge/rust-1.85%2B-orange) (edition 2024)
