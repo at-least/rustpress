@@ -34,6 +34,16 @@ pub fn icon(name: &str, class: &str) -> Raw<String> {
         "square-pen" => {
             r#"<svg class="inline-block size-[1em] {c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg>"#
         }
+        // upstream draws these two as its arrow-right turned ∓90°
+        "arrow-up" => {
+            r#"<svg class="inline-block size-[1em] {c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><path d="M12 19V5m-7 7l7-7l7 7"/></svg>"#
+        }
+        "arrow-down" => {
+            r#"<svg class="inline-block size-[1em] {c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><path d="M12 5v14m7-7l-7 7l-7-7"/></svg>"#
+        }
+        "corner-down-left" => {
+            r#"<svg class="inline-block size-[1em] {c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><path d="M20 4v7a4 4 0 0 1-4 4H4"/><path d="m9 10l-5 5l5 5"/></svg>"#
+        }
         "arrow-left" => {
             r#"<svg class="inline-block size-[1em] {c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true"><path d="M19 12H5m7 7l-7-7l7-7"/></svg>"#
         }

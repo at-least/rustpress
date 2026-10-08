@@ -945,6 +945,15 @@ pub struct SearchTranslations {
     /// Footer hint after Esc.
     #[serde(default = "default_search_close")]
     pub close_text: String,
+    /// Accessible names of the footer's key icons and its `esc` key.
+    #[serde(default = "default_search_up_key")]
+    pub navigate_up_key_aria_label: String,
+    #[serde(default = "default_search_down_key")]
+    pub navigate_down_key_aria_label: String,
+    #[serde(default = "default_search_enter_key")]
+    pub select_key_aria_label: String,
+    #[serde(default = "default_search_escape_key")]
+    pub close_key_aria_label: String,
     /// Title of the back button that closes the modal on phones.
     #[serde(default = "default_search_back")]
     pub back_button_title: String,
@@ -986,6 +995,22 @@ fn default_search_select() -> String {
 
 fn default_search_close() -> String {
     "to close".into()
+}
+
+fn default_search_up_key() -> String {
+    "up arrow".into()
+}
+
+fn default_search_down_key() -> String {
+    "down arrow".into()
+}
+
+fn default_search_enter_key() -> String {
+    "enter".into()
+}
+
+fn default_search_escape_key() -> String {
+    "escape".into()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]

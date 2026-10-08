@@ -20,7 +20,11 @@ pub fn search_modal<'a>(
     let select_text = search.translations.select_text.clone();
     let close_text = search.translations.close_text.clone();
     let back_title = search.translations.back_button_title.clone();
-    let kbd_cls = "bg-[rgba(128,128,128,0.1)] rounded-[0.25rem] px-[0.375rem] py-[0.1875rem] min-w-6 inline-block text-center align-middle border border-[rgba(128,128,128,0.15)] shadow-[0_2px_2px_0_rgba(0,0,0,0.1)] font-[inherit]";
+    let up_key = search.translations.navigate_up_key_aria_label.clone();
+    let down_key = search.translations.navigate_down_key_aria_label.clone();
+    let enter_key = search.translations.select_key_aria_label.clone();
+    let escape_key = search.translations.close_key_aria_label.clone();
+    let kbd_cls = "bg-[rgba(128,128,128,0.1)] rounded-[0.25rem] px-[0.375rem] py-[0.1875rem] min-w-6 inline-block text-center align-middle border border-[rgba(128,128,128,0.15)] shadow-[0_2px_2px_0_rgba(0,0,0,0.1)]";
     let results_cls = concat!(
         "flex flex-col gap-[0.375rem] overflow-x-hidden overflow-y-auto overscroll-contain",
         " [&_.result]:flex [&_.result]:items-center [&_.result]:gap-2 [&_.result]:rounded-[0.25rem] [&_.result]:leading-none [&_.result]:border-2 [&_.result]:border-solid",
@@ -76,9 +80,11 @@ pub fn search_modal<'a>(
                 <ul class=(results_cls) id="VPSearchResults" x-ref="results" x-html=(r#"resultsHtml"#) @click="pick($event)" :class=("(results.length) ? '' : 'flex-1'") role="listbox" aria-labelledby="localsearch-label"></ul>
 
                 <div class="text-[0.8rem] opacity-75 flex flex-wrap gap-4 leading-[1.09375] max-md:hidden" id="VPSearchShortcuts">
-                    <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"↑"</kbd><kbd class=(kbd_cls)>"↓"</kbd>(navigate_text.clone())</span>
-                    <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"Enter"</kbd>(select_text.clone())</span>
-                    <span class="flex items-center gap-1"><kbd class=(kbd_cls)>"Esc"</kbd>(close_text.clone())</span>
+                    // upstream's keys: icons named by aria-labels, Esc as
+                    // "esc" in the kbd's monospace
+                    <span class="flex items-center gap-1"><kbd class=(kbd_cls) aria-label=(up_key.clone())>(icon("arrow-up", "block size-[0.875rem]"))</kbd><kbd class=(kbd_cls) aria-label=(down_key.clone())>(icon("arrow-down", "block size-[0.875rem]"))</kbd>(navigate_text.clone())</span>
+                    <span class="flex items-center gap-1"><kbd class=(kbd_cls) aria-label=(enter_key.clone())>(icon("corner-down-left", "block size-[0.875rem]"))</kbd>(select_text.clone())</span>
+                    <span class="flex items-center gap-1"><kbd class=(kbd_cls) aria-label=(escape_key.clone())>"esc"</kbd>(close_text.clone())</span>
                 </div>
             </div>
         </div>

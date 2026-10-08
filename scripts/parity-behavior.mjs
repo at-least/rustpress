@@ -179,9 +179,17 @@ try {
     await page.keyboard.press('ArrowUp');
     await page.keyboard.press('ArrowUp');
     ok('ArrowUp wraps from the first to the last', await eventually(page.waitForFunction((n) => document.querySelectorAll('#VPLocalSearchBox li.result')[n - 1]?.classList.contains('selected'), count, POLL)));
-    // the footer names the keys that move the selection
-    const hint = await page.locator('#VPSearchShortcuts').innerText();
-    ok('the footer hints ↑ ↓ for navigation', hint.includes('↑') && hint.includes('↓') && !hint.includes('←'), hint.replace(/\s+/g, ' '));
+    // the footer's keys as upstream's: ↑ ↓ ↵ icons named by aria-labels,
+    // Esc as "esc", every key in the monospace of <code> and 22px tall
+    // (rounded: the esc key's text line is 13.984375px on both sides, a
+    // font-metric rounding that other fonts may not share)
+    const keys = await page.locator('#VPSearchShortcuts kbd').evaluateAll((ks) => {
+      const code = document.body.appendChild(document.createElement('code'));
+      const mono = getComputedStyle(code).fontFamily;
+      code.remove();
+      return ks.map((k) => [k.getAttribute('aria-label'), k.querySelector('svg') ? 'icon' : k.textContent, getComputedStyle(k).fontFamily === mono, Math.round(k.getBoundingClientRect().height)].join('|')).join(' ');
+    });
+    ok('the footer keys are named like upstream', keys === 'up arrow|icon|true|22 down arrow|icon|true|22 enter|icon|true|22 escape|esc|true|22', keys);
     // Enter right after typing opens the top result
     await page.locator('#VPLocalSearchBox input').fill('');
     await page.locator('#VPLocalSearchBox input').fill('frontmatter');

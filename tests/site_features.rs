@@ -954,6 +954,30 @@ backButtonTitle = "Suche schließen""#,
 }
 
 #[test]
+fn search_footer_keys_are_named_like_upstreams() {
+    // upstream VPLocalSearchBox: icon keys with translatable aria-labels
+    // (defaults "up arrow", "down arrow", "enter", "escape"), Esc as "esc"
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[search]\nprovider = \"local\"\n\n[search.translations]\ncloseKeyAriaLabel = \"Escape-Taste\"\n",
+        &[("guide/a.md", "# A\n")],
+    );
+    let html = page(&out, "/guide/a/");
+    let footer = &html[html.find("id=\"VPSearchShortcuts\"").unwrap()..];
+    let footer = &footer[..footer.find("</div>").unwrap()];
+    for label in ["up arrow", "down arrow", "enter"] {
+        assert!(
+            footer.contains(&format!("aria-label=\"{label}\"")),
+            "{label}: {footer}"
+        );
+    }
+    assert!(
+        footer.contains("aria-label=\"Escape-Taste\">esc</kbd>"),
+        "{footer}"
+    );
+    assert_eq!(footer.matches("<svg").count(), 3, "key icons: {footer}");
+}
+
+#[test]
 fn edit_link_paths_are_percent_encoded() {
     // a page name with a space (or non-ASCII bytes) must reach the edit
     // URL percent-encoded — a raw space in the href is invalid

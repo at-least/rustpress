@@ -53,6 +53,10 @@ navigateText = "切换"
 selectText = "选择"
 closeText = "关闭"
 backButtonTitle = "关闭搜索"
+navigateUpKeyAriaLabel = "上箭头"
+navigateDownKeyAriaLabel = "下箭头"
+selectKeyAriaLabel = "输入"
+closeKeyAriaLabel = "esc"
 ```
 
 | key | default | where it shows |
@@ -66,6 +70,10 @@ backButtonTitle = "关闭搜索"
 | `selectText` | `to select` | footer hint after Enter |
 | `closeText` | `to close` | footer hint after Esc |
 | `backButtonTitle` | `Close search` | tooltip and label of the back button that closes the modal on phones (below 768px, where the modal fills the screen) |
+| `navigateUpKeyAriaLabel` | `up arrow` | accessible name of the footer's ↑ key icon |
+| `navigateDownKeyAriaLabel` | `down arrow` | accessible name of the footer's ↓ key icon |
+| `selectKeyAriaLabel` | `enter` | accessible name of the footer's ↵ key icon |
+| `closeKeyAriaLabel` | `escape` | accessible name of the footer's `esc` key |
 
 ### Tuning
 
