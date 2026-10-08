@@ -3,8 +3,8 @@
 //! A bundled theme is a *complete design*: it defines every design token
 //! the compiled base stylesheet consumes, so no stock value leaks through
 //! when it is linked. These tests derive the required token set from the
-//! base's token layer itself, the vpkit package's `index.css` that
-//! `styles/vitepress.css` imports (the structural layer — utilities and
+//! base itself, the vpkit package's `index.css` (and the parts it imports)
+//! that `styles/vitepress.css` imports (the structural layer — utilities and
 //! component rules — resolves through these `--vp-*` custom properties)
 //! and then hold every `static/themes/*.css` to it, plus WCAG contrast
 //! minimums for the roles each token plays (body text, links, buttons,
@@ -22,10 +22,28 @@ fn repo(rel: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(rel)
 }
 
-/// The base stylesheet's token layer: vpkit, an npm `file:` dependency.
+/// The base stylesheet: vpkit's index.css (an npm `file:` dependency) with
+/// its `@import "./part.css";` lines replaced by the parts, in order.
 fn base_css() -> String {
-    let path = repo("node_modules/vpkit/index.css");
-    std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path:?}: {e} (npm install)"))
+    let dir = repo("node_modules/vpkit");
+    let read = |file: &str| {
+        let path = dir.join(file);
+        std::fs::read_to_string(&path)
+            .unwrap_or_else(|e| panic!("read {path:?}: {e} (npm install)"))
+    };
+    read("index.css")
+        .lines()
+        .map(|line| {
+            match line
+                .strip_prefix("@import \"./")
+                .and_then(|rest| rest.strip_suffix("\";"))
+            {
+                Some(part) => read(part),
+                None => line.to_string(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 struct Block {
