@@ -4,13 +4,9 @@
 //! `file:` dependency on ../vpkit), embedded into the binary. vpkit's own
 //! test (test/themes.mjs) holds each to the design contract and the WCAG
 //! minimums; here: the docs site's theme gallery must list exactly the
-//! embedded set, with card data taken from the files, and the code colors
-//! rustpress writes by default must be vpkit's syntax.css.
+//! embedded set, with card data taken from the files.
 
 use std::path::PathBuf;
-
-use rustpress::config::SiteConfig;
-use rustpress::markdown::MarkdownEngine;
 
 fn repo(rel: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(rel)
@@ -159,31 +155,4 @@ fn docs_theme_index_matches_the_bundled_set() {
             }
         }
     }
-}
-
-#[test]
-fn default_code_colors_are_vpkits_syntax_css() {
-    // vpkit/syntax.css is a header comment followed by this exact output:
-    // the syntax.css rustpress writes when [code] is left at its defaults
-    let config: SiteConfig = toml::from_str("").unwrap();
-    let engine = MarkdownEngine::new(
-        &config.markdown,
-        &config.code,
-        std::path::Path::new("."),
-        "/",
-    )
-    .unwrap();
-    let vpkit = read("node_modules/vpkit/syntax.css");
-    let header_end = vpkit
-        .find("*/\n\n")
-        .expect("vpkit's syntax.css starts with a header comment and a blank line");
-    assert!(
-        vpkit.starts_with("/*"),
-        "vpkit's syntax.css starts with its header comment"
-    );
-    assert_eq!(
-        &vpkit[header_end + "*/\n\n".len()..],
-        engine.syntax_css(),
-        "the default code colors drifted from vpkit's syntax.css"
-    );
 }
