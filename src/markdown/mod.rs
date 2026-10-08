@@ -190,16 +190,8 @@ impl MarkdownEngine {
         let html = resolve_marked_urls(html, page, content, &self.base);
         let html = self.render_titles(&html, page, content);
         let html = apply_heading_rewrites(&html, &headings);
-        let mut html = replace_toc(&html, &headings);
-        // comrak's footnote section lacks the separator <hr> that
-        // markdown-it-footnote emits upstream (visible rule above the
-        // footnote list); comrak 0.55 writes `data-footnotes` on the tag
-        if html.contains("<section class=\"footnotes\" data-footnotes>") {
-            html = html.replace(
-                "<section class=\"footnotes\" data-footnotes>",
-                "<hr class=\"footnotes-sep\"><section class=\"footnotes\" data-footnotes>",
-            );
-        }
+        let html = replace_toc(&html, &headings);
+        let mut html = upstream_footnotes(&html);
         if self.lazy_images {
             html = html.replace("<img ", "<img loading=\"lazy\" ");
         }
@@ -281,6 +273,71 @@ impl MarkdownEngine {
                 .to_string(),
         )
     }
+}
+
+/// comrak's footnote HTML reshaped into what upstream's
+/// @mdit/plugin-footnote emits: `[n]` reference text (`[n:k]` for the
+/// k-th repeat), ids by number (`footnote1`, `footnote-ref1:1`) instead of
+/// label, the separator rule and list classes, and `↩︎` backrefs — the
+/// U+FE0E keeps the arrow a text glyph, where a bare U+21A9 can draw as
+/// an emoji on Apple platforms. Pages without footnotes pass through.
+fn upstream_footnotes(html: &str) -> String {
+    if !html.contains("data-footnote-ref") {
+        return html.to_string();
+    }
+    static REF: OnceLock<regex::Regex> = OnceLock::new();
+    static ITEM: OnceLock<regex::Regex> = OnceLock::new();
+    static BACKREF: OnceLock<regex::Regex> = OnceLock::new();
+    let reference = REF.get_or_init(|| {
+        regex::Regex::new(
+            r#"<sup class="footnote-ref"><a href="\#fn-([^"]*)" id="fnref-([^"]*)" data-footnote-ref>(\d+)</a></sup>"#,
+        )
+        .unwrap()
+    });
+    // label → footnote number, and comrak reference id → upstream tag
+    let mut number = std::collections::HashMap::new();
+    let mut tag_of = std::collections::HashMap::new();
+    let html = reference.replace_all(html, |c: &regex::Captures| {
+        let (label, id, n) = (&c[1], &c[2], &c[3]);
+        // comrak ids the m-th reference `label-m` (m ≥ 2); upstream
+        // tags it `n:(m-1)`
+        let tag = match id.strip_prefix(label).and_then(|rest| rest.strip_prefix('-')) {
+            None => n.to_string(),
+            Some(m) => {
+                let m: u32 = m.parse().expect("comrak numbers repeat references");
+                format!("{n}:{}", m - 1)
+            }
+        };
+        number.insert(label.to_string(), n.to_string());
+        tag_of.insert(id.to_string(), tag.clone());
+        format!(
+            r##"<sup class="footnote-ref"><a href="#footnote{n}">[{tag}]</a><a class="footnote-anchor" id="footnote-ref{tag}"></a></sup>"##
+        )
+    });
+    let html = html.replace(
+        "<section class=\"footnotes\" data-footnotes>\n<ol>",
+        "<hr class=\"footnotes-sep\"><section class=\"footnotes\"><ol class=\"footnotes-list\">",
+    );
+    let item = ITEM.get_or_init(|| regex::Regex::new(r#"<li id="fn-([^"]*)">"#).unwrap());
+    let html = item.replace_all(&html, |c: &regex::Captures| {
+        // comrak renders only referenced footnotes
+        let n = &number[&c[1]];
+        format!(r#"<li id="footnote{n}" class="footnote-item">"#)
+    });
+    let backref = BACKREF.get_or_init(|| {
+        regex::Regex::new(
+            r#"<a href="\#fnref-([^"]*)" class="footnote-backref" data-footnote-backref data-footnote-backref-idx="[^"]*" aria-label="[^"]*">↩(?:<sup class="footnote-ref">\d+</sup>)?</a>"#,
+        )
+        .unwrap()
+    });
+    backref
+        .replace_all(&html, |c: &regex::Captures| {
+            let tag = &tag_of[&c[1]];
+            format!(
+                "<a href=\"#footnote-ref{tag}\" class=\"footnote-backref\">\u{21a9}\u{fe0e}</a>"
+            )
+        })
+        .into_owned()
 }
 
 /// Rewrite relative/`.md` links against the page's location into

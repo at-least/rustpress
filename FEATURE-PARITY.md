@@ -185,7 +185,7 @@ common `transformHead` use.
 | Frontmatter | implemented | `src/content.rs:17` | YAML; unknown keys tolerated |
 | GitHub-Style Tables | implemented | comrak GFM | |
 | Task Lists | implemented | comrak GFM | |
-| Footnotes | implemented | `expand_inline_footnotes` `src/markdown/preprocess.rs` | `[^1]` references + inline `^[…]` (rewritten to reference form); comrak renders |
+| Footnotes | implemented | `expand_inline_footnotes` `src/markdown/preprocess.rs`, `upstream_footnotes` `src/markdown/mod.rs` | `[^1]` references + inline `^[…]` (rewritten to reference form); comrak renders, reshaped into upstream's @mdit/plugin-footnote markup (`[n]`/`[n:k]`, numbered ids, `↩︎`) |
 | Emoji :tada: | implemented | comrak | shortcodes rendered |
 | Table of Contents | implemented | `src/markdown/preprocess.rs:306`, `src/markdown/mod.rs:329-372` | `[[toc]]` nested h2–h3; `markdown.toc` options n/a |
 

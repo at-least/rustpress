@@ -1528,3 +1528,35 @@ fn container_titles_render_inline_markdown() {
     }
     assert!(!h.contains("data-gd-inline"), "marker leaked: {h}");
 }
+
+#[test]
+fn footnotes_take_upstreams_shape() {
+    // @mdit/plugin-footnote's output (what upstream renders), from a
+    // probe of the pinned build: `[n]` / `[n:k]` reference text, ids by
+    // number not label, the list classes, and `↩︎` backrefs — U+FE0E
+    // keeps the arrow a text glyph, where a bare U+21A9 can draw as an
+    // emoji on Apple platforms
+    let out = synthetic(concat!(
+        "First[^1], again[^1], named[^note], inline^[Inline body.].\n\n",
+        "[^1]: One.\n",
+        "[^note]: Named.\n",
+    ));
+    let h = &out.html;
+    for want in [
+        "First<sup class=\"footnote-ref\"><a href=\"#footnote1\">[1]</a><a class=\"footnote-anchor\" id=\"footnote-ref1\"></a></sup>",
+        "again<sup class=\"footnote-ref\"><a href=\"#footnote1\">[1:1]</a><a class=\"footnote-anchor\" id=\"footnote-ref1:1\"></a></sup>",
+        "named<sup class=\"footnote-ref\"><a href=\"#footnote2\">[2]</a><a class=\"footnote-anchor\" id=\"footnote-ref2\"></a></sup>",
+        "inline<sup class=\"footnote-ref\"><a href=\"#footnote3\">[3]</a><a class=\"footnote-anchor\" id=\"footnote-ref3\"></a></sup>",
+        "<hr class=\"footnotes-sep\"><section class=\"footnotes\"><ol class=\"footnotes-list\">",
+        "<li id=\"footnote1\" class=\"footnote-item\">",
+        "<li id=\"footnote2\" class=\"footnote-item\">",
+        "<li id=\"footnote3\" class=\"footnote-item\">",
+        "One. <a href=\"#footnote-ref1\" class=\"footnote-backref\">\u{21a9}\u{fe0e}</a> <a href=\"#footnote-ref1:1\" class=\"footnote-backref\">\u{21a9}\u{fe0e}</a></p>",
+        "Named. <a href=\"#footnote-ref2\" class=\"footnote-backref\">\u{21a9}\u{fe0e}</a></p>",
+        "Inline body. <a href=\"#footnote-ref3\" class=\"footnote-backref\">\u{21a9}\u{fe0e}</a></p>",
+    ] {
+        assert!(h.contains(want), "missing {want}\n{h}");
+    }
+    // no comrak-shaped leftovers point at ids that no longer exist
+    assert!(!h.contains("fnref-") && !h.contains("id=\"fn-"), "{h}");
+}
