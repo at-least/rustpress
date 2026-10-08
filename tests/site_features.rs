@@ -303,6 +303,32 @@ fn language_switcher_follows_upstream() {
 }
 
 #[test]
+fn the_404_page_takes_the_root_locales_theme_config() {
+    // upstream's 404 is a root-locale page: probed on the pinned build,
+    // [locales.root.themeConfig] notFound reached the rendered /404.html
+    let (_, out) = build_site(
+        r#"title = "T"
+
+[locales.root]
+label = "English"
+
+[locales.root.themeConfig]
+skipToContentLabel = "Skip (root locale)"
+
+[locales.root.themeConfig.notFound]
+title = "NF (root locale)"
+
+[locales.zh]
+label = "中文"
+"#,
+        &[("index.md", "# H\n"), ("zh/index.md", "# H\n")],
+    );
+    let html = std::fs::read_to_string(out.path().join("404.html")).unwrap();
+    assert!(html.contains(">NF (root locale)<"), "notFound: {html}");
+    assert!(html.contains(">Skip (root locale)</a>"), "shell: {html}");
+}
+
+#[test]
 fn locale_theme_config_reaches_the_locales_pages() {
     // [locales.zh.themeConfig] layers over the site's theme settings on
     // the zh pages only — tables merge, arrays replace, unset keys

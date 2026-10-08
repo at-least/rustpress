@@ -635,7 +635,10 @@ impl Site {
         // divider + quote + outlined link, over the plain content column —
         // no sidebar/aside, footer visible. Metrics measured off the
         // deployed vitepress.dev/404.html.
-        let nf = self.config.not_found.clone().unwrap_or_default();
+        // a root-locale page: the root locale's themeConfig applies, as on
+        // upstream's 404
+        let cfg = self.config.for_locale("root");
+        let nf = cfg.not_found.clone().unwrap_or_default();
         // Upstream's SSG 404 document title is the status code and its
         // meta description is "Not Found" — both independent of the
         // themeConfig texts (which fill the visible PAGE NOT FOUND h1)
@@ -653,14 +656,14 @@ impl Site {
             has_math: false,
             lang: self.config.lang.clone(),
             translations: None,
-            site_title: match &self.config.site_title {
+            site_title: match &cfg.site_title {
                 Some(crate::config::SiteTitleSetting::Text(t)) => Some(t.clone()),
                 Some(crate::config::SiteTitleSetting::Hide(_)) => None,
                 None => self.locale_title("root"),
             },
             search_index_url: self.url(&search_index_path("root")),
             outline: None,
-            config: &self.config,
+            config: cfg,
         };
         let home = self.url("/");
         let nf_title = nf.title.clone().unwrap_or_else(|| "PAGE NOT FOUND".into());
