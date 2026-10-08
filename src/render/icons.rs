@@ -67,6 +67,12 @@ pub fn icon(name: &str, class: &str) -> Raw<String> {
     } else {
         base.to_string()
     };
+    // likewise `inline-block`, which sorts after a caller's `block`
+    let base = if class.split_whitespace().any(|c| c == "block") {
+        base.replace("inline-block ", "")
+    } else {
+        base
+    };
     Raw::dangerously_create(base.replace("{c}", class))
 }
 
@@ -81,4 +87,22 @@ pub fn social_icon(kind: &str, class: &str) -> Raw<String> {
     };
     let _ = class; // glyph size is fixed by the wrapping span, like the Tera theme
     Raw::dangerously_create(svg)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::icon;
+
+    #[test]
+    fn a_callers_display_replaces_the_default() {
+        // `inline-block` sorts after `block` in the compiled stylesheet:
+        // left beside the caller's `block`, it would win
+        let svg = icon("delete", "block size-[1.125rem]").into_inner();
+        assert!(svg.contains(r#"class="block size-[1.125rem]""#), "{svg}");
+        let svg = icon("delete", "m-2").into_inner();
+        assert!(
+            svg.contains(r#"class="inline-block size-[1em] m-2""#),
+            "{svg}"
+        );
+    }
 }

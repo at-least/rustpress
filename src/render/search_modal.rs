@@ -68,7 +68,7 @@ pub fn search_modal<'a>(
                     >
                     <div class="flex gap-1">
                         <button type="button" class="p-2 not-disabled:hover:text-brand-1 cursor-pointer disabled:opacity-[0.37]" id="VPSearchClear" title=(reset_title.clone()) @click="clear()" :disabled=("q.trim() === ''")>
-                            (icon("delete", "size-[1.125rem]"))
+                            (icon("delete", "block size-[1.125rem]"))
                         </button>
                     </div>
                 </form>

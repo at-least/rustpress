@@ -135,6 +135,18 @@ try {
     ok('search modal hidden initially', !(await dialog.isVisible()));
     await page.keyboard.press('Control+k');
     ok('Ctrl+K opens the modal', await eventually(dialog.waitFor({ state: 'visible', ...POLL })));
+    // the empty modal's box, as upstream's at 1280 (measured on a
+    // local-search scratch site; vitepress.dev itself uses Algolia): a
+    // 38px bar (36px input, 34px icon buttons), nothing in the list until
+    // a query is typed, the footer two 16px gaps below the bar
+    const box = await page.evaluate(() => {
+      const bar = document.getElementById('VPSearchBar').getBoundingClientRect();
+      const foot = document.getElementById('VPSearchShortcuts').getBoundingClientRect();
+      return { bar: bar.height, items: document.getElementById('VPSearchResults').children.length, gap: foot.top - bar.bottom };
+    });
+    ok('the search bar is 38px tall', box.bar === 38, String(box.bar));
+    ok('the empty list renders nothing', box.items === 0, String(box.items));
+    ok('the footer sits two gaps below the bar', box.gap === 32, String(box.gap));
     const input = page.locator('#VPLocalSearchBox input[type="search"], #VPLocalSearchBox input').first();
     ok('input focused', await eventually(page.waitForFunction(() => document.activeElement?.tagName === 'INPUT', null, POLL)));
     await input.fill('frontmatter');

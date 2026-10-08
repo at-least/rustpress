@@ -349,12 +349,12 @@ Alpine.data("searchModal", () => ({
     if (this.error) {
       return '<li class="no-results">Search index unavailable.</li>';
     }
+    // like upstream, the list stays empty until a query is typed
+    if (!this.q.trim()) return "";
     if (!this.results.length) {
       return (
         '<li class="no-results">' +
-        (this.q.trim()
-          ? (this.$root.dataset.noResults || 'No results for "{q}"').replace('{q}', '<b>' + this.esc(this.q.trim()) + '</b>')
-          : "") +
+        (this.$root.dataset.noResults || 'No results for "{q}"').replace('{q}', '<b>' + this.esc(this.q.trim()) + '</b>') +
         "</li>"
       );
     }
