@@ -317,6 +317,25 @@ try {
     await ctx.close();
   }
 
+  // ---- skip link (upstream VPSkipLink + its router's hash focus) -----------
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const page = await ctx.newPage();
+    await page.goto(`${base}/guide/routing/`, { waitUntil: 'networkidle' });
+    await page.keyboard.press('Tab');
+    const skip = await page.evaluate(() => {
+      const a = document.activeElement;
+      const r = a.getBoundingClientRect();
+      return { text: a.textContent.trim(), w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top) };
+    });
+    // a keyboard user must see where focus is (WCAG 2.4.7): the link was
+    // sr-only even while focused
+    ok('the first Tab reveals the skip link', skip.text === 'Skip to content' && skip.w > 40 && skip.h > 20 && skip.top >= 0, JSON.stringify(skip));
+    await page.keyboard.press('Enter');
+    ok('the skip link moves focus to the content', await eventually(page.waitForFunction(() => document.activeElement?.id === 'VPContent', null, POLL)));
+    await ctx.close();
+  }
+
   // ---- mobile outline dropdown ------------------------------------------
   {
     const ctx = await browser.newContext({ viewport: { width: 375, height: 800 } });

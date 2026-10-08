@@ -98,11 +98,6 @@ fn docs_site_builds_with_every_page_and_valid_anchors() {
             if frag.is_empty() || path.starts_with("http") {
                 continue;
             }
-            // theme chrome, not content: the skip link targets the doc
-            // layout's `#main`, which the home layout does not render
-            if href == "#main" {
-                continue;
-            }
             let target = if path.is_empty() {
                 url.clone()
             } else {

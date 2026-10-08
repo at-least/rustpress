@@ -103,7 +103,10 @@ pub fn layout<'a>(
                 (head_extra)
             </head>
             <body class=(format!("font-sans bg-bg text-text-1 antialiased [text-rendering:optimizeLegibility] [-moz-osx-font-smoothing:grayscale] [text-autospace:normal] [text-spacing-trim:normal]{}", if site.config.graded_containers { " vp-graded-containers" } else { "" }))>
-                <a class="sr-only" href="#main">(skip_label)</a>
+                // upstream VPSkipLink: visually hidden until focused, then a
+                // pill in the top-left corner; the content takes focus when it
+                // is followed (the hash-focus handler in the Alpine bundle)
+                <a class="VPSkipLink fixed top-2 left-2 z-[999] w-px h-px overflow-hidden whitespace-nowrap [clip:rect(0_0_0_0)] [clip-path:inset(50%)] rounded-lg px-4 py-2 text-[0.75rem] font-bold no-underline text-brand-1 shadow-3 bg-bg focus:w-auto focus:h-auto focus:[clip:auto] focus:[clip-path:none] xl:top-[0.875rem] xl:left-4" href="#VPContent">(skip_label)</a>
 
                 // body-level elements with Alpine directives each need their
                 // own x-data scope — Alpine 3 never initializes directives on

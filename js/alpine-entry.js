@@ -49,6 +49,33 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
+/* Same-page hash links (the skip link, outline links, heading anchors)
+   move focus to their target once the browser has scrolled there, like
+   upstream's router (scrollTo): a target that can't take focus gets a
+   temporary tabindex="-1", dropped again on blur. */
+document.addEventListener("click", (e) => {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const a = e.target.closest && e.target.closest("a[href]");
+  if (!a || !a.hash || a.origin !== location.origin || a.pathname !== location.pathname) return;
+  let target = null;
+  try {
+    target = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+  } catch (err) {}
+  if (!target) return;
+  requestAnimationFrame(() => {
+    target.focus({ preventScroll: true });
+    if (document.activeElement === target || target.hasAttribute("tabindex")) return;
+    const restore = () => {
+      target.removeAttribute("tabindex");
+      target.removeEventListener("blur", restore);
+    };
+    target.setAttribute("tabindex", "-1");
+    target.addEventListener("blur", restore);
+    target.focus({ preventScroll: true });
+    if (document.activeElement !== target) restore();
+  });
+});
+
 /* Code-group tab switching. The tab strip (radio inputs + labels) is
    emitted server-side by the markdown preprocessor; this component shows
    the <pre> of whichever radio is checked. `change` fires for a label
