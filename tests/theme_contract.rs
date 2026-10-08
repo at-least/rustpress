@@ -2,8 +2,9 @@
 //!
 //! A bundled theme is a *complete design*: it defines every design token
 //! the compiled base stylesheet consumes, so no stock value leaks through
-//! when it is linked. These tests derive the required token set from
-//! `styles/vitepress.css` itself (the structural layer — utilities and
+//! when it is linked. These tests derive the required token set from the
+//! base's token layer itself, the vitecss package's `index.css` that
+//! `styles/vitepress.css` imports (the structural layer — utilities and
 //! component rules — resolves through these `--vp-*` custom properties)
 //! and then hold every `static/themes/*.css` to it, plus WCAG contrast
 //! minimums for the roles each token plays (body text, links, buttons,
@@ -19,6 +20,12 @@ const ABSOLUTES: [&str; 2] = ["white", "black"];
 
 fn repo(rel: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(rel)
+}
+
+/// The base stylesheet's token layer: vitecss, an npm `file:` dependency.
+fn base_css() -> String {
+    let path = repo("node_modules/vitecss/index.css");
+    std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path:?}: {e} (npm install)"))
 }
 
 struct Block {
@@ -90,7 +97,7 @@ fn is_ramp(token: &str) -> bool {
 /// minus absolutes — the design contract. Derived, not hand-maintained,
 /// so it cannot drift from what the structure consumes.
 fn required_tokens() -> Vec<String> {
-    let css = std::fs::read_to_string(repo("styles/vitepress.css")).unwrap();
+    let css = base_css();
     let refs: Vec<String> = parse_refs(&css);
     let mut tokens: Vec<String> = refs
         .into_iter()
@@ -282,7 +289,7 @@ fn graded_containers_override_survives_themes() {
     // gradedContainers opts into GitHub-style severity colors; the rule
     // must carry its own literals with :has() specificity so it beats
     // any theme's :root/.dark warning/caution (which load later).
-    let css = std::fs::read_to_string(repo("styles/vitepress.css")).unwrap();
+    let css = base_css();
     for selector in [
         ":root:has(.vp-graded-containers)",
         ":root.dark:has(.vp-graded-containers)",

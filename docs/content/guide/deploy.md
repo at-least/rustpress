@@ -50,7 +50,7 @@ rustpress does not hash file names, so there is nothing that can be cached "immu
 
 These platforms build in a Node image, so the build command has to install Rust first. Set up a new project and change these settings using your dashboard:
 
-- **Build Command:** `curl -sSf https://sh.rustup.rs | sh -s -- -y && . "$HOME/.cargo/env" && cargo build --release && npm ci && npm run build:js && npm run build:css && ./target/release/rustpress build docs`
+- **Build Command:** `curl -sSf https://sh.rustup.rs | sh -s -- -y && . "$HOME/.cargo/env" && cargo build --release && git clone --depth 1 https://github.com/at-least/vitecss ../vitecss && npm ci && npm run build:js && npm run build:css && ./target/release/rustpress build docs`
 - **Output Directory:** `docs/public`
 
 Building the binary on every deploy takes a few minutes. The alternative is to build once in CI (below), commit or publish `docs/public`, and point the platform at it.
@@ -94,7 +94,9 @@ Building the binary on every deploy takes a few minutes. The alternative is to b
              node-version: 24
              cache: npm
          - name: Build theme assets
-           run: npm ci && npm run build:js && npm run build:css
+           run: |
+             git clone --depth 1 https://github.com/at-least/vitecss ../vitecss
+             npm ci && npm run build:js && npm run build:css
          - name: Build with rustpress
            run: cargo run --release -- build docs
          - name: Setup Pages
@@ -117,7 +119,7 @@ Building the binary on every deploy takes a few minutes. The alternative is to b
            uses: actions/deploy-pages@v4
    ```
 
-   This assumes the site lives inside the rustpress repository (as this documentation does). For a site in its own repository, build rustpress as a separate step: check out the rustpress repository, run its npm build, then `cargo install --path .` (or, once the crate is published, `cargo install rustpress-cli`). The binary carries the theme assets, so nothing has to be copied into the site. Note that `cargo install --git` cannot work: the npm-built `vitepress.css` and `js/app.js` are not committed, and the build refuses to run without them.
+   This assumes the site lives inside the rustpress repository (as this documentation does). For a site in its own repository, build rustpress as a separate step: check out the rustpress repository with vitecss next to it, run its npm build, then `cargo install --path .` (or, once the crate is published, `cargo install rustpress-cli`). The binary carries the theme assets, so nothing has to be copied into the site. Note that `cargo install --git` cannot work: the npm-built `vitepress.css` and `js/app.js` are not committed, and the build refuses to run without them.
 
    ::: warning
    Make sure the `base` option is properly configured when deploying to a `<user>.github.io/<repository>/` project page — see [Setting a Public Base Path](#setting-a-public-base-path).
@@ -136,6 +138,7 @@ Building the binary on every deploy takes a few minutes. The alternative is to b
    pages:
      script:
        - apt-get update && apt-get install -y nodejs npm
+       - git clone --depth 1 https://github.com/at-least/vitecss ../vitecss
        - npm ci && npm run build:js && npm run build:css
        - cargo build --release
        - ./target/release/rustpress build docs
