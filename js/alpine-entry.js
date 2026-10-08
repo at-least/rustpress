@@ -354,7 +354,7 @@ Alpine.data("searchModal", () => ({
     if (!this.results.length) {
       return (
         '<li class="no-results">' +
-        (this.$root.dataset.noResults || 'No results for "{q}"').replace('{q}', '<b>' + this.esc(this.q.trim()) + '</b>') +
+        (this.$root.dataset.noResults || 'No results for "{q}"').replace('{q}', '<strong>' + this.esc(this.q.trim()) + '</strong>') +
         "</li>"
       );
     }

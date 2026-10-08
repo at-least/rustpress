@@ -1069,6 +1069,23 @@ fn search_modal_strings_default_like_upstreams() {
 }
 
 #[test]
+fn a_no_results_text_without_the_query_slot_gets_the_query_appended() {
+    // upstream's noResultsText is a prefix: its modal appends the quoted
+    // query (`没有结果 "q"`, probed on the pinned build), so a string
+    // ported from an upstream config must too; `{q}` places it instead
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[search]\nprovider = \"local\"\n\n[search.translations]\nnoResultsText = \"没有结果\"\n",
+        &[("guide/a.md", "# A\n")],
+    );
+    let html = page(&out, "/guide/a/");
+    assert!(
+        html.contains("data-no-results=\"没有结果 &quot;{q}&quot;\""),
+        "{}",
+        &html[html.find("data-no-results").unwrap()..][..80]
+    );
+}
+
+#[test]
 fn search_footer_keys_are_named_like_upstreams() {
     // upstream VPLocalSearchBox: icon keys with translatable aria-labels
     // (defaults "up arrow", "down arrow", "enter", "escape"), Esc as "esc"

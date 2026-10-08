@@ -19,7 +19,12 @@ pub fn search_modal<'a>(
         .placeholder
         .clone()
         .unwrap_or_else(|| button_text.clone());
-    let no_results = search.translations.no_results_text.clone();
+    // upstream's noResultsText is a prefix, its modal appending the quoted
+    // query; `{q}` places the query anywhere instead
+    let no_results = match search.translations.no_results_text.as_str() {
+        t if t.contains("{q}") => t.to_string(),
+        t => format!("{t} \"{{q}}\""),
+    };
     let reset_title = search.translations.reset_button_title.clone();
     let navigate_text = search.translations.navigate_text.clone();
     let select_text = search.translations.select_text.clone();

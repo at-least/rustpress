@@ -63,7 +63,7 @@ closeKeyAriaLabel = "esc"
 | `buttonText` | `Search` | navbar button label; in the modal, the search icon's tooltip and the input placeholder |
 | `buttonAriaLabel` | `Search` | navbar button `aria-label` |
 | `placeholder` | the `buttonText` | modal input placeholder — a rustpress extra: upstream's input always shows `buttonText` |
-| `noResultsText` | `No results for "{q}"` | empty state; `{q}` is replaced with the query |
+| `noResultsText` | `No results for "{q}"` | empty state; `{q}` marks where the query goes — without it the quoted query follows the text, as in VitePress (`没有结果` shows `没有结果 "query"`) |
 | `resetButtonTitle` | `Reset search` | clear-button tooltip |
 | `navigateText` | `to navigate` | footer hint after the arrow keys |
 | `selectText` | `to select` | footer hint after Enter |

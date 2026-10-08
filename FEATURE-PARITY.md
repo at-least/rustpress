@@ -330,7 +330,7 @@ are Vue composables over the SPA runtime.
 | sidebar: nested `base` overrides | implemented | `src/sidebar.rs:170-233` | nearest base wins |
 | edit-link: frontmatter `editLink: false` | implemented | `src/content.rs`, `src/render/mod.rs` | per-page toggle honored (`edit_link != Some(false)`) |
 | last-updated: frontmatter `lastUpdated: false` / Date | implemented | `src/content.rs`, `src/render/mod.rs` | per-page toggle and verbatim date override |
-| search: local provider | partial | `src/render/mod.rs`, `search_modal.rs` | translations wired (button/modal strings, footer key aria-labels, `{q}` no-results), per locale under `[search.locales]` like upstream's `options.locales`; per-page `search: false`; one index per locale; still no `miniSearch` tuning |
+| search: local provider | partial | `src/render/mod.rs`, `search_modal.rs` | translations wired (button/modal strings, footer key aria-labels, `{q}` no-results — without `{q}` the quoted query is appended like upstream's), per locale under `[search.locales]` like upstream's `options.locales`; per-page `search: false`; one index per locale; still no `miniSearch` tuning |
 | search: Algolia / DocSearch / Ask AI | missing | — | external service; see extras for our `askAiUrl` |
 | footer: inline HTML in message/copyright | implemented | `src/render/layout.rs` | `message`/`copyright` rendered as inline HTML |
 | layout: `page` | missing | — | unstyled layout not distinguished from `doc` |
