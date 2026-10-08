@@ -18,6 +18,13 @@
 @source "../src";
 @source "../js";
 @source "../content";
+/* Not for class names: the CLI's --watch watches only the directories of
+   the input and the @source entries (through realpath, so these reach
+   ../vitecss), never those of @import-ed files. Without them, watch:css
+   misses every vitecss edit. The built CSS is byte-identical with or
+   without them (Tailwind 4.3.3): recheck that after a Tailwind bump. */
+@source "../node_modules/vitecss/index.css";
+@source "../node_modules/vitecss/fonts.css";
 /* The Inter webfonts. Their url()s (`fonts/…`) resolve next to the built
    vitepress.css, i.e. to static/fonts/, which holds copies of vitecss's
    fonts/ (tests/embedded_assets.rs fails when the two drift apart). */
