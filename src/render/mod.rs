@@ -197,7 +197,13 @@ impl Site {
         let (prev, next) = self.sidebars.neighbors(&page.url);
         let prev = apply_pager_override(page.front.prev.as_ref(), prev, self);
         let next = apply_pager_override(page.front.next.as_ref(), next, self);
-        let outline = outline_range(cfg, page);
+        // upstream's outline collects headings inside .VPDoc, which a
+        // `layout: page` page doesn't have
+        let outline = if is_page_layout {
+            None
+        } else {
+            outline_range(cfg, page)
+        };
         // last-updated: page Date override > git/mtime > front-matter off
         let last_updated = match &page.front.last_updated {
             Some(LastUpdatedSetting::Toggle(false)) => None,
@@ -239,14 +245,9 @@ impl Site {
 
         let body = if is_home {
             home::home_page(self, page).render().into_inner()
+        } else if is_page_layout {
+            doc::page_layout(rendered).render().into_inner()
         } else {
-            // `layout: page` strips the doc chrome (aside, edit link,
-            // timestamps, pager) like upstream's VPPage
-            let (aside, edit_on, last_updated, outline) = if is_page_layout {
-                (None, false, None, None)
-            } else {
-                (aside_left, edit_on, last_updated, outline)
-            };
             doc::doc_page(
                 cfg,
                 page,
@@ -255,7 +256,7 @@ impl Site {
                 next.as_ref(),
                 has_sidebar,
                 outline,
-                aside,
+                aside_left,
                 edit_on,
                 last_updated.as_ref(),
             )

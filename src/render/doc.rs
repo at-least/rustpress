@@ -8,6 +8,19 @@ use super::icons::icon;
 use crate::content::Page;
 use crate::markdown::{Heading, RenderedPage};
 
+/// VPPage (`layout: page`): the markdown in a plain container, with
+/// none of the doc chrome — no `.vp-doc` typography, padding, aside or
+/// doc footer. The sidebar, navbar and site footer follow the usual rules.
+pub fn page_layout(rendered: &RenderedPage) -> impl Renderable + '_ {
+    rsx! {
+        <div class="VPPage">
+            <div class="relative">
+                (Raw::dangerously_create(rendered.html.clone()))
+            </div>
+        </div>
+    }
+}
+
 // the args mirror the upstream template's slots one to one; a params
 // struct would just move the same names behind a field access
 #[allow(clippy::too_many_arguments)]

@@ -333,7 +333,7 @@ are Vue composables over the SPA runtime.
 | search: local provider | partial | `src/render/mod.rs`, `search_modal.rs` | translations wired (button/modal strings, footer key aria-labels, `{q}` no-results — without `{q}` the quoted query is appended like upstream's), per locale under `[search.locales]` like upstream's `options.locales`; per-page `search: false`; one index per locale; still no `miniSearch` tuning |
 | search: Algolia / DocSearch / Ask AI | missing | — | external service; see extras for our `askAiUrl` |
 | footer: inline HTML in message/copyright | implemented | `src/render/layout.rs` | `message`/`copyright` rendered as inline HTML |
-| layout: `page` | missing | — | unstyled layout not distinguished from `doc` |
+| layout: `page` | implemented | `src/render/doc.rs` (`page_layout`) | VPPage: the markdown bare — no `.vp-doc`, padding, outline, edit link, last updated or pager; sidebar/navbar/footer rules as `doc` |
 | home-page: hero `image` light/dark | implemented | `hero_image_html` |  |
 | home-page: hero action `target`/`rel` | implemented | `hero_button` | was finding #5; fixed in d6b05d2 |
 | home-page: `markdownStyles` | missing | — | |

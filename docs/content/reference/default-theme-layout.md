@@ -22,13 +22,14 @@ It also provides documentation specific features listed below. These features ar
 
 - [Edit Link](./default-theme-edit-link)
 - [Last Updated](./default-theme-last-updated)
+- [Prev / Next Links](./default-theme-prev-next-links)
 - Outline (the right-hand "On this page" aside)
-
-[Prev / Next Links](./default-theme-prev-next-links) render in both the `doc` and the `page` layout.
 
 ## Page Layout
 
-Option `page` is treated as a "blank page". The Markdown is still parsed and all of the [Markdown Extensions](../guide/markdown) work the same as in the `doc` layout, but the page renders without most of the doc chrome: no aside/outline, no edit link and no last-updated timestamp. The [prev/next pager](./default-theme-prev-next-links) still renders; hide it per page with `prev: false` and `next: false` in the frontmatter.
+Option `page` is treated as a "blank page". The Markdown is still parsed and all of the [Markdown Extensions](../guide/markdown) work the same as in the `doc` layout, but the page gets none of the default styling: no doc typography or padding, no outline, edit link, last-updated timestamp or prev/next pager.
+
+The page layout lets you style everything yourself without the theme affecting the markup — useful for a custom page. Your CSS can target the `.VPPage` container that holds the Markdown.
 
 Note that even in this layout, the navbar, the sidebar (if the page has a matching sidebar config) and the footer still show up. The `navbar` and `footer` frontmatter keys hide those two; see the [`sidebar`](./frontmatter-config#sidebar) frontmatter entry for why that key does not currently remove the sidebar panel.
 

@@ -375,6 +375,39 @@ label = "日本語"
 }
 
 #[test]
+fn page_layout_renders_the_markdown_bare() {
+    // upstream VPPage (`layout: page`), measured on the pinned build: the
+    // markdown in a plain container — no .vp-doc typography, no doc
+    // padding, aside or doc footer — while the sidebar still shows where
+    // one is configured
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[editLink]\npattern = \"https://x/edit/:path\"\n\n[sidebar.\"/guide/\"]\nitems = [{ text = \"A\", link = \"/guide/a\" }, { text = \"P\", link = \"/guide/p\" }]\n",
+        &[
+            ("guide/a.md", "# A\n"),
+            ("guide/p.md", "---\nlayout: page\n---\n\n# Page P\n\ntext\n"),
+        ],
+    );
+    let html = page(&out, "/guide/p/");
+    assert!(
+        html.contains("<div class=\"VPPage\"><div class=\"relative\"><h1 id=\"page-p\""),
+        "{html}"
+    );
+    assert!(!html.contains("class=\"vp-doc "), "doc typography");
+    assert!(!html.contains("x-data=\"docPage\""), "doc container");
+    assert!(
+        !html.contains("Next page") && !html.contains("Previous page"),
+        "pager"
+    );
+    assert!(!html.contains("https://x/edit/"), "edit link");
+    assert!(html.contains("id=\"VPSidebar\""), "sidebar");
+    // upstream's outline reads headings inside .VPDoc only: none here
+    assert!(
+        !html.contains("id=\"VPLocalNavOutlineDropdown\""),
+        "local-nav outline"
+    );
+}
+
+#[test]
 fn the_404_page_takes_the_root_locales_theme_config() {
     // upstream's 404 is a root-locale page: probed on the pinned build,
     // [locales.root.themeConfig] notFound reached the rendered /404.html
