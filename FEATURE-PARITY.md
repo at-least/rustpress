@@ -184,7 +184,7 @@ common `transformHead` use.
 | External Links | diverged | probe 2026-09-10 | upstream adds `target="_blank" rel="noreferrer"` to outbound links; we add nothing (and the external arrow is always on — see `externalLinkIcon`) |
 | Frontmatter | implemented | `src/content.rs:17` | YAML; unknown keys tolerated |
 | GitHub-Style Tables | implemented | comrak GFM | |
-| Task Lists | implemented | comrak GFM | |
+| Task Lists | implemented | comrak GFM, `task_list::PageFormatter` `src/markdown/mod.rs` | upstream's @mdit/plugin-tasklist markup: `task-item-N` ids, item text in a `<label for>` the checkbox |
 | Footnotes | implemented | `expand_inline_footnotes` `src/markdown/preprocess.rs`, `upstream_footnotes` `src/markdown/mod.rs` | `[^1]` references + inline `^[…]` (rewritten to reference form); comrak renders, reshaped into upstream's @mdit/plugin-footnote markup (`[n]`/`[n:k]`, numbered ids, `↩︎`) |
 | Emoji :tada: | implemented | comrak | shortcodes rendered |
 | Table of Contents | implemented | `src/markdown/preprocess.rs:306`, `src/markdown/mod.rs:329-372` | `[[toc]]` nested h2–h3; `markdown.toc` options n/a |

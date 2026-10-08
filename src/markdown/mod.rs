@@ -185,8 +185,19 @@ impl MarkdownEngine {
             },
         };
         let mut html = String::new();
-        comrak::format_html_with_plugins(root, &self.options, &mut html, &plugins)
-            .expect("infallible string write");
+        task_list::PageFormatter::format_document_with_plugins(
+            root,
+            &self.options,
+            &mut html,
+            &plugins,
+            0,
+        )
+        .expect("infallible string write");
+        // upstream's task-list class on the list itself
+        let html = html.replace(
+            " class=\"contains-task-list\"",
+            " class=\"task-list-container\"",
+        );
         let html = resolve_marked_urls(html, page, content, &self.base);
         let html = self.render_titles(&html, page, content);
         let html = apply_heading_rewrites(&html, &headings);
@@ -272,6 +283,86 @@ impl MarkdownEngine {
                 .strip_suffix("</p>\n")?
                 .to_string(),
         )
+    }
+}
+
+/// Task lists in upstream's shape (@mdit/plugin-tasklist, from a probe of
+/// the pinned build): each checkbox gets a page-wide `task-item-N` id and
+/// the item's first paragraph — its inline content — sits in a
+/// `<label for>` it, so the checkbox has an accessible name; in a loose
+/// list both live inside the `<p>`. Every other node renders as comrak's
+/// default. (A module of its own: the macro declares a `pub struct`.)
+mod task_list {
+    use std::fmt::Write as _;
+
+    use comrak::nodes::{AstNode, NodeValue};
+
+    comrak::create_formatter!(PageFormatter<usize>, {
+        NodeValue::TaskItem(_) => |context, node, entering| {
+            let in_list = node
+                .parent()
+                .is_some_and(|p| matches!(p.data.borrow().value, NodeValue::List(_)));
+            if entering {
+                context.cr()?;
+                if in_list {
+                    context.write_str("<li class=\"task-list-item\">")?;
+                }
+                // an item without text has no paragraph to carry the box
+                let has_text = node
+                    .first_child()
+                    .is_some_and(|c| matches!(c.data.borrow().value, NodeValue::Paragraph));
+                if !has_text {
+                    checkbox(context, node, false)?;
+                }
+            } else if in_list {
+                context.write_str("</li>")?;
+                context.lf()?;
+            }
+        },
+        NodeValue::Paragraph => |context, node, entering| {
+            let task = node.parent().filter(|p| {
+                node.previous_sibling().is_none()
+                    && matches!(p.data.borrow().value, NodeValue::TaskItem(_))
+            });
+            let Some(task) = task else {
+                return comrak::html::format_node_default(context, node, entering);
+            };
+            if entering {
+                // `<p>` first in a loose list, nothing in a tight one
+                let children = comrak::html::format_node_default(context, node, entering)?;
+                checkbox(context, task, true)?;
+                return Ok(children);
+            }
+            context.write_str("</label>")?;
+            return comrak::html::format_node_default(context, node, entering);
+        },
+    });
+
+    /// The checkbox of `task`, numbered by the render's counter, and the
+    /// opening of its label when the item has text.
+    fn checkbox(
+        context: &mut comrak::html::Context<usize>,
+        task: &AstNode<'_>,
+        label: bool,
+    ) -> std::fmt::Result {
+        let checked = matches!(
+            &task.data.borrow().value,
+            NodeValue::TaskItem(item) if item.symbol.is_some()
+        );
+        let n = context.user;
+        context.user += 1;
+        write!(
+            context,
+            r#"<input type="checkbox" class="task-list-item-checkbox" id="task-item-{n}"{} disabled="disabled">"#,
+            if checked { r#" checked="checked""# } else { "" }
+        )?;
+        if label {
+            write!(
+                context,
+                r#"<label class="task-list-item-label" for="task-item-{n}"> "#
+            )?;
+        }
+        Ok(())
     }
 }
 

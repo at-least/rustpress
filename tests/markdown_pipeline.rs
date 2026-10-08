@@ -1560,3 +1560,34 @@ fn footnotes_take_upstreams_shape() {
     // no comrak-shaped leftovers point at ids that no longer exist
     assert!(!h.contains("fnref-") && !h.contains("id=\"fn-"), "{h}");
 }
+
+#[test]
+fn task_list_checkboxes_are_labelled() {
+    // upstream (@mdit/plugin-tasklist) wraps each item's text in a
+    // <label for> its checkbox — an unlabelled checkbox fails Lighthouse's
+    // "form elements have labels" audit. Shape from a probe of the pinned
+    // build: page-wide task-item-N ids, the label holding the first
+    // paragraph's inline content (inside the <p> of a loose list), and
+    // task-list-container on the list
+    let out = synthetic(concat!(
+        "- [ ] Plain item\n",
+        "- [x] Item with `code`\n",
+        "- [ ] Parent item\n",
+        "  - [x] Nested child\n",
+        "\nLoose list:\n\n",
+        "- [ ] Loose one\n\n",
+        "- [x] Loose two\n",
+    ));
+    let h: String = out.html.split_whitespace().collect::<Vec<_>>().join(" ");
+    for want in [
+        "<ul class=\"task-list-container\"> <li class=\"task-list-item\"><input type=\"checkbox\" class=\"task-list-item-checkbox\" id=\"task-item-0\" disabled=\"disabled\"><label class=\"task-list-item-label\" for=\"task-item-0\"> Plain item</label></li>",
+        "<input type=\"checkbox\" class=\"task-list-item-checkbox\" id=\"task-item-1\" checked=\"checked\" disabled=\"disabled\"><label class=\"task-list-item-label\" for=\"task-item-1\"> Item with <code>code</code></label></li>",
+        "<label class=\"task-list-item-label\" for=\"task-item-2\"> Parent item</label> <ul class=\"task-list-container\">",
+        "id=\"task-item-3\" checked=\"checked\" disabled=\"disabled\"><label class=\"task-list-item-label\" for=\"task-item-3\"> Nested child</label>",
+        "<li class=\"task-list-item\"> <p><input type=\"checkbox\" class=\"task-list-item-checkbox\" id=\"task-item-4\" disabled=\"disabled\"><label class=\"task-list-item-label\" for=\"task-item-4\"> Loose one</label></p>",
+        "<p><input type=\"checkbox\" class=\"task-list-item-checkbox\" id=\"task-item-5\" checked=\"checked\" disabled=\"disabled\"><label class=\"task-list-item-label\" for=\"task-item-5\"> Loose two</label></p>",
+    ] {
+        assert!(h.contains(want), "missing {want}\n{h}");
+    }
+    assert!(!h.contains("contains-task-list"), "{h}");
+}
