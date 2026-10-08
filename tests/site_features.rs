@@ -954,6 +954,23 @@ backButtonTitle = "Suche schließen""#,
 }
 
 #[test]
+fn search_modal_strings_default_like_upstreams() {
+    // upstream VPLocalSearchBox: the input placeholder and the label's
+    // title are buttonText, the clear button's title "Reset search"
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[search]\nprovider = \"local\"\n\n[search.translations]\nbuttonText = \"Suchen\"\n",
+        &[("guide/a.md", "# A\n")],
+    );
+    let html = page(&out, "/guide/a/");
+    assert!(html.contains("placeholder=\"Suchen\""), "placeholder");
+    assert!(
+        html.contains(r#"<label id="localsearch-label" for="localsearch-input" title="Suchen">"#),
+        "label title"
+    );
+    assert!(html.contains("title=\"Reset search\""), "clear button");
+}
+
+#[test]
 fn search_footer_keys_are_named_like_upstreams() {
     // upstream VPLocalSearchBox: icon keys with translatable aria-labels
     // (defaults "up arrow", "down arrow", "enter", "escape"), Esc as "esc"

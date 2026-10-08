@@ -46,7 +46,6 @@ provider = "local"
 [search.translations]
 buttonText = "搜索"
 buttonAriaLabel = "搜索"
-placeholder = "搜索文档"
 noResultsText = "没有找到 “{q}” 的结果"
 resetButtonTitle = "清除"
 navigateText = "切换"
@@ -61,11 +60,11 @@ closeKeyAriaLabel = "esc"
 
 | key | default | where it shows |
 | --- | --- | --- |
-| `buttonText` | `Search` | navbar button label |
+| `buttonText` | `Search` | navbar button label; in the modal, the search icon's tooltip and the input placeholder |
 | `buttonAriaLabel` | `Search` | navbar button `aria-label` |
-| `placeholder` | `Search docs` | modal input placeholder |
+| `placeholder` | the `buttonText` | modal input placeholder — a rustpress extra: upstream's input always shows `buttonText` |
 | `noResultsText` | `No results for "{q}"` | empty state; `{q}` is replaced with the query |
-| `resetButtonTitle` | `Clear` | clear-button tooltip |
+| `resetButtonTitle` | `Reset search` | clear-button tooltip |
 | `navigateText` | `to navigate` | footer hint after the arrow keys |
 | `selectText` | `to select` | footer hint after Enter |
 | `closeText` | `to close` | footer hint after Esc |

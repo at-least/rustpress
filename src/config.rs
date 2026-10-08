@@ -927,9 +927,10 @@ pub struct SearchTranslations {
     /// Navbar button aria-label.
     #[serde(default = "default_search_button_text")]
     pub button_aria_label: String,
-    /// Modal input placeholder.
-    #[serde(default = "default_search_placeholder")]
-    pub placeholder: String,
+    /// Modal input placeholder; unset, the button text (upstream has no
+    /// such key: its placeholder is always `buttonText`).
+    #[serde(default)]
+    pub placeholder: Option<String>,
     /// Shown when a query matches nothing; `{q}` = the query.
     #[serde(default = "default_search_no_results")]
     pub no_results_text: String,
@@ -973,16 +974,12 @@ fn default_search_back() -> String {
     "Close search".into()
 }
 
-fn default_search_placeholder() -> String {
-    "Search docs".into()
-}
-
 fn default_search_no_results() -> String {
     "No results for \"{q}\"".into()
 }
 
 fn default_search_reset() -> String {
-    "Clear".into()
+    "Reset search".into()
 }
 
 fn default_search_navigate() -> String {

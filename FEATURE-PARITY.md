@@ -373,6 +373,8 @@ direction: upstream → us.
   light/dark split) — upstream colors code via Shiki `markdown` options.
 - `[markdown] codeCopyButton` toggle — upstream has no such option.
 - `askAiUrl` navbar link — upstream's Ask AI lives inside Algolia search.
+- `[search.translations] placeholder` — upstream's search input always
+  shows `buttonText`, which is ours too when `placeholder` is unset.
 - `[notFound]` title/quote/linkText — upstream 404 is slot-based.
 - hero action `theme: "sponsor"` — upstream has brand/alt only.
 - `rustpress serve` with SSE livereload; the parity tooling itself.
