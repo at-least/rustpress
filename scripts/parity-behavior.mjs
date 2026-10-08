@@ -142,8 +142,10 @@ try {
     const box = await page.evaluate(() => {
       const bar = document.getElementById('VPSearchBar').getBoundingClientRect();
       const foot = document.getElementById('VPSearchShortcuts').getBoundingClientRect();
-      return { bar: bar.height, items: document.getElementById('VPSearchResults').children.length, gap: foot.top - bar.bottom };
+      return { bar: bar.height, items: document.getElementById('VPSearchResults').children.length, gap: foot.top - bar.bottom, backdrop: getComputedStyle(document.getElementById('VPSearchBackdrop')).backdropFilter };
     });
+    // upstream dims the page behind the modal without blurring it
+    ok('the search backdrop does not blur the page', box.backdrop === 'none', box.backdrop);
     ok('the search bar is 38px tall', box.bar === 38, String(box.bar));
     ok('the empty list renders nothing', box.items === 0, String(box.items));
     ok('the footer sits two gaps below the bar', box.gap === 32, String(box.gap));
