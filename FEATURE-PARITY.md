@@ -236,7 +236,7 @@ common `transformHead` use.
 
 | feature | status | ours | note |
 |---|---|---|---|
-| `locales` (root + per-locale) | partial | `src/config.rs`, `src/render/mod.rs` | `label`/`lang`/`description`/`title` honored (locale `title` fixed in d6b05d2); `themeConfig` layered over the site's like upstream's stackView (theme keys only; sidebars stay path-keyed, search strings site-wide); no per-locale `head`/`titleTemplate`/`dir` |
+| `locales` (root + per-locale) | partial | `src/config.rs`, `src/render/mod.rs` | `label`/`lang`/`description`/`title` honored (locale `title` fixed in d6b05d2); `themeConfig` layered over the site's like upstream's stackView (theme keys only; sidebars stay path-keyed, search strings under `[search.locales]`); the 404 takes the root locale's; no per-locale `head`/`titleTemplate`/`dir` |
 | Language switcher | implemented | `src/render/mod.rs:483`, `src/render/navbar.rs:140-167,381-401` | current language as the title, the others in declaration order with `hreflang`/`rel="alternate"`; mobile accordion; same-page targeting, locale-root fallback |
 | Per-locale markdown strings | missing | — | container labels/code-copy texts are global only |
 | Separate dir per locale | implemented | `src/render/mod.rs:90-101` | `content/zh/**` → `/zh/**` |
@@ -330,7 +330,7 @@ are Vue composables over the SPA runtime.
 | sidebar: nested `base` overrides | implemented | `src/sidebar.rs:170-233` | nearest base wins |
 | edit-link: frontmatter `editLink: false` | implemented | `src/content.rs`, `src/render/mod.rs` | per-page toggle honored (`edit_link != Some(false)`) |
 | last-updated: frontmatter `lastUpdated: false` / Date | implemented | `src/content.rs`, `src/render/mod.rs` | per-page toggle and verbatim date override |
-| search: local provider | partial | `src/render/mod.rs`, `search_modal.rs` | translations wired (button/modal strings, footer key aria-labels, `{q}` no-results); per-page `search: false`; one index per locale; still no `miniSearch` tuning |
+| search: local provider | partial | `src/render/mod.rs`, `search_modal.rs` | translations wired (button/modal strings, footer key aria-labels, `{q}` no-results), per locale under `[search.locales]` like upstream's `options.locales`; per-page `search: false`; one index per locale; still no `miniSearch` tuning |
 | search: Algolia / DocSearch / Ask AI | missing | — | external service; see extras for our `askAiUrl` |
 | footer: inline HTML in message/copyright | implemented | `src/render/layout.rs` | `message`/`copyright` rendered as inline HTML |
 | layout: `page` | missing | — | unstyled layout not distinguished from `doc` |

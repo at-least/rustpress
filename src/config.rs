@@ -241,8 +241,9 @@ pub struct SiteConfig {
     #[serde(default)]
     pub locales: indexmap::IndexMap<String, Locale>,
 
-    /// The full config of each locale that has a `themeConfig`: this one
-    /// with the locale's theme keys layered over it (`for_locale`).
+    /// The full config of each locale with settings of its own (a
+    /// `themeConfig`, `[search.locales.<key>]` strings): this one with
+    /// them layered over it (`for_locale`).
     #[serde(skip)]
     pub locale_configs: std::collections::BTreeMap<String, SiteConfig>,
 }
@@ -252,8 +253,8 @@ pub struct SiteConfig {
 /// implements, in rustpress's spelling (`lastUpdatedText` is upstream's
 /// `lastUpdated.text`), plus the rustpress-only `askAiUrl`. Not here:
 /// `sidebar` (locale sidebars are path-keyed: `[sidebar."/zh/"]`),
-/// `search` (upstream keeps locale search strings under
-/// `search.options.locales`), and every site-level key.
+/// `search` (locale search strings live under `[search.locales]`, like
+/// upstream's `search.options.locales`), and every site-level key.
 const LOCALE_THEME_KEYS: &[&str] = &[
     "logo",
     "siteTitle",
@@ -376,26 +377,41 @@ impl SiteConfig {
     }
 
     /// Parse and validate a `rustpress.toml` source (`path` names it in
-    /// errors), resolving each locale's `themeConfig` into a full config.
+    /// errors), resolving each locale's settings (`themeConfig`, search
+    /// strings) into a full config.
     pub fn parse(raw: &str, path: &Path) -> Result<SiteConfig, ConfigError> {
         let mut config: SiteConfig = toml::from_str(raw).map_err(|source| ConfigError::Parse {
             path: path.to_path_buf(),
             source,
         })?;
         config.validate()?;
+        let search_locales = config
+            .search
+            .as_ref()
+            .map(|s| s.locales.clone())
+            .unwrap_or_default();
+        if let Some(bad) = search_locales
+            .keys()
+            .find(|k| *k != "root" && !config.locales.contains_key(*k))
+        {
+            return Err(ConfigError::SearchLocaleKey {
+                locale: bad.clone(),
+            });
+        }
+        // without [locales], every page is the root locale's
+        let mut keys: Vec<String> = config.locales.keys().cloned().collect();
+        if search_locales.contains_key("root") && !config.locales.contains_key("root") {
+            keys.push("root".into());
+        }
         let mut root: Option<toml::Table> = None;
-        for (key, locale) in &config.locales {
-            let Some(theme) = &locale.theme_config else {
+        for key in keys {
+            let theme = config
+                .locales
+                .get(&key)
+                .and_then(|l| l.theme_config.as_ref());
+            let search_strings = search_locales.get(&key).map(|l| &l.translations);
+            if theme.is_none() && search_strings.is_none() {
                 continue;
-            };
-            if let Some(bad) = theme
-                .keys()
-                .find(|k| !LOCALE_THEME_KEYS.contains(&k.as_str()))
-            {
-                return Err(ConfigError::LocaleThemeKey {
-                    locale: key.clone(),
-                    key: bad.clone(),
-                });
             }
             let root = root.get_or_insert_with(|| {
                 let mut table: toml::Table = toml::from_str(raw).expect("parsed above");
@@ -403,20 +419,53 @@ impl SiteConfig {
                 table
             });
             let mut merged = root.clone();
-            deep_merge(&mut merged, theme);
-            let resolved: SiteConfig = toml::Value::Table(merged).try_into().map_err(|source| {
-                ConfigError::LocaleTheme {
-                    locale: key.clone(),
-                    source,
+            if let Some(theme) = theme {
+                if let Some(bad) = theme
+                    .keys()
+                    .find(|k| !LOCALE_THEME_KEYS.contains(&k.as_str()))
+                {
+                    return Err(ConfigError::LocaleThemeKey {
+                        locale: key.clone(),
+                        key: bad.clone(),
+                    });
                 }
-            })?;
+                deep_merge(&mut merged, theme);
+            }
+            let mut resolved: SiteConfig =
+                toml::Value::Table(merged).try_into().map_err(|source| {
+                    ConfigError::LocaleTheme {
+                        locale: key.clone(),
+                        source,
+                    }
+                })?;
             resolved.validate()?;
-            config.locale_configs.insert(key.clone(), resolved);
+            // upstream's createSearchTranslate: per key the locale's
+            // string, then the site's, then the default
+            if let Some(strings) = search_strings {
+                let mut table = root
+                    .get("search")
+                    .and_then(|s| s.get("translations"))
+                    .and_then(toml::Value::as_table)
+                    .cloned()
+                    .unwrap_or_default();
+                deep_merge(&mut table, strings);
+                let search = resolved
+                    .search
+                    .as_mut()
+                    .expect("[search.locales] is in [search]");
+                search.translations = toml::Value::Table(table).try_into().map_err(|source| {
+                    ConfigError::SearchLocale {
+                        locale: key.clone(),
+                        source,
+                    }
+                })?;
+            }
+            config.locale_configs.insert(key, resolved);
         }
         Ok(config)
     }
 
-    /// The config of a locale's pages: its `themeConfig` layered over the
+    /// The config of a locale's pages: its settings layered over the
     /// site's, or the site's own when it has none.
     pub fn for_locale(&self, locale: &str) -> &SiteConfig {
         self.locale_configs.get(locale).unwrap_or(self)
@@ -914,6 +963,18 @@ pub struct Search {
     /// `search.options.translations` subset).
     #[serde(default)]
     pub translations: SearchTranslations,
+    /// Per-locale strings (upstream's `search.options.locales`), keyed by
+    /// locale (`root` included); `parse` layers each over `translations`.
+    #[serde(default)]
+    pub locales: std::collections::BTreeMap<String, SearchLocale>,
+}
+
+/// One locale's `[search.locales.<key>]`: the `translations` keys it
+/// sets, the others falling back to the site's.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SearchLocale {
+    pub translations: toml::Table,
 }
 
 /// Translatable local-search strings. Keys follow upstream's
@@ -1340,6 +1401,15 @@ pub enum ConfigError {
         locale: String,
         source: toml::de::Error,
     },
+    #[error(
+        "[search.locales.{locale}]: no such locale (declare it under [locales], or use `root`)"
+    )]
+    SearchLocaleKey { locale: String },
+    #[error("[search.locales.{locale}.translations]: {source}")]
+    SearchLocale {
+        locale: String,
+        source: toml::de::Error,
+    },
 }
 
 #[cfg(test)]
@@ -1681,8 +1751,8 @@ link = "/zh/guide/"
     #[test]
     fn locale_theme_config_takes_theme_keys_only() {
         // site-level keys (and typos) fail the load naming the locale and
-        // the key; search translations are site-wide (upstream keeps them
-        // under search.options.locales, not a locale's themeConfig)
+        // the key; search strings go under [search.locales] (upstream's
+        // search.options.locales), not a locale's themeConfig
         for (key, toml) in [
             ("base", "base = \"/zh/\""),
             ("search", "search = { provider = \"local\" }"),
@@ -1702,6 +1772,79 @@ link = "/zh/guide/"
         .to_string();
         assert!(
             err.contains("zh") && err.contains("returnToTopLabel"),
+            "{err}"
+        );
+    }
+
+    const SEARCH_LOCALES: &str = r#"
+title = "T"
+
+[search]
+provider = "local"
+
+[search.translations]
+buttonText = "Find"
+closeText = "close it"
+
+[search.locales.root.translations]
+navigateText = "move"
+
+[search.locales.zh.translations]
+buttonText = "搜索"
+selectText = "选择"
+
+[locales.root]
+label = "English"
+
+[locales.zh]
+label = "中文"
+
+[locales.ja]
+label = "日本語"
+"#;
+
+    #[test]
+    fn search_locale_translations_layer_over_the_sites() {
+        // upstream's createSearchTranslate, probed on the pinned build:
+        // per key the page's locale (search.options.locales.<key>), then
+        // the site's translations, then the default; `root` is the root
+        // locale's own and reaches no other locale
+        let c = load_str(SEARCH_LOCALES).unwrap();
+        let tr = |l: &str| {
+            let t = &c.for_locale(l).search.as_ref().unwrap().translations;
+            [
+                t.button_text.clone(),
+                t.navigate_text.clone(),
+                t.select_text.clone(),
+                t.close_text.clone(),
+            ]
+        };
+        assert_eq!(tr("zh"), ["搜索", "to navigate", "选择", "close it"]);
+        assert_eq!(tr("root"), ["Find", "move", "to select", "close it"]);
+        assert_eq!(tr("ja"), ["Find", "to navigate", "to select", "close it"]);
+        // without [locales] every page is the root locale's
+        let single = load_str(
+            "title = \"T\"\n\n[search]\nprovider = \"local\"\n\n[search.locales.root.translations]\nbuttonText = \"Go\"\n",
+        )
+        .unwrap();
+        let root = &single
+            .for_locale("root")
+            .search
+            .as_ref()
+            .unwrap()
+            .translations;
+        assert_eq!(root.button_text, "Go");
+    }
+
+    #[test]
+    fn search_locales_name_declared_locales_and_known_keys() {
+        let src = SEARCH_LOCALES.replace("[search.locales.zh.", "[search.locales.cn.");
+        let err = load_str(&src).unwrap_err().to_string();
+        assert!(err.contains("[search.locales.cn]"), "{err}");
+        let src = SEARCH_LOCALES.replace("selectText = \"选择\"", "selectTxt = \"选择\"");
+        let err = load_str(&src).unwrap_err().to_string();
+        assert!(
+            err.contains("[search.locales.zh.translations]") && err.contains("selectTxt"),
             "{err}"
         );
     }

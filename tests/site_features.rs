@@ -303,6 +303,78 @@ fn language_switcher_follows_upstream() {
 }
 
 #[test]
+fn search_locale_strings_reach_each_locales_pages() {
+    // [search.locales.<key>.translations], upstream's search.options
+    // .locales — probed on the pinned build: per key the locale's string,
+    // then the site's, then the default; `root` stays on the root
+    // locale's pages, the 404 included
+    let (_, out) = build_site(
+        r#"title = "T"
+
+[search]
+provider = "local"
+
+[search.translations]
+buttonText = "Find"
+closeText = "close it"
+
+[search.locales.root.translations]
+navigateText = "move"
+
+[search.locales.zh.translations]
+buttonText = "搜索"
+selectText = "选择"
+
+[locales.root]
+label = "English"
+
+[locales.zh]
+label = "中文"
+
+[locales.ja]
+label = "日本語"
+"#,
+        &[
+            ("guide/a.md", "# A\n"),
+            ("zh/guide/a.md", "# A\n"),
+            ("ja/guide/a.md", "# A\n"),
+        ],
+    );
+    let strings = |html: &str| {
+        let placeholder = html.split("placeholder=\"").nth(1).unwrap();
+        let footer = &html[html.find("id=\"VPSearchShortcuts\"").unwrap()..];
+        let footer = &footer[..footer.find("</div>").unwrap()];
+        let hints: Vec<&str> = footer
+            .split("</kbd>")
+            .skip(1)
+            .filter_map(|s| s.split('<').next().filter(|t| !t.is_empty()))
+            .collect();
+        (
+            placeholder[..placeholder.find('"').unwrap()].to_string(),
+            hints.join("|"),
+        )
+    };
+    let at = |url: &str| strings(&page(&out, url));
+    let not_found = std::fs::read_to_string(out.path().join("404.html")).unwrap();
+    assert_eq!(
+        at("/guide/a/"),
+        ("Find".into(), "move|to select|close it".into())
+    );
+    assert_eq!(
+        at("/zh/guide/a/"),
+        ("搜索".into(), "to navigate|选择|close it".into())
+    );
+    assert_eq!(
+        at("/ja/guide/a/"),
+        ("Find".into(), "to navigate|to select|close it".into())
+    );
+    assert_eq!(
+        strings(&not_found),
+        ("Find".into(), "move|to select|close it".into())
+    );
+}
+
+#[test]
 fn the_404_page_takes_the_root_locales_theme_config() {
     // upstream's 404 is a root-locale page: probed on the pinned build,
     // [locales.root.themeConfig] notFound reached the rendered /404.html

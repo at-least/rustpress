@@ -37,7 +37,7 @@ search: false
 
 ### i18n {#local-search-i18n}
 
-The strings of the search button and modal are configurable under `[search.translations]`. They apply site-wide — there is no per-locale set.
+The strings of the search button and modal are configurable under `[search.translations]`:
 
 ```toml [rustpress.toml]
 [search]
@@ -73,6 +73,24 @@ closeKeyAriaLabel = "esc"
 | `navigateDownKeyAriaLabel` | `down arrow` | accessible name of the footer's ↓ key icon |
 | `selectKeyAriaLabel` | `enter` | accessible name of the footer's ↵ key icon |
 | `closeKeyAriaLabel` | `escape` | accessible name of the footer's `esc` key |
+
+On a [multi-language site](../guide/i18n), each locale can set its own strings under `[search.locales.<key>.translations]` (VitePress's `search.options.locales`), with the same keys. A key a locale leaves out falls back to `[search.translations]`, then to the default. Use the key `root` for the root locale's pages (and the 404 page); it doesn't reach the other locales.
+
+```toml [rustpress.toml]
+[search]
+provider = "local"
+
+[search.locales.zh.translations]
+buttonText = "搜索"
+buttonAriaLabel = "搜索"
+noResultsText = "没有找到 “{q}” 的结果"
+resetButtonTitle = "清除"
+selectText = "选择"
+navigateText = "切换"
+closeText = "关闭"
+```
+
+A key under `[search.locales]` that names no locale in `[locales]` (other than `root`) fails the build.
 
 ### Tuning
 

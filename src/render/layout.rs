@@ -32,9 +32,10 @@ pub struct Shell<'a> {
     pub site_title: Option<String>,
     /// The search index this page's modal fetches (its locale's own).
     pub search_index_url: String,
-    /// Theme settings for this page: its locale's themeConfig layered over
-    /// the site's (`SiteConfig::for_locale`). Site-level settings (`head`,
-    /// `appearance`, `search`) are read from the site config.
+    /// Theme settings for this page: its locale's themeConfig and search
+    /// strings layered over the site's (`SiteConfig::for_locale`).
+    /// Site-level settings (`head`, `appearance`) are read from the site
+    /// config.
     pub config: &'a crate::config::SiteConfig,
     /// Effective outline for this page (site setting ∧ front matter):
     /// gates the aside outline and the local-nav dropdown.
@@ -152,7 +153,7 @@ pub fn layout<'a>(
                 }
 
                 @if shell.has_navbar
-                    && let Some(search) = site.config.search.as_ref()
+                    && let Some(search) = shell.config.search.as_ref()
                 {
                     (super::search_modal::search_modal(&search_index_url, search))
                 }
