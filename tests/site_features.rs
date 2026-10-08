@@ -375,6 +375,32 @@ label = "日本語"
 }
 
 #[test]
+fn local_nav_dropdown_lists_the_outline_headings() {
+    // upstream's dropdown and aside render the same headers (getHeaders
+    // of the outline range, VPDocOutlineItem nesting) — on vitepress.dev
+    // at 375 the dropdown held "Return to top" and the h2s only; ours
+    // listed every heading, the h1 included
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[outline]\nlevel = [2, 3]\n",
+        &[(
+            "guide/a.md",
+            "# Title\n\n## Two\n\n### Three\n\n#### Four\n\n## Two b\n",
+        )],
+    );
+    let html = page(&out, "/guide/a/");
+    let drop = &html[html.find("id=\"VPOutlineDropdownItems\"").unwrap()..];
+    let drop = &drop[..drop.find("id=\"VPContent\"").unwrap()];
+    let hrefs: Vec<&str> = drop
+        .split("href=\"#")
+        .skip(1)
+        .map(|s| &s[..s.find('"').unwrap()])
+        .collect();
+    assert_eq!(hrefs, ["", "two", "three", "two-b"], "{drop}");
+    let two = &drop[drop.find("href=\"#two\"").unwrap()..drop.find("href=\"#two-b\"").unwrap()];
+    assert!(two.contains("<ul"), "h3 nests under its h2: {two}");
+}
+
+#[test]
 fn page_layout_renders_the_markdown_bare() {
     // upstream VPPage (`layout: page`), measured on the pinned build: the
     // markdown in a plain container — no .vp-doc typography, no doc

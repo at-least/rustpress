@@ -130,7 +130,7 @@ pub fn layout<'a>(
                     </header>
                 }
 
-                (Raw::dangerously_create(super::local_nav::local_nav(shell.config, is_home, has_sidebar, shell.outline.is_some(), headings)))
+                (Raw::dangerously_create(super::local_nav::local_nav(shell.config, is_home, has_sidebar, shell.outline, headings)))
                 @if has_sidebar {
                     (Raw::dangerously_create(super::sidebar::sidebar(site, &current_url)))
                 }

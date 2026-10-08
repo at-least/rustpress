@@ -2,8 +2,9 @@
 //! bar with the mobile menu button and the outline dropdown. Hidden on
 //! the home page.
 
-use hypertext::prelude::*;
+use hypertext::{Raw, prelude::*};
 
+use super::escape::{escape_attr, escape_text};
 use super::icons::icon;
 use crate::markdown::Heading;
 
@@ -11,12 +12,21 @@ pub fn local_nav<'a>(
     cfg: &'a crate::config::SiteConfig,
     is_home: bool,
     has_sidebar: bool,
-    outline_enabled: bool,
+    outline: Option<(u8, u8)>,
     headings: &'a [Heading],
 ) -> String {
     if is_home {
         return String::new();
     }
+    let outline_enabled = outline.is_some();
+    // upstream's dropdown lists the aside's headers: the outline range
+    let headings: Vec<&Heading> = match outline {
+        Some((lo, hi)) => headings
+            .iter()
+            .filter(|h| h.level >= lo && h.level <= hi)
+            .collect(),
+        None => Vec::new(),
+    };
     let outline_label = cfg.outline.label();
     let return_label = cfg.return_to_top_label.clone();
     let menu_label = cfg.sidebar_menu_label.clone();
@@ -50,7 +60,7 @@ pub fn local_nav<'a>(
                             <a class="block px-4 leading-[3.4285714] text-[0.875rem] font-medium text-brand-1" href="#" @click="open = false; window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })">(return_label)</a>
                         </div>
                         <div class="py-2 bg-bg-soft">
-                            (outline_list(headings, false))
+                            (outline_list(&headings))
                         </div>
                     </div>
                     </div>
@@ -62,24 +72,27 @@ pub fn local_nav<'a>(
     .into_inner()
 }
 
-/// Flat outline link list (the dropdown shows one flat level, like the
-/// original outline_items at root nesting).
-fn outline_list<'a>(headings: &'a [Heading], nested: bool) -> impl Renderable + 'a {
-    let cls = if nested {
-        "pr-4 pl-4"
-    } else {
-        "relative z-[1]"
-    };
-    rsx! {
-        <ul class=(cls)>
-            @for h in headings {
-                <li>
-                    <a class=(format!(
-                        "outline-link block leading-[2.2857143] text-[0.875rem] font-normal text-text-2 whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] [&.active]:text-text-1 scroll-mt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+var(--vp-doc-top-height,0px)+2rem)] scroll-mb-12{}",
-                        if !nested { " pl-[0.8125rem]" } else { "" }
-                    )) href=(format!("#{}", h.id)) title=(h.text.clone())>(h.text.clone())</a>
-                </li>
-            }
-        </ul>
-    }
+/// The dropdown's outline, nested like the aside's: upstream renders
+/// VPDocOutlineItem here without `root`, so the top list is padded like
+/// the nested ones.
+fn outline_list(headings: &[&Heading]) -> Raw<String> {
+    let items: Vec<(u8, String)> = headings
+        .iter()
+        .map(|h| {
+            (
+                h.level,
+                format!(
+                    "<a class=\"outline-link block leading-[2.2857143] text-[0.875rem] font-normal text-text-2 whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-500 hover:text-text-1 hover:duration-[250ms] [&.active]:text-text-1 scroll-mt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+var(--vp-doc-top-height,0px)+2rem)] scroll-mb-12\" href=\"#{}\" title=\"{}\">{}</a>",
+                    escape_attr(&h.id),
+                    escape_attr(&h.text),
+                    escape_text(&h.text),
+                ),
+            )
+        })
+        .collect();
+    Raw::dangerously_create(crate::markdown::nested_outline_list(
+        &items,
+        " class=\"pr-4 pl-4\"",
+        " class=\"pr-4 pl-4\"",
+    ))
 }

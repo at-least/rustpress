@@ -181,6 +181,10 @@ const CASES = [
   ['feat w @390', '/', 390, `document.querySelector('.VPFeature').closest('li').getBoundingClientRect().width.toFixed(0)`],
   ['feat w @640', '/', 640, `document.querySelector('.VPFeature').closest('li').getBoundingClientRect().width.toFixed(0)`],
   ['feat w @960', '/', 960, `document.querySelector('.VPFeature').closest('li').getBoundingClientRect().width.toFixed(0)`],
+  // the local-nav outline dropdown lists the aside's headings, nested
+  // like upstream's (VPDocOutlineItem without `root`: the top list padded
+  // like the nested ones) — text offsets of "Return to top" + each link
+  ['outline dropdown @375', '/guide/routing/', 375, `(async () => { document.getElementById('VPOutlineDropdownButton').click(); const box = document.getElementById('VPOutlineDropdownItems'); for (let i = 0; i < 100 && !box.offsetParent; i++) await new Promise((r) => setTimeout(r, 50)); const bb = box.getBoundingClientRect(); return [...box.querySelectorAll('a')].map((a) => { const g = document.createRange(); g.selectNodeContents(a); return Math.round(g.getBoundingClientRect().left - bb.left); }).join(','); })()`],
 ];
 
 if (skip) {
