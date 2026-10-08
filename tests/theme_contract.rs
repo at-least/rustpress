@@ -1,49 +1,24 @@
-//! The bundled-theme contract.
+//! The bundled themes and what rustpress builds from them.
 //!
-//! A bundled theme is a *complete design*: it defines every design token
-//! the compiled base stylesheet consumes, so no stock value leaks through
-//! when it is linked. These tests derive the required token set from the
-//! base itself, the vpkit package's `index.css` (and the parts it imports)
-//! that `styles/vitepress.css` imports (the structural layer — utilities and
-//! component rules — resolves through these `--vp-*` custom properties)
-//! and then hold every `static/themes/*.css` to it, plus WCAG contrast
-//! minimums for the roles each token plays (body text, links, buttons,
-//! badge text) in both light and dark mode.
+//! The color themes are vpkit's (`node_modules/vpkit/themes`, an npm
+//! `file:` dependency on ../vpkit), embedded into the binary. vpkit's own
+//! test (test/themes.mjs) holds each to the design contract and the WCAG
+//! minimums; here: the docs site's theme gallery must list exactly the
+//! embedded set, with card data taken from the files, and the code colors
+//! rustpress writes by default must be vpkit's syntax.css.
 
 use std::path::PathBuf;
 
-const RAMPS: [&str; 7] = [
-    "gray", "indigo", "purple", "green", "yellow", "orange", "red",
-];
-/// Absolute colors, defined once in the base and never themed.
-const ABSOLUTES: [&str; 2] = ["white", "black"];
+use rustpress::config::SiteConfig;
+use rustpress::markdown::MarkdownEngine;
 
 fn repo(rel: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(rel)
 }
 
-/// The base stylesheet: vpkit's index.css (an npm `file:` dependency) with
-/// its `@import "./part.css";` lines replaced by the parts, in order.
-fn base_css() -> String {
-    let dir = repo("node_modules/vpkit");
-    let read = |file: &str| {
-        let path = dir.join(file);
-        std::fs::read_to_string(&path)
-            .unwrap_or_else(|e| panic!("read {path:?}: {e} (npm install)"))
-    };
-    read("index.css")
-        .lines()
-        .map(|line| {
-            match line
-                .strip_prefix("@import \"./")
-                .and_then(|rest| rest.strip_suffix("\";"))
-            {
-                Some(part) => read(part),
-                None => line.to_string(),
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
+fn read(rel: &str) -> String {
+    let path = repo(rel);
+    std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path:?}: {e} (npm install)"))
 }
 
 struct Block {
@@ -52,8 +27,7 @@ struct Block {
 }
 
 /// Parse a stylesheet into top-level `selector { decl; decl; }` blocks,
-/// comments stripped. Theme files and the token layer of the base are
-/// flat, which is all this needs to read.
+/// comments stripped. Theme files are flat, which is all this needs to read.
 fn parse_blocks(css: &str) -> Vec<Block> {
     let css = strip_comments(css);
     let mut blocks = Vec::new();
@@ -105,91 +79,7 @@ fn strip_comments(css: &str) -> String {
     out
 }
 
-fn is_ramp(token: &str) -> bool {
-    RAMPS
-        .iter()
-        .any(|r| token == *r || token.starts_with(&format!("{r}-")))
-}
-
-/// Every `--vp-c-*` token referenced anywhere in the base stylesheet,
-/// minus absolutes — the design contract. Derived, not hand-maintained,
-/// so it cannot drift from what the structure consumes.
-fn required_tokens() -> Vec<String> {
-    let css = base_css();
-    let refs: Vec<String> = parse_refs(&css);
-    let mut tokens: Vec<String> = refs
-        .into_iter()
-        .filter(|t| !is_ramp(t) && !ABSOLUTES.contains(&t.as_str()))
-        .collect();
-    tokens.sort();
-    tokens.dedup();
-    assert!(tokens.len() >= 30, "contract implausibly small: {tokens:?}");
-    tokens
-}
-
-fn parse_refs(css: &str) -> Vec<String> {
-    let mut refs = Vec::new();
-    for decl in declarations(css) {
-        // Guard: a ramp token may only appear *inside* a token-layer
-        // definition (`--vp-c-success-1: var(--vp-c-green-1)`), never in
-        // a structural rule (`background-color: var(--vp-c-green-soft)`)
-        // — otherwise themes that don't define ramps leak stock colors.
-        for name in decl.value_matches() {
-            if is_ramp(&name) {
-                assert!(
-                    decl.property.starts_with("--vp-c-"),
-                    "ramp token --vp-c-{name} referenced by structural rule `{}` in the base",
-                    decl.property
-                );
-            }
-            refs.push(name);
-        }
-    }
-    refs
-}
-
-struct Decl {
-    property: String,
-    value: String,
-}
-
-fn declarations(css: &str) -> Vec<Decl> {
-    let css = strip_comments(css);
-    let parts: Vec<&str> = css.split([';', '{', '}']).collect();
-    parts
-        .into_iter()
-        .filter_map(|part| part.split_once(':'))
-        .map(|(property, value)| Decl {
-            property: property.trim().to_string(),
-            value: value.trim().to_string(),
-        })
-        .collect()
-}
-
-impl Decl {
-    fn value_matches(&self) -> Vec<String> {
-        let mut out = Vec::new();
-        let mut rest = self.value.as_str();
-        while let Some(start) = rest.find("var(--vp-c-") {
-            rest = &rest[start + "var(--vp-c-".len()..];
-            let end = rest.find(')').unwrap_or(rest.len());
-            out.push(rest[..end].trim().to_string());
-            rest = &rest[end..];
-        }
-        out
-    }
-}
-
-struct ThemeMode {
-    values: std::collections::HashMap<String, String>,
-}
-
-fn theme_file(name: &str) -> String {
-    let path = repo(&format!("static/themes/{name}.css"));
-    std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path:?}: {e}"))
-}
-
-fn mode_values(css: &str, selector: &str) -> ThemeMode {
+fn mode_values(css: &str, selector: &str) -> std::collections::HashMap<String, String> {
     let mut values = std::collections::HashMap::new();
     for block in parse_blocks(css) {
         if block.selector == selector {
@@ -198,138 +88,7 @@ fn mode_values(css: &str, selector: &str) -> ThemeMode {
             }
         }
     }
-    ThemeMode { values }
-}
-
-impl ThemeMode {
-    fn hex(&self, token: &str) -> (u8, u8, u8) {
-        let value = self
-            .values
-            .get(&format!("--vp-c-{token}"))
-            .unwrap_or_else(|| panic!("token --vp-c-{token} not defined"));
-        let hex = value
-            .strip_prefix('#')
-            .unwrap_or_else(|| panic!("--vp-c-{token} = {value:?}: expected a hex literal"));
-        assert!(
-            hex.len() == 6,
-            "--vp-c-{token} = {value:?}: expected 6-digit hex"
-        );
-        let n = u32::from_str_radix(hex, 16).expect("valid hex");
-        (
-            ((n >> 16) & 0xff) as u8,
-            ((n >> 8) & 0xff) as u8,
-            (n & 0xff) as u8,
-        )
-    }
-
-    /// Resolve a token to a solid color: hex directly, `rgba(r,g,b,a)`
-    /// composited over the given backdrop.
-    fn color_over(&self, token: &str, backdrop: (u8, u8, u8)) -> (u8, u8, u8) {
-        let value = self
-            .values
-            .get(&format!("--vp-c-{token}"))
-            .unwrap_or_else(|| panic!("token --vp-c-{token} not defined"));
-        if let Some(hex) = value.strip_prefix('#') {
-            assert!(
-                hex.len() == 6,
-                "--vp-c-{token} = {value:?}: expected 6-digit hex"
-            );
-            let n = u32::from_str_radix(hex, 16).expect("valid hex");
-            return (
-                ((n >> 16) & 0xff) as u8,
-                ((n >> 8) & 0xff) as u8,
-                (n & 0xff) as u8,
-            );
-        }
-        let rgba: Vec<f64> = value
-            .strip_prefix("rgba(")
-            .and_then(|v| v.strip_suffix(")"))
-            .unwrap_or_else(|| panic!("--vp-c-{token} = {value:?}: expected #hex or rgba()"))
-            .split(',')
-            .map(|n| n.trim().parse::<f64>().expect("numeric rgba component"))
-            .collect();
-        assert!(rgba.len() == 4, "--vp-c-{token} = {value:?}");
-        let mix = |fg: f64, bg: u8| (fg * rgba[3] + f64::from(bg) * (1.0 - rgba[3])).round() as u8;
-        (
-            mix(rgba[0], backdrop.0),
-            mix(rgba[1], backdrop.1),
-            mix(rgba[2], backdrop.2),
-        )
-    }
-}
-
-fn luminance((r, g, b): (u8, u8, u8)) -> f64 {
-    let channel = |c: u8| {
-        let c = f64::from(c) / 255.0;
-        if c <= 0.04045 {
-            c / 12.92
-        } else {
-            ((c + 0.055) / 1.055).powf(2.4)
-        }
-    };
-    0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
-}
-
-fn contrast(a: (u8, u8, u8), b: (u8, u8, u8)) -> f64 {
-    let (la, lb) = (luminance(a), luminance(b));
-    let (hi, lo) = (la.max(lb), la.min(lb));
-    (hi + 0.05) / (lo + 0.05)
-}
-
-fn assert_contrast(mode: &ThemeMode, token: &str, against: (u8, u8, u8), min: f64, label: &str) {
-    let ratio = contrast(mode.hex(token), against);
-    assert!(
-        ratio >= min - 1e-9,
-        "{label}: --vp-c-{token} {:?} has contrast {ratio:.2} < {min} against {against:?}",
-        mode.hex(token),
-    );
-}
-
-fn bundled_theme_names() -> Vec<String> {
-    let dir = repo("static/themes");
-    let mut names: Vec<String> = std::fs::read_dir(&dir)
-        .unwrap()
-        .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().is_some_and(|x| x == "css"))
-        .filter_map(|e| {
-            e.path()
-                .file_stem()
-                .map(|s| s.to_string_lossy().into_owned())
-        })
-        .collect();
-    names.sort();
-    assert!(!names.is_empty(), "no bundled themes found");
-    names
-}
-
-#[test]
-fn graded_containers_override_survives_themes() {
-    // gradedContainers opts into GitHub-style severity colors; the rule
-    // must carry its own literals with :has() specificity so it beats
-    // any theme's :root/.dark warning/caution (which load later).
-    let css = base_css();
-    for selector in [
-        ":root:has(.vp-graded-containers)",
-        ":root.dark:has(.vp-graded-containers)",
-    ] {
-        let blocks = parse_blocks(&css);
-        let block = blocks
-            .iter()
-            .find(|b| b.selector == selector)
-            .unwrap_or_else(|| panic!("missing `{selector}` rule"));
-        for token in ["--vp-c-warning-1", "--vp-c-caution-1"] {
-            let value = block
-                .declarations
-                .iter()
-                .find(|(prop, _)| prop == token)
-                .unwrap_or_else(|| panic!("`{selector}` does not define {token}"));
-            assert!(
-                value.1.starts_with('#') || value.1.starts_with("rgba("),
-                "`{selector}` {token} = {:?}: expected a literal, not a stock ramp reference",
-                value.1
-            );
-        }
-    }
+    values
 }
 
 #[test]
@@ -353,14 +112,14 @@ fn docs_theme_index_matches_the_bundled_set() {
     let bundled = rustpress::theme_assets::bundled_themes();
     assert_eq!(
         listed, bundled,
-        "docs theme index drifted from static/themes/"
+        "docs theme index drifted from vpkit's themes/"
     );
 
     // the gallery card data (blurb + both-mode mock tokens) must match
     // the theme files themselves, or the cards lie — regenerate with
     // `node scripts/gen-theme-index.mjs`
     for entry in listed {
-        let css = std::fs::read_to_string(repo(&format!("static/themes/{entry}.css"))).unwrap();
+        let css = read(&format!("node_modules/vpkit/themes/{entry}.css"));
         let item = serde_json::from_str::<Vec<serde_json::Value>>(&json)
             .unwrap()
             .into_iter()
@@ -387,7 +146,6 @@ fn docs_theme_index_matches_the_bundled_set() {
                 ("danger", "danger-1"),
             ] {
                 let want = values
-                    .values
                     .get(&format!("--vp-c-{token}"))
                     .unwrap_or_else(|| {
                         panic!("theme {entry}: --vp-c-{token} missing in {selector}")
@@ -396,7 +154,7 @@ fn docs_theme_index_matches_the_bundled_set() {
                 let got = mock[key].as_str().unwrap_or("").to_ascii_lowercase();
                 assert_eq!(
                     got, want,
-                    "theme {entry}: {mode}.{key} drifted from static/themes/{entry}.css"
+                    "theme {entry}: {mode}.{key} drifted from vpkit's themes/{entry}.css"
                 );
             }
         }
@@ -404,120 +162,28 @@ fn docs_theme_index_matches_the_bundled_set() {
 }
 
 #[test]
-fn themes_are_complete_designs() {
-    let required = required_tokens();
-    for name in bundled_theme_names() {
-        let css = theme_file(&name);
-        for selector in [":root", ".dark"] {
-            let mode = mode_values(&css, selector);
-            let missing: Vec<&String> = required
-                .iter()
-                .filter(|token| !mode.values.contains_key(&format!("--vp-c-{token}")))
-                .collect();
-            assert!(
-                missing.is_empty(),
-                "theme {name}, {selector}: missing tokens {missing:?} — a bundled theme must define the whole contract"
-            );
-        }
-        let root = mode_values(&css, ":root");
-        for i in 1..=5 {
-            assert!(
-                root.values.contains_key(&format!("--vp-shadow-{i}")),
-                "theme {name}: missing --vp-shadow-{i}"
-            );
-        }
-    }
-}
-
-#[test]
-fn themes_meet_contrast_minimums() {
-    let white = (0xff, 0xff, 0xff);
-    for name in bundled_theme_names() {
-        let css = theme_file(&name);
-        for selector in [":root", ".dark"] {
-            let mode = mode_values(&css, selector);
-            let label = format!("theme {name} {selector}");
-            let bg = mode.hex("bg");
-
-            // body text
-            assert_contrast(&mode, "text-1", bg, 7.0, &label);
-            // secondary text also sits on the sidebar / code-block surfaces
-            assert_contrast(&mode, "text-2", bg, 4.5, &label);
-            assert_contrast(&mode, "text-2", mode.hex("bg-alt"), 4.5, &label);
-            assert_contrast(&mode, "text-2", mode.hex("bg-soft"), 4.5, &label);
-            // muted text
-            assert_contrast(&mode, "text-3", bg, 3.0, &label);
-
-            // text ramp must be monotonic: primary ≥ secondary ≥ muted
-            // (contrast against the page bg). Fitting tokens independently
-            // can converge or invert the ramp — headings would lose
-            // hierarchy against body text.
-            let c1 = contrast(mode.hex("text-1"), bg);
-            let c2 = contrast(mode.hex("text-2"), bg);
-            let c3 = contrast(mode.hex("text-3"), bg);
-            assert!(
-                c1 >= c2,
-                "{label}: text-1 ({c1:.2}) does not outrank text-2 ({c2:.2})"
-            );
-            assert!(
-                c2 >= c3,
-                "{label}: text-2 ({c2:.2}) does not outrank text-3 ({c3:.2})"
-            );
-
-            // borders and dividers must separate from the page bg, or
-            // rules and surfaces vanish
-            assert!(
-                contrast(mode.hex("border"), bg) >= 1.1,
-                "{label}: border {:?} vanishes on bg {bg:?}",
-                mode.hex("border")
-            );
-
-            // elevated surfaces (dropdowns, popovers) are never darker
-            // than the page bg — the stock look's convention
-            assert!(
-                luminance(mode.hex("bg-elv")) >= luminance(bg) - 1e-9,
-                "{label}: bg-elv {:?} is darker than bg {bg:?}",
-                mode.hex("bg-elv")
-            );
-
-            // container semantics must stay distinguishable: distinct
-            // hues per role, and the brand is not the body text color
-            let sems: Vec<(u8, u8, u8)> = ["success-1", "warning-1", "danger-1"]
-                .iter()
-                .map(|t| mode.hex(t))
-                .collect();
-            for i in 0..sems.len() {
-                for j in i + 1..sems.len() {
-                    assert_ne!(sems[i], sems[j], "{label}: semantic colors collapsed");
-                }
-            }
-            assert_ne!(
-                mode.hex("brand-1"),
-                mode.hex("text-1"),
-                "{label}: brand-1 equals text-1 — links would be invisible as emphasis"
-            );
-
-            // links and inline code
-            assert_contrast(&mode, "brand-1", bg, 4.5, &label);
-            // hero button: white text on the brand background in every
-            // state (default -3, hover -2)
-            assert_contrast(&mode, "brand-3", white, 3.0, &label);
-            assert_contrast(&mode, "brand-2", white, 3.0, &label);
-
-            // badge / container foregrounds, measured against their own
-            // soft background (composited over the page bg when rgba)
-            for kind in [
-                "tip",
-                "note",
-                "success",
-                "important",
-                "warning",
-                "danger",
-                "caution",
-            ] {
-                let soft = mode.color_over(&format!("{kind}-soft"), bg);
-                assert_contrast(&mode, &format!("{kind}-1"), soft, 4.5, &label);
-            }
-        }
-    }
+fn default_code_colors_are_vpkits_syntax_css() {
+    // vpkit/syntax.css is a header comment followed by this exact output:
+    // the syntax.css rustpress writes when [code] is left at its defaults
+    let config: SiteConfig = toml::from_str("").unwrap();
+    let engine = MarkdownEngine::new(
+        &config.markdown,
+        &config.code,
+        std::path::Path::new("."),
+        "/",
+    )
+    .unwrap();
+    let vpkit = read("node_modules/vpkit/syntax.css");
+    let header_end = vpkit
+        .find("*/\n\n")
+        .expect("vpkit's syntax.css starts with a header comment and a blank line");
+    assert!(
+        vpkit.starts_with("/*"),
+        "vpkit's syntax.css starts with its header comment"
+    );
+    assert_eq!(
+        &vpkit[header_end + "*/\n\n".len()..],
+        engine.syntax_css(),
+        "the default code colors drifted from vpkit's syntax.css"
+    );
 }

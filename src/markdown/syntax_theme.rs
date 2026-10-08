@@ -23,8 +23,16 @@ use std::path::{Path, PathBuf};
 use include_dir::{Dir, include_dir};
 
 /// All Helix built-in themes, vendored unmodified from
-/// helix-editor/helix (runtime/themes, MPL-2.0).
-static HELIX_THEMES: Dir = include_dir!("$CARGO_MANIFEST_DIR/assets/syntax-themes/helix");
+/// helix-editor/helix (runtime/themes, MPL-2.0) in vpkit's helix/ (an npm
+/// `file:` dependency on ../vpkit), next to their LICENSE and SOURCE note:
+/// a theme is a `.toml` file there.
+static HELIX_THEMES: Dir = include_dir!("$CARGO_MANIFEST_DIR/node_modules/vpkit/helix");
+
+fn helix_files() -> impl Iterator<Item = &'static include_dir::File<'static>> {
+    HELIX_THEMES
+        .files()
+        .filter(|f| f.path().extension().is_some_and(|ext| ext == "toml"))
+}
 
 /// The override CSS for a Helix built-in theme name (file stem, e.g.
 /// `catppuccin_mocha`).
@@ -40,7 +48,7 @@ pub fn helix_builtin(name: &str) -> Option<SyntaxTheme> {
 }
 /// How many Helix themes are embedded.
 pub fn helix_count() -> usize {
-    HELIX_THEMES.files().count()
+    helix_files().count()
 }
 
 /// One resolved style for a capture scope.
@@ -336,8 +344,7 @@ pub struct GalleryEntry {
 /// source of `syntax-themes.json`, the index behind the docs site's
 /// syntax demo page (written by `rustpress syntax-index`).
 pub fn gallery_entries() -> Vec<GalleryEntry> {
-    let mut names: Vec<String> = HELIX_THEMES
-        .files()
+    let mut names: Vec<String> = helix_files()
         .filter_map(|f| f.path().file_stem()?.to_str().map(str::to_string))
         .collect();
     names.sort();

@@ -10,14 +10,18 @@ keywords = ["vitepress", "documentation", "static-site", "markdown", "docs"]
 categories = ["command-line-utilities", "web-programming", "text-processing"]
 # The crate name is `rustpress-cli` because `rustpress` on crates.io belongs to
 # another project; the library and the installed binary are still `rustpress`.
-# Only the sources plus the compile-time embedded assets/ (syntax themes) and
-# static/ (built theme CSS/JS, fonts) go to crates.io; `include` also brings in
-# the gitignored static/vitepress.css and static/js/app.js.
+# Only the sources plus the compile-time embedded static/ (built theme CSS/JS,
+# fonts) and vpkit's themes/ and helix/ (color themes; Helix code-color themes
+# with their MPL-2.0 LICENSE) go to crates.io; `include` also brings in the
+# gitignored static/vitepress.css and static/js/app.js and the node_modules/
+# link to ../vpkit.
 default-run = "rustpress"
 include = [
     "/src",
     "/assets",
     "/static",
+    "/node_modules/vpkit/themes",
+    "/node_modules/vpkit/helix",
     "/build.rs",
     "/README.md",
     "/LICENSE",

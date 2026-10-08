@@ -7,7 +7,7 @@
  * default.
  *
  * Cards are rendered from <base>themes.json, generated at build time
- * from static/themes/: each carries the theme's own tokens, and the
+ * from the bundled themes (vpkit's themes/): each carries the theme's own tokens, and the
  * card paints a miniature page mock with them (light and dark side by
  * side — surfaces, text, link, semantics), so the card is the design,
  * not just a palette chip. The stock card paints with the page's live

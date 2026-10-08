@@ -1,15 +1,16 @@
 // Generate docs/static/themes.json — the index the docs site's Theme
 // Gallery (/themes/) renders its cards from. For every bundled
-// theme in static/themes/ it extracts, from the theme file itself:
+// theme (vpkit's themes/, embedded from node_modules/vpkit) it extracts,
+// from the theme file itself:
 //   name          — file stem
 //   desc          — the header comment's one-line description
 //   light / dark  — the tokens the card's miniature page mock paints
 //                   with (surfaces, text, border, brand, semantics)
 // Run automatically by `npm run build:docs` so the gallery can never
-// drift from static/themes/.
+// drift from the embedded themes.
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 
-const dir = new URL("../static/themes/", import.meta.url);
+const dir = new URL("../node_modules/vpkit/themes/", import.meta.url);
 const themes = readdirSync(dir)
   .filter((f) => f.endsWith(".css"))
   .map((file) => {
