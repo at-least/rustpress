@@ -823,7 +823,8 @@ provider = "local"
 buttonText = "Suchen"
 placeholder = "Dokumente durchsuchen"
 noResultsText = "Nichts gefunden für {q}"
-navigateText = "zum Navigieren""#,
+navigateText = "zum Navigieren"
+backButtonTitle = "Suche schließen""#,
         &[("guide/a.md", "# A\n")],
     );
     let html = page(&out, "/guide/a/");
@@ -841,6 +842,10 @@ navigateText = "zum Navigieren""#,
         "no-results string"
     );
     assert!(html.contains(">zum Navigieren</span>"), "footer hint");
+    assert!(
+        html.contains("title=\"Suche schließen\" aria-label=\"Suche schließen\""),
+        "phone back button"
+    );
 }
 
 #[test]

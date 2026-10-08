@@ -850,6 +850,9 @@ pub struct SearchTranslations {
     /// Footer hint after Esc.
     #[serde(default = "default_search_close")]
     pub close_text: String,
+    /// Title of the back button that closes the modal on phones.
+    #[serde(default = "default_search_back")]
+    pub back_button_title: String,
 }
 
 impl Default for SearchTranslations {
@@ -860,6 +863,10 @@ impl Default for SearchTranslations {
 
 fn default_search_button_text() -> String {
     "Search".into()
+}
+
+fn default_search_back() -> String {
+    "Close search".into()
 }
 
 fn default_search_placeholder() -> String {

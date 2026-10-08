@@ -19,6 +19,7 @@ pub fn search_modal<'a>(
     let navigate_text = search.translations.navigate_text.clone();
     let select_text = search.translations.select_text.clone();
     let close_text = search.translations.close_text.clone();
+    let back_title = search.translations.back_button_title.clone();
     let kbd_cls = "bg-[rgba(128,128,128,0.1)] rounded-[0.25rem] px-[0.375rem] py-[0.1875rem] min-w-6 inline-block text-center align-middle border border-[rgba(128,128,128,0.15)] shadow-[0_2px_2px_0_rgba(0,0,0,0.1)] font-[inherit]";
     let results_cls = concat!(
         "flex flex-col gap-[0.375rem] overflow-x-hidden overflow-y-auto overscroll-contain",
@@ -40,6 +41,13 @@ pub fn search_modal<'a>(
                     <label id="localsearch-label" for="localsearch-input" title=(button_aria.clone())>
                         (icon("search", "block m-2 text-[1.125rem] max-md:hidden"))
                     </label>
+                    // full screen on phones, where neither the backdrop nor
+                    // Escape is in reach: upstream's back button closes it
+                    <div class="flex gap-1 md:hidden">
+                        <button type="button" class="p-2 hover:text-brand-1 cursor-pointer" title=(back_title.clone()) aria-label=(back_title.clone()) @click="close()">
+                            (icon("arrow-left", "block size-[1.125rem]"))
+                        </button>
+                    </div>
                     <input
                         class="py-[0.375rem] px-3 w-full placeholder:text-text-3 [&::-webkit-search-cancel-button]:hidden"
                         id="localsearch-input"

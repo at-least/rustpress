@@ -52,6 +52,7 @@ resetButtonTitle = "清除"
 navigateText = "切换"
 selectText = "选择"
 closeText = "关闭"
+backButtonTitle = "关闭搜索"
 ```
 
 | key | default | where it shows |
@@ -64,6 +65,7 @@ closeText = "关闭"
 | `navigateText` | `to navigate` | footer hint after the arrow keys |
 | `selectText` | `to select` | footer hint after Enter |
 | `closeText` | `to close` | footer hint after Esc |
+| `backButtonTitle` | `Close search` | tooltip and label of the back button that closes the modal on phones (below 768px, where the modal fills the screen) |
 
 ### Tuning
 

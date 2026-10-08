@@ -239,6 +239,29 @@ try {
     await ctx.close();
   }
 
+  // ---- search modal on a phone ---------------------------------------------
+  {
+    // full screen below 768px, so neither the backdrop nor Escape is in
+    // reach: upstream puts a back button (title "Close search") before
+    // the input, shown only there
+    const ctx = await browser.newContext({ viewport: { width: 375, height: 800 } });
+    const page = await ctx.newPage();
+    await page.goto(`${base}/guide/what-is-vitepress/`, { waitUntil: 'networkidle' });
+    const dialog = page.locator('#VPLocalSearchBox');
+    await page.locator('#VPSearchButton').click();
+    await eventually(dialog.waitFor({ state: 'visible', ...POLL }));
+    const back = page.locator('#VPLocalSearchBox button[title="Close search"]');
+    ok('a phone gets a back button in the search bar', await back.isVisible());
+    const box = await back.boundingBox().catch(() => null);
+    if (box) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    ok('tapping it closes the search', await eventually(dialog.waitFor({ state: 'hidden', ...POLL })));
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.keyboard.press('Control+k');
+    await eventually(dialog.waitFor({ state: 'visible', ...POLL }));
+    ok('the back button is phone-only', !(await back.isVisible()));
+    await ctx.close();
+  }
+
   // ---- appearance toggle -----------------------------------------------
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
