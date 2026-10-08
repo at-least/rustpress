@@ -43,5 +43,6 @@
   "feat w @390": "358",
   "feat w @640": "280",
   "feat w @960": "212",
-  "outline dropdown @375": "17,17,17,33,33,17,33,17,17,17,33,33,33,33,33,33,33"
+  "outline dropdown @375": "17,17,17,33,33,17,33,17,17,17,33,33,33,33,33,33,33",
+  "local nav without headers @375": "false|fixed|0|48|Return to top"
 }

@@ -185,6 +185,10 @@ const CASES = [
   // like upstream's (VPDocOutlineItem without `root`: the top list padded
   // like the nested ones) — text offsets of "Return to top" + each link
   ['outline dropdown @375', '/guide/routing/', 375, `(async () => { document.getElementById('VPOutlineDropdownButton').click(); const box = document.getElementById('VPOutlineDropdownItems'); for (let i = 0; i < 100 && !box.offsetParent; i++) await new Promise((r) => setTimeout(r, 50)); const bb = box.getBoundingClientRect(); return [...box.querySelectorAll('a')].map((a) => { const g = document.createRange(); g.selectNodeContents(a); return Math.round(g.getBoundingClientRect().left - bb.left); }).join(','); })()`],
+  // a page with neither outline headers nor a sidebar (fixture under
+  // /probe/): upstream shows no local nav until the page has scrolled
+  // past the navbar, then a fixed bar holding "Return to top"
+  ['local nav without headers @375', '/probe/no-outline/', 375, `(async () => { const nav = document.getElementById('VPLocalNav'); const shown = () => getComputedStyle(nav).display !== 'none'; const top = shown(); window.scrollTo(0, 300); for (let i = 0; i < 100 && !shown(); i++) await new Promise((r) => setTimeout(r, 50)); const b = nav.getBoundingClientRect(); return [top, getComputedStyle(nav).position, Math.round(b.top), Math.round(b.height), nav.innerText.trim()].join('|'); })()`],
 ];
 
 if (skip) {

@@ -96,8 +96,10 @@ fn return_to_top_label_is_configurable() {
         "title = \"T\"\nreturnToTopLabel = \"Nach oben\"\n",
         &[("guide/a.md", "# A\n\ntext\n")],
     );
+    // no outline headers on the page: the local nav's "Return to top"
+    // is upstream's plain button
     assert!(
-        page(&out, "/guide/a/").contains(">Nach oben</a>"),
+        page(&out, "/guide/a/").contains(">Nach oben</button>"),
         "local nav label"
     );
 }
@@ -209,9 +211,10 @@ fn logo_variants_and_outline_false() {
     );
     let html = page(&out, "/guide/a/");
     assert!(!html.contains("VPOutlineMarker"), "no outline marker");
+    // upstream keeps the dropdown slot, as a "Return to top" button
     assert!(
-        !html.contains("VPLocalNavOutlineDropdown"),
-        "no local-nav dropdown"
+        !html.contains("VPOutlineDropdownButton") && html.contains(">Return to top</button>"),
+        "no local-nav outline"
     );
 }
 
@@ -375,6 +378,52 @@ label = "日本語"
 }
 
 #[test]
+fn local_nav_without_outline_headers_offers_return_to_top() {
+    // upstream VPLocalNav, probed on the pinned build below 1280: without
+    // outline headers the dropdown is a "Return to top" button and the
+    // bar hides from 960px; without a sidebar too, the bar shows only once
+    // the page has scrolled past the navbar, fixed to the top
+    let (_, out) = build_site(
+        "title = \"T\"\n\n[sidebar.\"/guide/\"]\nitems = [{ text = \"A\", link = \"/guide/a\" }, { text = \"N\", link = \"/guide/noh\" }]\n",
+        &[
+            ("guide/a.md", "# A\n\n## Sub\n"),
+            ("guide/noh.md", "# No headings\n\ntext\n"),
+            ("solo.md", "# Solo\n\ntext\n"),
+        ],
+    );
+    let bar = |url: &str| {
+        let html = page(&out, url);
+        let id = html.find("id=\"VPLocalNav\"").unwrap();
+        let start = html[..id].rfind("<div").unwrap();
+        let open = id + html[id..].find('>').unwrap();
+        let end = html
+            .find("<aside")
+            .or(html.find("id=\"VPContent\""))
+            .unwrap();
+        (html[start..open].to_string(), html[open..end].to_string())
+    };
+    let (tag, body) = bar("/guide/a/");
+    assert!(body.contains("id=\"VPOutlineDropdownButton\""), "{body}");
+    assert!(
+        !tag.contains("lg:hidden") && !tag.contains("x-show"),
+        "{tag}"
+    );
+    let (tag, body) = bar("/guide/noh/");
+    assert!(body.contains(">Return to top</button>"), "{body}");
+    assert!(!body.contains("id=\"VPOutlineDropdownButton\""), "{body}");
+    assert!(
+        tag.contains(" lg:hidden") && !tag.contains("x-show"),
+        "{tag}"
+    );
+    let (tag, body) = bar("/solo/");
+    assert!(body.contains(">Return to top</button>"), "{body}");
+    assert!(
+        tag.starts_with("<div class=\"fixed ") && tag.contains("x-show=\"scrolled\""),
+        "{tag}"
+    );
+}
+
+#[test]
 fn local_nav_dropdown_lists_the_outline_headings() {
     // upstream's dropdown and aside render the same headers (getHeaders
     // of the outline range, VPDocOutlineItem nesting) — on vitepress.dev
@@ -426,9 +475,11 @@ fn page_layout_renders_the_markdown_bare() {
     );
     assert!(!html.contains("https://x/edit/"), "edit link");
     assert!(html.contains("id=\"VPSidebar\""), "sidebar");
-    // upstream's outline reads headings inside .VPDoc only: none here
+    // upstream's outline reads headings inside .VPDoc only: none here,
+    // so the local nav offers "Return to top" instead of the outline
     assert!(
-        !html.contains("id=\"VPLocalNavOutlineDropdown\""),
+        !html.contains("id=\"VPOutlineDropdownButton\"")
+            && html.contains(">Return to top</button>"),
         "local-nav outline"
     );
 }

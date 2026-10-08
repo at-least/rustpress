@@ -97,6 +97,26 @@ Alpine.data("codeGroup", () => ({
 /* Doc-page scrollspy: navbar `.top` state, right-hand outline active
    link + marker position (ported from the old scrollspy.js — rAF
    throttled, active heading = last one whose top is above the nav). */
+/* VPLocalNav on a page with neither outline headers nor a sidebar:
+   shown once the page has scrolled past the navbar (upstream's
+   isScrolled). Like upstream, the nav height comes from a probe element:
+   a custom property reads back as its raw token ("4rem"). */
+Alpine.data("localNavScroll", () => ({
+  scrolled: false,
+  init() {
+    const probe = document.createElement("div");
+    probe.style.cssText = "position: absolute; visibility: hidden; height: var(--vp-nav-height)";
+    document.body.appendChild(probe);
+    const navHeight = probe.offsetHeight;
+    probe.remove();
+    const update = () => {
+      this.scrolled = window.scrollY >= navHeight;
+    };
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+  },
+}));
+
 Alpine.data("docPage", () => ({
   activeId: "",
   init() {
