@@ -217,7 +217,7 @@ The `note`, `important` and `caution` types are available too, with the same sty
 
 ### Custom Title
 
-You may set custom title by appending the text right after the "type" of the container.
+You may set custom title by appending the text right after the "type" of the container. The title is inline markdown: `code`, **emphasis**, links and emoji shortcodes work in it (a title that would read as a heading or a list item stays literal).
 
 **Input**
 
@@ -380,7 +380,7 @@ Wraps in a `<div class="vp-raw">`
 
 ## GitHub-flavored Alerts
 
-rustpress also supports [GitHub-flavored alerts](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts) to render as callouts. They will be rendered the same as the [custom containers](#custom-containers). Unlike on GitHub, text placed right after the marker becomes the title of the alert (`> [!NOTE] Custom Title`), and [containers you registered yourself](#registering-new-containers) work here too.
+rustpress also supports [GitHub-flavored alerts](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts) to render as callouts. They will be rendered the same as the [custom containers](#custom-containers). Unlike on GitHub, text placed right after the marker becomes the title of the alert (`> [!NOTE] Custom Title`) — as plain text, not markdown, like VitePress — and [containers you registered yourself](#registering-new-containers) work here too.
 
 ```md
 > [!NOTE]

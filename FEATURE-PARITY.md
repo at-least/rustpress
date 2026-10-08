@@ -195,7 +195,7 @@ common `transformHead` use.
 |---|---|---|---|
 | Custom Containers | — | | group heading |
 | Default Title | implemented | `src/markdown/preprocess.rs:259-390` | info/tip/warning/danger + note/important/caution kinds |
-| Custom Title | implemented | `src/markdown/preprocess.rs:350-378` | text after the kind; `{no-title}` too |
+| Custom Title | implemented | `expand_containers` + `render_titles` (`src/markdown/mod.rs`) | text after the kind, rendered as inline markdown like upstream's md.renderInline (alert titles stay plain text, as upstream); `{no-title}` too |
 | Registering New Containers | diverged | `src/config.rs:578-588` | `[markdown.container.custom]` `{name, kind, label}` reuses a builtin kind's styling; upstream's are unstyled + your CSS |
 | Nesting | implemented | `src/markdown/preprocess.rs:269-321` | fence-length nesting (`::::`), incl. in list items |
 | Additional Attributes | partial | `rewrite_link_attrs` | `{target=… rel=…}` on links (rewritten to raw anchors — no markdown inside the text); `{open}`/`{no-title}` on containers; not on arbitrary elements |

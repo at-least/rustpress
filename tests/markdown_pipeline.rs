@@ -1500,3 +1500,31 @@ fn unclosed_list_marker_fence_flushes_with_indent() {
         out.html
     );
 }
+
+#[test]
+fn container_titles_render_inline_markdown() {
+    // upstream renders `:::` titles with md.renderInline (code, emphasis,
+    // emoji); a title that is not inline content stays literal, and
+    // GitHub alert titles stay plain text — all checked against the
+    // pinned upstream build
+    let out = synthetic(concat!(
+        "::: details Example Netlify `_headers` file\nbody\n:::\n\n",
+        "::: warning Avoid `<style scoped>` in **Markdown**\nbody\n:::\n\n",
+        "::: tip Celebrate :tada:\nbody\n:::\n\n",
+        "::: info # not a heading\nbody\n:::\n\n",
+        "::: danger 1. not a list\nbody\n:::\n\n",
+        "> [!NOTE] Alert with `code` & <b>\n> body\n",
+    ));
+    let h = &out.html;
+    for want in [
+        "<summary>Example Netlify <code>_headers</code> file</summary>",
+        "<p class=\"custom-block-title\">Avoid <code>&lt;style scoped&gt;</code> in <strong>Markdown</strong></p>",
+        "<p class=\"custom-block-title\">Celebrate 🎉</p>",
+        "<p class=\"custom-block-title\"># not a heading</p>",
+        "<p class=\"custom-block-title\">1. not a list</p>",
+        "<p class=\"custom-block-title\">Alert with `code` &amp; &lt;b&gt;</p>",
+    ] {
+        assert!(h.contains(want), "missing {want}\n{h}");
+    }
+    assert!(!h.contains("data-gd-inline"), "marker leaked: {h}");
+}

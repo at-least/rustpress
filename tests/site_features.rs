@@ -566,6 +566,30 @@ fn frontmatter_page_toggles() {
 }
 
 #[test]
+fn container_title_links_resolve_like_body_links() {
+    // a title is inline markdown (upstream md.renderInline), and its
+    // links take the same route as body links: relative `.md` → the
+    // canonical page URL, base-prefixed
+    let (_, out) = build_site(
+        "title = \"T\"\nbase = \"/docs/\"\n",
+        &[
+            (
+                "a.md",
+                "# A\n\n::: tip Read [the guide](./b.md)\nbody\n:::\n",
+            ),
+            ("b.md", "# B\n"),
+        ],
+    );
+    assert!(
+        page(&out, "/a/").contains(
+            "<p class=\"custom-block-title\">Read <a href=\"/docs/b/\">the guide</a></p>"
+        ),
+        "{}",
+        page(&out, "/a/")
+    );
+}
+
+#[test]
 fn collapsed_groups_holding_the_current_page_start_open() {
     // upstream useSidebarItemControl: a group that is or contains the
     // current page (hasActiveLink) is expanded however it was configured,

@@ -67,6 +67,11 @@ const MAX_INCLUDE_DEPTH: u8 = 8;
 /// string collides with it.
 const GD_GROUP_TOKEN: &str = "gd-ingroup";
 
+/// Marks a container title element whose escaped text is rendered as
+/// inline markdown after comrak's pass (upstream renders `:::` titles
+/// with md.renderInline); the renderer strips it.
+pub const INLINE_MARK: &str = "data-gd-inline";
+
 impl<'a> Preprocess<'a> {
     pub fn run(&self, body: &str, page_rel: &str) -> Result<String, PreprocessError> {
         let page_dir = self
@@ -820,10 +825,20 @@ pub fn expand_alerts(md: &str, opts: &ContainerOptions) -> String {
             continue;
         }
         if let Some((indent, kind, title)) = alert_opener(bare, opts) {
+            // upstream renders alert titles as plain text, not inline
+            // markdown: backslash-escaping each ASCII punctuation char
+            // (CommonMark) makes the title pass render it verbatim
             let title_suffix = if title.is_empty() {
                 String::new()
             } else {
-                format!(" {title}")
+                let literal: String = title
+                    .chars()
+                    .flat_map(|c| {
+                        let esc = c.is_ascii_punctuation().then_some('\\');
+                        esc.into_iter().chain(std::iter::once(c))
+                    })
+                    .collect();
+                format!(" {literal}")
             };
             out_lines.push(format!("{indent}::: {kind}{title_suffix}"));
             i += 1;
@@ -1107,7 +1122,10 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
                     let open_attr = if open { " open" } else { "" };
                     out_lines.extend([
                         format!("{indent}<details class=\"custom-block details\"{open_attr}>"),
-                        format!("{indent}<summary>{}</summary>", escape_text(&summary)),
+                        format!(
+                            "{indent}<summary {INLINE_MARK}>{}</summary>",
+                            escape_text(&summary)
+                        ),
                         String::new(),
                     ]);
                 }
@@ -1135,7 +1153,7 @@ pub fn expand_containers(md: &str, opts: &ContainerOptions) -> String {
                     if !no_title {
                         let title = title.unwrap_or(default_label);
                         out_lines.push(format!(
-                            "{indent}<p class=\"custom-block-title\">{}</p>",
+                            "{indent}<p class=\"custom-block-title\" {INLINE_MARK}>{}</p>",
                             escape_text(&title)
                         ));
                     }
@@ -1661,11 +1679,11 @@ mod tests {
     fn tip_container_with_default_and_custom_title() {
         let out = containers("::: tip\nhi **bold**\n:::\n");
         assert!(out.contains("<div class=\"custom-block tip\">"), "{out}");
-        assert!(out.contains("<p class=\"custom-block-title\">TIP</p>"));
+        assert!(out.contains("<p class=\"custom-block-title\" data-gd-inline>TIP</p>"));
         assert!(out.contains("hi **bold**"));
         let out = containers("::: warning SERVER REQUIRED\nx\n:::\n");
         assert!(
-            out.contains("<p class=\"custom-block-title\">SERVER REQUIRED</p>"),
+            out.contains("<p class=\"custom-block-title\" data-gd-inline>SERVER REQUIRED</p>"),
             "{out}"
         );
         let out = containers("::: tip {no-title}\nx\n:::\n");
@@ -1679,7 +1697,7 @@ mod tests {
             out.contains("<details class=\"custom-block details\" open>"),
             "{out}"
         );
-        assert!(out.contains("<summary>Click me</summary>"));
+        assert!(out.contains("<summary data-gd-inline>Click me</summary>"));
         let out = containers("::: code-group\n```js [a]\n1\n```\n:::\n");
         assert!(
             out.contains("<div class=\"vp-code-group\" x-data=\"codeGroup\">"),

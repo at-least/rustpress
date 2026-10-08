@@ -188,6 +188,7 @@ impl MarkdownEngine {
         comrak::format_html_with_plugins(root, &self.options, &mut html, &plugins)
             .expect("infallible string write");
         let html = resolve_marked_urls(html, page, content, &self.base);
+        let html = self.render_titles(&html, page, content);
         let html = apply_heading_rewrites(&html, &headings);
         let mut html = replace_toc(&html, &headings);
         // comrak's footnote section lacks the separator <hr> that
@@ -228,6 +229,57 @@ impl MarkdownEngine {
             headings,
             has_math,
         })
+    }
+}
+
+impl MarkdownEngine {
+    /// Container titles arrive as escaped text in elements marked with
+    /// `INLINE_MARK` (the preprocessor runs before comrak parses); render
+    /// each as inline markdown with the page's own options and link
+    /// rules, as upstream's md.renderInline does. A title that does not
+    /// parse as one paragraph (`# x`, `1. x`) keeps its literal text.
+    fn render_titles(&self, html: &str, page: &Page, content: &Content) -> String {
+        if !html.contains(preprocess::INLINE_MARK) {
+            return html.to_string();
+        }
+        static TITLE: OnceLock<regex::Regex> = OnceLock::new();
+        // titles are escaped text: no `<` before the closing tag
+        let title = TITLE.get_or_init(|| {
+            regex::Regex::new(
+                r#"(<summary|<p class="custom-block-title") data-gd-inline>([^<]*)(</summary>|</p>)"#,
+            )
+            .unwrap()
+        });
+        title
+            .replace_all(html, |c: &regex::Captures| {
+                let inline = self
+                    .inline_html(&unescape_minimal(&c[2]), page, content)
+                    .unwrap_or_else(|| c[2].to_string());
+                format!("{}>{inline}{}", &c[1], &c[3])
+            })
+            .into_owned()
+    }
+
+    /// `md` rendered as inline markdown, or `None` when it does not parse
+    /// as a single paragraph.
+    fn inline_html(&self, md: &str, page: &Page, content: &Content) -> Option<String> {
+        let md = preprocess::rewrite_badges(md);
+        let arena = Arena::new();
+        let root = comrak::parse_document(&arena, &md, &self.options);
+        let mut blocks = root.children();
+        let first = blocks.next()?;
+        if blocks.next().is_some() || !matches!(first.data.borrow().value, NodeValue::Paragraph) {
+            return None;
+        }
+        rewrite_links(&root, page, content, &self.base);
+        let mut html = String::new();
+        comrak::format_html(root, &self.options, &mut html).expect("infallible string write");
+        let html = resolve_marked_urls(html, page, content, &self.base);
+        Some(
+            html.strip_prefix("<p>")?
+                .strip_suffix("</p>\n")?
+                .to_string(),
+        )
     }
 }
 
