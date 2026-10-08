@@ -219,11 +219,11 @@ if (!existsSync(join(DIST, 'index.html'))) {
       .reduce((a, b) => Math.max(a, b), 0);
   };
   const distMtime = statSync(join(DIST, 'index.html')).mtimeMs;
-  // vitecss by its two stylesheets, not its directory: node_modules/vitecss
-  // links to the ../vitecss checkout, whose .git would make a walk see
+  // vpkit by its two stylesheets, not its directory: node_modules/vpkit
+  // links to the ../vpkit checkout, whose .git would make a walk see
   // every commit there as a source change
-  const vitecss = ['index.css', 'fonts.css'].map((f) => join(ROOT, 'node_modules/vitecss', f));
-  for (const src of [CSS_PATH, join(ROOT, 'styles/vitepress.css'), ...vitecss, join(ROOT, 'src/render')]) {
+  const vpkit = ['index.css', 'fonts.css'].map((f) => join(ROOT, 'node_modules/vpkit', f));
+  for (const src of [CSS_PATH, join(ROOT, 'styles/vitepress.css'), ...vpkit, join(ROOT, 'src/render')]) {
     if (existsSync(src) && newest(src) > distMtime) {
       console.error(`parity-viewport: demo/public is older than ${src} — rebuild first (npm run check:demo)`);
       process.exit(1);

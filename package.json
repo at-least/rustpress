@@ -33,7 +33,7 @@
     "alpinejs": "^3.17.2",
     "esbuild": "^0.28.2",
     "playwright-chromium": "^1.62.1",
-    "vitecss": "file:../vitecss"
+    "vpkit": "file:../vpkit"
   },
   "private": true
 }

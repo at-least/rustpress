@@ -53,13 +53,13 @@ fn site_outside_the_repo_gets_the_embedded_theme_assets() {
 }
 
 #[test]
-fn embedded_fonts_are_the_ones_vitecss_names() {
-    // the @font-face rules come from vitecss (fonts.css) while the files
-    // they name are embedded from static/fonts/ — a copy of vitecss's
+fn embedded_fonts_are_the_ones_vpkit_names() {
+    // the @font-face rules come from vpkit (fonts.css) while the files
+    // they name are embedded from static/fonts/ — a copy of vpkit's
     // fonts/, which must not drift from it
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
     let ours = root.join("static/fonts");
-    let theirs = root.join("node_modules/vitecss/fonts");
+    let theirs = root.join("node_modules/vpkit/fonts");
     let names = |dir: &std::path::Path| {
         let mut names: Vec<String> = std::fs::read_dir(dir)
             .unwrap_or_else(|e| panic!("read {dir:?}: {e}"))
@@ -71,12 +71,12 @@ fn embedded_fonts_are_the_ones_vitecss_names() {
     assert_eq!(
         names(&ours),
         names(&theirs),
-        "static/fonts/ and vitecss's fonts/ hold different files"
+        "static/fonts/ and vpkit's fonts/ hold different files"
     );
     for name in names(&ours) {
         assert!(
             std::fs::read(ours.join(&name)).unwrap() == std::fs::read(theirs.join(&name)).unwrap(),
-            "static/fonts/{name} differs from vitecss's copy"
+            "static/fonts/{name} differs from vpkit's copy"
         );
     }
 }

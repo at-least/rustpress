@@ -145,7 +145,7 @@ common `transformHead` use.
 | extraMenuLabel | missing | — | (and the `...` overflow menu itself is missing, see `nav`) |
 | skipToContentLabel | implemented | `src/render/layout.rs:41,71` | |
 | externalLinkIcon | diverged | `src/render/vpdoc.rs:108` | arrow is always on; upstream defaults off, opt-in |
-| gradedContainers | implemented | `vp-graded-containers` body class | the graded palette ships in vitecss (`index.css`); switch added in fe1cdc9 |
+| gradedContainers | implemented | `vp-graded-containers` body class | the graded palette ships in vpkit (`index.css`); switch added in fe1cdc9 |
 | useLayout | n/a | — | Vue composable |
 
 ## reference/frontmatter-config.md
@@ -268,7 +268,7 @@ rustpress deliberately has no replacement for. One exception:
 |---|---|---|---|
 | Customizing CSS variables | implemented | `theme` → `/themes/<name>.css` (`src/render/mod.rs`) | same mechanism: a CSS file linked after the theme stylesheet; bundled names or the site's own `.css` |
 | Different fonts | partial | `--vp-font-family-*` overridable via the `theme` CSS file | no `theme-without-fonts` entry; Inter always ships |
-| Navbar theming (CSS vars) | implemented | vitecss `index.css` | same `--vp-nav-*` tokens |
+| Navbar theming (CSS vars) | implemented | vpkit `index.css` | same `--vp-nav-*` tokens |
 | Navbar overflow `...` collapse | missing | — | long nav wraps/scrolls instead |
 | Registering global components | n/a | — | no Vue |
 | Layout slots | n/a | — | no Vue |

@@ -5,8 +5,8 @@
  *
  * The design system — the --vp-* theme variables, the semantic utilities
  * (`text-text-1`, `bg-bg-alt`, …), the breakpoints, the dark variant and
- * the global rules that cannot be expressed as utilities — is the vitecss
- * package (../vitecss, a file: dependency). This file only wires it to
+ * the global rules that cannot be expressed as utilities — is the vpkit
+ * package (../vpkit, a file: dependency). This file only wires it to
  * rustpress. Every component style lives in src/render/ (and js/ for
  * JS-generated markup) as Tailwind utility classes. */
 
@@ -20,13 +20,13 @@
 @source "../content";
 /* Not for class names: the CLI's --watch watches only the directories of
    the input and the @source entries (through realpath, so these reach
-   ../vitecss), never those of @import-ed files. Without them, watch:css
-   misses every vitecss edit. The built CSS is byte-identical with or
+   ../vpkit), never those of @import-ed files. Without them, watch:css
+   misses every vpkit edit. The built CSS is byte-identical with or
    without them (Tailwind 4.3.3): recheck that after a Tailwind bump. */
-@source "../node_modules/vitecss/index.css";
-@source "../node_modules/vitecss/fonts.css";
+@source "../node_modules/vpkit/index.css";
+@source "../node_modules/vpkit/fonts.css";
 /* The Inter webfonts. Their url()s (`fonts/…`) resolve next to the built
-   vitepress.css, i.e. to static/fonts/, which holds copies of vitecss's
+   vitepress.css, i.e. to static/fonts/, which holds copies of vpkit's
    fonts/ (tests/embedded_assets.rs fails when the two drift apart). */
-@import "vitecss/fonts.css";
-@import "vitecss";
+@import "vpkit/fonts.css";
+@import "vpkit";

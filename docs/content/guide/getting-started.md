@@ -14,13 +14,13 @@ description: Get up and running with rustpress. Build the binary, create a site 
 
 ### Build from source
 
-rustpress is not on crates.io yet. When it is, the crate will be named `rustpress-cli` (the `rustpress` crate name belongs to another project) and the installed binary will still be `rustpress`. For now, clone the repository and build it. The theme's CSS comes from vitecss, a separate repository that npm links from `../vitecss`, so clone it next to rustpress. The theme's stylesheet and script are produced by npm and then embedded into the binary, so the npm step has to run before `cargo build`:
+rustpress is not on crates.io yet. When it is, the crate will be named `rustpress-cli` (the `rustpress` crate name belongs to another project) and the installed binary will still be `rustpress`. For now, clone the repository and build it. The theme's CSS comes from vpkit, a separate repository that npm links from `../vpkit`, so clone it next to rustpress. The theme's stylesheet and script are produced by npm and then embedded into the binary, so the npm step has to run before `cargo build`:
 
 ```sh
 $ git clone https://github.com/at-least/rustpress
-$ git clone https://github.com/at-least/vitecss  # the theme's CSS, as ../vitecss
+$ git clone https://github.com/at-least/vpkit  # the theme's CSS, as ../vpkit
 $ cd rustpress
-$ npm install                      # tailwindcss CLI + esbuild + alpinejs + vitecss
+$ npm install                      # tailwindcss CLI + esbuild + alpinejs + vpkit
 $ npm run build:js && npm run build:css   # → static/js/app.js, static/vitepress.css
 $ cargo build --release            # → target/release/rustpress
 ```

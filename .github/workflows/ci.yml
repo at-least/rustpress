@@ -28,12 +28,12 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --check
-      # the theme's CSS is the vitecss package, an npm `file:` dependency
-      # on a sibling checkout. Without ../vitecss, npm ci still passes
+      # the theme's CSS is the vpkit package, an npm `file:` dependency
+      # on a sibling checkout. Without ../vpkit, npm ci still passes
       # (leaving a dangling link) and build:css fails: "Can't resolve
-      # 'vitecss/fonts.css'". actions/checkout cannot place a repository
+      # 'vpkit/fonts.css'". actions/checkout cannot place a repository
       # outside the workspace, hence a plain clone.
-      - run: git clone --depth 1 https://github.com/at-least/vitecss ../vitecss
+      - run: git clone --depth 1 https://github.com/at-least/vpkit ../vpkit
       - run: npm ci
       # the embedded assets must exist before ANY cargo compile: build.rs
       # refuses to build without the gitignored static/vitepress.css and

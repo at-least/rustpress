@@ -42,9 +42,9 @@ jobs:
         if: steps.drift.outputs.drifted == 'true'
       - uses: Swatinem/rust-cache@v2
         if: steps.drift.outputs.drifted == 'true'
-      # drift-watch.mjs runs build:css, which imports the vitecss sibling
+      # drift-watch.mjs runs build:css, which imports the vpkit sibling
       # checkout (an npm `file:` dependency)
-      - run: git clone --depth 1 https://github.com/at-least/vitecss ../vitecss
+      - run: git clone --depth 1 https://github.com/at-least/vpkit ../vpkit
         if: steps.drift.outputs.drifted == 'true'
       - run: npm ci
         if: steps.drift.outputs.drifted == 'true'

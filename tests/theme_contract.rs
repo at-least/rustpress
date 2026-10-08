@@ -3,7 +3,7 @@
 //! A bundled theme is a *complete design*: it defines every design token
 //! the compiled base stylesheet consumes, so no stock value leaks through
 //! when it is linked. These tests derive the required token set from the
-//! base's token layer itself, the vitecss package's `index.css` that
+//! base's token layer itself, the vpkit package's `index.css` that
 //! `styles/vitepress.css` imports (the structural layer — utilities and
 //! component rules — resolves through these `--vp-*` custom properties)
 //! and then hold every `static/themes/*.css` to it, plus WCAG contrast
@@ -22,9 +22,9 @@ fn repo(rel: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(rel)
 }
 
-/// The base stylesheet's token layer: vitecss, an npm `file:` dependency.
+/// The base stylesheet's token layer: vpkit, an npm `file:` dependency.
 fn base_css() -> String {
-    let path = repo("node_modules/vitecss/index.css");
+    let path = repo("node_modules/vpkit/index.css");
     std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path:?}: {e} (npm install)"))
 }
 

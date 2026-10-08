@@ -28,10 +28,10 @@ demo/                 parity site: rustpress.toml + content/ (VitePress
                       format, mirrored verbatim from vitepress.dev) + static/
 assets/themes/        vendored github-light/dark .tmTheme files
 static/               theme assets embedded into the binary: fonts (a
-                      copy of vitecss's) + the npm-built vitepress.css
+                      copy of vpkit's) + the npm-built vitepress.css
                       and js/app.js (gitignored)
-styles/               Tailwind entry (vitepress.css), importing vitecss
-                      (../vitecss): the --vp-* tokens, semantic
+styles/               Tailwind entry (vitepress.css), importing vpkit
+                      (../vpkit): the --vp-* tokens, semantic
                       utilities and Inter @font-face
 js/alpine-entry.js    the Alpine bundle source
 tests/fixtures/en/    verbatim subset of vitepress/docs/en used by tests
@@ -40,8 +40,8 @@ tests/fixtures/en/    verbatim subset of vitepress/docs/en used by tests
 ## Build & develop
 
 ```sh
-git clone https://github.com/at-least/vitecss ../vitecss   # the theme's CSS (npm file: dependency)
-npm install          # tailwindcss CLI + esbuild + alpinejs + vitecss (assets only)
+git clone https://github.com/at-least/vpkit ../vpkit   # the theme's CSS (npm file: dependency)
+npm install          # tailwindcss CLI + esbuild + alpinejs + vpkit (assets only)
 npm run build        # bundle app.js, build vitepress.css, cargo build + demo build
 npm test             # cargo test + full demo build + upstream parity gate
 npm run dev          # tailwind/esbuild watch + rustpress serve demo
@@ -58,7 +58,7 @@ The user-facing documentation lives in `docs/` and is itself a rustpress
 site; `cargo test --test docs_site` builds it and validates every link and
 anchor.
 
-`static/vitepress.css` and `static/js/app.js` are embedded into the binary at compile time (`build.rs` refuses to build without them), so run `npm install && npm run build:js && npm run build:css` once before the first `cargo build`. `vitepress.css` is built by the Tailwind CLI from `styles/vitepress.css` (which imports the vitecss package) + class strings living in `src/**/*.rs` (`@source "../src"`); after that, `cargo build` alone suffices for Rust-side changes that don't touch classes. A binary installed from the crate is self-contained.
+`static/vitepress.css` and `static/js/app.js` are embedded into the binary at compile time (`build.rs` refuses to build without them), so run `npm install && npm run build:js && npm run build:css` once before the first `cargo build`. `vitepress.css` is built by the Tailwind CLI from `styles/vitepress.css` (which imports the vpkit package) + class strings living in `src/**/*.rs` (`@source "../src"`); after that, `cargo build` alone suffices for Rust-side changes that don't touch classes. A binary installed from the crate is self-contained.
 
 ## Trust model
 
