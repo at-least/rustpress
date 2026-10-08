@@ -180,14 +180,16 @@ impl Site {
     ) -> Result<String, BuildError> {
         use crate::content::{AsideSetting, LastUpdatedSetting};
 
+        // theme settings as this page's locale sees them (its themeConfig
+        // layered over the site's)
+        let cfg = self.config.for_locale(&page.locale);
         // per-page toggles (front matter wins)
         let has_sidebar =
             self.sidebars.for_url(&page.url).is_some() && page.front.sidebar != Some(false);
         let has_navbar = page.front.navbar != Some(false);
-        let show_footer = self.config.footer.is_some() && page.front.footer != Some(false);
+        let show_footer = cfg.footer.is_some() && page.front.footer != Some(false);
         let edit_on = page.front.edit_link != Some(false);
-        let aside_left =
-            AsideSetting::resolve(page.front.aside.as_ref(), self.config.aside.as_ref());
+        let aside_left = AsideSetting::resolve(page.front.aside.as_ref(), cfg.aside.as_ref());
         let is_home = page.is_home();
         let is_page_layout = page.front.layout.as_deref() == Some("page");
 
@@ -195,7 +197,7 @@ impl Site {
         let (prev, next) = self.sidebars.neighbors(&page.url);
         let prev = apply_pager_override(page.front.prev.as_ref(), prev, self);
         let next = apply_pager_override(page.front.next.as_ref(), next, self);
-        let outline = outline_range(&self.config, page);
+        let outline = outline_range(cfg, page);
         // last-updated: page Date override > git/mtime > front-matter off
         let last_updated = match &page.front.last_updated {
             Some(LastUpdatedSetting::Toggle(false)) => None,
@@ -232,6 +234,7 @@ impl Site {
             site_title: self.navbar_site_title(page),
             search_index_url: self.search_index_url(page),
             outline,
+            config: cfg,
         };
 
         let body = if is_home {
@@ -245,7 +248,7 @@ impl Site {
                 (aside_left, edit_on, last_updated, outline)
             };
             doc::doc_page(
-                self,
+                cfg,
                 page,
                 rendered,
                 prev.as_ref(),
@@ -553,7 +556,7 @@ impl Site {
     /// The navbar title: `siteTitle` wins (text override, or hidden),
     /// else the locale-aware site title.
     fn navbar_site_title(&self, page: &Page) -> Option<String> {
-        match &self.config.site_title {
+        match &self.config.for_locale(&page.locale).site_title {
             Some(crate::config::SiteTitleSetting::Text(t)) => Some(t.clone()),
             Some(crate::config::SiteTitleSetting::Hide(_)) => None,
             None => Some(self.document_site_title(page)),
@@ -657,6 +660,7 @@ impl Site {
             },
             search_index_url: self.url(&search_index_path("root")),
             outline: None,
+            config: &self.config,
         };
         let home = self.url("/");
         let nf_title = nf.title.clone().unwrap_or_else(|| "PAGE NOT FOUND".into());

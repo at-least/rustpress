@@ -147,7 +147,7 @@ Theme files map dotted tree-sitter capture scopes to colors, support `[palette]`
 
 ### Multi-language sites
 
-`[locales.root]` + `[locales.zh]` (label/lang/title/description) with per-locale content directories (`content/zh/**` → `/zh/**`); pair with `[rewrites]` `"en/:rest*" = ":rest*"` for VitePress's canonical `en/` layout. The navbar gets a language flyout and the mobile menu a language accordion, titled with the current language and listing the others in declaration order; links target the same page in the other locale when it exists, else the locale root. Per-locale `lang` attribute, title and description.
+`[locales.root]` + `[locales.zh]` (label/lang/title/description) with per-locale content directories (`content/zh/**` → `/zh/**`); pair with `[rewrites]` `"en/:rest*" = ":rest*"` for VitePress's canonical `en/` layout. The navbar gets a language flyout and the mobile menu a language accordion, titled with the current language and listing the others in declaration order; links target the same page in the other locale when it exists, else the locale root. Per-locale `lang` attribute, title and description, and per-locale theme settings (`[locales.zh.themeConfig]`: nav, labels, footer, …, layered over the site's like VitePress).
 
 ## Testing
 

@@ -303,6 +303,111 @@ fn language_switcher_follows_upstream() {
 }
 
 #[test]
+fn locale_theme_config_reaches_the_locales_pages() {
+    // [locales.zh.themeConfig] layers over the site's theme settings on
+    // the zh pages only — tables merge, arrays replace, unset keys
+    // inherit (upstream's stackView, probed on the pinned build)
+    let config = r#"title = "T"
+returnToTopLabel = "Top"
+darkModeSwitchLabel = "Theme"
+
+[outline]
+level = [2, 3]
+label = "On this page"
+
+[docFooter]
+prev = "Prev"
+next = "Next"
+
+[editLink]
+pattern = "https://example.com/edit/:path"
+text = "Edit"
+
+[footer]
+message = "Root footer"
+
+[[nav]]
+text = "Guide"
+link = "/guide/a/"
+
+[sidebar."/guide/"]
+items = [{ text = "A", link = "/guide/a/" }, { text = "B", link = "/guide/b/" }]
+
+[sidebar."/zh/guide/"]
+items = [{ text = "甲", link = "/zh/guide/a/" }, { text = "乙", link = "/zh/guide/b/" }]
+
+[locales.root]
+label = "English"
+
+[locales.zh]
+label = "中文"
+
+[locales.zh.themeConfig]
+returnToTopLabel = "回到顶部"
+
+[locales.zh.themeConfig.outline]
+label = "页面导航"
+
+[locales.zh.themeConfig.docFooter]
+prev = "上一页"
+
+[locales.zh.themeConfig.editLink]
+text = "编辑此页"
+
+[locales.zh.themeConfig.footer]
+message = "中文页脚"
+
+[[locales.zh.themeConfig.nav]]
+text = "指南"
+link = "/zh/guide/a/"
+"#;
+    let (_, out) = build_site(
+        config,
+        &[
+            ("guide/a.md", "# A\n\n## Sub\n\n### Deep\n"),
+            ("guide/b.md", "# B\n"),
+            ("zh/guide/a.md", "# 甲\n\n## 小节\n\n### 深\n"),
+            ("zh/guide/b.md", "# 乙\n"),
+        ],
+    );
+    let zh_a = page(&out, "/zh/guide/a/");
+    let zh_b = page(&out, "/zh/guide/b/");
+    for want in [
+        ">指南<",
+        "页面导航",
+        "回到顶部",
+        "编辑此页",
+        "中文页脚",
+        // edit pattern and next label inherit from the site
+        "https://example.com/edit/zh/guide/a.md",
+        ">Next<",
+        // outline level [2, 3] inherits: the h3 is listed
+        "href=\"#深\"",
+        // an untouched label inherits
+        "Theme",
+    ] {
+        assert!(zh_a.contains(want), "zh page missing {want}");
+    }
+    assert!(zh_b.contains(">上一页<"), "zh prev label");
+    for gone in [
+        ">Guide<",
+        "On this page",
+        "Return to top",
+        ">Edit<",
+        "Root footer",
+    ] {
+        assert!(!zh_a.contains(gone), "zh page still shows {gone}");
+    }
+    // the root locale keeps the site's settings
+    let a = page(&out, "/guide/a/");
+    for want in [">Guide<", "On this page", "Top", ">Edit<", "Root footer"] {
+        assert!(a.contains(want), "root page missing {want}");
+    }
+    assert!(page(&out, "/guide/b/").contains(">Prev<"));
+    assert!(!a.contains("指南") && !a.contains("页面导航"));
+}
+
+#[test]
 fn locale_switcher_prefix_strip_is_segment_safe() {
     // with the canonical "en/:rest*" = ":rest*" rewrite, a page named
     // english.md lands at /english/ while its locale base is /en — a

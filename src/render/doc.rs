@@ -4,7 +4,6 @@
 
 use hypertext::{Raw, prelude::*};
 
-use super::Site;
 use super::icons::icon;
 use crate::content::Page;
 use crate::markdown::{Heading, RenderedPage};
@@ -13,7 +12,7 @@ use crate::markdown::{Heading, RenderedPage};
 // struct would just move the same names behind a field access
 #[allow(clippy::too_many_arguments)]
 pub fn doc_page<'a>(
-    site: &'a Site,
+    cfg: &'a crate::config::SiteConfig,
     page: &'a Page,
     rendered: &'a RenderedPage,
     prev: Option<&'a super::PagerLink>,
@@ -24,7 +23,7 @@ pub fn doc_page<'a>(
     edit_on: bool,
     last_updated: Option<&'a (String, String)>,
 ) -> impl Renderable + 'a {
-    let outline_label = site.config.outline.label();
+    let outline_label = cfg.outline.label();
     let headings: Vec<&Heading> = match outline {
         Some((lo, hi)) => rendered
             .headings
@@ -35,7 +34,7 @@ pub fn doc_page<'a>(
     };
     let show_outline = !headings.is_empty();
     let aside_left = aside == Some(true);
-    let edit_link = site.config.edit_link.as_ref().filter(|_| edit_on).map(|e| {
+    let edit_link = cfg.edit_link.as_ref().filter(|_| edit_on).map(|e| {
         let text = e
             .text
             .clone()
@@ -49,7 +48,7 @@ pub fn doc_page<'a>(
         )
     });
     let last_updated = last_updated.cloned();
-    let doc_footer = site.config.doc_footer.clone().unwrap_or_default();
+    let doc_footer = cfg.doc_footer.clone().unwrap_or_default();
     // `docFooter.prev/next: false` disables that pager side
     let (prev, prev_label) = match pager_label(&doc_footer.prev, "Previous page") {
         Ok(label) => (prev, label),
@@ -59,7 +58,7 @@ pub fn doc_page<'a>(
         Ok(label) => (next, label),
         Err(()) => (None, String::new()),
     };
-    let updated_label = site.config.last_updated_text.clone();
+    let updated_label = cfg.last_updated_text.clone();
     let show_footer =
         edit_link.is_some() || last_updated.is_some() || prev.is_some() || next.is_some();
 

@@ -32,6 +32,10 @@ pub struct Shell<'a> {
     pub site_title: Option<String>,
     /// The search index this page's modal fetches (its locale's own).
     pub search_index_url: String,
+    /// Theme settings for this page: its locale's themeConfig layered over
+    /// the site's (`SiteConfig::for_locale`). Site-level settings (`head`,
+    /// `appearance`, `search`) are read from the site config.
+    pub config: &'a crate::config::SiteConfig,
     /// Effective outline for this page (site setting ∧ front matter):
     /// gates the aside outline and the local-nav dropdown.
     pub outline: Option<(u8, u8)>,
@@ -54,11 +58,11 @@ pub fn layout<'a>(
     let is_home = shell.is_home;
     let has_sidebar = shell.has_sidebar;
     let current_url = shell.current_url.to_string();
-    let footer = site.config.footer.clone();
+    let footer = shell.config.footer.clone();
     let show_footer = shell.show_footer && footer.is_some();
     let head_tags = serialize_head_tags(&site.config.head);
     let head_extra = Raw::dangerously_create(shell.head_extra.clone());
-    let skip_label = site.config.skip_to_content_label.clone();
+    let skip_label = shell.config.skip_to_content_label.clone();
     let theme_link = site.theme_link.as_ref().map(|rel| site.url(rel));
     let footer_message = footer.as_ref().and_then(|f| f.message.clone());
     let footer_copyright = footer.as_ref().and_then(|f| f.copyright.clone());
@@ -102,7 +106,7 @@ pub fn layout<'a>(
                 (head_tags)
                 (head_extra)
             </head>
-            <body class=(format!("font-sans bg-bg text-text-1 antialiased [text-rendering:optimizeLegibility] [-moz-osx-font-smoothing:grayscale] [text-autospace:normal] [text-spacing-trim:normal]{}", if site.config.graded_containers { " vp-graded-containers" } else { "" }))>
+            <body class=(format!("font-sans bg-bg text-text-1 antialiased [text-rendering:optimizeLegibility] [-moz-osx-font-smoothing:grayscale] [text-autospace:normal] [text-spacing-trim:normal]{}", if shell.config.graded_containers { " vp-graded-containers" } else { "" }))>
                 // upstream VPSkipLink: visually hidden until focused, then a
                 // pill in the top-left corner; the content takes focus when it
                 // is followed (the hash-focus handler in the Alpine bundle)
@@ -120,12 +124,12 @@ pub fn layout<'a>(
 
                 @if shell.has_navbar {
                     <header class="relative top-[var(--vp-layout-top-height,0px)] left-0 z-(--vp-z-index-nav) w-full pointer-events-none lg:fixed">
-                        (navbar::navbar(site, &current_url, is_home, has_sidebar, shell.translations.as_ref(), shell.site_title.as_deref()))
-                        (navbar::nav_screen(site, &current_url, shell.translations.as_ref()))
+                        (navbar::navbar(site, shell.config, &current_url, is_home, has_sidebar, shell.translations.as_ref(), shell.site_title.as_deref()))
+                        (navbar::nav_screen(site, shell.config, &current_url, shell.translations.as_ref()))
                     </header>
                 }
 
-                (Raw::dangerously_create(super::local_nav::local_nav(site, is_home, has_sidebar, shell.outline.is_some(), headings)))
+                (Raw::dangerously_create(super::local_nav::local_nav(shell.config, is_home, has_sidebar, shell.outline.is_some(), headings)))
                 @if has_sidebar {
                     (Raw::dangerously_create(super::sidebar::sidebar(site, &current_url)))
                 }

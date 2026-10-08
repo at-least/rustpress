@@ -7,7 +7,7 @@ use hypertext::prelude::*;
 
 use super::icons::{icon, social_icon};
 use super::{Site, Translations};
-use crate::config::NavItem;
+use crate::config::{NavItem, SiteConfig};
 
 /// Upstream's default activeMatch: the current path starts with the
 /// link, and the match ends at a segment boundary — "/guide" activates
@@ -35,6 +35,7 @@ fn nav_item_active(item: &NavItem, current_url: &str) -> bool {
 
 pub fn navbar<'a>(
     site: &'a Site,
+    cfg: &'a SiteConfig,
     current_url: &'a str,
     is_home: bool,
     has_sidebar: bool,
@@ -43,18 +44,18 @@ pub fn navbar<'a>(
 ) -> impl Renderable + 'a {
     let home = site.url("/");
     let site_title = site_title.map(str::to_string);
-    let logo = site.config.logo.as_ref().map(|l| logo_html(site, l));
-    let ask_ai = site.config.ask_ai_url.clone();
-    let nav: Vec<&NavItem> = site.config.nav.iter().collect();
-    let socials: Vec<_> = site.config.social_links.clone();
-    let has_search = site.config.search.is_some();
+    let logo = cfg.logo.as_ref().map(|l| logo_html(site, l));
+    let ask_ai = cfg.ask_ai_url.clone();
+    let nav: Vec<&NavItem> = cfg.nav.iter().collect();
+    let socials: Vec<_> = cfg.social_links.clone();
+    let has_search = cfg.search.is_some();
     let show_social = !socials.is_empty();
-    let toggleable = site.config.appearance.toggleable();
-    let nav_menu_label = site.config.nav_menu_label.clone();
-    let lang_menu_label = site.config.lang_menu_label.clone();
-    let mobile_menu_label = site.config.mobile_menu_label.clone();
-    let dark_switch_title = site.config.dark_mode_switch_title.clone();
-    let light_switch_title = site.config.light_mode_switch_title.clone();
+    let toggleable = cfg.appearance.toggleable();
+    let nav_menu_label = cfg.nav_menu_label.clone();
+    let lang_menu_label = cfg.lang_menu_label.clone();
+    let mobile_menu_label = cfg.mobile_menu_label.clone();
+    let dark_switch_title = cfg.dark_mode_switch_title.clone();
+    let light_switch_title = cfg.light_mode_switch_title.clone();
 
     // upstream VPNavBar draws a 1px rule before every cluster unit that
     // follows another (menu, translations, appearance, social links):
@@ -132,9 +133,9 @@ pub fn navbar<'a>(
                         <div class="content-body relative flex justify-end items-center h-(--vp-nav-height)">
                             <div class="flex items-center md:gap-2 md:pl-6 lg:pl-8">
                                 @if has_search {
-                                    <button type="button" class="flex items-center gap-2 h-(--vp-nav-height) px-[0.875rem] py-2 text-[1.25rem] cursor-pointer md:h-auto md:py-2 md:px-3 md:bg-bg-alt md:rounded-lg md:text-[0.875rem] md:leading-none md:text-text-2" id="VPSearchButton" aria-keyshortcuts="/ control+k meta+k" aria-label=(site.config.search.as_ref().map(|s| s.translations.button_aria_label.clone()).unwrap_or_else(|| "Search".into())) @click="$store.ui.search = true">
+                                    <button type="button" class="flex items-center gap-2 h-(--vp-nav-height) px-[0.875rem] py-2 text-[1.25rem] cursor-pointer md:h-auto md:py-2 md:px-3 md:bg-bg-alt md:rounded-lg md:text-[0.875rem] md:leading-none md:text-text-2" id="VPSearchButton" aria-keyshortcuts="/ control+k meta+k" aria-label=(cfg.search.as_ref().map(|s| s.translations.button_aria_label.clone()).unwrap_or_else(|| "Search".into())) @click="$store.ui.search = true">
                                         (icon("search", ""))
-                                        <span class="hidden md:inline md:text-[0.8125rem]">(site.config.search.as_ref().map(|s| s.translations.button_text.clone()).unwrap_or_else(|| "Search".into()))</span>
+                                        <span class="hidden md:inline md:text-[0.8125rem]">(cfg.search.as_ref().map(|s| s.translations.button_text.clone()).unwrap_or_else(|| "Search".into()))</span>
                                         <span class="hidden md:flex md:items-center md:gap-1 md:px-[0.375rem] md:py-1 md:border md:border-divider md:rounded-[0.25rem] md:text-[0.75rem]" aria-hidden="true">
                                             <kbd class="font-[inherit] font-medium before:content-['Ctrl'] [.mac_&]:before:content-['⌘']"></kbd>
                                             <kbd class="font-[inherit] font-medium before:content-['K']"></kbd>
@@ -384,17 +385,18 @@ fn appearance_switch(id: &'static str, dark_title: &str, light_title: &str) -> S
 /// VPNavScreen — the full-screen mobile menu.
 pub fn nav_screen<'a>(
     site: &'a Site,
+    cfg: &'a SiteConfig,
     current_url: &'a str,
     translations: Option<&'a Translations>,
 ) -> impl Renderable + 'a {
-    let nav: Vec<&NavItem> = site.config.nav.iter().collect();
-    let socials = site.config.social_links.clone();
+    let nav: Vec<&NavItem> = cfg.nav.iter().collect();
+    let socials = cfg.social_links.clone();
     let has_nav = !nav.is_empty();
-    let toggleable = site.config.appearance.toggleable();
-    let dark_label = site.config.dark_mode_switch_label.clone();
-    let nav_menu_label = site.config.nav_menu_label.clone();
-    let dark_switch_title = site.config.dark_mode_switch_title.clone();
-    let light_switch_title = site.config.light_mode_switch_title.clone();
+    let toggleable = cfg.appearance.toggleable();
+    let dark_label = cfg.dark_mode_switch_label.clone();
+    let nav_menu_label = cfg.nav_menu_label.clone();
+    let dark_switch_title = cfg.dark_mode_switch_title.clone();
+    let light_switch_title = cfg.light_mode_switch_title.clone();
     rsx! {
         <div class="fixed inset-0 pt-[calc(var(--vp-nav-height)+var(--vp-layout-top-height,0px)+1px)] pr-8 pl-8 bg-(--vp-nav-screen-bg-color) w-full overflow-y-auto overscroll-contain transition-colors duration-[250ms] pointer-events-auto opacity-100 md:hidden" id="VPNavScreen" x-data="{}" x-cloak x-show="$store.ui.screen" @keydown.escape.window="$store.ui.screen = false">
             <div class="mx-auto pt-6 pb-24 max-w-[18rem]">

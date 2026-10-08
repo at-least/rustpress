@@ -240,6 +240,59 @@ pub struct SiteConfig {
     /// `/zh/`).
     #[serde(default)]
     pub locales: indexmap::IndexMap<String, Locale>,
+
+    /// The full config of each locale that has a `themeConfig`: this one
+    /// with the locale's theme keys layered over it (`for_locale`).
+    #[serde(skip)]
+    pub locale_configs: std::collections::BTreeMap<String, SiteConfig>,
+}
+
+/// Theme keys a locale's `themeConfig` may override: upstream's
+/// `DefaultTheme.Config` (types/default-theme.d.ts) that rustpress
+/// implements, in rustpress's spelling (`lastUpdatedText` is upstream's
+/// `lastUpdated.text`), plus the rustpress-only `askAiUrl`. Not here:
+/// `sidebar` (locale sidebars are path-keyed: `[sidebar."/zh/"]`),
+/// `search` (upstream keeps locale search strings under
+/// `search.options.locales`), and every site-level key.
+const LOCALE_THEME_KEYS: &[&str] = &[
+    "logo",
+    "siteTitle",
+    "nav",
+    "outline",
+    "aside",
+    "editLink",
+    "lastUpdatedText",
+    "docFooter",
+    "socialLinks",
+    "footer",
+    "darkModeSwitchLabel",
+    "lightModeSwitchTitle",
+    "darkModeSwitchTitle",
+    "sidebarMenuLabel",
+    "returnToTopLabel",
+    "langMenuLabel",
+    "navMenuLabel",
+    "mobileMenuLabel",
+    "skipToContentLabel",
+    "gradedContainers",
+    "notFound",
+    "askAiUrl",
+];
+
+/// Layer `over` onto `base` the way upstream stacks a locale's
+/// themeConfig over the root's (stackView): tables merge key by key,
+/// anything else — a value, an array — replaces.
+fn deep_merge(base: &mut toml::Table, over: &toml::Table) {
+    for (key, value) in over {
+        match (base.get_mut(key), value) {
+            (Some(toml::Value::Table(below)), toml::Value::Table(above)) => {
+                deep_merge(below, above)
+            }
+            _ => {
+                base.insert(key.clone(), value.clone());
+            }
+        }
+    }
 }
 
 fn default_true() -> bool {
@@ -319,12 +372,54 @@ impl SiteConfig {
             path: path.clone(),
             source,
         })?;
-        let config: SiteConfig = toml::from_str(&raw).map_err(|source| ConfigError::Parse {
-            path: path.clone(),
+        Self::parse(&raw, &path)
+    }
+
+    /// Parse and validate a `rustpress.toml` source (`path` names it in
+    /// errors), resolving each locale's `themeConfig` into a full config.
+    pub fn parse(raw: &str, path: &Path) -> Result<SiteConfig, ConfigError> {
+        let mut config: SiteConfig = toml::from_str(raw).map_err(|source| ConfigError::Parse {
+            path: path.to_path_buf(),
             source,
         })?;
         config.validate()?;
+        let mut root: Option<toml::Table> = None;
+        for (key, locale) in &config.locales {
+            let Some(theme) = &locale.theme_config else {
+                continue;
+            };
+            if let Some(bad) = theme
+                .keys()
+                .find(|k| !LOCALE_THEME_KEYS.contains(&k.as_str()))
+            {
+                return Err(ConfigError::LocaleThemeKey {
+                    locale: key.clone(),
+                    key: bad.clone(),
+                });
+            }
+            let root = root.get_or_insert_with(|| {
+                let mut table: toml::Table = toml::from_str(raw).expect("parsed above");
+                table.remove("locales");
+                table
+            });
+            let mut merged = root.clone();
+            deep_merge(&mut merged, theme);
+            let resolved: SiteConfig = toml::Value::Table(merged).try_into().map_err(|source| {
+                ConfigError::LocaleTheme {
+                    locale: key.clone(),
+                    source,
+                }
+            })?;
+            resolved.validate()?;
+            config.locale_configs.insert(key.clone(), resolved);
+        }
         Ok(config)
+    }
+
+    /// The config of a locale's pages: its `themeConfig` layered over the
+    /// site's, or the site's own when it has none.
+    pub fn for_locale(&self, locale: &str) -> &SiteConfig {
+        self.locale_configs.get(locale).unwrap_or(self)
     }
 
     fn validate(&self) -> Result<(), ConfigError> {
@@ -1191,6 +1286,10 @@ pub struct Locale {
     /// Locale-specific description.
     #[serde(default)]
     pub description: Option<String>,
+    /// Theme settings for this locale's pages, layered over the site's
+    /// (`[locales.zh.themeConfig]`; keys from `LOCALE_THEME_KEYS`).
+    #[serde(default)]
+    pub theme_config: Option<toml::Table>,
 }
 
 /// Errors loading or validating `rustpress.toml`.
@@ -1212,6 +1311,13 @@ pub enum ConfigError {
     Rewrite { rule: String, problem: String },
     #[error("invalid nav item {text:?}: {problem}")]
     Nav { text: String, problem: String },
+    #[error("[locales.{locale}.themeConfig]: `{key}` is not a theme setting a locale can override")]
+    LocaleThemeKey { locale: String, key: String },
+    #[error("[locales.{locale}.themeConfig]: {source}")]
+    LocaleTheme {
+        locale: String,
+        source: toml::de::Error,
+    },
 }
 
 #[cfg(test)]
@@ -1482,6 +1588,99 @@ base = "/reference/"
         assert!(
             err.to_string().contains("titel"),
             "error should name the bad key: {err}"
+        );
+    }
+
+    fn load_str(src: &str) -> Result<SiteConfig, ConfigError> {
+        SiteConfig::parse(src, Path::new("rustpress.toml"))
+    }
+
+    const TWO_LOCALES: &str = r#"
+title = "T"
+returnToTopLabel = "Top"
+darkModeSwitchLabel = "Theme"
+
+[outline]
+level = [2, 3]
+label = "On this page"
+
+[docFooter]
+prev = "Prev"
+next = "Next"
+
+[[nav]]
+text = "Guide"
+link = "/guide/"
+
+[locales.root]
+label = "English"
+
+[locales.zh]
+label = "中文"
+
+[locales.zh.themeConfig]
+returnToTopLabel = "回到顶部"
+
+[locales.zh.themeConfig.outline]
+label = "页面导航"
+
+[locales.zh.themeConfig.docFooter]
+prev = "上一页"
+
+[[locales.zh.themeConfig.nav]]
+text = "指南"
+link = "/zh/guide/"
+"#;
+
+    #[test]
+    fn locale_theme_config_deep_merges_over_the_root() {
+        // upstream layers a locale's themeConfig over the root's with
+        // stackView: tables merge key by key, arrays and values replace —
+        // probed on the pinned build (zh overriding outline.label kept
+        // root's outline.level; overriding docFooter.prev kept its next)
+        let c = load_str(TWO_LOCALES).unwrap();
+        let zh = c.for_locale("zh");
+        assert_eq!(zh.return_to_top_label, "回到顶部");
+        assert_eq!(zh.dark_mode_switch_label, "Theme", "an unset key inherits");
+        assert_eq!(zh.outline.label(), "页面导航");
+        assert_eq!(zh.outline.level(), c.outline.level(), "a table merges");
+        let footer = zh.doc_footer.as_ref().unwrap();
+        assert_eq!(footer.prev, Some(PagerLabel::Text("上一页".into())));
+        assert_eq!(footer.next, Some(PagerLabel::Text("Next".into())));
+        let nav: Vec<_> = zh.nav.iter().map(|n| n.text.as_str()).collect();
+        assert_eq!(nav, ["指南"], "an array replaces");
+        // the root and override-free locales read the root config
+        for root in [&c, c.for_locale("root"), c.for_locale("ja")] {
+            assert_eq!(root.return_to_top_label, "Top");
+            assert_eq!(root.nav[0].text, "Guide");
+        }
+    }
+
+    #[test]
+    fn locale_theme_config_takes_theme_keys_only() {
+        // site-level keys (and typos) fail the load naming the locale and
+        // the key; search translations are site-wide (upstream keeps them
+        // under search.options.locales, not a locale's themeConfig)
+        for (key, toml) in [
+            ("base", "base = \"/zh/\""),
+            ("search", "search = { provider = \"local\" }"),
+            ("retrunToTopLabel", "retrunToTopLabel = \"x\""),
+        ] {
+            let src = format!(
+                "title = \"T\"\n\n[locales.zh]\nlabel = \"中文\"\n\n[locales.zh.themeConfig]\n{toml}\n"
+            );
+            let err = load_str(&src).unwrap_err().to_string();
+            assert!(err.contains("zh") && err.contains(key), "{key}: {err}");
+        }
+        // a theme key's value goes through the same parsing as at the root
+        let err = load_str(
+            "title = \"T\"\n\n[locales.zh]\nlabel = \"中文\"\n\n[locales.zh.themeConfig]\nreturnToTopLabel = 3\n",
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(
+            err.contains("zh") && err.contains("returnToTopLabel"),
+            "{err}"
         );
     }
 
