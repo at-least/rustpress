@@ -264,7 +264,7 @@ linkText = "Return home"
 - Type: `string`
 - Default: `Appearance`
 
-The label next to the appearance switch. It is only displayed in the mobile menu.
+The appearance switch's accessible name (`aria-label`), and the label next to it in the mobile menu — the only place it is displayed.
 
 ## lightModeSwitchTitle
 

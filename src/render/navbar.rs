@@ -54,6 +54,7 @@ pub fn navbar<'a>(
     let nav_menu_label = cfg.nav_menu_label.clone();
     let lang_menu_label = cfg.lang_menu_label.clone();
     let mobile_menu_label = cfg.mobile_menu_label.clone();
+    let dark_label = cfg.dark_mode_switch_label.clone();
     let dark_switch_title = cfg.dark_mode_switch_title.clone();
     let light_switch_title = cfg.light_mode_switch_title.clone();
 
@@ -189,7 +190,7 @@ pub fn navbar<'a>(
 
                             @if toggleable {
                                 <div class=(format!("hidden md:flex md:items-center{appearance_rule}"))>
-                                    (Raw::dangerously_create(appearance_switch("VPSwitchAppearance", &dark_switch_title, &light_switch_title)))
+                                    (Raw::dangerously_create(appearance_switch("VPSwitchAppearance", &dark_label, &dark_switch_title, &light_switch_title)))
                                 </div>
                             }
 
@@ -364,12 +365,13 @@ fn nav_entry<'a>(site: &'a Site, item: &'a NavItem, current_url: &'a str) -> Str
 }
 
 /// VPSwitchAppearance — one instance in the navbar, one in the nav
-/// screen. The markup is the light-mode state; the JS bundle syncs
-/// `aria-checked` and picks the title (what clicking will do) from the
-/// two `data-title-*` attributes on load and on every toggle.
-fn appearance_switch(id: &'static str, dark_title: &str, light_title: &str) -> String {
+/// screen, named by `darkModeSwitchLabel` like upstream's. The markup is
+/// the light-mode state; the JS bundle syncs `aria-checked` and picks the
+/// title (what clicking will do) from the two `data-title-*` attributes
+/// on load and on every toggle.
+fn appearance_switch(id: &'static str, label: &str, dark_title: &str, light_title: &str) -> String {
     rsx! {
-        <button type="button" id=(id) class="VPSwitch VPSwitchAppearance relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label="Appearance" aria-checked="false" title=(dark_title.to_string()) data-title-dark=(dark_title.to_string()) data-title-light=(light_title.to_string()) @click="gdToggleAppearance()">
+        <button type="button" id=(id) class="VPSwitch VPSwitchAppearance relative block w-10 h-[1.375rem] shrink-0 rounded-[0.6875rem] border border-(--vp-input-border-color) bg-(--vp-input-switch-bg-color) transition-colors duration-[250ms] hover:border-brand-1 cursor-pointer" role="switch" aria-label=(label.to_string()) aria-checked="false" title=(dark_title.to_string()) data-title-dark=(dark_title.to_string()) data-title-light=(light_title.to_string()) @click="gdToggleAppearance()">
             <span class="absolute top-px left-px w-[1.125rem] h-[1.125rem] rounded-full bg-(--vp-c-neutral-inverse) shadow-1 transition-transform duration-[250ms] dark:translate-x-[1.125rem]">
                 <span class="relative block w-[1.125rem] h-[1.125rem] rounded-full overflow-hidden">
                     (icon("sun", "absolute top-[0.1875rem] left-[0.1875rem] size-3 text-text-2 dark:text-text-1 transition-opacity duration-[250ms] opacity-100 dark:opacity-0"))
@@ -435,8 +437,8 @@ pub fn nav_screen<'a>(
                 // surface, the label left and the switch right
                 @if toggleable {
                     <div class=(format!("appearance flex justify-between items-center rounded-lg py-3 pr-[0.875rem] pl-4 bg-bg-soft{}", if has_nav || translations.is_some() { " mt-6" } else { "" }))>
-                        <p class="label leading-[2] text-[0.75rem] font-medium text-text-2">(dark_label)</p>
-                        (Raw::dangerously_create(appearance_switch("VPSwitchAppearanceScreen", &dark_switch_title, &light_switch_title)))
+                        <p class="label leading-[2] text-[0.75rem] font-medium text-text-2">(dark_label.clone())</p>
+                        (Raw::dangerously_create(appearance_switch("VPSwitchAppearanceScreen", &dark_label, &dark_switch_title, &light_switch_title)))
                     </div>
                 }
 

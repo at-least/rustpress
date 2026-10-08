@@ -32,6 +32,7 @@ fn build() -> String {
         &site,
         "rustpress.toml",
         "title = \"probe\"\nlightModeSwitchTitle = \"Go light\"\ndarkModeSwitchTitle = \"Go dark\"\n\
+         darkModeSwitchLabel = \"Theme\"\n\
          [[sidebar]]\ntext = \"Plain\"\nitems = [{ text = \"A\", link = \"/guide/a\" }]\n\
          [[sidebar]]\ntext = \"Folded\"\ncollapsed = true\nitems = [{ text = \"B\", link = \"/guide/b\" }]\n",
     );
@@ -60,6 +61,18 @@ fn switch_carries_both_titles() {
         2,
         "{html}"
     );
+}
+
+#[test]
+fn switch_is_named_by_dark_mode_switch_label() {
+    // upstream VPSwitchAppearance: `theme.darkModeSwitchLabel || 'Appearance'`
+    let html = build();
+    assert_eq!(
+        html.matches("role=\"switch\" aria-label=\"Theme\"").count(),
+        2,
+        "navbar + nav screen: {html}"
+    );
+    assert!(!html.contains("aria-label=\"Appearance\""), "{html}");
 }
 
 #[test]
